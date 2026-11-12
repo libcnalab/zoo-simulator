@@ -555,6 +555,11 @@ ActionError Zoo::TreatAnimal(AnimalId id) {
     return ActionError::None;
 }
 
+int Zoo::SpreadVisitors() {
+    const Env env = MakeEnv();
+    return visitors_.Spread(env);
+}
+
 Money Zoo::RefillFeeder(PropId feeder) {
     Env env = MakeEnv();
     return animals_.RefillFeeder(env, feeder);

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 #pragma once
 
+#include <algorithm>
 #include <cstdint>
 #include <memory>
 #include <string_view>
@@ -79,6 +80,20 @@ enum class VisitorThought : std::uint8_t {
     Count
 };
 std::string_view ToString(VisitorThought v);
+
+/// How fast a visit goes. The management game runs a day in twelve minutes, so its
+/// people look at an enclosure for ten seconds and are gone after four minutes; in a
+/// zoo one walks through oneself they stand at a fence for a minute and stay long
+/// enough to get round. All three are factors on the tuning (VisitorTuning.hpp).
+struct VisitorPace {
+    /// On the time at a fence, on a bench, over a meal and at a board.
+    float linger = 1.0f;
+    /// On how long a group stays in the zoo before it goes home; hunger, thirst and
+    /// weariness come on that much more slowly, so a long visit has no more meals.
+    float stay = 1.0f;
+    /// On how many people arrive (with a longer stay, fewer arrivals keep the same crowd).
+    float arrivals = 1.0f;
+};
 
 /// One person visiting the zoo.
 ///
@@ -212,6 +227,17 @@ public:
     int ArrivedToday() const { return arrivedToday_; }
     int LeftToday() const { return leftToday_; }
     std::int64_t ArrivedEver() const { return arrivedEver_; }
+    /// The pace of a visit (see VisitorPace). A setting, not state: it is not saved
+    /// and takes no part in StateHash().
+    const VisitorPace& Pace() const { return pace_; }
+    void SetPace(const VisitorPace& pace);
+    /// As if the zoo had been open for hours: every group that is on its feet inside
+    /// (walking, standing or at a fence; not seated, served, queueing or in a house)
+    /// is set down somewhere on the public paths the gate leads to, the farther in the
+    /// more it has seen, the longer it has been here and the hungrier and wearier it
+    /// is, and makes up its mind from there. For a zoo one walks into in mid-morning; Step() never does this.
+    /// Returns the number of people moved.
+    int Spread(const Env& env);
     /// Starts the day's counters afresh.
     void CloseDay();
     /// Removes everybody and all litter (the ticket price and the rating stay).
@@ -233,6 +259,7 @@ private:
     Rng rng_;
     Money ticketPrice_ = Dollars(15);
     bool open_ = true;
+    VisitorPace pace_;
     float arrivalRemainder_ = 0.0f;
     float rating_ = 0.6f;
     float educationRating_ = 0.0f;

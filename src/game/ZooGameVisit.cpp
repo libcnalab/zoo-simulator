@@ -4,12 +4,15 @@
 #include "ZooGame.hpp"
 
 #include <algorithm>
+#include <array>
 #include <chrono>
 #include <cmath>
 #include <cstdio>
 #include <ctime>
 #include <filesystem>
 #include <fstream>
+#include <map>
+#include <string>
 
 #include "CnaEngine/App/AssetDirectory.hpp"
 
@@ -32,6 +35,11 @@ constexpr float kVisitHour = 10.5f;
 /// The calendar creeps: one game hour takes six real minutes (the management
 /// game's takes thirty seconds), while everything alive moves at its own speed.
 constexpr int kVisitPace = 12;
+/// The visitors' pace for a visit on foot: a minute at a fence, twenty minutes in the zoo,
+/// and as many arrivals as keep the crowd of mid-morning. While the zoo is filled before the
+/// player walks in, people come kFillArrivals times as fast as that.
+constexpr zoo::VisitorPace kVisitPeople{.linger = 6.0f, .stay = 6.0f, .arrivals = 0.25f};
+constexpr float kFillArrivals = 1.7f;
 /// The day stops before the afternoon thins the crowd out: a visit has no closing time.
 constexpr float kLatestHour = 15.5f;
 constexpr float kEarliestHour = 9.5f;
@@ -67,8 +75,8 @@ std::unique_ptr<zoo::Zoo> ZooGame::MakeVisitorZoo() {
         }
         const zoo::ScenarioReport report = zoo::BuildVisitorZoo(*made, options);
         const double took = std::chrono::duration<double>(std::chrono::steady_clock::now() - began).count();
-        std::printf("zoo: visitor zoo: %d enclosures, %d animals, %d buildings, %d props (%.2f s)\n", report.enclosures,
-                    report.animals, report.buildings, report.props, took);
+        std::printf("zoo: visitor zoo: %d enclosures, %d animals, %d buildings, %d props (%.2f s)\n",
+                    report.enclosures, report.animals, report.buildings, report.props, took);
         for (const std::string& problem : report.problems)
             std::printf("zoo: visitor zoo: %s\n", problem.c_str());
     }
@@ -77,6 +85,9 @@ std::unique_ptr<zoo::Zoo> ZooGame::MakeVisitorZoo() {
 }
 
 void ZooGame::PrepareVisit(zoo::Zoo& zoo, bool fill) {
+    // People take their time here: a minute at a fence, not the few seconds of a day that
+    // passes in a quarter of an hour.
+    zoo.Guests().SetPace(kVisitPeople);
     const float hour = startHour_ ? static_cast<float>(*startHour_) : kVisitHour;
     const float now = zoo.Time().Hour();
     if (fill || now < kEarliestHour || now >= kLatestHour) {
@@ -87,11 +98,65 @@ void ZooGame::PrepareVisit(zoo::Zoo& zoo, bool fill) {
         const auto began = std::chrono::steady_clock::now();
         const std::int64_t ticks = warmUpTicks_ > 0 ? warmUpTicks_ : kFillTicks;
         zoo.SetDayPace(0);
-        for (std::int64_t i = 0; i < ticks; ++i)
+        // The people who came in first are set down all over the zoo, as if it had been
+        // open since nine; the rest of the time they and the later ones settle.
+        const std::int64_t before = ticks * 3 / 5;
+        zoo::VisitorPace filling = kVisitPeople;
+        filling.arrivals = kFillArrivals;
+        zoo.Guests().SetPace(filling);
+        for (std::int64_t i = 0; i < before; ++i)
+            zoo.Step();
+        const int spread = zoo.SpreadVisitors();
+        zoo.Guests().SetPace(kVisitPeople);
+        for (std::int64_t i = before; i < ticks; ++i)
             zoo.Step();
         const double took = std::chrono::duration<double>(std::chrono::steady_clock::now() - began).count();
-        std::printf("zoo: visit: %d visitors after %lld steps at %.2f h (%.2f s)\n", zoo.Guests().Count(),
-                    static_cast<long long>(ticks), static_cast<double>(zoo.Time().Hour()), took);
+        std::printf(
+            "zoo: visit: %d visitors (%d set down about the zoo) after %lld steps at %.2f h (%.2f s)\n",
+            zoo.Guests().Count(), spread, static_cast<long long>(ticks),
+            static_cast<double>(zoo.Time().Hour()), took);
+        // Where the people are: how many do what, and how many stand at each habitat.
+        std::map<std::uint32_t, int> watchers;
+        std::array<int, static_cast<std::size_t>(zoo::VisitorActivity::Count)> doing{};
+        for (const zoo::Visitor& visitor : zoo.Guests().All()) {
+            ++doing[static_cast<std::size_t>(visitor.activity)];
+            if (visitor.activity == zoo::VisitorActivity::Watching)
+                ++watchers[visitor.targetEnclosure.value];
+        }
+        std::string line;
+        for (std::size_t i = 0; i < doing.size(); ++i)
+            if (doing[i] > 0)
+                line += Format(" %s %d,",
+                               std::string(zoo::ToString(static_cast<zoo::VisitorActivity>(i))).c_str(),
+                               doing[i]);
+        line += " at the habitats:";
+        for (const auto& [id, count] : watchers) {
+            const zoo::Enclosure* enclosure = zoo.Habitats().Find(zoo::EnclosureId{id});
+            line += Format(" %s %d,", enclosure ? enclosure->name.c_str() : "?", count);
+        }
+        std::printf("zoo: visit:%s\n", line.c_str());
+        // Where the walkers are going (only the leaders know).
+        std::map<std::uint32_t, int> bound;
+        std::array<int, static_cast<std::size_t>(zoo::VisitorGoal::Count)> wants{};
+        for (const zoo::Visitor& visitor : zoo.Guests().All()) {
+            if (visitor.activity != zoo::VisitorActivity::Walking || !visitor.leader)
+                continue;
+            ++wants[static_cast<std::size_t>(visitor.goal)];
+            if (visitor.goal == zoo::VisitorGoal::Watch)
+                ++bound[visitor.targetEnclosure.value];
+        }
+        line = " walking groups:";
+        for (std::size_t i = 0; i < wants.size(); ++i)
+            if (wants[i] > 0)
+                line +=
+                    Format(" %s %d,", std::string(zoo::ToString(static_cast<zoo::VisitorGoal>(i))).c_str(),
+                           wants[i]);
+        line += " bound for:";
+        for (const auto& [id, count] : bound) {
+            const zoo::Enclosure* enclosure = zoo.Habitats().Find(zoo::EnclosureId{id});
+            line += Format(" %s %d,", enclosure ? enclosure->name.c_str() : "?", count);
+        }
+        std::printf("zoo: visit:%s\n", line.c_str());
     }
     zoo.SetDayPace(kVisitPace);
 }
@@ -257,20 +322,26 @@ void ZooGame::FillVisitFigures() {
 
 void ZooGame::PrintVisitFigures(const char* when) const {
     const zoo::Vec2 at = walker_.Position();
-    std::printf("zoo: visit %s: %s, at %.1f,%.1f heading %.0f; visitors %d simulated, %zu in range, %zu in view, %zu drawn; "
-                "avatars %d ready of %zu, %d failed; animals %zu, %zu drawn\n",
-                when, visit_.clock.c_str(), static_cast<double>(at.x), static_cast<double>(at.z),
-                static_cast<double>(walker_.Yaw() * 180.0f / kPi), zoo_->Guests().Count(), visitors_->InRange(),
-                visitors_->InView(), visitors_->Drawn(), visitors_->Ready(), visitors_->CastSize(), visitors_->Failed(),
-                zoo_->Fauna().All().size(), animals_->Drawn());
+    std::printf(
+        "zoo: visit %s: %s, at %.1f,%.1f heading %.0f; visitors %d simulated, %zu in range, %zu in view, %zu "
+        "drawn; "
+        "avatars %d ready of %zu, %d failed; animals %zu, %zu drawn\n",
+        when, visit_.clock.c_str(), static_cast<double>(at.x), static_cast<double>(at.z),
+        static_cast<double>(walker_.Yaw() * 180.0f / kPi), zoo_->Guests().Count(), visitors_->InRange(),
+        visitors_->InView(), visitors_->Drawn(), visitors_->Ready(), visitors_->CastSize(),
+        visitors_->Failed(), zoo_->Fauna().All().size(), animals_->Drawn());
     const SoundFigures& sound = sounds_->Figures();
-    std::printf("zoo: visit %s: sound %s, %d recordings (%d failed), %d voices (%d heard), %d steps, %d calls, last \"%s\"\n",
-                when, sound.device ? "plays" : "has no device", sound.files, sound.failed, sound.voices,
-                sound.audible, sound.steps, sound.calls, sound.lastCall.c_str());
+    std::printf(
+        "zoo: visit %s: sound %s, %d recordings (%d failed), %d voices (%d heard), %d steps, %d calls, last "
+        "\"%s\"\n",
+        when, sound.device ? "plays" : "has no device", sound.files, sound.failed, sound.voices,
+        sound.audible, sound.steps, sound.calls, sound.lastCall.c_str());
     if (visit_.card.shown > 0.0f || !visit_.prompt.empty() || visit_.window != VisitWindow::None)
         std::printf("zoo: visit %s: looking at \"%s, %s\" (%s); E: \"%s\"; window %d\n", when,
-                    visit_.card.shown > 0.0f ? visit_.card.name.c_str() : "", visit_.card.shown > 0.0f ? visit_.card.species.c_str() : "",
-                    visit_.card.shown > 0.0f ? visit_.card.doing.c_str() : "", visit_.prompt.c_str(), static_cast<int>(visit_.window));
+                    visit_.card.shown > 0.0f ? visit_.card.name.c_str() : "",
+                    visit_.card.shown > 0.0f ? visit_.card.species.c_str() : "",
+                    visit_.card.shown > 0.0f ? visit_.card.doing.c_str() : "", visit_.prompt.c_str(),
+                    static_cast<int>(visit_.window));
 }
 
 void ZooGame::UpdateVisit(double seconds) {

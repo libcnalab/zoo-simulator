@@ -692,8 +692,8 @@ void Stepper::Decide(Group g) {
         }
     };
     const float stay = kVisitHours + kVisitSpreadHours * Hash01(lead.look, 5);
-    const bool over =
-        static_cast<float>(now - lead.arrivedTick) > stay * static_cast<float>(kTicksPerGameHour);
+    const bool over = static_cast<float>(now - lead.arrivedTick) >
+                      stay * all.pace_.stay * static_cast<float>(kTicksPerGameHour);
     if (Closing() || MeanHappiness(g) < 0.18f) {
         leave();
         return;

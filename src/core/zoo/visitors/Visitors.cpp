@@ -229,6 +229,99 @@ float Visitors::ExpectedArrivalsPerHour(const Env& env, const Animals& animals) 
            (0.5f + 0.7f * rating_) * price;
 }
 
+void Visitors::SetPace(const VisitorPace& pace) {
+    pace_.linger = std::clamp(pace.linger, 0.25f, 20.0f);
+    pace_.stay = std::clamp(pace.stay, 0.25f, 20.0f);
+    pace_.arrivals = std::clamp(pace.arrivals, 0.0f, 20.0f);
+}
+
+int Visitors::Spread(const Env& env) {
+    if (!scratch_) {
+        scratch_ = std::make_unique<Scratch>();
+    }
+    Sites& sites = scratch_->sites;
+    sites.Refresh(env);
+    if (!sites.open) {
+        return 0;
+    }
+    const Vec2 gate = World::TileCenter(sites.entranceTile);
+    std::vector<TileCoord> tiles;
+    float farthest = 1.0f;
+    for (int z = 0; z < sites.depth; ++z) {
+        for (int x = 0; x < sites.width; ++x) {
+            const TileCoord t{x, z};
+            if (env.world.At(t).path == PathKind::None || env.enclosures.RegionAt(t) != Region::Public ||
+                !env.nav.Reachable(t, sites.entranceTile, kWalker)) {
+                continue;
+            }
+            tiles.push_back(t);
+            farthest = std::max(farthest, Distance(World::TileCenter(t), gate));
+        }
+    }
+    if (tiles.size() < 2) {
+        return 0;
+    }
+    int moved = 0;
+    for (std::size_t first = 0; first < visitors_.size();) {
+        std::size_t end = first + 1;
+        while (end < visitors_.size() && visitors_[end].group == visitors_[first].group) {
+            ++end;
+        }
+        Visitor& lead = visitors_[first];
+        bool afoot = lead.ticketPaid && !lead.served;
+        for (std::size_t i = first; afoot && i < end; ++i) {
+            const VisitorActivity doing = visitors_[i].activity;
+            afoot = (doing == VisitorActivity::Walking || doing == VisitorActivity::Idle ||
+                     doing == VisitorActivity::Watching) &&
+                    !visitors_[i].seat && !visitors_[i].inside;
+        }
+        if (afoot) {
+            const Vec2 centre = World::TileCenter(
+                tiles[static_cast<std::size_t>(rng_.RangeInt(0, static_cast<int>(tiles.size()) - 1))]);
+            const float far = Distance(centre, gate) / farthest;
+            const float heading = rng_.Range(0.0f, kTwoPi);
+            for (std::size_t i = first; i < end; ++i) {
+                Visitor& v = visitors_[i];
+                const float angle = kTwoPi * (static_cast<float>(i - first) - 0.5f) / 4.0f;
+                v.position = i == first ? centre : centre + Vec2{std::sin(angle), std::cos(angle)} * 0.6f;
+                v.heading = heading;
+                v.speed = 0.0f;
+                v.activity = VisitorActivity::Idle;
+                v.goal = VisitorGoal::None;
+                v.targetEnclosure = {};
+                v.targetBuilding = {};
+                v.targetProp = {};
+                v.target = v.position;
+                v.route.clear();
+                v.routeIndex = 0;
+                v.hunger = std::min(0.85f, v.hunger + far * rng_.Range(0.0f, 0.4f));
+                v.thirst = std::min(0.85f, v.thirst + far * rng_.Range(0.0f, 0.4f));
+                v.bladder = std::min(0.85f, v.bladder + far * rng_.Range(0.0f, 0.4f));
+                v.tiredness = std::min(0.85f, v.tiredness + far * rng_.Range(0.0f, 0.5f));
+                ++moved;
+            }
+            lead.reroute = false;
+            lead.lost = 0;
+            lead.previousGoal = VisitorGoal::None;
+            // Not all in the same breath: the groups set off over the next few seconds.
+            lead.activityUntil = env.time.tick + rng_.RangeInt(0, 4 * kTicksPerSecond);
+            // The deeper in, the longer ago it came (none so long ago that it goes home at once).
+            const float stayTicks =
+                (kVisitHours + 0.5f * kVisitSpreadHours) * static_cast<float>(kTicksPerGameHour) * pace_.stay;
+            lead.arrivedTick =
+                env.time.tick - static_cast<std::int64_t>(far * rng_.Range(0.15f, 0.75f) * stayTicks);
+            lead.seenEnclosures.clear();
+            for (const ViewSite& site : sites.views) {
+                if (rng_.Chance(0.4f * far)) {
+                    lead.seenEnclosures.push_back(site.enclosure.value);
+                }
+            }
+        }
+        first = end;
+    }
+    return moved;
+}
+
 void Visitors::CloseDay() {
     arrivedToday_ = 0;
     leftToday_ = 0;
@@ -470,7 +563,8 @@ void Stepper::Arrivals() {
         all.arrivalRemainder_ = 0.0f;
         return;
     }
-    all.arrivalRemainder_ += all.ExpectedArrivalsPerHour(env, fauna) / kSecondsPerGameHour;
+    all.arrivalRemainder_ +=
+        all.pace_.arrivals * all.ExpectedArrivalsPerHour(env, fauna) / kSecondsPerGameHour;
     while (all.arrivalRemainder_ >= 1.0f) {
         // Alone, couples, families and parties of friends.
         const float roll = all.rng_.NextFloat();
@@ -558,7 +652,8 @@ void Stepper::EverySecond(Group g) {
     const Sites& sites = scr.sites;
     std::vector<Visitor>& list = List();
     Visitor& lead = list[g.first];
-    const float hours = 1.0f / kSecondsPerGameHour;
+    // A longer stay is the same visit taken slowly: no more meals than in a short one.
+    const float hours = 1.0f / (kSecondsPerGameHour * all.pace_.stay);
     const float heat = 1.0f + 0.04f * std::max(0.0f, env.weather.temperatureC - 22.0f);
     for (std::size_t i = g.first; i < g.end; ++i) {
         Visitor& v = list[i];

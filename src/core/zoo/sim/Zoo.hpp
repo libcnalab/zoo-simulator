@@ -121,6 +121,9 @@ public:
     void SetAutoCare(bool on) { config_.autoCare = on; }
     /// See ZooConfig::dayPace; 0..1000.
     void SetDayPace(int pace);
+    /// Sets the visitors down all over the zoo, as if it had been open for hours
+    /// (Visitors::Spread). Returns the number of people moved.
+    int SpreadVisitors();
     /// Puts the calendar on `day` (days since 1 March of year 1) at `hour` [0, 24).
     /// Nothing else changes: nobody ages, no day is closed. For a zoo that opens
     /// on a late morning in summer rather than at eight on 1 March.

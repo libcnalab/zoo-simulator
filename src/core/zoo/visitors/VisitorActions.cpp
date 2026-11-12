@@ -180,7 +180,8 @@ void Stepper::GroupArrived(Group g) {
             return;
         case VisitorGoal::Watch:
             SetActivity(g, VisitorActivity::Watching);
-            lead.activityUntil = now + Ticks(kWatchSeconds + kWatchSpreadSeconds * rng.NextFloat());
+            lead.activityUntil =
+                now + Ticks(all.pace_.linger * (kWatchSeconds + kWatchSpreadSeconds * rng.NextFloat()));
             return;
         case VisitorGoal::Food:
         case VisitorGoal::Drink:
@@ -199,11 +200,12 @@ void Stepper::GroupArrived(Group g) {
             for (std::size_t i = g.first; i < g.end; ++i) {
                 list[i].activity = list[i].seat ? VisitorActivity::Sitting : VisitorActivity::Idle;
             }
-            lead.activityUntil = now + Ticks(kRestSeconds * (1.0f + rng.NextFloat()));
+            lead.activityUntil = now + Ticks(all.pace_.linger * kRestSeconds * (1.0f + rng.NextFloat()));
             return;
         case VisitorGoal::Eat:
             SetActivity(g, VisitorActivity::Eating);
-            lead.activityUntil = now + Ticks(kEatSeconds * (1.0f + 0.6f * rng.NextFloat()));
+            lead.activityUntil =
+                now + Ticks(all.pace_.linger * kEatSeconds * (1.0f + 0.6f * rng.NextFloat()));
             return;
         case VisitorGoal::Bin: {
             SetActivity(g, VisitorActivity::Idle);
@@ -224,7 +226,8 @@ void Stepper::GroupArrived(Group g) {
         }
         case VisitorGoal::Read:
             SetActivity(g, VisitorActivity::Reading);
-            lead.activityUntil = now + Ticks(kReadSeconds * (1.0f + 0.5f * rng.NextFloat()));
+            lead.activityUntil =
+                now + Ticks(all.pace_.linger * kReadSeconds * (1.0f + 0.5f * rng.NextFloat()));
             return;
         case VisitorGoal::Leave:
             Depart(g, true);

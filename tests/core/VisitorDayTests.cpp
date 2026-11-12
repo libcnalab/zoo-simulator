@@ -8,6 +8,7 @@
 #include <chrono>
 #include <cstdio>
 #include <map>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -247,6 +248,64 @@ TEST(VisitorDayTests, ADayInTheStarterZoo) {
     }
     EXPECT_EQ(first.scared, 0);
     EXPECT_GT(zoo.Accounts().Balance(), before - Dollars(4000)) << "the starter zoo roughly pays its way";
+}
+
+// Visitors::Spread: the zoo one walks into in mid-morning has people all over it.
+TEST(VisitorDayTests, SpreadSetsTheGroupsDownAllOverThePathsAndTheyCarryOn) {
+    const auto filled = [] {
+        auto zoo = std::make_unique<Zoo>(testdata::GameCatalog(), testdata::GameSpecies());
+        BuildStarterZoo(*zoo);
+        zoo->SetCalendar(1, 10.5f);
+        zoo->SetDayPace(0);
+        for (int tick = 0; tick < 3000; ++tick) {
+            zoo->Step();
+        }
+        return zoo;
+    };
+    const std::unique_ptr<Zoo> zoo = filled();
+    ASSERT_GT(zoo->Guests().Count(), 20);
+    const int moved = zoo->SpreadVisitors();
+    EXPECT_GT(moved, zoo->Guests().Count() / 3);
+    int idle = 0;
+    for (const Visitor& v : zoo->Guests().All()) {
+        if (v.activity != VisitorActivity::Idle || v.goal != VisitorGoal::None) {
+            continue;
+        }
+        ++idle;
+        const TileCoord tile = World::TileAt(zoo->Guests().LeaderOf(v.id)->position);
+        EXPECT_NE(zoo->Map().At(tile).path, PathKind::None) << "a group is set down on a path";
+        EXPECT_EQ(zoo->Habitats().RegionAt(tile), Region::Public);
+    }
+    EXPECT_GE(idle, moved);
+
+    // The same zoo spreads the same way.
+    const std::unique_ptr<Zoo> twin = filled();
+    twin->SpreadVisitors();
+    EXPECT_EQ(twin->StateHash(), zoo->StateHash());
+
+    // And the people carry on from where they were set down: they watch, nobody is lost.
+    std::map<std::uint32_t, std::pair<Vec2, int>> still;
+    int longest = 0;
+    for (int tick = 0; tick < 2400; ++tick) {
+        zoo->Step();
+        for (const Visitor& v : zoo->Guests().All()) {
+            auto& was = still[v.id.value];
+            const bool stuck =
+                v.activity == VisitorActivity::Walking && DistanceSquared(v.position, was.first) < 0.000001f;
+            was.second = stuck ? was.second + 1 : 0;
+            longest = std::max(longest, was.second);
+            was.first = v.position;
+        }
+    }
+    int watching = 0;
+    int lost = 0;
+    for (const Visitor& v : zoo->Guests().All()) {
+        watching += v.activity == VisitorActivity::Watching ? 1 : 0;
+        lost += v.thought == VisitorThought::LostWay ? 1 : 0;
+    }
+    EXPECT_GT(watching, 0);
+    EXPECT_EQ(lost, 0);
+    EXPECT_LT(longest, 20 * kTicksPerSecond) << "nobody walks on the spot";
 }
 
 }  // namespace zoo

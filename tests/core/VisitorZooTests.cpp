@@ -315,6 +315,22 @@ TEST(VisitorZooTests, DISABLED_MorningAndCrowdFigures) {
                 ++resting;
             }
         }
+        std::map<std::string, int> doing;
+        std::map<std::uint32_t, int> watchers;
+        for (const Visitor& visitor : zoo.Guests().All()) {
+            ++doing[std::string(ToString(visitor.activity)) + "/" + std::string(ToString(visitor.goal))];
+            if (visitor.activity == VisitorActivity::Watching) {
+                ++watchers[visitor.targetEnclosure.value];
+            }
+        }
+        for (const auto& [what, count] : doing) {
+            std::cout << "  " << what << "=" << count;
+        }
+        std::cout << "\n  watchers by enclosure:";
+        for (const auto& [id, count] : watchers) {
+            std::cout << " " << id << ":" << count;
+        }
+        std::cout << std::endl;
         std::cout << "hour=" << zoo.Time().Hour() << " visitors=" << zoo.Guests().Count()
                   << " inside=" << inside << " watched=" << watched.size() << " sitting/eating=" << resting
                   << " mean_happiness=" << zoo.Guests().MeanHappiness() << " rating=" << zoo.Guests().Rating()
