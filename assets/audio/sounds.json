@@ -1,0 +1,305 @@
+{
+  "version": 1,
+  "sounds": [
+    {
+      "name": "lion_roar",
+      "kind": "call",
+      "files": [
+        "animals/lion_roar.ogg",
+        "animals/lion_roar_2.ogg"
+      ],
+      "seconds": [
+        2.2,
+        2.1
+      ],
+      "species": "lion"
+    },
+    {
+      "name": "lion_growl",
+      "kind": "call",
+      "files": [
+        "animals/lion_growl.ogg",
+        "animals/lion_growl_2.ogg"
+      ],
+      "seconds": [
+        3.0,
+        3.4
+      ],
+      "species": "lion"
+    },
+    {
+      "name": "tiger_growl",
+      "kind": "call",
+      "files": [
+        "animals/tiger_growl.ogg",
+        "animals/tiger_growl_2.ogg",
+        "animals/tiger_growl_3.ogg"
+      ],
+      "seconds": [
+        2.8,
+        2.9,
+        3.6
+      ],
+      "species": "tiger"
+    },
+    {
+      "name": "wolf_howl",
+      "kind": "call",
+      "files": [
+        "animals/wolf_howl.ogg",
+        "animals/wolf_howl_2.ogg",
+        "animals/wolf_howl_3.ogg"
+      ],
+      "seconds": [
+        8.4,
+        9.8,
+        9.7
+      ],
+      "species": "wolf"
+    },
+    {
+      "name": "brown_bear_growl",
+      "kind": "call",
+      "files": [
+        "animals/brown_bear_growl.ogg"
+      ],
+      "seconds": [
+        1.7
+      ],
+      "species": "brown_bear"
+    },
+    {
+      "name": "brown_bear_huff",
+      "kind": "call",
+      "files": [
+        "animals/brown_bear_huff.ogg",
+        "animals/brown_bear_huff_2.ogg"
+      ],
+      "seconds": [
+        1.6,
+        1.6
+      ],
+      "species": "brown_bear"
+    },
+    {
+      "name": "zebra_bark",
+      "kind": "call",
+      "files": [
+        "animals/zebra_bark.ogg"
+      ],
+      "seconds": [
+        1.59
+      ],
+      "species": "zebra"
+    },
+    {
+      "name": "zebra_whinny",
+      "kind": "call",
+      "files": [
+        "animals/zebra_whinny.ogg"
+      ],
+      "seconds": [
+        1.59
+      ],
+      "species": "zebra"
+    },
+    {
+      "name": "footstep_paved",
+      "kind": "footstep",
+      "files": [
+        "footsteps/paved_1.ogg",
+        "footsteps/paved_2.ogg",
+        "footsteps/paved_3.ogg",
+        "footsteps/paved_4.ogg",
+        "footsteps/paved_5.ogg"
+      ],
+      "seconds": [
+        0.4,
+        0.4,
+        0.4,
+        0.4,
+        0.4
+      ]
+    },
+    {
+      "name": "footstep_gravel",
+      "kind": "footstep",
+      "files": [
+        "footsteps/gravel_1.ogg",
+        "footsteps/gravel_2.ogg",
+        "footsteps/gravel_3.ogg",
+        "footsteps/gravel_4.ogg",
+        "footsteps/gravel_5.ogg"
+      ],
+      "seconds": [
+        0.4,
+        0.4,
+        0.4,
+        0.4,
+        0.4
+      ]
+    },
+    {
+      "name": "footstep_grass",
+      "kind": "footstep",
+      "files": [
+        "footsteps/grass_1.ogg",
+        "footsteps/grass_2.ogg",
+        "footsteps/grass_3.ogg",
+        "footsteps/grass_4.ogg",
+        "footsteps/grass_5.ogg"
+      ],
+      "seconds": [
+        0.4,
+        0.4,
+        0.4,
+        0.4,
+        0.4
+      ]
+    },
+    {
+      "name": "park_day",
+      "kind": "ambience",
+      "files": [
+        "ambience/park_day.ogg"
+      ],
+      "seconds": [
+        36.0
+      ],
+      "loop": true
+    },
+    {
+      "name": "crowd",
+      "kind": "ambience",
+      "files": [
+        "ambience/crowd.ogg"
+      ],
+      "seconds": [
+        25.0
+      ],
+      "loop": true
+    },
+    {
+      "name": "water",
+      "kind": "ambience",
+      "files": [
+        "ambience/water.ogg"
+      ],
+      "seconds": [
+        15.0
+      ],
+      "loop": true
+    },
+    {
+      "name": "wind_trees",
+      "kind": "ambience",
+      "files": [
+        "ambience/wind_trees.ogg"
+      ],
+      "seconds": [
+        20.0
+      ],
+      "loop": true
+    },
+    {
+      "name": "giraffe_grunt",
+      "kind": "call",
+      "files": [
+        "animals/giraffe_grunt.ogg"
+      ],
+      "seconds": [
+        1.4
+      ],
+      "species": "giraffe"
+    },
+    {
+      "name": "penguin_bray",
+      "kind": "call",
+      "files": [
+        "animals/penguin_bray.ogg"
+      ],
+      "seconds": [
+        1.1
+      ],
+      "species": "penguin"
+    },
+    {
+      "name": "meerkat_chirp",
+      "kind": "call",
+      "files": [
+        "animals/meerkat_chirp.ogg",
+        "animals/meerkat_chirp_2.ogg",
+        "animals/meerkat_chirp_3.ogg"
+      ],
+      "seconds": [
+        2.3,
+        2.31,
+        2.3
+      ],
+      "species": "meerkat"
+    },
+    {
+      "name": "flamingo_call",
+      "kind": "call",
+      "files": [
+        "animals/flamingo_call.ogg",
+        "animals/flamingo_call_2.ogg",
+        "animals/flamingo_call_3.ogg"
+      ],
+      "seconds": [
+        3.5,
+        3.6,
+        3.5
+      ],
+      "species": "flamingo"
+    },
+    {
+      "name": "rhino_grunt",
+      "kind": "call",
+      "files": [
+        "animals/rhino_grunt.ogg"
+      ],
+      "seconds": [
+        3.8
+      ],
+      "species": "rhino"
+    },
+    {
+      "name": "rhino_snort",
+      "kind": "call",
+      "files": [
+        "animals/rhino_snort.ogg",
+        "animals/rhino_snort_2.ogg"
+      ],
+      "seconds": [
+        1.8,
+        1.9
+      ],
+      "species": "rhino"
+    },
+    {
+      "name": "camel_grunt",
+      "kind": "call",
+      "files": [
+        "animals/camel_grunt.ogg",
+        "animals/camel_grunt_2.ogg"
+      ],
+      "seconds": [
+        2.56,
+        2.65
+      ],
+      "species": "camel"
+    },
+    {
+      "name": "elephant_rumble",
+      "kind": "call",
+      "files": [
+        "animals/elephant_rumble.ogg"
+      ],
+      "seconds": [
+        4.6
+      ],
+      "species": "elephant"
+    }
+  ]
+}
