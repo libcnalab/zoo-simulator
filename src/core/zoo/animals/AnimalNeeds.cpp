@@ -27,7 +27,8 @@ void AdvanceNeeds(Animal& animal, const SpeciesDef& species, Env& env, const Enc
                   int viewers, const Animal* mother, bool predatorPresent) {
     const float oldHunger = animal.hunger;
     const float oldThirst = animal.thirst;
-    animal.hunger = ClampNeed(animal.hunger + tuning::kHungerPerDay * kDaysPerTick);
+    const float foodNeed = animal.Pregnant() ? tuning::kPregnancyFoodNeedMultiplier : 1.0f;
+    animal.hunger = ClampNeed(animal.hunger + tuning::kHungerPerDay * foodNeed * kDaysPerTick);
     animal.thirst = ClampNeed(animal.thirst + tuning::kThirstPerDay * kDaysPerTick);
     if (animal.hunger >= tuning::kStarvingThreshold && oldHunger < tuning::kStarvingThreshold &&
         (animal.alerts & 1U) == 0U) {
@@ -105,6 +106,10 @@ void AdvanceNeeds(Animal& animal, const SpeciesDef& species, Env& env, const Enc
 }
 
 bool AdvanceHealth(Animal& animal, const SpeciesDef& species, const Env& env, DeathCause& cause) {
+    if (animal.health <= 0.0f) {
+        cause = DeathCause::Injury;
+        return true;
+    }
     const float hungerDamage =
         animal.hunger >= 1.0f ? tuning::kHealthAtCriticalHungerPerDay * kDaysPerTick : 0.0f;
     const float thirstDamage =

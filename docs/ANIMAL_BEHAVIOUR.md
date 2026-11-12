@@ -52,6 +52,60 @@ successful attempt runs to the weakest edge and crosses it, then emits
 `AnimalEscaped`. `Recapture` places the loose animal back in its home enclosure or
 crates it if the home no longer exists.
 
+## Life events
+
+Illness checks run once per game hour. Risk starts at `kIllnessBaseChancePerDay` and
+adds `kIllnessPoorWelfareChancePerDay` times how far welfare is below
+`kIllnessWelfareLevel` (nothing above it), `kIllnessDirtyChancePerDay` times enclosure
+dirt, `kIllnessUrgentNeedChancePerDay` for hunger and for thirst above
+`kIllnessNeedLevel` (going without, not the appetite before a meal),
+`kIllnessTemperatureChancePerDay` scaled by how far the weather is outside the species'
+range (full at `kIllnessTemperatureSpanC` degrees; not inside a shelter),
+`kIllnessOldAgeChancePerDay` after `kSicknessOldAgeFraction` of lifespan, and
+`kIllnessContagionChancePerDay` when a sick same-species animal shares its enclosure.
+In the kept starter zoo that is about one illness per animal in half a year
+(`ZooSeasonTests`, disabled because it is slow: ninety days, 13 illnesses among 12 to
+27 animals, 15 births, no deaths).
+The daily risk is divided across `kLifeChecksPerGameDay` hourly rolls. A sick animal cannot play, mate,
+or fight. Treatment recovers it after `kTreatedRecoveryDays`; an untreated animal
+can recover after `kUntreatedRecoveryMinimumDays` when welfare is at least `kUntreatedRecoveryWelfare`,
+with `kUntreatedRecoveryChancePerHour` per hour. Untreated illness continues to damage
+health through the ordinary health update.
+
+An adult healthy female may conceive when she and an adult healthy male that is allowed
+to breed share an enclosure. Welfare must meet `kBreedingWelfare`; conception risk is
+`kConceptionChancePerDay` per day, divided across `kLifeChecksPerGameDay` hourly checks.
+The female must be younger than
+`kBreedingMaximumAgeFraction` of lifespan and meet the species' birth interval. The
+enclosure must have room for `litterMin` young under `groupMax`. Gestation uses the
+species' `gestationDays` converted by `kGameDaysPerRealDay`. Births wait while the mother
+is crated. Litter size is uniform from `litterMin` to `litterMax`; each young animal has
+age zero, random sex, parent ids, and the mother's home. `kStillbirthBaseChance` plus
+`kStillbirthPoorWelfareChance` times missing welfare determines whether the whole litter
+is lost. A surviving litter increments `Births()` once per young. Pregnancy multiplies
+the mother's hunger rise by `kPregnancyFoodNeedMultiplier`.
+
+An enclosure can trigger one fight per game hour when its species exceeds `maxAdultMales`
+or `groupMax`. The daily probability is `kFightChancePerDay` times aggression and
+`1 + kFightExcessMultiplierPerAnimal` times the amount over the limit, divided across
+`kLifeChecksPerGameDay` hourly checks. Sick, sleeping, sheltered,
+crated, and juvenile animals are excluded. Damage starts at `kFightHealthDamage` and
+scales by the opponent's adult mass divided by the fighter's; each fighter gains
+`kFightStress` stress. A fighter reduced to zero health dies through the normal injury
+death path.
+
+A dangerous carnivore or omnivore may hunt a different, lighter species in the same
+enclosure when hunger exceeds `kPredatorHungerThreshold`, while awake and within
+`kPredatorAttackDistanceM`. Its hourly attack chance is `kPredatorAttackChancePerHour`
+times hunger. Success is `kPredatorBaseSuccessChance` minus `kPredatorMassSuccessPenalty`
+times the prey-to-predator mass ratio, plus `kPredatorHealthSuccessBonus` times missing
+prey health and `kPredatorJuvenileSuccessBonus` for juveniles. A successful hunt emits
+`AnimalKilled` and `AnimalDied` with
+`DeathCause::Killed`, removes the prey, and lowers predator hunger by
+`kPredatorHungerDrop`. A failed attack removes `kPredatorFailedWound` health and adds
+`kFightStress` stress. The same rule applies to a loose predator standing inside an
+enclosure. The hourly life-event pass runs at the game-hour boundary.
+
 ## Movement and world edits
 
 Animal positions and speeds use metres and metres per motion second. Direct

@@ -217,4 +217,42 @@ inline constexpr float kLifespanVariationRange = 0.3f;           // additional l
 inline constexpr float kShelterStressMultiplier = 0.5f;          // stress target while sheltered
 inline constexpr float kEnrichmentBoredomRelief = 0.5f;          // boredom rate reduction at full enrichment
 
+inline constexpr float kIllnessBaseChancePerDay = 0.002f;        // chance per game day
+inline constexpr float kIllnessPoorWelfareChancePerDay = 0.06f;  // added chance at zero welfare per game day
+inline constexpr float kIllnessWelfareLevel = 0.7f;              // welfare from which that chance is nothing
+inline constexpr float kIllnessNeedLevel = 0.75f;           // hunger or thirst that counts as going without
+inline constexpr float kIllnessTemperatureSpanC = 10.0f;    // degrees out of range for the full chance
+inline constexpr float kIllnessDirtyChancePerDay = 0.025f;  // added chance at full dirt per game day
+inline constexpr float kIllnessUrgentNeedChancePerDay = 0.035f;  // added chance per urgent need per game day
+inline constexpr float kIllnessTemperatureChancePerDay =
+    0.02f;  // added chance outside comfort range per game day
+inline constexpr float kIllnessOldAgeChancePerDay =
+    0.015f;  // added chance past 80 percent lifespan per game day
+inline constexpr float kIllnessContagionChancePerDay = 0.02f;  // added chance near same species per game day
+inline constexpr float kTreatedRecoveryDays = 2.0f;            // game days
+inline constexpr float kUntreatedRecoveryChancePerHour = 0.01f;  // chance per game hour
+inline constexpr float kUntreatedRecoveryWelfare = 0.65f;        // minimum welfare fraction
+inline constexpr float kBreedingWelfare = 0.6f;                  // minimum welfare fraction
+inline constexpr float kBreedingMaximumAgeFraction = 0.75f;      // maximum lifespan fraction
+inline constexpr float kConceptionChancePerDay = 0.16f;          // chance per game day
+inline constexpr float kStillbirthBaseChance = 0.02f;            // chance per litter
+inline constexpr float kStillbirthPoorWelfareChance = 0.5f;      // added chance at zero welfare per litter
+inline constexpr float kFightChancePerDay = 0.3f;                // chance per game day at aggression 1
+inline constexpr float kFightHealthDamage = 0.12f;               // health fraction before mass scaling
+inline constexpr float kFightStress = 0.25f;                     // stress fraction added per fight
+inline constexpr float kPredatorHungerThreshold = 0.5f;          // hunger fraction to hunt
+inline constexpr float kPredatorAttackDistanceM = 20.0f;         // metres
+inline constexpr float kPredatorAttackChancePerHour = 0.25f;     // chance per hour at threshold hunger
+inline constexpr float kPredatorHungerDrop = 0.65f;              // hunger fraction restored on kill
+inline constexpr float kPredatorFailedWound = 0.08f;             // prey health fraction lost
+inline constexpr float kPregnancyFoodNeedMultiplier = 1.5f;      // maternal hunger rate while pregnant
+inline constexpr float kLifeChecksPerGameDay = 24.0f;            // hourly life checks per game day
+inline constexpr float kUntreatedRecoveryMinimumDays =
+    3.0f;  // untreated illness duration before recovery rolls
+inline constexpr float kFightExcessMultiplierPerAnimal = 1.0f;  // chance multiplier per animal over the limit
+inline constexpr float kPredatorBaseSuccessChance = 0.9f;       // base chance that an attack succeeds
+inline constexpr float kPredatorMassSuccessPenalty = 0.25f;     // success chance per prey/predator mass ratio
+inline constexpr float kPredatorHealthSuccessBonus = 0.3f;      // success chance at zero prey health
+inline constexpr float kPredatorJuvenileSuccessBonus = 0.25f;   // extra success chance against juveniles
+
 }  // namespace zoo::tuning

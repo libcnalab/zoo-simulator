@@ -66,7 +66,9 @@ AnimalActivity ChooseRoutineActivity(const Animal& animal, const SpeciesDef& spe
         tuning::kIdleWeight,
         tuning::kRestBaseWeight + animal.fatigue * tuning::kRestFatigueWeight,
         species.diet == Diet::Carnivore || species.diet == Diet::Piscivore ? 0.0f : tuning::kForageWeight,
-        animal.boredom > tuning::kPlayNeedThreshold ? species.playfulness * tuning::kPlayWeight : 0.0f,
+        !animal.sick && animal.boredom > tuning::kPlayNeedThreshold
+            ? species.playfulness * tuning::kPlayWeight
+            : 0.0f,
         species.sociability * tuning::kSocializeWeight,
         vocalizeWeight,
         0.0f};

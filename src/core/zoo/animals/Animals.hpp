@@ -167,7 +167,9 @@ struct Animal {
     float welfare = 0.7f;
     std::uint32_t issues = 0;  ///< from that same evaluation
     bool sick = false;
-    bool treated = false;  ///< a vet has seen to the illness: it recovers
+    bool treated = false;            ///< a vet has seen to the illness: it recovers
+    std::int64_t sickSinceTick = 0;  ///< Tick when the current illness began; 0 for older saves.
+    std::int64_t treatedTick = 0;    ///< Tick when treatment began; 0 until treated.
     /// Alert latches: bit 0 starving, bit 1 thirsty; cleared below 0.6.
     std::uint8_t alerts = 0;
 
@@ -336,6 +338,8 @@ private:
                                    const WelfareReport* cachedHabitat = nullptr) const;
     const WelfareReport& CachedHabitat(const Env& env, const Animal& animal, const GroupInfo& group);
     void StepAnimals(Env& env, const std::vector<Enclosure>& enclosures, int& pathCalls);
+    void AdvanceLife(Env& env);
+    void ForgetAnimalReferences(AnimalId id);
     std::uint32_t nextId_ = 1;
     Rng rng_;
     int births_ = 0;

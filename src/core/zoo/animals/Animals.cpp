@@ -304,6 +304,7 @@ bool Animals::Remove(AnimalId id) {
                          [](const Animal& animal, std::uint32_t value) { return animal.id.value < value; });
     if (it == animals_.end() || it->id != id)
         return false;
+    ForgetAnimalReferences(id);
     animals_.erase(it);
     return true;
 }
@@ -695,6 +696,7 @@ bool Animals::Treat(AnimalId id) {
     if (animal == nullptr || !animal->sick)
         return false;
     animal->treated = true;
+    animal->treatedTick = -1;
     return true;
 }
 void Animals::SetViewers(EnclosureId enclosure, int viewers) {
@@ -967,6 +969,7 @@ void Animals::StepAnimals(Env& env, const std::vector<Enclosure>& enclosures, in
         if (animal_internal::AdvanceHealth(animal, species, env, cause)) {
             env.Emit(MakeEvent(EventType::AnimalDied, animal.id, animal.home, animal.position,
                                static_cast<int>(cause)));
+            ForgetAnimalReferences(animal.id);
             animals_.erase(animals_.begin() + static_cast<std::ptrdiff_t>(index));
             ++deaths_;
             continue;
@@ -996,6 +999,9 @@ void Animals::StepAnimals(Env& env, const std::vector<Enclosure>& enclosures, in
 void Animals::Step(Env& env) {
     int pathCalls = 0;
     const std::vector<Enclosure>& enclosures = env.enclosures.All();
+    if (env.time.tick % kTicksPerGameHour == 0) {
+        AdvanceLife(env);
+    }
     GroupAnimals(env);
     UpdateEnclosureDirt(env);
     StepAnimals(env, enclosures, pathCalls);
@@ -1035,6 +1041,8 @@ std::uint64_t Animals::StateHash() const {
         add(animal.issues);
         add(animal.sick);
         add(animal.treated);
+        add(static_cast<std::uint64_t>(animal.sickSinceTick));
+        add(static_cast<std::uint64_t>(animal.treatedTick));
         add(animal.alerts);
         add(static_cast<std::uint64_t>(animal.activity));
         add(animal.moving);

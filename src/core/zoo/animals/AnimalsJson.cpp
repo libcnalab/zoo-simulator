@@ -73,6 +73,8 @@ Json Encode(const Animal& a, const SpeciesCatalog& species) {
                 {"issues", a.issues},
                 {"sick", a.sick},
                 {"treated", a.treated},
+                {"sick_since_tick", a.sickSinceTick},
+                {"treated_tick", a.treatedTick},
                 {"alerts", a.alerts},
                 {"activity", ToString(a.activity)},
                 {"moving", a.moving},
@@ -132,6 +134,12 @@ Animal DecodeAnimal(const Json& value, const SpeciesCatalog& species) {
     a.issues = static_cast<std::uint32_t>(issues);
     a.sick = ReadBool(value.at("sick"), "sick");
     a.treated = ReadBool(value.at("treated"), "treated");
+    if (value.contains("sick_since_tick")) {
+        a.sickSinceTick = value.at("sick_since_tick").get<std::int64_t>();
+    }
+    if (value.contains("treated_tick")) {
+        a.treatedTick = value.at("treated_tick").get<std::int64_t>();
+    }
     const std::uint64_t alerts = ReadUnsigned(value.at("alerts"), "alerts");
     if (alerts > 3U) {
         throw std::runtime_error("alerts out of range");
