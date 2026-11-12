@@ -21,6 +21,7 @@
 #include "zoo/sim/Env.hpp"
 #include "zoo/sim/Events.hpp"
 #include "zoo/sim/WeatherSystem.hpp"
+#include "zoo/visitors/Visitors.hpp"
 #include "zoo/world/World.hpp"
 
 namespace zoo {
@@ -90,7 +91,7 @@ struct BuyResult {
 /// A zoo: the whole simulation of one game, and the one object the game layer
 /// (rendering, UI, audio) talks to.
 ///
-/// Owns the map, everything built on it, the animals, the money, the weather
+/// Owns the map, everything built on it, the animals, the visitors, the money, the weather
 /// and the clock. Step() advances all of it by one tick of kTickSeconds and is
 /// deterministic: two zoos built from equal configurations and given the same
 /// sequence of calls stay bit-identical (see StateHash()).
@@ -140,6 +141,9 @@ public:
     const Navigator& Routes() const { return nav_; }
     const Animals& Fauna() const { return animals_; }
     Animals& Fauna() { return animals_; }
+    /// The visitors: who is in the zoo, the ticket price, the gate, the rating.
+    const Visitors& Guests() const { return visitors_; }
+    Visitors& Guests() { return visitors_; }
 
     /// The view of the zoo the subsystems step with, as of now. Events go to the
     /// zoo's own list. For queries that need one (Animals::Welfare, GroupOf, ...).
@@ -217,6 +221,7 @@ private:
     Builder builder_;
     Navigator nav_;
     Animals animals_;
+    Visitors visitors_;
     WeatherSystem weather_;
     GameTime time_;
 
@@ -232,6 +237,8 @@ private:
         std::string name;
     };
     std::vector<RosterEntry> roster_;
+    /// When visitors last ran from a loose animal: one message per scare, not per group.
+    std::int64_t lastScareNote_ = -1000000;
 };
 
 /// The pieces a Zoo is assembled from, either new or read from a save.
@@ -241,6 +248,7 @@ struct Zoo::Parts {
     ZooObjects objects;
     Finance finance;
     Animals animals;
+    Visitors visitors;
     WeatherSystem weather;
     GameTime time;
 };

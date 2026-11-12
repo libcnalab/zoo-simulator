@@ -84,7 +84,8 @@ std::string_view Describe(ActionError e) {
 Zoo::Zoo(const Catalog& catalog, const SpeciesCatalog& species, const ZooConfig& config)
     : Zoo(catalog, species,
           Parts{config, World::Generate(config.world), ZooObjects{}, Finance(config.startingMoney),
-                Animals(config.seed), WeatherSystem(config.seed, config.climate), GameTime{}}) {}
+                Animals(config.seed), Visitors(config.seed), WeatherSystem(config.seed, config.climate),
+                GameTime{}}) {}
 
 Zoo::Zoo(const Catalog& catalog, const SpeciesCatalog& species, Parts&& parts)
     : catalog_(catalog),
@@ -96,6 +97,7 @@ Zoo::Zoo(const Catalog& catalog, const SpeciesCatalog& species, Parts&& parts)
       builder_(world_, objects_, enclosures_, catalog_, config_.sandbox ? nullptr : &finance_),
       nav_(world_),
       animals_(std::move(parts.animals)),
+      visitors_(std::move(parts.visitors)),
       weather_(std::move(parts.weather)),
       time_(parts.time) {
     enclosures_.Rebuild(world_, objects_, catalog_);
@@ -128,6 +130,13 @@ void Zoo::Step() {
 
     Env env = MakeEnv();
     animals_.Step(env);
+    visitors_.Step(env, animals_);
+    if (time_.tick % kTicksPerSecond == 0) {
+        // The animals know how many people are looking at them.
+        for (const Enclosure& enclosure : enclosures_.All()) {
+            animals_.SetViewers(enclosure.id, visitors_.Watching(enclosure.id));
+        }
+    }
 
     if (config_.autoCare) {
         const std::int64_t tickOfDay = time_.AbsoluteTick() % kTicksPerDay;
@@ -244,6 +253,24 @@ void Zoo::CloseDay(std::int64_t day) {
     // Worn fences change what the enclosures hold in.
     enclosures_.Rebuild(world_, objects_, catalog_);
 
+    const int guests = visitors_.ArrivedToday();
+    visitors_.CloseDay();
+    if (config_.autoCare) {
+        // Until the zoo has cleaners of its own the night shift empties the bins
+        // and sweeps the paths.
+        std::vector<PropId> bins;
+        for (const Prop& prop : objects_.Props()) {
+            if (catalog_.props[static_cast<std::size_t>(prop.def)].role == PropRole::Bin &&
+                prop.amount > 0.0f) {
+                bins.push_back(prop.id);
+            }
+        }
+        for (const PropId id : bins) {
+            objects_.FindProp(id)->amount = 0.0f;
+        }
+        visitors_.CleanAllLitter();
+    }
+
     if (config_.sandbox) {
         return;
     }
@@ -255,7 +282,7 @@ void Zoo::CloseDay(std::int64_t day) {
     std::string text = "Day " + std::to_string(day + 1) + " closed with a ";
     text += profit >= 0 ? "profit of " : "loss of ";
     text += FormatMoney(profit >= 0 ? profit : -profit);
-    text += ".";
+    text += guests == 1 ? "; 1 visitor." : "; " + std::to_string(guests) + " visitors.";
     Push(profit >= 0 ? Severity::Info : Severity::Warning, std::move(text));
     if (finance_.Balance() < 0) {
         Push(Severity::Alarm, "The zoo is in debt. Raise income or take a loan before the bills pile up.");
@@ -395,8 +422,14 @@ void Zoo::ReportEvents(std::size_t first) {
             case EventType::VisitorBought:
             case EventType::VisitorDonated:
             case EventType::VisitorLittered:
-            case EventType::VisitorScared:
             case EventType::VisitorThought:
+                break;
+            case EventType::VisitorScared:
+                if (time_.tick - lastScareNote_ >= kTicksPerGameHour) {
+                    lastScareNote_ = time_.tick;
+                    severity = Severity::Alarm;
+                    text = "Visitors are running from a dangerous animal on the loose!";
+                }
                 break;
         }
         if (!text.empty()) {
@@ -536,6 +569,7 @@ std::uint64_t Zoo::StateHash() const {
     Hasher h;
     h.Add(time_.tick);
     h.Add(animals_.StateHash());
+    h.Add(visitors_.StateHash());
     h.Add(finance_.Balance());
     h.Add(finance_.Loan());
     for (const Money amount : finance_.Today().amounts) {
@@ -570,7 +604,8 @@ std::uint64_t Zoo::StateHash() const {
 bool Zoo::SameState(const Zoo& other) const {
     return config_ == other.config_ && time_ == other.time_ && world_ == other.world_ &&
            objects_ == other.objects_ && enclosures_ == other.enclosures_ && finance_ == other.finance_ &&
-           animals_ == other.animals_ && weather_.State() == other.weather_.State();
+           animals_ == other.animals_ && visitors_ == other.visitors_ &&
+           weather_.State() == other.weather_.State();
 }
 
 }  // namespace zoo

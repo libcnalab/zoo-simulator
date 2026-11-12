@@ -13,6 +13,7 @@
 #include "zoo/build/EnclosuresJson.hpp"
 #include "zoo/build/ObjectsJson.hpp"
 #include "zoo/economy/FinanceJson.hpp"
+#include "zoo/visitors/VisitorsJson.hpp"
 #include "zoo/world/WorldJson.hpp"
 
 namespace zoo {
@@ -26,18 +27,14 @@ struct ZooAccess {
 
     static std::unique_ptr<Zoo> Assemble(const Catalog& catalog, const SpeciesCatalog& species,
                                          ZooConfig config, World world, ZooObjects objects, Finance finance,
-                                         Animals animals, const WeatherState& weather, GameTime time,
-                                         const Json& enclosures, std::deque<Notification> notifications,
+                                         Animals animals, Visitors visitors, const WeatherState& weather,
+                                         GameTime time, const Json& enclosures,
+                                         std::deque<Notification> notifications,
                                          std::uint32_t nextNotification, std::string* error) {
         WeatherSystem sky(config.seed, config.climate);
         sky.Restore(weather, GameTime{time.tick > 0 ? time.tick - 1 : 0});
-        Zoo::Parts parts{std::move(config),
-                         std::move(world),
-                         std::move(objects),
-                         std::move(finance),
-                         std::move(animals),
-                         std::move(sky),
-                         time};
+        Zoo::Parts parts{std::move(config),  std::move(world),    std::move(objects), std::move(finance),
+                         std::move(animals), std::move(visitors), std::move(sky),     time};
         std::unique_ptr<Zoo> zoo(new Zoo(catalog, species, std::move(parts)));
         // Ids and names of the enclosures are state; their extent follows from the map.
         if (!EnclosuresFromJson(enclosures, zoo->enclosures_, error)) {
@@ -248,6 +245,7 @@ Json ZooToJson(const Zoo& zoo) {
               {"enclosures", ToJson(zoo.Habitats())},
               {"finance", ToJson(zoo.Accounts())},
               {"animals", ToJson(zoo.Fauna(), zoo.SpeciesList())},
+              {"visitors", ToJson(zoo.Guests())},
               {"notifications", std::move(notifications)},
               {"next_notification", ZooAccess::NextNotification(zoo)}};
     return Json{{"format", kSaveFormat},
@@ -257,6 +255,7 @@ Json ZooToJson(const Zoo& zoo) {
                                  {"year", zoo.Time().Year()},
                                  {"balance", zoo.Accounts().Balance()},
                                  {"animals", zoo.Fauna().All().size()},
+                                 {"visitors", zoo.Guests().Count()},
                                  {"species", species.size()},
                                  {"game_version", VersionString()}}},
                 {"zoo", std::move(body)}};
@@ -319,6 +318,13 @@ std::unique_ptr<Zoo> ZooFromJson(const Json& json, const Catalog& catalog, const
         if (!animals) {
             throw std::runtime_error("animals: " + part);
         }
+        // Saves from before there were visitors open as a zoo nobody has come to yet.
+        std::optional<Visitors> visitors = body.contains("visitors")
+                                               ? VisitorsFromJson(body.at("visitors"), &part)
+                                               : std::optional<Visitors>(Visitors(config.seed));
+        if (!visitors) {
+            throw std::runtime_error(part);
+        }
         std::deque<Notification> notifications;
         for (const Json& n : body.at("notifications")) {
             notifications.push_back(NotificationFromJson(n));
@@ -327,7 +333,7 @@ std::unique_ptr<Zoo> ZooFromJson(const Json& json, const Catalog& catalog, const
 
         std::unique_ptr<Zoo> zoo =
             ZooAccess::Assemble(catalog, species, std::move(config), std::move(*world), std::move(*objects),
-                                std::move(*finance), std::move(*animals), weather, time,
+                                std::move(*finance), std::move(*animals), std::move(*visitors), weather, time,
                                 body.at("enclosures"), std::move(notifications), nextNotification, &part);
         if (!zoo) {
             throw std::runtime_error("enclosures: " + part);
