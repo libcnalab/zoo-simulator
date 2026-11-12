@@ -14,6 +14,7 @@ enum class CameraMode {
     Overview,  ///< management view: orbiting a point on the ground
     Walk,      ///< on foot, at a visitor's eye height
     Follow,    ///< orbiting an animal (or anything else that moves)
+    Eye,       ///< out of the eyes of the player's own body (Walker), which the game places
 };
 
 class CameraRig {
@@ -28,6 +29,9 @@ public:
     void GoTo(zoo::Vec2 focus);
     /// The thing Follow mode orbits; call every frame while in that mode.
     void SetFollowTarget(const Vector3& position, float size);
+    /// Looks out of eyes at `eye` along `yaw` and `pitch` (below the horizon): the
+    /// mode becomes Eye, in which Update() leaves the camera where this put it.
+    void SetEye(const Vector3& eye, float yaw, float pitch);
 
     void Update(const Controls& controls, float seconds, const zoo::World& world);
     void Apply(CnaEngine::Graphics::Camera& camera) const;

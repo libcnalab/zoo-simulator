@@ -15,6 +15,7 @@
 
 #include "CnaEngine/App/AssetDirectory.hpp"
 #include "CnaEngine/Enhanced/PbrMaterialBinder.hpp"
+#include "CnaEngine/Enhanced/RelativeMouseCapture.hpp"
 #include "CnaEngine/Enhanced/ShadowReception.hpp"
 
 #include "Microsoft/Xna/Framework/GamerServices/GamerServicesDispatcher.hpp"
@@ -45,7 +46,10 @@ bool Parse(std::string_view text, T& out) {
 
 ZooGame::ZooGame() : EngineGame(MakeOptions()) {}
 
-ZooGame::~ZooGame() = default;
+ZooGame::~ZooGame() {
+    if (!editor_ && zoo_ && visitors_ && (Automation().Options().Automated() || script_))
+        PrintVisitFigures("at the end");
+}
 
 bool ZooGame::ParseArgument(std::span<const std::string_view> arguments, std::size_t& index) {
     const std::string_view name = arguments[index];
@@ -63,8 +67,18 @@ bool ZooGame::ParseArgument(std::span<const std::string_view> arguments, std::si
         return Parse(arguments[++index], warmUpTicks_);
     if (name == "--speed" && hasValue)
         return Parse(arguments[++index], play_.speed);
+    if (name == "--stand" && hasValue) {
+        standAt_ = arguments[++index];
+        return true;
+    }
+    if (name == "--people" && hasValue)
+        return Parse(arguments[++index], peopleBudget_);
     if (name == "--list-animals") {
         listAnimals_ = true;
+        return true;
+    }
+    if (name == "--editor") {
+        editor_ = true;
         return true;
     }
     if (name == "--empty") {
@@ -77,6 +91,7 @@ bool ZooGame::ParseArgument(std::span<const std::string_view> arguments, std::si
     }
     if (name == "--saves" && hasValue) {
         SetSaveDirectory(std::string(arguments[++index]));
+        ownSaves_ = true;
         return true;
     }
     if (name == "--script" && hasValue) {
@@ -99,12 +114,15 @@ bool ZooGame::ParseArgument(std::span<const std::string_view> arguments, std::si
         return false;
     }
     if (name == "--view" && hasValue) {
-        // x,z,yaw degrees,pitch degrees,distance
+        // x,z,yaw degrees,pitch degrees[,distance]: the overhead camera of the editor;
+        // on a visit where the visitor stands and looks (no distance then).
         std::string_view rest = arguments[++index];
-        float values[5]{};
-        for (float& value : values) {
+        float values[5]{0.0f, 0.0f, 180.0f, 0.0f, 60.0f};
+        for (std::size_t i = 0; i < std::size(values); ++i) {
+            if (i == 4 && rest.empty())
+                break;
             const std::size_t comma = rest.find(',');
-            if (!Parse(rest.substr(0, comma), value))
+            if (!Parse(rest.substr(0, comma), values[i]))
                 return false;
             rest = comma == std::string_view::npos ? std::string_view() : rest.substr(comma + 1);
         }
@@ -130,19 +148,24 @@ void ZooGame::LoadGame() {
     for (const std::string& error : catalog_->errors)
         std::printf("zoo: data: %s\n", error.c_str());
 
-    zoo::ZooConfig config;
-    config.world.seed = seed_;
-    config.seed = seed_;
-    auto first = std::make_unique<zoo::Zoo>(*catalog_, *species_, config);
-    if (!emptyMap_) {
-        const zoo::ScenarioReport report = zoo::BuildStarterZoo(*first);
-        std::printf("zoo: starter zoo: %d enclosures, %d animals, %d buildings, %d props\n",
-                    report.enclosures, report.animals, report.buildings, report.props);
-        for (const std::string& problem : report.problems)
-            std::printf("zoo: starter zoo: %s\n", problem.c_str());
+    std::unique_ptr<zoo::Zoo> first;
+    if (editor_) {
+        zoo::ZooConfig config;
+        config.world.seed = seed_;
+        config.seed = seed_;
+        first = std::make_unique<zoo::Zoo>(*catalog_, *species_, config);
+        if (!emptyMap_) {
+            const zoo::ScenarioReport report = zoo::BuildStarterZoo(*first);
+            std::printf("zoo: starter zoo: %d enclosures, %d animals, %d buildings, %d props\n",
+                        report.enclosures, report.animals, report.buildings, report.props);
+            for (const std::string& problem : report.problems)
+                std::printf("zoo: starter zoo: %s\n", problem.c_str());
+        }
+        for (std::int64_t i = 0; i < warmUpTicks_; ++i)
+            first->Step();
+    } else {
+        first = MakeVisitorZoo();
     }
-    for (std::int64_t i = 0; i < warmUpTicks_; ++i)
-        first->Step();
 
     surfaces_ = std::make_unique<Surfaces>(device);
     const auto assets = App::FindAssetDirectory("assets");
@@ -161,6 +184,8 @@ void ZooGame::LoadGame() {
     if (!GamerServicesDispatcher::getIsInitializedProperty())
         GamerServicesDispatcher::Initialize(getServicesProperty());
     visitors_ = std::make_unique<VisitorRenderer>();
+    // From the ground one looks along whole avenues of people: the nearest are drawn.
+    visitors_->SetBudget(peopleBudget_ > 0 ? peopleBudget_ : editor_ ? 400 : 120);
     Renderer().AddPass(Graphics::PassPoint::AfterOpaque, "visitors",
                        [this](auto&, const Graphics::Camera& camera, Graphics::RenderStatistics&) {
                            visitors_->Draw(camera, Renderer().Lighting());
@@ -183,6 +208,35 @@ void ZooGame::LoadGame() {
         }
     }
 
+    const bool toTitle = startAtMenu_ || (!Automation().Options().Automated() && !script_);
+    if (!editor_) {
+        // A visit: the mouse looks around without a button held. A player begins at
+        // the title, the zoo at eye level behind it; an automated run is already walking.
+        SetMouseCapture(std::make_unique<Enhanced::RelativeMouseCapture>());
+        ReadVisitSettings();
+        ApplyVisitSettings(false);
+        freshZoo_ = true;
+        std::error_code ignored;
+        visit_.canContinue = std::filesystem::exists(SavePath(kContinueTitle), ignored);
+        Pose pose = startView_ ? Pose{startView_->x, startView_->z, startView_->yaw, startView_->pitch}
+                               : EntrancePose();
+        if (!standAt_.empty()) {
+            if (const auto stand = StandPose(standAt_))
+                pose = *stand;
+            else
+                std::fprintf(stderr, "zoo: --stand %s: there is no such place\n", standAt_.c_str());
+        }
+        BeginWalk(pose);
+        if (toTitle) {
+            visit_.screen = VisitScreen::Title;
+            freshZoo_ = true;
+        }
+        camera_.SetEye(walker_.Eye(), walker_.Yaw(), walker_.Pitch());
+        camera_.Apply(MainCamera());
+        UpdateShadowArea();
+        UpdateSky();
+        return;
+    }
     if (startView_)
         camera_.SetOverview({startView_->x, startView_->z}, startView_->yaw, startView_->pitch,
                             startView_->distance);
@@ -191,7 +245,7 @@ void ZooGame::LoadGame() {
     OpenPalette(play_, startPalette_);
     // A player begins at the title screen, with the starter zoo as its backdrop; an
     // automated run goes straight into the game.
-    if (startAtMenu_ || (!Automation().Options().Automated() && !script_)) {
+    if (toTitle) {
         play_.mainMenu = true;
         play_.started = false;
     }
@@ -320,7 +374,7 @@ void ZooGame::UpdateCameraMode() {
 void ZooGame::UpdateShadowArea() {
     // The sun's shadow map covers the ground the player looks at: little of it,
     // finely, from close by; much of it, coarsely, from high above.
-    if (camera_.Mode() == CameraMode::Walk) {
+    if (camera_.Mode() == CameraMode::Walk || camera_.Mode() == CameraMode::Eye) {
         constexpr float kReach = 45.0f;
         const Vector3 ahead = Vector3::Normalize(camera_.Target() - camera_.Position());
         SetShadowArea(camera_.Position() + Vector3(ahead.X, 0.0f, ahead.Z) * (kReach * 0.7f), kReach);
@@ -347,9 +401,10 @@ void ZooGame::StepSimulation(double seconds) {
 
 void ZooGame::UpdateSky() {
     const zoo::GameTime now = zoo_->Time();
+    // On a visit the calendar creeps (ZooConfig::dayPace): no fraction of a tick to add.
     clock_.hours = startHour_ ? *startHour_
                               : static_cast<double>(now.Hour()) +
-                                    tickDebt_ / static_cast<double>(zoo::kTicksPerGameHour);
+                                    (editor_ ? tickDebt_ / static_cast<double>(zoo::kTicksPerGameHour) : 0.0);
     // The game's year begins on the first of March.
     clock_.dayOfYear = std::fmod(59.0 + static_cast<double>(now.YearFraction()) * 365.0, 365.0);
     const Vector3 sun = clock_.DirectionToSun();
@@ -359,6 +414,13 @@ void ZooGame::UpdateSky() {
 }
 
 void ZooGame::UpdateFrame(double seconds) {
+    if (editor_)
+        UpdateEditor(seconds);
+    else
+        UpdateVisit(seconds);
+}
+
+void ZooGame::UpdateEditor(double seconds) {
     const auto dt = static_cast<float>(seconds);
     if (script_) {
         shots_.clear();
@@ -430,7 +492,7 @@ void ZooGame::Submit(App::Frame& frame) {
     terrain_->Submit(frame);
     scenery_->Submit(frame);
     animals_->Submit(frame);
-    if (!play_.mainMenu)
+    if (editor_ && !play_.mainMenu)
         tools_->Submit(frame);
 }
 

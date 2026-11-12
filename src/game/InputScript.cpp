@@ -9,6 +9,7 @@ namespace zoogame {
 
 namespace {
 
+using Microsoft::Xna::Framework::Vector2;
 using Microsoft::Xna::Framework::Input::ButtonState;
 using Microsoft::Xna::Framework::Input::KeyboardState;
 using Microsoft::Xna::Framework::Input::Keys;
@@ -30,7 +31,10 @@ bool ParseKey(const std::string& name, Keys& key) {
         {"Escape", Keys::Escape},   {"Space", Keys::Space}, {"Enter", Keys::Enter},
         {"Shift", Keys::LeftShift}, {"Tab", Keys::Tab},     {"Control", Keys::LeftControl},
         {"Back", Keys::Back},       {"Left", Keys::Left},   {"Right", Keys::Right},
-        {"Up", Keys::Up},           {"Down", Keys::Down},
+        {"Up", Keys::Up},           {"Down", Keys::Down},   {"F1", Keys::F1},
+        {"F2", Keys::F2},           {"F3", Keys::F3},       {"F4", Keys::F4},
+        {"F5", Keys::F5},           {"F6", Keys::F6},       {"F7", Keys::F7},
+        {"F8", Keys::F8},           {"F9", Keys::F9},       {"F10", Keys::F10},
     };
     for (const auto& named : kNamed) {
         if (name == named.name) {
@@ -132,6 +136,20 @@ std::optional<InputScript> InputScript::Load(const std::string& path, std::strin
             if (!(in >> notches))
                 return fail("expected NOTCHES");
             script.Add({frame, What::Wheel, notches, 0, {}, {}});
+        } else if (command == "look") {
+            // Mouse look: DX DY pixels in all, spread over FRAMES frames (1 when not given).
+            int dx = 0, dy = 0, frames = 1;
+            if (!(in >> dx >> dy))
+                return fail("expected DX DY");
+            in >> frames;
+            frames = std::max(frames, 1);
+            for (int i = 0; i < frames; ++i)
+                script.Add({frame + i,
+                            What::Look,
+                            dx * (i + 1) / frames - dx * i / frames,
+                            dy * (i + 1) / frames - dy * i / frames,
+                            {},
+                            {}});
         } else if (command == "shot") {
             std::string file_;
             if (!(in >> file_))
@@ -148,6 +166,7 @@ std::optional<InputScript> InputScript::Load(const std::string& path, std::strin
 
 CnaEngine::Input::InputSnapshot InputScript::Next(std::vector<std::string>& shots) {
     ++frame_;
+    look_ = Vector2(0.0f, 0.0f);
     for (; next_ < steps_.size() && steps_[next_].frame <= frame_; ++next_) {
         const Step& step = steps_[next_];
         switch (step.what) {
@@ -169,6 +188,9 @@ CnaEngine::Input::InputSnapshot InputScript::Next(std::vector<std::string>& shot
                 break;
             case What::Wheel:
                 wheel_ += step.x * 120;
+                break;
+            case What::Look:
+                look_ = look_ + Vector2(static_cast<float>(step.x), static_cast<float>(step.y));
                 break;
             case What::Shot:
                 shots.push_back(step.path);

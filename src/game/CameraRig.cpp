@@ -46,7 +46,7 @@ void CameraRig::SetMode(CameraMode mode, const zoo::World& world) {
         feet_ = ClampToWorld(focus_, world, 1.0f);
         walkYaw_ = yaw_;
         walkPitch_ = 0.0f;
-    } else if (mode == CameraMode::Overview && mode_ == CameraMode::Walk) {
+    } else if (mode == CameraMode::Overview && (mode_ == CameraMode::Walk || mode_ == CameraMode::Eye)) {
         focusGoal_ = focus_ = feet_;
         yawGoal_ = yaw_ = walkYaw_;
     } else if (mode == CameraMode::Overview && mode_ == CameraMode::Follow) {
@@ -76,6 +76,15 @@ void CameraRig::SetFollowTarget(const Vector3& position, float size) {
     followSize_ = size;
 }
 
+void CameraRig::SetEye(const Vector3& eye, float yaw, float pitch) {
+    mode_ = CameraMode::Eye;
+    position_ = eye;
+    target_ = eye + Direction(yaw, pitch) * 10.0f;
+    feet_ = focus_ = focusGoal_ = {eye.X, eye.Z};
+    walkYaw_ = yaw_ = yawGoal_ = yaw;
+    walkPitch_ = pitch;
+}
+
 void CameraRig::Update(const Controls& controls, float seconds, const zoo::World& world) {
     switch (mode_) {
         case CameraMode::Overview:
@@ -86,6 +95,8 @@ void CameraRig::Update(const Controls& controls, float seconds, const zoo::World
             break;
         case CameraMode::Follow:
             UpdateFollow(controls, seconds, world);
+            break;
+        case CameraMode::Eye:
             break;
     }
 }

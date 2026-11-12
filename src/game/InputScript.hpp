@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "CnaEngine/Input/InputSnapshot.hpp"
+#include "Microsoft/Xna/Framework/Vector2.hpp"
 #include "Microsoft/Xna/Framework/Input/Keys.hpp"
 
 namespace zoogame {
@@ -26,10 +27,11 @@ namespace zoogame {
 ///     FRAME key NAME                      (down on FRAME, up on the next)
 ///     FRAME hold NAME                     FRAME release NAME
 ///     FRAME wheel NOTCHES
+///     FRAME look DX DY [FRAMES]           (mouse look of a captured mouse, in pixels)
 ///     FRAME shot PATH.png
 ///
 /// Key names: A..Z, 0..9, Escape, Space, Enter, Shift, Control, Tab, Back,
-/// Left, Right, Up, Down.
+/// Left, Right, Up, Down, F1..F10.
 class InputScript {
 public:
     /// nullopt (and `error`) when the file is missing or a line does not parse.
@@ -39,9 +41,11 @@ public:
     /// asks for on this frame are appended to `shots`.
     CnaEngine::Input::InputSnapshot Next(std::vector<std::string>& shots);
     int LastFrame() const { return lastFrame_; }
+    /// How far the captured mouse moved on the frame Next() last returned (`look`).
+    Microsoft::Xna::Framework::Vector2 Look() const { return look_; }
 
 private:
-    enum class What { Move, Down, Up, KeyDown, KeyUp, Wheel, Shot };
+    enum class What { Move, Down, Up, KeyDown, KeyUp, Wheel, Look, Shot };
     struct Step {
         int frame = 0;
         What what = What::Move;
@@ -59,6 +63,7 @@ private:
     int x_ = 0;
     int y_ = 0;
     int wheel_ = 0;
+    Microsoft::Xna::Framework::Vector2 look_{0.0f, 0.0f};
     bool buttons_[3] = {false, false, false};
     std::unordered_set<Microsoft::Xna::Framework::Input::Keys> keys_;
 };

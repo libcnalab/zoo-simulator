@@ -6,6 +6,7 @@
 #include <memory>
 #include <optional>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 #include "CnaEngine/Graphics/Camera.hpp"
@@ -54,6 +55,19 @@ public:
     /// The height a visitor is drawn at, metres.
     float HeightOf(zoo::VisitorId id) const;
     std::size_t Drawn() const { return drawn_; }
+    /// People near enough to be drawn at the last Draw(), whichever way the camera looked.
+    std::size_t InRange() const { return inRange_; }
+    /// Of them those the camera looked at; Drawn() is less when they were more than the budget.
+    std::size_t InView() const { return inViewCount_; }
+    /// The most people a frame draws: the nearest of those in view.
+    void SetBudget(std::size_t people) { budget_ = std::max<std::size_t>(people, 1); }
+    std::size_t Budget() const { return budget_; }
+    /// People the simulation has in the zoo (those inside buildings too).
+    std::size_t Known() const { return actors_.size(); }
+    /// The cast: how many avatars there are to play the visitors, and how many
+    /// of them CNA could not make.
+    std::size_t CastSize() const { return cast_.size(); }
+    int Failed() const { return failed_; }
     /// Members of the cast that can be drawn by now.
     int Ready() const { return ready_; }
     /// False once it is known that CNA cannot provide avatars at all.
@@ -119,7 +133,12 @@ private:
     AvatarExpression expression_;
     std::int64_t tick_ = -1;
     std::size_t drawn_ = 0;
+    std::size_t inRange_ = 0;
+    std::size_t inViewCount_ = 0;
+    std::size_t budget_ = 400;
+    std::vector<std::pair<float, Actor*>> inView_;
     int ready_ = 0;
+    int failed_ = 0;
     bool available_ = true;
     bool reported_ = false;
     // What it costs (reported at the end of a run with ZOO_AVATAR_DEBUG set).

@@ -77,6 +77,7 @@ void VisitorRenderer::Clear() {
     actors_.clear();
     tick_ = -1;
     drawn_ = 0;
+    inView_.clear();
 }
 
 void VisitorRenderer::GrowCast() {
@@ -168,6 +169,7 @@ void VisitorRenderer::PollCast() {
             }
         }
     }
+    failed_ = failed;
     if (failed > 0 && ready_ == 0 && static_cast<std::size_t>(failed) == cast_.size() && !reported_) {
         reported_ = true;
         available_ = false;
@@ -397,6 +399,7 @@ void VisitorRenderer::Pose(Actor& actor, const Member& member, float scale) {
 void VisitorRenderer::Draw(const CnaEngine::Graphics::Camera& camera,
                            const CnaEngine::Graphics::ForwardLighting& lighting) {
     drawn_ = 0;
+    inRange_ = 0;
     if (ready_ == 0)
         return;
     const auto& frustum = camera.Frustum();
@@ -408,19 +411,49 @@ void VisitorRenderer::Draw(const CnaEngine::Graphics::Camera& camera,
     if (!lighting.fillLights.empty())
         ambient = ambient + lighting.fillLights.front().diffuse * 0.55f;
 
+    // Who is in view, and how far away: when that is more people than a frame may
+    // draw (from the ground one looks along a whole avenue of them), the nearest are drawn.
+    // People make room for one another, and so they do for the observer: who would walk
+    // straight through the eyes is drawn stepping round them at arm's length.
+    constexpr float kRoom = 0.95f;
+    const auto standing = [&](const Actor& actor) {
+        Vector3 feet(actor.shown.x, actor.ground, actor.shown.z);
+        const float dx = feet.X - eye.X;
+        const float dz = feet.Z - eye.Z;
+        const float apart = std::sqrt(dx * dx + dz * dz);
+        if (apart < kRoom && eye.Y - feet.Y < 2.5f && eye.Y - feet.Y > 0.5f) {
+            const float push = (kRoom - apart) / std::max(apart, 0.05f);
+            feet.X += (apart > 0.01f ? dx : 0.05f) * push;
+            feet.Z += dz * push;
+        }
+        return feet;
+    };
+    inView_.clear();
     for (auto& [id, actor] : actors_) {
-        if (actor.hidden)
+        if (actor.hidden || Playing(actor) == nullptr)
             continue;
-        const Member* member = Playing(actor);
-        if (member == nullptr)
-            continue;
-        const Vector3 feet(actor.shown.x, actor.ground, actor.shown.z);
+        const Vector3 feet = standing(actor);
         const Vector3 away = feet - eye;
-        if (away.X * away.X + away.Y * away.Y + away.Z * away.Z > kFarthest * kFarthest)
+        const float distance = away.X * away.X + away.Y * away.Y + away.Z * away.Z;
+        if (distance > kFarthest * kFarthest)
             continue;
+        ++inRange_;
         if (frustum.Contains(BoundingSphere(feet + Vector3(0.0f, 0.9f, 0.0f), 1.4f)) ==
             ContainmentType::Disjoint)
             continue;
+        inView_.emplace_back(distance, &actor);
+    }
+    inViewCount_ = inView_.size();
+    if (inView_.size() > budget_) {
+        std::nth_element(inView_.begin(), inView_.begin() + static_cast<std::ptrdiff_t>(budget_), inView_.end(),
+                         [](const auto& a, const auto& b) { return a.first < b.first; });
+        inView_.resize(budget_);
+    }
+
+    for (const auto& [distance, seen] : inView_) {
+        Actor& actor = *seen;
+        const Member* member = Playing(actor);
+        const Vector3 feet = standing(actor);
         const float scale = actor.heightM / member->height;
         const auto before = std::chrono::steady_clock::now();
         Pose(actor, *member, scale);

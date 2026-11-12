@@ -34,5 +34,9 @@ std::string SafeTitle(std::string_view title);
 
 inline constexpr std::string_view kSaveSuffix = ".zoo.json";
 inline constexpr std::string_view kAutosaveTitle = "autosave";
+/// The visit "Continue Visit" goes on with: kept when one leaves, and now and then on the way.
+inline constexpr std::string_view kContinueTitle = "visit-continue";
+/// Beside a saved zoo: where its visitor stood and looked ("x z yaw pitch").
+inline constexpr std::string_view kPoseSuffix = ".pose";
 
 }  // namespace zoogame
