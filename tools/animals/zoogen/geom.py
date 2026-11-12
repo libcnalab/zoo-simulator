@@ -294,6 +294,7 @@ class Spec:
     meta: dict = field(default_factory=dict)   # copied into the manifest
     rig: object = None                # rig.Rig: which bones play which role
     clips: object = None              # callable(rig.Solver) -> [rig.Clip]
+    validate_mesh: bool = False       # remove duplicate/invalid faces before UV and export
 
 
 def expand_bones(bones):

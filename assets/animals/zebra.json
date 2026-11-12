@@ -1,0 +1,133 @@
+{
+  "bones": 33,
+  "clips": [
+    {
+      "duration": 6.0,
+      "events": [],
+      "frames": 181,
+      "loop": true,
+      "name": "idle",
+      "speed": 0.0
+    },
+    {
+      "duration": 1.1333,
+      "events": [
+        {
+          "name": "step",
+          "time": 0.0
+        },
+        {
+          "name": "step",
+          "time": 0.2833
+        },
+        {
+          "name": "step",
+          "time": 0.5667
+        },
+        {
+          "name": "step",
+          "time": 0.85
+        }
+      ],
+      "frames": 35,
+      "loop": true,
+      "name": "walk",
+      "speed": 1.5
+    },
+    {
+      "duration": 0.6333,
+      "events": [
+        {
+          "name": "step",
+          "time": 0.0
+        },
+        {
+          "name": "step",
+          "time": 0.0
+        },
+        {
+          "name": "step",
+          "time": 0.3167
+        },
+        {
+          "name": "step",
+          "time": 0.3167
+        }
+      ],
+      "frames": 20,
+      "loop": true,
+      "name": "trot",
+      "speed": 3.0
+    },
+    {
+      "duration": 3.0,
+      "events": [],
+      "frames": 91,
+      "loop": true,
+      "name": "eat",
+      "speed": 0.0
+    },
+    {
+      "duration": 2.4,
+      "events": [],
+      "frames": 73,
+      "loop": true,
+      "name": "drink",
+      "speed": 0.0
+    },
+    {
+      "duration": 8.0,
+      "events": [],
+      "frames": 241,
+      "loop": true,
+      "name": "rest",
+      "speed": 0.0
+    },
+    {
+      "duration": 8.0,
+      "events": [],
+      "frames": 241,
+      "loop": true,
+      "name": "sleep",
+      "speed": 0.0
+    },
+    {
+      "duration": 2.6,
+      "events": [
+        {
+          "name": "call",
+          "time": 0.572
+        }
+      ],
+      "frames": 79,
+      "loop": false,
+      "name": "vocalize",
+      "speed": 0.0
+    }
+  ],
+  "generator": "tools/animals (zoogen)",
+  "license": "MIT",
+  "meta": {
+    "body_length_m": 2.3,
+    "common_name": "Plains zebra",
+    "roughness": 0.9,
+    "scientific_name": "Equus quagga",
+    "shoulder_height_m": 1.35
+  },
+  "name": "zebra",
+  "skeleton_bounds_animal_space": {
+    "max": [
+      1.127,
+      0.162,
+      1.3905
+    ],
+    "min": [
+      -1.541,
+      -0.162,
+      0.0
+    ]
+  },
+  "texture": 1024,
+  "triangles": 18852,
+  "vertices": 9436
+}

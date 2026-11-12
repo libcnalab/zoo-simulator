@@ -277,6 +277,8 @@ def build_mesh(spec):
 
     ob = _mesh_object(spec.name, verts, tris)
     me = ob.data
+    if spec.validate_mesh:
+        me.validate(verbose=False, clean_customdata=False)
     for poly in me.polygons:
         poly.use_smooth = True
     _activate(ob)
@@ -324,7 +326,7 @@ def build_mesh(spec):
         col = w[:, i]
         for vi in np.nonzero(col > 0.0)[0]:
             vg.add([int(vi)], float(col[vi]), 'REPLACE')
-    info = {"bones": bones, "bone_names": bone_names, "triangles": int(len(tris)),
+    info = {"bones": bones, "bone_names": bone_names, "triangles": int(len(me.polygons)),
             "vertices": int(len(verts)), "image": img}
     return ob, info
 

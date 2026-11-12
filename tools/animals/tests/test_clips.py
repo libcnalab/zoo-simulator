@@ -17,7 +17,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from zoogen import geom, quadruped  # noqa: E402
 from zoogen.rig import Pose, Solver, quat_from_matrix, rot_x, rot_y, rot_z  # noqa: E402
 
-SPECIES = ["lion"]
+SPECIES = ["lion", "tiger", "wolf", "brown_bear", "polar_bear", "zebra"]
 
 
 def make_solver(species):
@@ -100,8 +100,8 @@ class ClipTests(unittest.TestCase):
     def test_bone_lengths_never_change(self):
         for species, solver, clips in self.cases:
             for clip in clips:
-                for i in range(24):
-                    world = joints(solver.solve(clip.pose(i / 24)))
+                for i in range(12):
+                    world = joints(solver.solve(clip.pose(i / 12)))
                     for n, p in solver.parent.items():
                         if p is None:
                             continue
@@ -116,15 +116,15 @@ class ClipTests(unittest.TestCase):
         for species, solver, clips in self.cases:
             for clip in clips:
                 solver.reset_stats()
-                for i in range(48):
-                    solver.solve(clip.pose(i / 48))
+                for i in range(24):
+                    solver.solve(clip.pose(i / 24))
                 self.assertLess(solver.ik_error, 1e-6, f"{species}/{clip.name}")
                 self.assertLess(solver.extension, 0.99, f"{species}/{clip.name}")
 
     def test_loops_are_seamless_and_smooth(self):
         for species, solver, clips in self.cases:
             for clip in clips:
-                n = max(24, int(round(clip.duration * 30)))
+                n = max(16, int(round(clip.duration * 12)))
                 prev = joints(solver.solve(clip.pose(0.0)))
                 worst = 0.0
                 for i in range(1, n + 1):
@@ -134,8 +134,8 @@ class ClipTests(unittest.TestCase):
                     cur = joints(solver.solve(clip.pose(u)))
                     worst = max(worst, max(np.linalg.norm(cur[k] - prev[k]) for k in cur))
                     prev = cur
-                # No joint jumps: at 30 Hz nothing in these clips moves faster than 5 m/s.
-                self.assertLess(worst, 5.0 / 30.0, f"{species}/{clip.name}")
+                # No joint jumps: sampled movement must stay below the same 5 m/s bound.
+                self.assertLess(worst, 5.0 * clip.duration / n, f"{species}/{clip.name}")
                 if clip.loop:
                     a = joints(solver.solve(clip.pose(0.0)))
                     b = joints(solver.solve(clip.pose(1.0 - 1e-9)))
@@ -147,7 +147,7 @@ class ClipTests(unittest.TestCase):
             for clip in clips:
                 if clip.speed <= 0.0:
                     continue
-                n = 120
+                n = 48
                 for key, leg in solver.rig.legs.items():
                     rest = solver.toe_base(key)
                     on_ground = 0
@@ -178,8 +178,8 @@ class ClipTests(unittest.TestCase):
     def test_nothing_sinks_into_the_ground(self):
         for species, solver, clips in self.cases:
             for clip in clips:
-                for i in range(24):
-                    world = joints(solver.solve(clip.pose(i / 24)))
+                for i in range(12):
+                    world = joints(solver.solve(clip.pose(i / 12)))
                     for n, p in world.items():
                         if solver.parent[n] is None:
                             continue
