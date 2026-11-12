@@ -134,6 +134,21 @@
       "wearPerDay": 0.0015,
       "color": "#77766e",
       "postColor": "#34332e"
+    },
+    {
+      "id": "high_glass_wall",
+      "name": "High glass wall",
+      "kind": 10,
+      "style": "glass",
+      "heightM": 4.5,
+      "strength": 4,
+      "visibility": 1,
+      "cost": 940,
+      "gateCost": 260,
+      "upkeepPerDay": 11,
+      "wearPerDay": 0.0015,
+      "color": "#b7d9dc",
+      "postColor": "#78898a"
     }
   ]
 }

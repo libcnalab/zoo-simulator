@@ -15,6 +15,7 @@ Costs are purchase prices in dollars. Fence prices are per two metre edge; path 
 | cable_barrier | Cable barrier | 2.4 m | 5 | 0.90 | $390 |
 | hedge | Clipped hedge | 1.0 m | 1 | 0.25 | $65 |
 | high_cable_barrier | High cable barrier | 5.0 m | 5 | 0.80 | $760 |
+| high_glass_wall | High glass wall | 4.5 m | 4 | 1.00 | $940 |
 
 ## Paths and terrain
 

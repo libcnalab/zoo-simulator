@@ -208,14 +208,14 @@ HabitatStyle Style(std::string_view species) {
     if (species == "tiger") {
         return {Terrain::ForestFloor,
                 "steel_bars",
-                "steel_bars",
+                "high_glass_wall",
                 "medium_shelter",
                 "meat_platform",
                 "bamboo_clump",
                 "tropical_fern",
                 "granite_boulder",
                 "scratching_post",
-                0,
+                1,
                 1};
     }
     if (species == "wolf") {
@@ -234,7 +234,7 @@ HabitatStyle Style(std::string_view species) {
     if (species == "brown_bear") {
         return {Terrain::ForestFloor,
                 "steel_bars",
-                "steel_bars",
+                "high_glass_wall",
                 "medium_shelter",
                 "meat_platform",
                 "pine",
@@ -247,7 +247,7 @@ HabitatStyle Style(std::string_view species) {
     if (species == "polar_bear") {
         return {Terrain::Snow,
                 "steel_bars",
-                "steel_bars",
+                "high_glass_wall",
                 "cooled_den",
                 "fish_bucket_stand",
                 "pine",
