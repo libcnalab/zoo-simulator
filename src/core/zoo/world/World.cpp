@@ -432,6 +432,25 @@ void World::SetFence(EdgeRef e, Fence fence) {
     ++revision_;
 }
 
+void World::WearFences(const std::array<float, 256>& wearByKind, std::array<int, 256>& countByKind) {
+    countByKind.fill(0);
+    bool changed = false;
+    for (std::vector<Fence>* fences : {&fencesHorizontal_, &fencesVertical_}) {
+        for (Fence& fence : *fences) {
+            if (!fence.Exists())
+                continue;
+            ++countByKind[fence.kind];
+            const float worn = std::max(0.0f, fence.condition - wearByKind[fence.kind]);
+            if (worn != fence.condition) {
+                fence.condition = worn;
+                changed = true;
+            }
+        }
+    }
+    if (changed)
+        ++revision_;
+}
+
 std::uint32_t World::ChunkRevision(int cx, int cz) const {
     if (cx < 0 || cz < 0 || cx >= ChunksX() || cz >= ChunksZ())
         return 0;

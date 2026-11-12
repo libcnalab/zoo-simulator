@@ -65,7 +65,7 @@ std::vector<Tile> DecodeTiles(const Json& runs, std::size_t expected) {
         if (count > expected - tiles.size())
             throw std::runtime_error("tile run lengths do not match map size");
         if (!run.contains("terrain") || !run["terrain"].is_string() || !run.contains("path") ||
-            !run["path"].is_string() || !run.contains("building") || !run.contains("water_mm"))
+            !run["path"].is_string() || !run.contains("building") || !run.contains("water"))
             throw std::runtime_error("tile run is missing a required field");
         const auto terrain = TerrainFromString(run["terrain"].get<std::string>());
         const auto path = PathKindFromString(run["path"].get<std::string>());
@@ -75,13 +75,12 @@ std::vector<Tile> DecodeTiles(const Json& runs, std::size_t expected) {
             throw std::runtime_error("unknown path name");
         const BuildingId building{ReadU32(run["building"], "building id")};
         float water = kNoWater;
-        if (!run["water_mm"].is_null()) {
-            if (!run["water_mm"].is_number_integer())
-                throw std::runtime_error("water level must be integer millimetres");
-            const std::int64_t mm = run["water_mm"].get<std::int64_t>();
-            if (mm < -12000 || mm > 40000)
+        if (!run["water"].is_null()) {
+            if (!run["water"].is_number())
+                throw std::runtime_error("water level must be a number of metres");
+            water = run["water"].get<float>();
+            if (!std::isfinite(water) || water < -12.0f || water > 40.0f)
                 throw std::runtime_error("water level is out of range");
-            water = static_cast<float>(mm) / 1000.0f;
         }
         tiles.insert(tiles.end(), count, Tile{*terrain, *path, building, water});
     }
@@ -96,12 +95,12 @@ std::vector<float> DecodeHeights(const Json& values, std::size_t expected) {
     std::vector<float> heights;
     heights.reserve(expected);
     for (const Json& value : values) {
-        if (!value.is_number_integer())
-            throw std::runtime_error("height must be integer millimetres");
-        const std::int64_t mm = value.get<std::int64_t>();
-        if (mm < -12000 || mm > 40000)
+        if (!value.is_number())
+            throw std::runtime_error("height must be a number of metres");
+        const float height = value.get<float>();
+        if (!std::isfinite(height) || height < -12.0f || height > 40.0f)
             throw std::runtime_error("height is out of range");
-        heights.push_back(static_cast<float>(mm) / 1000.0f);
+        heights.push_back(height);
     }
     return heights;
 }
@@ -150,20 +149,19 @@ nlohmann::json ToJson(const World& world) {
             Json value{{"terrain", ToString(tile.terrain)},
                        {"path", ToString(tile.path)},
                        {"building", tile.building.value}};
-            value["water_mm"] = tile.waterLevel == kNoWater
-                                    ? Json(nullptr)
-                                    : Json(static_cast<std::int32_t>(std::lround(tile.waterLevel * 1000.0f)));
+            // Metres, exactly: a loaded world must equal the saved one bit for bit.
+            value["water"] = tile.waterLevel == kNoWater ? Json(nullptr) : Json(tile.waterLevel);
             return value;
         });
     Json heights = Json::array();
     for (float height : WorldAccess::Heights(world))
-        heights.push_back(static_cast<std::int32_t>(std::lround(height * 1000.0f)));
+        heights.push_back(height);
     return Json{
         {"width", world.Width()},
         {"depth", world.Depth()},
         {"property", {{"min", CoordJson(world.PropertyMin())}, {"max", CoordJson(world.PropertyMax())}}},
         {"entrance", CoordJson(world.EntranceTile())},
-        {"heights_mm", std::move(heights)},
+        {"heights", std::move(heights)},
         {"tiles", std::move(tileRuns)},
         {"fences_h", EncodeFences(WorldAccess::HorizontalFences(world))},
         {"fences_v", EncodeFences(WorldAccess::VerticalFences(world))}};
@@ -182,7 +180,7 @@ std::optional<World> WorldFromJson(const nlohmann::json& json, std::string* erro
         const int depth = json["depth"].get<int>();
         if (width < 8 || width > 512 || depth < 8 || depth > 512)
             throw std::runtime_error("world dimensions must be in [8, 512]");
-        for (const char* key : {"property", "entrance", "heights_mm", "tiles", "fences_h", "fences_v"})
+        for (const char* key : {"property", "entrance", "heights", "tiles", "fences_h", "fences_v"})
             if (!json.contains(key))
                 throw std::runtime_error(std::string("missing field: ") + key);
         const Json& property = json["property"];
@@ -201,7 +199,7 @@ std::optional<World> WorldFromJson(const nlohmann::json& json, std::string* erro
             static_cast<std::size_t>(width + 1) * static_cast<std::size_t>(depth);
         const auto tiles = DecodeTiles(json["tiles"], tileCount);
         const auto heights = DecodeHeights(
-            json["heights_mm"], static_cast<std::size_t>(width + 1) * static_cast<std::size_t>(depth + 1));
+            json["heights"], static_cast<std::size_t>(width + 1) * static_cast<std::size_t>(depth + 1));
         const auto horizontal = DecodeFences(json["fences_h"], horizontalCount);
         const auto vertical = DecodeFences(json["fences_v"], verticalCount);
         World world(width, depth);

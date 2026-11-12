@@ -168,6 +168,8 @@ struct PropDef {
     /// this far away and walkers go around it.
     float radiusM = 0.5f;
     float heightM = 1.0f;
+    /// Blocking props keep off paths (and paths off them). Street furniture
+    /// (benches, lamps, bins, boards) does not block: it stands at a path's kerb.
     bool blocksWalking = true;
     Money cost = 0;
     /// Plant cover it adds to its surroundings, in m2 (enclosure vegetation density).

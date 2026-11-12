@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 #pragma once
 
+#include <array>
 #include <cstdint>
 #include <optional>
 #include <vector>
@@ -79,6 +80,8 @@ struct WorldGenParams {
     int margin = 6;
     /// Width of the entrance gate in tiles (in the south wall, centred).
     int entranceWidth = 4;
+
+    bool operator==(const WorldGenParams&) const = default;
 };
 
 /// The terrain and everything that lives on the tile grid: heights (one per grid
@@ -175,6 +178,10 @@ public:
     /// `e` must be in bounds. A default Fence removes the fence.
     void SetFence(EdgeRef e, Fence fence);
     Fence FenceOn(TileCoord t, Dir side) const { return FenceAt(EdgeOf(t, side)); }
+    /// A day's wear: lowers the condition of every fence by `wearByKind[kind]` (not
+    /// below 0) and counts the fences per kind. Conditions are not what fences look
+    /// like or where one can walk, so only Revision() changes (when anything wore).
+    void WearFences(const std::array<float, 256>& wearByKind, std::array<int, 256>& countByKind);
 
     // ---- queries ----------------------------------------------------------------------
     /// First hit of a ray with the ground (not the water), within `maxDistance`;

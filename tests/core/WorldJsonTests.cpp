@@ -28,7 +28,7 @@ TEST(WorldJson, GeneratedAndEditedWorldRoundTrips) {
 TEST(WorldJson, Generated128MapStaysCompact) {
     WorldGenParams params;
     const World world = World::Generate(params);
-    EXPECT_LT(ToJson(world).dump().size(), 300000u);
+    EXPECT_LT(ToJson(world).dump().size(), 500000u);
 }
 
 TEST(WorldJson, MalformedDocumentsFailWithUsefulErrors) {
@@ -47,7 +47,7 @@ TEST(WorldJson, MalformedDocumentsFailWithUsefulErrors) {
     bad["tiles"][0]["terrain"] = "lava";
     expectInvalid(bad);
     bad = good;
-    bad["heights_mm"].erase(bad["heights_mm"].begin());
+    bad["heights"].erase(bad["heights"].begin());
     expectInvalid(bad);
     bad = good;
     bad["property"]["min"] = "wrong";

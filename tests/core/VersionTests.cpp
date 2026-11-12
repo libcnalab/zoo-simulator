@@ -5,4 +5,6 @@
 
 #include <string>
 
-TEST(Version, IsNotEmpty) { EXPECT_FALSE(std::string(zoo::VersionString()).empty()); }
+TEST(Version, IsNotEmpty) {
+    EXPECT_FALSE(std::string(zoo::VersionString()).empty());
+}

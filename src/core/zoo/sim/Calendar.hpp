@@ -15,12 +15,12 @@ namespace zoo {
 inline constexpr int kTicksPerSecond = 20;
 inline constexpr float kTickSeconds = 1.0f / static_cast<float>(kTicksPerSecond);
 inline constexpr int kTimeScale = 120;
-inline constexpr int kGameSecondsPerTick = kTimeScale / kTicksPerSecond;        // 6
-inline constexpr int kTicksPerGameHour = 3600 / kGameSecondsPerTick;            // 600
-inline constexpr int kTicksPerDay = 24 * kTicksPerGameHour;                     // 14400
+inline constexpr int kGameSecondsPerTick = kTimeScale / kTicksPerSecond;  // 6
+inline constexpr int kTicksPerGameHour = 3600 / kGameSecondsPerTick;      // 600
+inline constexpr int kTicksPerDay = 24 * kTicksPerGameHour;               // 14400
 inline constexpr int kDaysPerMonth = 4;
 inline constexpr int kMonthsPerYear = 12;
-inline constexpr int kDaysPerYear = kDaysPerMonth * kMonthsPerYear;            // 48
+inline constexpr int kDaysPerYear = kDaysPerMonth * kMonthsPerYear;  // 48
 /// Real-world durations of biology (gestation, lifespan, ...) are given in real
 /// days or years in the data and converted with these: a game year stands for a
 /// real year although it only has kDaysPerYear game days.
