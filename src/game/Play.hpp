@@ -62,7 +62,13 @@ struct Selection {
 enum class Palette { None, Paths, Fences, Terrain, Water, Buildings, Scenery, Animals };
 
 /// The window open in the middle of the screen.
-enum class Dialog { None, Zoo, Finances, Animals, Messages, Menu, Save, Load, Help };
+enum class Dialog { None, Zoo, Finances, Animals, Messages, Menu, Save, Load, NewGame, Help };
+
+/// The windows that stop the game and take every click until they are closed.
+constexpr bool IsModal(Dialog dialog) {
+    return dialog == Dialog::Menu || dialog == Dialog::Save || dialog == Dialog::Load ||
+           dialog == Dialog::NewGame || dialog == Dialog::Help;
+}
 
 /// What the interface asks of the game.
 enum class Request { None, NewGame, Save, Load, Quit, MainMenu };
@@ -83,6 +89,12 @@ struct Play {
     Dialog dialog = Dialog::None;
     /// The camera keeps on the selected animal.
     bool follow = false;
+    /// The player walks the zoo at eye height instead of looking from above.
+    bool walk = false;
+    /// The title screen is up: the zoo behind it is a backdrop.
+    bool mainMenu = false;
+    /// A game is in progress (the title screen offers to go back to it).
+    bool started = true;
 
     /// What the tool in hand would do or why it cannot, shown above the toolbar.
     std::string hint;
@@ -91,10 +103,12 @@ struct Play {
     /// What just went wrong ("Not enough money"), shown for a few seconds.
     std::string flash;
     float flashLeft = 0.0f;
+    bool flashBad = true;
 
     Request request = Request::None;
-    std::string requestPath;  ///< the save file to write or read
-    zoo::ZooConfig newGame;   ///< for Request::NewGame
+    std::string requestPath;     ///< the save file to write or read
+    zoo::ZooConfig newGame;      ///< for Request::NewGame
+    bool newGameStarter = true;  ///< Request::NewGame begins with the starter zoo, not bare land
 
     void Use(ToolKind kind) {
         tool.kind = kind;
@@ -104,6 +118,12 @@ struct Play {
     void Flash(std::string text) {
         flash = std::move(text);
         flashLeft = 3.5f;
+        flashBad = true;
+    }
+    /// News rather than a refusal ("Saved").
+    void Tell(std::string text) {
+        Flash(std::move(text));
+        flashBad = false;
     }
     void Select(Selection s) {
         selection = s;

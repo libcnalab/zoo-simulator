@@ -1,0 +1,12 @@
+# The title screen: a new zoo on bare land, a walk, back to the title screen and into the zoo again.
+# Run from build/: ./zoo-simulator --frames 110 --lockstep --menu --script ../tests/ui/title_new_zoo.script
+# Expect "zoo: new zoo" in the output.
+5 click 305 250
+14 click 786 256
+22 click 803 528
+44 key Tab
+72 key Tab
+76 click 1158 690
+82 click 640 444
+86 click 640 444
+96 click 305 250

@@ -4,7 +4,7 @@
 #include <cmath>
 #include <string>
 
-#include "Hud.hpp"
+#include "HudWidgets.hpp"
 
 namespace zoogame {
 
@@ -15,58 +15,13 @@ using ui::Box;
 namespace theme = ui::theme;
 
 constexpr float kPaletteWidth = 272.0f;
-constexpr float kRow = 28.0f;  ///< a row of a list, with its gap
-constexpr float kGap = 3.0f;
-
-/// A row of a list: a name on the left, a figure on the right.
-bool ItemRow(ui::Ui& ui, const Box& box, std::string_view name, std::string_view figure, bool selected,
-             std::string_view tooltip = {}) {
-    const bool clicked = ui.Button(box, "", {.selected = selected, .tooltip = tooltip});
-    Box inner = box.Inset(9.0f, 0.0f);
-    if (!figure.empty()) {
-        const float width = ui.Paint().TextWidth(figure, theme::kSmall);
-        ui.LabelIn(inner.CutRight(width + 2.0f), figure, theme::kSmall,
-                   selected ? theme::kText : theme::kMoney, Align::Right);
-        inner.CutRight(6.0f);
-    }
-    ui.LabelIn(inner, name, theme::kBody, theme::kText);
-    return clicked;
-}
-
-/// A row of equal buttons, one of which is chosen; returns the one clicked or -1.
-int Choice(ui::Ui& ui, Box row, std::initializer_list<std::string_view> labels, int chosen) {
-    const float count = static_cast<float>(labels.size());
-    const float width = (row.w - kGap * (count - 1.0f)) / count;
-    int clicked = -1;
-    int index = 0;
-    for (const std::string_view label : labels) {
-        const Box box{std::round(row.x + (width + kGap) * static_cast<float>(index)), row.y,
-                      std::round(width), row.h};
-        if (ui.Button(box, label, {.selected = index == chosen, .size = theme::kSmall + 1.0f}))
-            clicked = index;
-        ++index;
-    }
-    return clicked;
-}
-
-void Heading(ui::Ui& ui, Box& body, std::string_view text) {
-    ui.LabelIn(body.CutTop(20.0f), text, theme::kSmall, theme::kMuted, Align::Left, true);
-    body.CutTop(2.0f);
-}
-
-void Note(ui::Ui& ui, Box& body, std::string_view text) {
-    body.CutTop(4.0f);
-    const float used = ui.Paragraph(body, text, theme::kSmall, theme::kMuted);
-    body.CutTop(used + 2.0f);
-}
-
-void Fact(ui::Ui& ui, Box& body, std::string_view label, std::string_view value) {
-    const Box row = body.CutTop(19.0f);
-    ui.LabelIn(row, label, theme::kSmall, theme::kMuted);
-    Box right = row;
-    right.CutLeft(std::min(row.w * 0.42f, ui.Paint().TextWidth(label, theme::kSmall) + 10.0f));
-    ui.LabelIn(right, value, theme::kSmall, theme::kText, Align::Right);
-}
+using hud::Choice;
+using hud::Fact;
+using hud::Heading;
+using hud::ItemRow;
+using hud::kGap;
+using hud::kRow;
+using hud::Note;
 
 std::string TerrainName(const zoo::Catalog& catalog, zoo::Terrain terrain) {
     return catalog.TerrainInfo(terrain).name;
@@ -213,7 +168,7 @@ void Hud::HintLine(ui::Ui& ui, Play& play) {
     const std::string& text = flashing ? play.flash : play.hint;
     if (text.empty())
         return;
-    const bool bad = flashing || play.hintBad;
+    const bool bad = flashing ? play.flashBad : play.hintBad;
     const float size = theme::kBody;
     const float width =
         std::min(ui.Paint().TextWidth(text, size, flashing) + 28.0f, ui.Screen().X - 2.0f * kPaletteWidth);

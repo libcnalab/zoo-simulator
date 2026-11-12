@@ -5,9 +5,13 @@
 #include <charconv>
 #include <cmath>
 #include <cstdio>
+#include <filesystem>
 #include <stdexcept>
+#include <utility>
 
+#include "Saves.hpp"
 #include "zoo/sim/Scenario.hpp"
+#include "zoo/sim/ZooSave.hpp"
 
 #include "CnaEngine/App/AssetDirectory.hpp"
 #include "CnaEngine/Enhanced/PbrMaterialBinder.hpp"
@@ -65,6 +69,14 @@ bool ZooGame::ParseArgument(std::span<const std::string_view> arguments, std::si
         emptyMap_ = true;
         return true;
     }
+    if (name == "--menu") {
+        startAtMenu_ = true;
+        return true;
+    }
+    if (name == "--saves" && hasValue) {
+        SetSaveDirectory(std::string(arguments[++index]));
+        return true;
+    }
     if (name == "--script" && hasValue) {
         std::string error;
         script_ = InputScript::Load(std::string(arguments[++index]), error);
@@ -119,30 +131,34 @@ void ZooGame::LoadGame() {
     zoo::ZooConfig config;
     config.world.seed = seed_;
     config.seed = seed_;
-    zoo_ = std::make_unique<zoo::Zoo>(*catalog_, *species_, config);
+    auto first = std::make_unique<zoo::Zoo>(*catalog_, *species_, config);
     if (!emptyMap_) {
-        const zoo::ScenarioReport report = zoo::BuildStarterZoo(*zoo_);
+        const zoo::ScenarioReport report = zoo::BuildStarterZoo(*first);
         std::printf("zoo: starter zoo: %d enclosures, %d animals, %d buildings, %d props\n",
                     report.enclosures, report.animals, report.buildings, report.props);
         for (const std::string& problem : report.problems)
             std::printf("zoo: starter zoo: %s\n", problem.c_str());
     }
     for (std::int64_t i = 0; i < warmUpTicks_; ++i)
-        zoo_->Step();
-    zoo_->DrainEvents(events_);
-    events_.clear();
+        first->Step();
 
     surfaces_ = std::make_unique<Surfaces>(device);
-    terrain_ = std::make_unique<TerrainRenderer>(device, *surfaces_);
-    terrain_->Build(zoo_->Map());
+    const auto assets = App::FindAssetDirectory("assets");
+    if (!assets)
+        throw std::runtime_error("zoo: the assets directory is missing beside the executable");
+    canvas_ = std::make_unique<ui::Canvas>(device, getContentProperty(), *assets);
+    ui_ = std::make_unique<ui::Ui>(*canvas_, controls_);
+    sky_ = std::make_unique<Graphics::SkyDome>(device);
+    sky_->AttachTo(Renderer());
+    clock_.latitudeDegrees = 48.0;
+    (void)Enhanced::EnableShadows(*this, {.size = 4096, .radius = 90.0f, .ahead = 0.7f});
+
+    const int speed = play_.speed;
+    Adopt(std::move(first));
+    play_.speed = speed;
     std::printf("zoo: ground painted in %.2f s\n", terrain_->LastPaintSeconds());
-    scenery_ = std::make_unique<SceneryRenderer>(device, *surfaces_, *catalog_);
-    scenery_->Update(zoo_->Map(), zoo_->Objects(), -1);
     std::printf("zoo: scenery: %zu triangles in %zu draw calls\n", scenery_->Triangles(),
                 scenery_->DrawCalls());
-
-    animals_ = std::make_unique<AnimalRenderer>(getContentProperty(), *species_);
-    animals_->Update(*zoo_, 0.0f, 0.0f);
     if (listAnimals_) {
         for (const zoo::Animal& animal : zoo_->Fauna().All()) {
             std::printf(
@@ -154,31 +170,136 @@ void ZooGame::LoadGame() {
         }
     }
 
-    sky_ = std::make_unique<Graphics::SkyDome>(device);
-    sky_->AttachTo(Renderer());
-    clock_.latitudeDegrees = 48.0;
-    (void)Enhanced::EnableShadows(*this, {.size = 4096, .radius = 90.0f, .ahead = 0.7f});
-    UpdateShadowArea();
-
-    const zoo::Vec2 entrance = zoo::World::TileCenter(zoo_->Map().EntranceTile());
-    camera_.SetOverview({entrance.x, entrance.z - 30.0f}, 3.14159265f, 0.75f, 70.0f);
     if (startView_)
         camera_.SetOverview({startView_->x, startView_->z}, startView_->yaw, startView_->pitch,
                             startView_->distance);
+    UpdateShadowArea();
     UpdateSky();
+    OpenPalette(play_, startPalette_);
+    // A player begins at the title screen, with the starter zoo as its backdrop; an
+    // automated run goes straight into the game.
+    if (startAtMenu_ || (!Automation().Options().Automated() && !script_)) {
+        play_.mainMenu = true;
+        play_.started = false;
+    }
+}
 
-    const auto assets = App::FindAssetDirectory("assets");
-    if (!assets)
-        throw std::runtime_error("zoo: the assets directory is missing beside the executable");
-    canvas_ = std::make_unique<ui::Canvas>(device, getContentProperty(), *assets);
-    ui_ = std::make_unique<ui::Ui>(*canvas_, controls_);
+void ZooGame::Adopt(std::unique_ptr<zoo::Zoo> zoo) {
+    auto& device = getGraphicsDeviceProperty();
+    // What draws the old zoo goes before the zoo it refers to.
+    tools_.reset();
+    animals_.reset();
+    scenery_.reset();
+    terrain_.reset();
+    zoo_ = std::move(zoo);
+    zoo_->DrainEvents(events_);
+    events_.clear();
+    tickDebt_ = 0.0;
+    autosaveMonth_ = zoo_->Time().Day() / zoo::kDaysPerMonth;
+
+    terrain_ = std::make_unique<TerrainRenderer>(device, *surfaces_);
+    terrain_->Build(zoo_->Map());
+    scenery_ = std::make_unique<SceneryRenderer>(device, *surfaces_, *catalog_);
+    scenery_->Update(zoo_->Map(), zoo_->Objects(), -1);
+    animals_ = std::make_unique<AnimalRenderer>(getContentProperty(), *species_);
+    animals_->Update(*zoo_, 0.0f, 0.0f);
+    tools_ = std::make_unique<WorldTools>(device, *surfaces_, *catalog_);
+
+    camera_.SetMode(CameraMode::Overview, zoo_->Map());
+    const zoo::Vec2 entrance = zoo::World::TileCenter(zoo_->Map().EntranceTile());
+    camera_.SetOverview({entrance.x, entrance.z - 30.0f}, 3.14159265f, 0.75f, 70.0f);
+
+    play_ = Play{};
     play_.zoo = zoo_.get();
     play_.catalog = catalog_.get();
     play_.species = species_.get();
     play_.camera = &camera_;
     play_.animals = animals_.get();
-    tools_ = std::make_unique<WorldTools>(device, *surfaces_, *catalog_);
-    OpenPalette(play_, startPalette_);
+    hud_ = Hud();
+}
+
+void ZooGame::SaveTo(const std::string& path, bool quietly) {
+    std::error_code ignored;
+    std::filesystem::create_directories(std::filesystem::path(path).parent_path(), ignored);
+    std::string error;
+    if (!zoo::SaveZoo(*zoo_, path, &error)) {
+        play_.Flash("The zoo could not be saved: " + error);
+        std::printf("zoo: save failed: %s\n", error.c_str());
+        return;
+    }
+    std::printf("zoo: saved %s\n", path.c_str());
+    if (!quietly)
+        play_.Tell("Saved");
+}
+
+void ZooGame::HandleRequest() {
+    const Request request = std::exchange(play_.request, Request::None);
+    switch (request) {
+        case Request::None:
+            break;
+        case Request::Save:
+            SaveTo(play_.requestPath, false);
+            break;
+        case Request::Load: {
+            std::string error;
+            std::unique_ptr<zoo::Zoo> loaded = zoo::LoadZoo(play_.requestPath, *catalog_, *species_, &error);
+            if (!loaded) {
+                play_.Flash("The zoo could not be loaded: " + error);
+                std::printf("zoo: load failed: %s\n", error.c_str());
+                break;
+            }
+            std::printf("zoo: loaded %s\n", play_.requestPath.c_str());
+            Adopt(std::move(loaded));
+            play_.Tell(Format("Welcome back to %s", zoo_->Name().c_str()));
+            break;
+        }
+        case Request::NewGame: {
+            // By value: Adopt() starts the shared state afresh.
+            const zoo::ZooConfig config = play_.newGame;
+            const bool starter = play_.newGameStarter;
+            auto fresh = std::make_unique<zoo::Zoo>(*catalog_, *species_, config);
+            if (starter)
+                (void)zoo::BuildStarterZoo(*fresh);
+            std::printf("zoo: new zoo \"%s\" seed %llu\n", config.name.c_str(),
+                        static_cast<unsigned long long>(config.seed));
+            Adopt(std::move(fresh));
+            break;
+        }
+        case Request::Quit:
+            Exit();
+            break;
+        case Request::MainMenu:
+            play_.mainMenu = true;
+            play_.dialog = Dialog::None;
+            play_.palette = Palette::None;
+            play_.Use(ToolKind::Inspect);
+            play_.walk = false;
+            play_.follow = false;
+            break;
+    }
+}
+
+void ZooGame::UpdateCameraMode() {
+    CameraMode mode = CameraMode::Overview;
+    if (!play_.mainMenu) {
+        if (play_.follow && play_.selection.kind == Picked::Animal) {
+            const zoo::Animal* animal = zoo_->Fauna().Find(play_.selection.animal);
+            const auto position = animals_->PositionOf(play_.selection.animal);
+            if (animal != nullptr && position) {
+                const zoo::SpeciesDef& species = species_->All()[static_cast<std::size_t>(animal->species)];
+                camera_.SetFollowTarget(*position, std::max(species.bodyLengthM, species.shoulderHeightM));
+                mode = CameraMode::Follow;
+            } else {
+                play_.follow = false;
+            }
+        } else {
+            play_.follow = false;
+        }
+        if (mode != CameraMode::Follow && play_.walk)
+            mode = CameraMode::Walk;
+    }
+    if (mode != camera_.Mode())
+        camera_.SetMode(mode, zoo_->Map());
 }
 
 void ZooGame::UpdateShadowArea() {
@@ -234,7 +355,22 @@ void ZooGame::UpdateFrame(double seconds) {
     }
     ui_->Begin(dt);
     hud_.Build(*ui_, play_);
-    if (controls_.KeyboardFree()) {
+    const bool playing = !play_.mainMenu;
+    if (!playing) {
+        play_.hint.clear();
+        play_.flashLeft = std::max(0.0f, play_.flashLeft - dt);
+        if (controls_.KeyboardFree() && controls_.Pressed(Keys::Escape))
+            play_.dialog = Dialog::None;
+    }
+    if (playing && controls_.KeyboardFree() && !IsModal(play_.dialog)) {
+        if (controls_.Pressed(Keys::Tab)) {
+            play_.walk = !play_.walk;
+            play_.follow = false;
+        }
+        if (controls_.Pressed(Keys::F5))
+            SaveTo(SavePath("quicksave").string(), false);
+    }
+    if (playing && controls_.KeyboardFree() && !IsModal(play_.dialog)) {
         if (controls_.Pressed(Keys::Space))
             play_.speed = play_.speed == 0 ? 1 : 0;
         if (controls_.Pressed(Keys::D1))
@@ -247,12 +383,24 @@ void ZooGame::UpdateFrame(double seconds) {
             play_.speed = 8;
     }
     const auto& viewport = getGraphicsDeviceProperty().getViewportProperty();
-    tools_->Update(play_, controls_, MainCamera(),
-                   Vector2(static_cast<float>(viewport.getWidthProperty()),
-                           static_cast<float>(viewport.getHeightProperty())),
-                   dt);
+    if (playing)
+        tools_->Update(play_, controls_, MainCamera(),
+                       Vector2(static_cast<float>(viewport.getWidthProperty()),
+                               static_cast<float>(viewport.getHeightProperty())),
+                       dt);
     ui_->End();
-    StepSimulation(seconds);
+    HandleRequest();
+    // The title screen shows the zoo alive behind it; a window that takes over the screen stops it.
+    if (play_.mainMenu ? play_.dialog == Dialog::None : !IsModal(play_.dialog))
+        StepSimulation(seconds);
+    // An autosave at the turn of every month.
+    const std::int64_t month = zoo_->Time().Day() / zoo::kDaysPerMonth;
+    if (month != autosaveMonth_) {
+        autosaveMonth_ = month;
+        if (!Automation().Options().Automated() && !script_)
+            SaveTo(SavePath(kAutosaveTitle).string(), true);
+    }
+    UpdateCameraMode();
     camera_.Update(controls_, dt, zoo_->Map());
     camera_.Apply(MainCamera());
     UpdateShadowArea();
@@ -266,7 +414,8 @@ void ZooGame::Submit(App::Frame& frame) {
     terrain_->Submit(frame);
     scenery_->Submit(frame);
     animals_->Submit(frame);
-    tools_->Submit(frame);
+    if (!play_.mainMenu)
+        tools_->Submit(frame);
 }
 
 void ZooGame::DrawOverlay(Microsoft::Xna::Framework::Graphics::GraphicsDevice&) {

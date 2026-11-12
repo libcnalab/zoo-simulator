@@ -149,6 +149,26 @@ void WorldTools::MarkEdge(Mark mark, const zoo::World& world, zoo::EdgeRef edge,
     Layer(mark).Quad(a, b, b + up, a + up);
 }
 
+void WorldTools::MarkBand(Mark mark, const zoo::World& world, zoo::TileCoord tile, zoo::Dir side,
+                          float width) {
+    // A strip lying on the ground just inside the tile's edge (a fence would hide one under it).
+    const zoo::TileCoord out = zoo::Step(side);
+    const zoo::Vec2 center = zoo::World::TileCenter(tile);
+    const float half = 0.5f * zoo::kTileSize;
+    const zoo::Vec2 toEdge{static_cast<float>(out.x), static_cast<float>(out.z)};
+    const zoo::Vec2 along{-toEdge.z, toEdge.x};
+    const auto point = [&](float across, float lengthwise) {
+        const zoo::Vec2 p{center.x + toEdge.x * across + along.x * lengthwise,
+                          center.z + toEdge.z * across + along.z * lengthwise};
+        return Vector3(p.x, world.HeightAt(p) + kLift, p.z);
+    };
+    const float outer = half - 0.08f;
+    const float inner = outer - width;
+    // Both windings: seen from above whichever way the side faces.
+    Layer(mark).Quad(point(inner, -half), point(outer, -half), point(outer, half), point(inner, half));
+    Layer(mark).Quad(point(inner, half), point(outer, half), point(outer, -half), point(inner, -half));
+}
+
 void WorldTools::MarkRing(Mark mark, const zoo::World& world, zoo::Vec2 center, float radius, float width) {
     const int sides = std::clamp(static_cast<int>(radius * 6.0f), 16, 64);
     const float inner = std::max(0.0f, radius - width);
@@ -261,6 +281,8 @@ void WorldTools::Update(Play& play, const Controls& controls, const CnaEngine::G
     if (rightClick || escape) {
         if (dragging_) {
             dragging_ = false;
+        } else if (escape && IsModal(play.dialog)) {
+            play.dialog = Dialog::None;
         } else if (tool.kind != ToolKind::Inspect) {
             play.Use(ToolKind::Inspect);
             play.palette = Palette::None;
@@ -404,7 +426,7 @@ void WorldTools::ShowSelection(const Play& play) {
                     for (const zoo::Dir side :
                          {zoo::Dir::North, zoo::Dir::East, zoo::Dir::South, zoo::Dir::West}) {
                         if (zoo.Habitats().At(tile + zoo::Step(side)) != s.enclosure)
-                            MarkEdge(Mark::Select, world, zoo::EdgeOf(tile, side), 0.5f);
+                            MarkBand(Mark::Select, world, tile, side, 0.45f);
                     }
                 }
             }

@@ -1,0 +1,9 @@
+# The list of animals, selecting one from it, the following camera, then a walk.
+# Run from build/: ./zoo-simulator --frames 160 --lockstep --script ../tests/ui/follow_walk.script
+5 click 871 690
+12 click 400 396
+20 click 1027 551
+92 key Escape
+96 key Tab
+97 hold W
+150 release W

@@ -96,11 +96,31 @@ std::string Percent(float fraction) {
 }
 
 void Hud::Build(ui::Ui& ui, Play& play) {
+    if (play.mainMenu) {
+        // The title screen; its windows (a new zoo, loading, the help) lie over it.
+        ui.SetEnabled(play.dialog == Dialog::None);
+        TitleScreen(ui, play);
+        ui.SetEnabled(true);
+        Windows(ui, play);
+        HintLine(ui, play);  // "The zoo could not be loaded"
+        return;
+    }
+    // A modal window stops everything beneath it.
+    const bool modal = IsModal(play.dialog);
+    ui.SetEnabled(!modal);
     TopBar(ui, play);
     Toolbar(ui, play);
     HintLine(ui, play);
     PalettePanel(ui, play);
+    Inspector(ui, play);
     Toasts(ui, play);
+    ui.SetEnabled(true);
+    if (modal) {
+        const Box screen{0.0f, 0.0f, ui.Screen().X, ui.Screen().Y};
+        ui.Claim(screen);
+        ui.Paint().Fill(screen, Rgb(6, 10, 12, 130));
+    }
+    Windows(ui, play);
 }
 
 void Hud::TopBar(ui::Ui& ui, Play& play) {
@@ -215,6 +235,8 @@ void Hud::Toasts(ui::Ui& ui, Play& play) {
         toasts_.erase(toasts_.begin(), toasts_.end() - static_cast<std::ptrdiff_t>(kMost));
 
     constexpr float kWidth = 330.0f;
+    // Beside the inspector when something is selected.
+    const float shift = play.selection.kind != Picked::None ? 310.0f : 0.0f;
     float y = kBarHeight + 10.0f;
     std::uint32_t dismissed = 0;
     for (auto it = toasts_.rbegin(); it != toasts_.rend(); ++it) {
@@ -225,7 +247,7 @@ void Hud::Toasts(ui::Ui& ui, Play& play) {
         const zoo::Notification& n = *found;
         const auto lines = ui.Paint().Wrap(n.text, kWidth - 30.0f, theme::kSmall + 1.0f);
         const float lineHeight = ui.Paint().LineHeight(theme::kSmall + 1.0f);
-        const Box box{ui.Screen().X - kWidth - 10.0f, y, kWidth,
+        const Box box{ui.Screen().X - kWidth - 10.0f - shift, y, kWidth,
                       lineHeight * static_cast<float>(lines.size()) + 14.0f};
         // The last second fades it out.
         const float fade = std::clamp(kLife - it->age, 0.0f, 1.0f);

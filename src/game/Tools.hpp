@@ -59,6 +59,7 @@ private:
     MeshWriter& Layer(Mark mark) { return layers_[static_cast<std::size_t>(mark)].writer; }
     void MarkTile(Mark mark, const zoo::World& world, zoo::TileCoord tile);
     void MarkEdge(Mark mark, const zoo::World& world, zoo::EdgeRef edge, float height = 1.4f);
+    void MarkBand(Mark mark, const zoo::World& world, zoo::TileCoord tile, zoo::Dir side, float width);
     void MarkRing(Mark mark, const zoo::World& world, zoo::Vec2 center, float radius, float width = 0.25f);
     void UploadLayers();
     void ShowFences(const zoo::World& world, const std::vector<zoo::EdgeRef>& edges, int kind, bool gate);

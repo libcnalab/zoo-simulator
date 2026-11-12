@@ -1,0 +1,13 @@
+# The windows: saving, loading that save, the help, a new zoo.
+# Run from build/: ./zoo-simulator --frames 100 --lockstep --saves ../build-probe/saves --script ../tests/ui/save_load.script
+# Expect "zoo: saved" and "zoo: loaded" in the output.
+5 click 1158 690
+12 click 640 284
+22 key Enter
+34 click 1158 690
+40 click 640 324
+50 click 868 553
+64 click 1158 690
+70 click 640 404
+80 key Escape
+86 click 640 364

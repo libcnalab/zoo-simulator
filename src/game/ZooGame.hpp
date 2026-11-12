@@ -39,6 +39,12 @@ protected:
     void OnQuit() override {}
 
 private:
+    /// Makes `zoo` the game being played: the world is drawn anew, the interface starts afresh.
+    void Adopt(std::unique_ptr<zoo::Zoo> zoo);
+    /// Carries out what the interface asked for this frame (saving, loading, a new zoo, quitting).
+    void HandleRequest();
+    void SaveTo(const std::string& path, bool quietly);
+    void UpdateCameraMode();
     void StepSimulation(double seconds);
     void UpdateSky();
     void UpdateShadowArea();
@@ -59,6 +65,10 @@ private:
     std::vector<std::string> shots_;
     /// The palette open at the start (--palette, for screenshots).
     Palette startPalette_ = Palette::None;
+    /// --menu: the title screen even in an automated run.
+    bool startAtMenu_ = false;
+    /// The month an autosave was last written in.
+    std::int64_t autosaveMonth_ = -1;
 
     // The simulation. The catalogs outlive the zoo, which refers to them.
     std::unique_ptr<zoo::Catalog> catalog_;
