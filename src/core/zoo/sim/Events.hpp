@@ -27,6 +27,15 @@ enum class EventType : std::uint8_t {
     AnimalPregnant,  ///< other = the father
     AnimalCalled,    ///< vocalised (the sound engine plays the species' call at `position`)
     AnimalUnhappy,   ///< welfare fell below the alert threshold (once per decline)
+
+    // ---- visitors (Event::visitor set; `position` where it happened) ----
+    VisitorArrived,   ///< paid for a ticket; detail = the price in cents
+    VisitorLeft,      ///< detail = happiness on leaving, 0..100
+    VisitorBought,    ///< building = the stall or shop; detail = the price in cents
+    VisitorDonated,   ///< detail = the amount in cents
+    VisitorLittered,  ///< dropped litter at `position`
+    VisitorScared,    ///< animal = the loose animal it runs from
+    VisitorThought,   ///< detail = VisitorThought; a new thought worth a speech bubble
 };
 
 struct Event {

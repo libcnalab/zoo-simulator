@@ -390,6 +390,13 @@ void Zoo::ReportEvents(std::size_t first) {
                 text = who + " is unhappy with its enclosure.";
                 break;
             case EventType::AnimalCalled:
+            case EventType::VisitorArrived:
+            case EventType::VisitorLeft:
+            case EventType::VisitorBought:
+            case EventType::VisitorDonated:
+            case EventType::VisitorLittered:
+            case EventType::VisitorScared:
+            case EventType::VisitorThought:
                 break;
         }
         if (!text.empty()) {
