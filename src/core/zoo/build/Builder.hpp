@@ -125,6 +125,14 @@ public:
     Builder(World& world, ZooObjects& objects, Enclosures& enclosures, const Catalog& catalog,
             Finance* finance = nullptr);
 
+    /// For placing many props or painting much ground in a row (a scenario's planting):
+    /// between Hold() and Release() those two operations leave the enclosures' figures
+    /// (Enclosure::stats) as they were, and Release() brings them up to date in one
+    /// rebuild instead of one per prop. Regions never go stale: props and ground cover
+    /// do not change them, and every other operation still rebuilds at once.
+    void Hold() { held_ = true; }
+    void Release();
+
     // ---- fences ---------------------------------------------------------------------
     /// What stops a fence of catalog kind `kind` (FenceDef::kind) on one edge:
     /// OutOfBounds; NotProperty unless both tiles beside the edge are property;
@@ -256,6 +264,8 @@ private:
     BuildPlan DoDemolish(BuildingId id, bool apply);
     BuildPlan DoProp(int def, Vec2 position, float heading, float scale, bool apply);
     BuildPlan DoRemoveProp(PropId id, bool apply);
+    /// The enclosures' figures after an operation that cannot change a region.
+    void RefreshFigures();
 
     World& world_;
     ZooObjects& objects_;
@@ -263,6 +273,8 @@ private:
     const Catalog& catalog_;
     Finance* finance_ = nullptr;
     float largestPropRadius_ = 0.0f;
+    bool held_ = false;
+    bool stale_ = false;
 };
 
 }  // namespace zoo

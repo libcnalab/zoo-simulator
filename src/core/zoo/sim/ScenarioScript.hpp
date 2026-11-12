@@ -23,6 +23,9 @@ public:
           rng_(zoo.Config().seed, 0x5ce0a210) {}
 
     ScenarioReport& Report() { return report_; }
+    /// See Builder::Hold(): for stretches that place much and read no habitat's figures.
+    void Hold() { build_.Hold(); }
+    void Release() { build_.Release(); }
     Rng& Random() { return rng_; }
 
     TileCoord Tile(int east, int north) const { return {origin_.x + east, origin_.z - north}; }

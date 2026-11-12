@@ -811,9 +811,12 @@ ScenarioReport BuildVisitorZoo(Zoo& zoo, const VisitorZooOptions& options) {
     for (const HabitatPlan& plan : kHabitats) {
         Habitat(zoo, script, plan, options);
     }
+    // What follows stands outside the habitats and asks about none of their figures.
+    script.Hold();
     Facilities(zoo, script);
     GroundDetail(zoo, script);
     Parkland(zoo, script);
+    script.Release();
     zoo.Guests().SetTicketPrice(0);
     script.Provision();
     return script.Report();

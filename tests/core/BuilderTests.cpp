@@ -347,6 +347,39 @@ TEST(Builder, SmallZooConstructionUpdatesEnclosureStatisticsEndToEnd) {
     EXPECT_GT(enclosure.stats.visibility, 0.0f);
 }
 
+TEST(Builder, HeldFiguresComeUpToDateOnReleaseAndRegionsNeverGoStale) {
+    Catalog catalog = ShippedCatalog();
+    World world(16, 16);
+    ZooObjects objects;
+    Enclosures enclosures;
+    enclosures.Rebuild(world, objects, catalog);
+    Builder builder(world, objects, enclosures, catalog);
+    int treeDef = -1;
+    for (std::size_t i = 0; i < catalog.props.size(); ++i) {
+        if (catalog.props[i].role == PropRole::Tree) {
+            treeDef = static_cast<int>(i);
+            break;
+        }
+    }
+    ASSERT_GE(treeDef, 0);
+
+    builder.Hold();
+    // A fence changes regions: it is seen at once, held or not.
+    ASSERT_TRUE(builder.PlaceFence(EdgesAround({4, 4}, {10, 10}), catalog.fences[1].kind).Ok());
+    ASSERT_EQ(enclosures.All().size(), 1U);
+    EXPECT_TRUE(enclosures.At(TileCoord{7, 7}));
+    // A tree changes only the figures: they wait for the release.
+    ASSERT_TRUE(builder.PlaceProp(treeDef, World::TileCenter({9, 8})).Ok());
+    EXPECT_FLOAT_EQ(enclosures.All().front().stats.vegetationM2, 0.0f);
+    builder.Release();
+    EXPECT_GT(enclosures.All().front().stats.vegetationM2, 0.0f);
+
+    // After the release every prop counts at once again.
+    const float one = enclosures.All().front().stats.vegetationM2;
+    ASSERT_TRUE(builder.PlaceProp(treeDef, World::TileCenter({6, 6})).Ok());
+    EXPECT_GT(enclosures.All().front().stats.vegetationM2, one);
+}
+
 TEST(Builder, FenceChecksReportBoundsPropertyPerimeterBuildingAndDuplicateErrors) {
     Catalog catalog = ShippedCatalog();
     World world(16, 16);

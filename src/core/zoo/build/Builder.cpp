@@ -7,6 +7,7 @@
 #include <cstdint>
 #include <limits>
 #include <tuple>
+#include <utility>
 #include <vector>
 
 namespace zoo {
@@ -271,6 +272,21 @@ BuildPlan Builder::PlaceFence(std::span<const EdgeRef> edges, int kind, bool gat
     return DoFence(edges, kind, gate, true);
 }
 
+void Builder::RefreshFigures() {
+    if (held_) {
+        stale_ = true;
+        return;
+    }
+    enclosures_.Rebuild(world_, objects_, catalog_);
+}
+
+void Builder::Release() {
+    held_ = false;
+    if (std::exchange(stale_, false)) {
+        enclosures_.Rebuild(world_, objects_, catalog_);
+    }
+}
+
 BuildPlan Builder::DoFence(std::span<const EdgeRef> edges, int kind, bool gate, bool apply) {
     BuildPlan plan;
     const FenceDef* def = catalog_.FenceByKind(kind);
@@ -483,7 +499,7 @@ BuildPlan Builder::DoTerrain(std::span<const TileCoord> tiles, Terrain terrain, 
         for (const TileCoord tile : accepted) {
             world_.SetTerrain(tile, terrain);
         }
-        enclosures_.Rebuild(world_, objects_, catalog_);
+        RefreshFigures();
     }
     return plan;
 }
@@ -964,7 +980,7 @@ BuildPlan Builder::DoProp(int defIndex, Vec2 position, float heading, float scal
         prop.heading = WrapAngle(heading);
         prop.scale = std::clamp(scale, kMinPropScale, kMaxPropScale);
         plan.prop = objects_.AddProp(prop);
-        enclosures_.Rebuild(world_, objects_, catalog_);
+        RefreshFigures();
     }
     return plan;
 }
