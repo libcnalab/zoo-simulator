@@ -1,0 +1,31 @@
+# Build trees (closed list of names: build, build-asan, build-ubsan, build-tsan, build-probe, build-consumer)
+/build*/
+/cmake-build-*/
+CMakeUserPresets.json
+compile_commands.json
+
+# IDEs and editors
+/.idea/
+/.vscode/
+/.cache/
+*.user
+*.swp
+*~
+
+# Python
+__pycache__/
+*.py[cod]
+
+# Blender backups and scratch output of the asset generators
+*.blend1
+*.blend2
+/assets/generated/_work/
+
+# Runtime output
+/saves/
+/screenshots/
+*.log
+imgui.ini
+
+# Agent scratch
+/.codex-work/

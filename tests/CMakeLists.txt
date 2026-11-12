@@ -1,0 +1,17 @@
+# SPDX-License-Identifier: MIT
+if(NOT TARGET GTest::gtest_main)
+    if(NOT EXISTS "${ZOO_GOOGLETEST_DIR}/CMakeLists.txt")
+        message(FATAL_ERROR "No GoogleTest at '${ZOO_GOOGLETEST_DIR}'. Set -DZOO_GOOGLETEST_DIR=... or -DZOO_BUILD_TESTS=OFF.")
+    endif()
+    set(INSTALL_GTEST OFF CACHE BOOL "" FORCE)
+    set(BUILD_GMOCK OFF CACHE BOOL "" FORCE)
+    add_subdirectory("${ZOO_GOOGLETEST_DIR}" "${CMAKE_BINARY_DIR}/_googletest" EXCLUDE_FROM_ALL)
+endif()
+include(GoogleTest)
+
+file(GLOB_RECURSE ZOO_TEST_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/core/*.cpp")
+add_executable(zoo_core_tests ${ZOO_TEST_SOURCES})
+target_link_libraries(zoo_core_tests PRIVATE Zoo::Core zoo_warnings GTest::gtest_main)
+target_include_directories(zoo_core_tests SYSTEM PRIVATE "${ZOO_NLOHMANN_JSON_INCLUDE}")
+target_compile_definitions(zoo_core_tests PRIVATE ZOO_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
+gtest_discover_tests(zoo_core_tests DISCOVERY_TIMEOUT 60)

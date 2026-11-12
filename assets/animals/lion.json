@@ -1,0 +1,29 @@
+{
+  "bones": 33,
+  "clips": [],
+  "generator": "tools/animals (zoogen)",
+  "license": "MIT",
+  "meta": {
+    "common_name": "African lion",
+    "roughness": 0.9,
+    "scientific_name": "Panthera leo",
+    "sex": "male",
+    "shoulder_height_m": 1.2
+  },
+  "name": "lion",
+  "skeleton_bounds_animal_space": {
+    "max": [
+      1.22,
+      0.17,
+      1.5
+    ],
+    "min": [
+      -1.42,
+      -0.17,
+      0.0
+    ]
+  },
+  "texture": 1024,
+  "triangles": 18624,
+  "vertices": 9320
+}
