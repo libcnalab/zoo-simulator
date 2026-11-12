@@ -168,6 +168,8 @@ struct Animal {
     std::uint32_t issues = 0;  ///< from that same evaluation
     bool sick = false;
     bool treated = false;  ///< a vet has seen to the illness: it recovers
+    /// Alert latches: bit 0 starving, bit 1 thirsty; cleared below 0.6.
+    std::uint8_t alerts = 0;
 
     // -- behaviour --
     AnimalActivity activity = AnimalActivity::Idle;
@@ -306,9 +308,9 @@ private:
         int viewers = 0;  // input, not saved
     };
 
-    std::vector<Animal> animals_;             // ascending id
-    std::vector<EnclosureCare> care_;         // ascending id
-    std::vector<std::uint8_t> alertLatches_;  // hunger and thirst alert state, aligned with animals_
+    std::vector<Animal> animals_;      // ascending id
+    std::vector<EnclosureCare> care_;  // ascending id
+    std::vector<std::vector<std::size_t>> enclosureScratch_;
     std::uint32_t nextId_ = 1;
     Rng rng_;
     int births_ = 0;

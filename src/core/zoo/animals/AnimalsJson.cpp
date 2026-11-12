@@ -73,6 +73,7 @@ Json Encode(const Animal& a, const SpeciesCatalog& species) {
                 {"issues", a.issues},
                 {"sick", a.sick},
                 {"treated", a.treated},
+                {"alerts", a.alerts},
                 {"activity", ToString(a.activity)},
                 {"moving", a.moving},
                 {"activity_ticks", a.activityTicks},
@@ -127,6 +128,11 @@ Animal DecodeAnimal(const Json& value, const SpeciesCatalog& species) {
     a.issues = static_cast<std::uint32_t>(issues);
     a.sick = ReadBool(value.at("sick"), "sick");
     a.treated = ReadBool(value.at("treated"), "treated");
+    const std::uint64_t alerts = ReadUnsigned(value.at("alerts"), "alerts");
+    if (alerts > 3U) {
+        throw std::runtime_error("alerts out of range");
+    }
+    a.alerts = static_cast<std::uint8_t>(alerts);
     const std::string activity = ReadString(value.at("activity"), "activity");
     bool found = false;
     for (int i = 0; i < static_cast<int>(AnimalActivity::Count); ++i) {
@@ -172,17 +178,13 @@ Json ToJson(const Animals& animals, const SpeciesCatalog& species) {
     Json care = Json::array();
     for (const auto& item : AnimalsAccess::Care(animals))
         care.push_back(Json{{"id", item.id.value}, {"dirt", item.dirt}});
-    Json alerts = Json::array();
-    for (std::uint8_t item : AnimalsAccess::Alerts(animals))
-        alerts.push_back(item);
     return Json{{"next_id", AnimalsAccess::NextId(animals)},
                 {"rng", Json::array({AnimalsAccess::RngState(animals), AnimalsAccess::RngStream(animals)})},
                 {"births", AnimalsAccess::Births(animals)},
                 {"deaths", AnimalsAccess::Deaths(animals)},
                 {"escapes", AnimalsAccess::Escapes(animals)},
                 {"animals", list},
-                {"care", care},
-                {"alerts", alerts}};
+                {"care", care}};
 }
 std::optional<Animals> AnimalsFromJson(const Json& json, const SpeciesCatalog& species, std::string* error) {
     try {
@@ -191,8 +193,8 @@ std::optional<Animals> AnimalsFromJson(const Json& json, const SpeciesCatalog& s
         const std::uint64_t next = ReadUnsigned(json.at("next_id"), "next_id");
         if (next == 0 || next > std::numeric_limits<std::uint32_t>::max())
             throw std::runtime_error("next_id out of range");
-        if (!json.at("animals").is_array() || !json.at("care").is_array() || !json.at("alerts").is_array())
-            throw std::runtime_error("animals, care, and alerts must be arrays");
+        if (!json.at("animals").is_array() || !json.at("care").is_array())
+            throw std::runtime_error("animals and care must be arrays");
         std::vector<Animal> animals;
         std::uint32_t previous = 0;
         for (const Json& value : json.at("animals")) {
@@ -209,21 +211,12 @@ std::optional<Animals> AnimalsFromJson(const Json& json, const SpeciesCatalog& s
             care.push_back(
                 {ReadId<EnclosureId>(value.at("id"), "care id"), ReadFloat(value.at("dirt"), "dirt"), 0});
         }
-        std::vector<std::uint8_t> alerts;
-        for (const Json& value : json.at("alerts")) {
-            const std::uint64_t alert = ReadUnsigned(value, "alert");
-            if (alert > 3U)
-                throw std::runtime_error("alert out of range");
-            alerts.push_back(static_cast<std::uint8_t>(alert));
-        }
-        if (alerts.size() != animals.size())
-            throw std::runtime_error("alert count does not match animals");
         const int births = ReadInt(json.at("births"), "births");
         const int deaths = ReadInt(json.at("deaths"), "deaths");
         const int escapes = ReadInt(json.at("escapes"), "escapes");
         Animals result;
-        AnimalsAccess::Restore(result, std::move(animals), std::move(care), std::move(alerts),
-                               static_cast<std::uint32_t>(next), ReadUnsigned(json.at("rng")[0], "rng state"),
+        AnimalsAccess::Restore(result, std::move(animals), std::move(care), static_cast<std::uint32_t>(next),
+                               ReadUnsigned(json.at("rng")[0], "rng state"),
                                ReadUnsigned(json.at("rng")[1], "rng stream"), births, deaths, escapes);
         if (error != nullptr)
             error->clear();

@@ -21,7 +21,6 @@ struct AnimalsAccess {
     static void AddCare(Animals& animals, EnclosureId id, float dirt) {
         animals.care_.push_back(Animals::EnclosureCare{id, dirt, 0});
     }
-    static const std::vector<std::uint8_t>& Alerts(const Animals& animals) { return animals.alertLatches_; }
     static std::uint32_t NextId(const Animals& animals) { return animals.nextId_; }
     static std::uint64_t RngState(const Animals& animals) { return animals.rng_.State(); }
     static std::uint64_t RngStream(const Animals& animals) { return animals.rng_.Stream(); }
@@ -29,11 +28,10 @@ struct AnimalsAccess {
     static int Deaths(const Animals& animals) { return animals.deaths_; }
     static int Escapes(const Animals& animals) { return animals.escapes_; }
     static void Restore(Animals& animals, std::vector<Animal> list, std::vector<Animals::EnclosureCare> care,
-                        std::vector<std::uint8_t> alerts, std::uint32_t nextId, std::uint64_t state,
-                        std::uint64_t stream, int births, int deaths, int escapes) {
+                        std::uint32_t nextId, std::uint64_t state, std::uint64_t stream, int births,
+                        int deaths, int escapes) {
         animals.animals_ = std::move(list);
         animals.care_ = std::move(care);
-        animals.alertLatches_ = std::move(alerts);
         animals.nextId_ = nextId;
         animals.rng_.Restore(state, stream);
         animals.births_ = births;
