@@ -40,7 +40,7 @@
   "vegetationDensity": 0.05,
   "needsShelter": true,
   "tempMinC": -45,
-  "tempMaxC": 10,
+  "tempMaxC": 25,
   "fenceHeightM": 4.0,
   "fenceStrength": 4,
   "price": 12000,
