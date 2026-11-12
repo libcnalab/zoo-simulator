@@ -154,17 +154,10 @@ HabitatStyle Style(std::string_view species) {
                 5};
     }
     if (species == "flamingo") {
-        return {Terrain::Mud,
-                "wire_mesh",
-                "glass_wall",
-                "heated_barn",
-                "fish_bucket_stand",
-                "willow",
-                "bamboo_clump",
-                "sandstone_rock",
-                "ball",
-                3,
-                9};
+        return {Terrain::Mud, "wire_mesh", "glass_wall", "heated_barn", "fish_bucket_stand",
+                // Not willows: their curtain hangs to the ground and was all one saw from the glass.
+                // Acacias stand by the soda lakes too, and carry their crown above the eye.
+                "acacia", "tropical_fern", "sandstone_rock", "ball", 3, 9};
     }
     if (species == "giraffe") {
         return {Terrain::Savanna,
