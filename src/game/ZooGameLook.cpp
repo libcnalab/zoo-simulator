@@ -253,19 +253,58 @@ std::optional<ZooGame::Pose> ZooGame::StandPose(std::string_view what) const {
     };
     if (kind == "habitat") {
         for (const zoo::Enclosure& enclosure : zoo_->Habitats().All()) {
-            // The spot at the fence and the animal that are nearest to each other.
+            // The spot at the fence and the animal that are nearest to each other, where a
+            // visitor would in fact stand: at the glass rather than at the mesh, and with no
+            // trunk, rock or shelter between them and the animal.
+            const auto blocked = [&](zoo::Vec2 from, zoo::Vec2 to) {
+                const float sx = to.x - from.x;
+                const float sz = to.z - from.z;
+                const float length2 = std::max(sx * sx + sz * sz, 1.0e-4f);
+                for (const zoo::Prop& prop : zoo_->Objects().Props()) {
+                    if (prop.def < 0)
+                        continue;
+                    const zoo::PropDef& def = zoo_->Definitions().props[static_cast<std::size_t>(prop.def)];
+                    if (def.heightM * prop.scale < 1.0f)
+                        continue;
+                    const float along = std::clamp(
+                        ((prop.position.x - from.x) * sx + (prop.position.z - from.z) * sz) / length2, 0.0f,
+                        0.92f);
+                    const float px = from.x + along * sx - prop.position.x;
+                    const float pz = from.z + along * sz - prop.position.z;
+                    const float reach = def.radiusM * prop.scale + 0.6f;
+                    if (px * px + pz * pz < reach * reach)
+                        return true;
+                }
+                return false;
+            };
             float best = 1.0e9f;
             Pose pose;
             for (const zoo::Animal& animal : zoo_->Fauna().All()) {
                 if (!animal.Visible() || !(animal.home == enclosure.id))
                     continue;
                 for (const zoo::ViewingSpot& spot : enclosure.viewing) {
-                    const zoo::Vec2 at = centre(spot.tile);
+                    // Up at the fence, in front of whoever else is watching from that tile.
+                    const zoo::TileCoord toward = zoo::Step(spot.side);
+                    const zoo::Vec2 middle = centre(spot.tile);
+                    const zoo::Vec2 at{middle.x + 0.72f * static_cast<float>(toward.x),
+                                       middle.z + 0.72f * static_cast<float>(toward.z)};
                     const float dx = animal.position.x - at.x;
                     const float dz = animal.position.z - at.z;
-                    if (dx * dx + dz * dz < best) {
-                        best = dx * dx + dz * dz;
-                        pose = Pose{at.x, at.z, std::atan2(dx, dz), 0.06f};
+                    const float sight = std::max(spot.visibility, 0.2f);
+                    // Some six metres off is where an animal fills the view without the eye
+                    // being on top of it.
+                    const float off = std::sqrt(dx * dx + dz * dz) - 6.0f;
+                    float score = (off * off + 1.0f) / (sight * sight * sight * sight);
+                    if (score >= best)
+                        continue;
+                    if (blocked(at, {animal.position.x, animal.position.z}))
+                        score *= 16.0f;
+                    if (score < best) {
+                        best = score;
+                        // Down at an animal that lies right at the fence, level at one far off.
+                        const float distance = std::sqrt(dx * dx + dz * dz);
+                        const float down = std::atan2(1.2f, std::max(distance, 0.5f));
+                        pose = Pose{at.x, at.z, std::atan2(dx, dz), std::clamp(down, 0.06f, 0.9f)};
                     }
                 }
             }
