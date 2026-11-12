@@ -1,0 +1,133 @@
+{
+  "bones": 33,
+  "clips": [
+    {
+      "duration": 6.0,
+      "events": [],
+      "frames": 181,
+      "loop": true,
+      "name": "idle",
+      "speed": 0.0
+    },
+    {
+      "duration": 0.3,
+      "events": [
+        {
+          "name": "step",
+          "time": 0.0
+        },
+        {
+          "name": "step",
+          "time": 0.075
+        },
+        {
+          "name": "step",
+          "time": 0.15
+        },
+        {
+          "name": "step",
+          "time": 0.225
+        }
+      ],
+      "frames": 10,
+      "loop": true,
+      "name": "walk",
+      "speed": 0.6
+    },
+    {
+      "duration": 0.2333,
+      "events": [
+        {
+          "name": "step",
+          "time": 0.0
+        },
+        {
+          "name": "step",
+          "time": 0.0
+        },
+        {
+          "name": "step",
+          "time": 0.1167
+        },
+        {
+          "name": "step",
+          "time": 0.1167
+        }
+      ],
+      "frames": 8,
+      "loop": true,
+      "name": "trot",
+      "speed": 1.5
+    },
+    {
+      "duration": 3.0,
+      "events": [],
+      "frames": 91,
+      "loop": true,
+      "name": "eat",
+      "speed": 0.0
+    },
+    {
+      "duration": 2.4,
+      "events": [],
+      "frames": 73,
+      "loop": true,
+      "name": "drink",
+      "speed": 0.0
+    },
+    {
+      "duration": 8.0,
+      "events": [],
+      "frames": 241,
+      "loop": true,
+      "name": "rest",
+      "speed": 0.0
+    },
+    {
+      "duration": 8.0,
+      "events": [],
+      "frames": 241,
+      "loop": true,
+      "name": "sleep",
+      "speed": 0.0
+    },
+    {
+      "duration": 2.6,
+      "events": [
+        {
+          "name": "call",
+          "time": 0.572
+        }
+      ],
+      "frames": 79,
+      "loop": false,
+      "name": "vocalize",
+      "speed": 0.0
+    }
+  ],
+  "generator": "tools/animals (zoogen)",
+  "license": "MIT",
+  "meta": {
+    "body_length_m": 0.35,
+    "common_name": "Meerkat",
+    "roughness": 0.91,
+    "scientific_name": "Suricata suricatta",
+    "shoulder_height_m": 0.25
+  },
+  "name": "meerkat",
+  "skeleton_bounds_animal_space": {
+    "max": [
+      0.25,
+      0.039,
+      0.2575
+    ],
+    "min": [
+      -0.322,
+      -0.039,
+      0.0
+    ]
+  },
+  "texture": 1024,
+  "triangles": 8576,
+  "vertices": 4296
+}

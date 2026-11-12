@@ -1,0 +1,133 @@
+{
+  "bones": 41,
+  "clips": [
+    {
+      "duration": 6.0,
+      "events": [],
+      "frames": 181,
+      "loop": true,
+      "name": "idle",
+      "speed": 0.0
+    },
+    {
+      "duration": 1.1333,
+      "events": [
+        {
+          "name": "step",
+          "time": 0.0
+        },
+        {
+          "name": "step",
+          "time": 0.2833
+        },
+        {
+          "name": "step",
+          "time": 0.5667
+        },
+        {
+          "name": "step",
+          "time": 0.85
+        }
+      ],
+      "frames": 35,
+      "loop": true,
+      "name": "walk",
+      "speed": 1.3
+    },
+    {
+      "duration": 0.7333,
+      "events": [
+        {
+          "name": "step",
+          "time": 0.0
+        },
+        {
+          "name": "step",
+          "time": 0.1833
+        },
+        {
+          "name": "step",
+          "time": 0.3667
+        },
+        {
+          "name": "step",
+          "time": 0.55
+        }
+      ],
+      "frames": 23,
+      "loop": true,
+      "name": "trot",
+      "speed": 2.8
+    },
+    {
+      "duration": 3.0,
+      "events": [],
+      "frames": 91,
+      "loop": true,
+      "name": "eat",
+      "speed": 0.0
+    },
+    {
+      "duration": 2.4,
+      "events": [],
+      "frames": 73,
+      "loop": true,
+      "name": "drink",
+      "speed": 0.0
+    },
+    {
+      "duration": 8.0,
+      "events": [],
+      "frames": 241,
+      "loop": true,
+      "name": "rest",
+      "speed": 0.0
+    },
+    {
+      "duration": 8.0,
+      "events": [],
+      "frames": 241,
+      "loop": true,
+      "name": "sleep",
+      "speed": 0.0
+    },
+    {
+      "duration": 2.6,
+      "events": [
+        {
+          "name": "call",
+          "time": 0.572
+        }
+      ],
+      "frames": 79,
+      "loop": false,
+      "name": "vocalize",
+      "speed": 0.0
+    }
+  ],
+  "generator": "tools/animals (zoogen)",
+  "license": "MIT",
+  "meta": {
+    "body_length_m": 6.0,
+    "common_name": "African bush elephant",
+    "roughness": 0.94,
+    "scientific_name": "Loxodonta africana",
+    "shoulder_height_m": 3.2
+  },
+  "name": "elephant",
+  "skeleton_bounds_animal_space": {
+    "max": [
+      3.08,
+      0.92,
+      3.296
+    ],
+    "min": [
+      -2.61,
+      -0.92,
+      0.0
+    ]
+  },
+  "texture": 1024,
+  "triangles": 22334,
+  "vertices": 11205
+}

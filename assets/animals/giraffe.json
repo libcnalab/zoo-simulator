@@ -1,0 +1,134 @@
+{
+  "bones": 39,
+  "clips": [
+    {
+      "duration": 6.0,
+      "events": [],
+      "frames": 181,
+      "loop": true,
+      "name": "idle",
+      "speed": 0.0
+    },
+    {
+      "duration": 1.1333,
+      "events": [
+        {
+          "name": "step",
+          "time": 0.0
+        },
+        {
+          "name": "step",
+          "time": 0.068
+        },
+        {
+          "name": "step",
+          "time": 0.5667
+        },
+        {
+          "name": "step",
+          "time": 0.6347
+        }
+      ],
+      "frames": 35,
+      "loop": true,
+      "name": "walk",
+      "speed": 1.2
+    },
+    {
+      "duration": 0.6333,
+      "events": [
+        {
+          "name": "step",
+          "time": 0.0
+        },
+        {
+          "name": "step",
+          "time": 0.114
+        },
+        {
+          "name": "step",
+          "time": 0.3293
+        },
+        {
+          "name": "step",
+          "time": 0.4433
+        }
+      ],
+      "frames": 20,
+      "loop": true,
+      "name": "trot",
+      "speed": 2.7
+    },
+    {
+      "duration": 3.0,
+      "events": [],
+      "frames": 91,
+      "loop": true,
+      "name": "eat",
+      "speed": 0.0
+    },
+    {
+      "duration": 2.4,
+      "events": [],
+      "frames": 73,
+      "loop": true,
+      "name": "drink",
+      "speed": 0.0
+    },
+    {
+      "duration": 8.0,
+      "events": [],
+      "frames": 241,
+      "loop": true,
+      "name": "rest",
+      "speed": 0.0
+    },
+    {
+      "duration": 8.0,
+      "events": [],
+      "frames": 241,
+      "loop": true,
+      "name": "sleep",
+      "speed": 0.0
+    },
+    {
+      "duration": 2.6,
+      "events": [
+        {
+          "name": "call",
+          "time": 0.572
+        }
+      ],
+      "frames": 79,
+      "loop": false,
+      "name": "vocalize",
+      "speed": 0.0
+    }
+  ],
+  "generator": "tools/animals (zoogen)",
+  "license": "MIT",
+  "meta": {
+    "body_length_m": 4.3,
+    "common_name": "Reticulated giraffe",
+    "roughness": 0.92,
+    "scientific_name": "Giraffa reticulata",
+    "shoulder_height_m": 5.2,
+    "withers_height_m": 3.1
+  },
+  "name": "giraffe",
+  "skeleton_bounds_animal_space": {
+    "max": [
+      3.01,
+      0.372,
+      5.04
+    ],
+    "min": [
+      -1.41,
+      -0.372,
+      0.0
+    ]
+  },
+  "texture": 1024,
+  "triangles": 23340,
+  "vertices": 11706
+}

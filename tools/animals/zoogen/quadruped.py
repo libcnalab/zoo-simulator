@@ -28,6 +28,7 @@ from .rig import Clip, Pose, bump, envelope, hermite, rot_y, smooth
 WALK = {"HL": 0.0, "FL": 0.25, "HR": 0.5, "FR": 0.75}      # lateral sequence, as most mammals
 TROT = {"HL": 0.0, "FR": 0.0, "HR": 0.5, "FL": 0.5}        # diagonal pairs
 PACE = {"HL": 0.0, "FL": 0.06, "HR": 0.5, "FR": 0.56}      # lateral pairs (camels, giraffes)
+GALLOP = {"HL": 0.0, "HR": 0.18, "FL": 0.52, "FR": 0.70}  # rotary sequence with suspension
 
 HEEL_OFF_SPAN = 0.32        # last part of the stance during which the heel rises
 LAND_SPAN = 0.12            # first part of the stance during which the foot settles
@@ -209,6 +210,8 @@ class Params:
     eat_height: float = 0.07        # muzzle height when eating from the ground (m)
     drink_height: float = 0.03
     idle_period: float = 6.0
+    idle_bob: float = 0.004
+    idle_roll: float = 0.7
     look_yaw: float = 16.0
     idle_shift: float = 0.012
     tail_idle: float = 8.0
@@ -290,8 +293,8 @@ def idle_clip(solver, P):
         a = 2.0 * math.pi * u
         breath = math.sin(2.0 * a)
         pose = stand(solver, Pose())
-        pose.move(rig.body, dy=P.idle_shift * math.sin(a), dz=0.004 * breath)
-        pose.r(rig.body, rx=0.7 * math.sin(a))
+        pose.move(rig.body, dy=P.idle_shift * math.sin(a), dz=P.idle_bob * breath)
+        pose.r(rig.body, rx=P.idle_roll * math.sin(a))
         pose.r(rig.chest, ry=-0.5 * breath)
         yaw = P.look_yaw * (0.75 * math.sin(a) + 0.25 * math.sin(2.0 * a + 1.0))
         pitch = 3.0 * math.sin(a + 2.1)

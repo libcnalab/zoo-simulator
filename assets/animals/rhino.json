@@ -1,0 +1,132 @@
+{
+  "bones": 33,
+  "clips": [
+    {
+      "duration": 6.0,
+      "events": [],
+      "frames": 181,
+      "loop": true,
+      "name": "idle",
+      "speed": 0.0
+    },
+    {
+      "duration": 1.3333,
+      "events": [
+        {
+          "name": "step",
+          "time": 0.0
+        },
+        {
+          "name": "step",
+          "time": 0.3333
+        },
+        {
+          "name": "step",
+          "time": 0.6667
+        },
+        {
+          "name": "step",
+          "time": 1.0
+        }
+      ],
+      "frames": 41,
+      "loop": true,
+      "name": "walk",
+      "speed": 1.0893
+    },
+    {
+      "duration": 1.3333,
+      "events": [
+        {
+          "name": "step",
+          "time": 0.0
+        },
+        {
+          "name": "step",
+          "time": 0.0
+        },
+        {
+          "name": "step",
+          "time": 0.6667
+        },
+        {
+          "name": "step",
+          "time": 0.6667
+        }
+      ],
+      "frames": 41,
+      "loop": true,
+      "name": "trot",
+      "speed": 2.2222
+    },
+    {
+      "duration": 3.0,
+      "events": [],
+      "frames": 91,
+      "loop": true,
+      "name": "eat",
+      "speed": 0.0
+    },
+    {
+      "duration": 2.4,
+      "events": [],
+      "frames": 73,
+      "loop": true,
+      "name": "drink",
+      "speed": 0.0
+    },
+    {
+      "duration": 8.0,
+      "events": [],
+      "frames": 241,
+      "loop": true,
+      "name": "rest",
+      "speed": 0.0
+    },
+    {
+      "duration": 8.0,
+      "events": [],
+      "frames": 241,
+      "loop": true,
+      "name": "sleep",
+      "speed": 0.0
+    },
+    {
+      "duration": 2.6,
+      "events": [
+        {
+          "name": "call",
+          "time": 0.572
+        }
+      ],
+      "frames": 79,
+      "loop": false,
+      "name": "vocalize",
+      "speed": 0.0
+    }
+  ],
+  "generator": "tools/animals (zoogen)",
+  "license": "MIT",
+  "meta": {
+    "common_name": "Southern white rhinoceros",
+    "roughness": 0.93,
+    "scientific_name": "Ceratotherium simum simum",
+    "shoulder_height_m": 1.8
+  },
+  "name": "rhino",
+  "skeleton_bounds_animal_space": {
+    "max": [
+      2.08,
+      0.36,
+      1.53
+    ],
+    "min": [
+      -1.94,
+      -0.36,
+      0.0
+    ]
+  },
+  "texture": 1024,
+  "triangles": 18848,
+  "vertices": 9430
+}

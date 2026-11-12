@@ -17,7 +17,8 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from zoogen import geom, quadruped  # noqa: E402
 from zoogen.rig import Pose, Solver, quat_from_matrix, rot_x, rot_y, rot_z  # noqa: E402
 
-SPECIES = ["lion", "tiger", "wolf", "brown_bear", "polar_bear", "zebra"]
+SPECIES = ["lion", "tiger", "wolf", "brown_bear", "polar_bear", "zebra", "rhino", "camel",
+           "elephant", "giraffe", "meerkat"]
 
 
 def make_solver(species):
@@ -193,6 +194,62 @@ class ClipTests(unittest.TestCase):
             self.assertLess(eat, 0.12, species)
             self.assertLess(drink, 0.06, species)
             self.assertGreater(drink, 0.0, species)
+
+
+class AnatomyTests(unittest.TestCase):
+    def test_pillar_feet_have_flat_round_soles(self):
+        from zoogen.anatomy import round_foot
+        foot = round_foot("foot.L", 1.0, .5, .3, .28, "toes.L")
+        vertices, _, _ = geom.loft(foot)
+        self.assertAlmostEqual(float(vertices[:, 2].min()), .012)
+        sole = vertices[np.abs(vertices[:, 2] - .012) < 1e-8]
+        self.assertGreaterEqual(len(sole), foot.segments)
+        distance = np.linalg.norm(sole[:-1, :2] - np.array([1.0, .5]), axis=1)
+        self.assertTrue(np.allclose(distance, .3))
+
+    def test_cloven_hooves_have_a_gap_and_mirror_weights(self):
+        from zoogen.anatomy import split_foot
+        digits = split_foot("hoof", 0, .4, .10, .22, .14, "fingers.L")
+        left, _, _ = geom.loft(digits[0])
+        right, _, _ = geom.loft(digits[1])
+        self.assertLess(float(left[:, 1].max()), float(right[:, 1].min()))
+        mirrored = geom.mirror_part(digits[0])
+        self.assertEqual(mirrored.weights, {"fingers.R": 1.0})
+        vertices, _, _ = geom.loft(mirrored)
+        self.assertTrue(np.allclose(np.sort(vertices[:, 1]), np.sort(-left[:, 1])))
+
+    def test_ungulate_leg_skins_overlap_their_foot_tops(self):
+        for species, foot_name in (("camel", "pad"), ("giraffe", "hoof")):
+            spec = importlib.import_module("species." + species).make_spec()
+            for end in ("front", "hind"):
+                leg = next(part for part in spec.parts if part.name == end + "_leg.L")
+                digits = [part for part in spec.parts if part.name.startswith(end + "_" + foot_name)]
+                skin_vertices = geom.loft(leg)[0]
+                foot_vertices = np.concatenate([geom.loft(part)[0] for part in digits])
+                self.assertLess(float(skin_vertices[:, 2].min()), float(foot_vertices[:, 2].max()),
+                                species + "/" + end)
+                # Remeshing shrinks thin contacts: bury the ankle across both digit centres.
+                ankle = leg.rings[-1]
+                self.assertLess(float(ankle.c[2]) + 2 * spec.voxel,
+                                float(foot_vertices[:, 2].max()), species + "/" + end)
+                for digit in digits:
+                    self.assertGreater(ankle.ry, abs(float(digit.rings[0].c[1] - ankle.c[1])),
+                                       species + "/" + end)
+
+    def test_sentinel_has_planted_hind_feet_and_a_grounded_tail(self):
+        spec, solver = make_solver("meerkat")
+        idle = next(clip for clip in spec.clips(solver) if clip.name == "idle")
+        for phase in (0, .25, .5, .75):
+            world = solver.solve(idle.pose(phase))
+            for key in ("HL", "HR"):
+                toe = world[spec.rig.legs[key].toes][:3, 3]
+                self.assertAlmostEqual(float(toe[2]), float(solver.toe_base(key)[2]))
+            tip = solver.point(world, "tail4", np.array([-.332, 0, .062]))
+            self.assertAlmostEqual(float(tip[2]), .003, places=6)
+            pelvis = world["hips"][:3, 3]
+            shoulder = world["chest"][:3, 3]
+            self.assertGreater(float(shoulder[2] - pelvis[2]), .12)
+            self.assertLess(abs(float(shoulder[0] - pelvis[0])), .04)
 
 
 if __name__ == "__main__":

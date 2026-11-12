@@ -356,18 +356,23 @@ def make_wild_quadruped(config):
     def clips(solver):
         walk_speed = config["walk_speed"]
         trot_speed = config["trot_speed"]
-        walk_period = 1.15
+        walk_period = config.get("walk_period", 1.15)
         walk_duty = 0.64 if not bear else 0.69
-        trot_period = 0.62
+        trot_period = config.get("trot_period", 0.62)
         trot_duty = 0.30 if wolf else 0.42
-        walk_offsets = quad.PACE if bear else quad.WALK
+        walk_offsets = (quad.PACE if config.get("walk_pattern") == "pace" else
+                        quad.PACE if bear else quad.WALK)
         walk = quad.Gait("walk", period=walk_period,
                          stance=walk_speed * walk_period * walk_duty, duty=walk_duty,
-                         offsets=walk_offsets, lift=0.08, bob=0.012,
+                         offsets=walk_offsets, lift=config.get("walk_lift", 0.08), bob=0.012,
                          hip_yaw=4.0, chest_yaw=3.0, tail_sway=7.0)
         fast = quad.Gait("trot", period=trot_period,
                          stance=trot_speed * trot_period * trot_duty, duty=trot_duty,
-                         offsets=quad.TROT, lift=0.12, bob=-0.016,
+                         offsets=(quad.PACE if config.get("fast_pattern") == "pace" else
+                                  quad.WALK if config.get("fast_pattern") == "walk" else
+                                  quad.GALLOP if config.get("fast_pattern") == "gallop" else
+                                  quad.TROT),
+                         lift=config.get("fast_lift", 0.12), bob=-0.016,
                          hip_yaw=3.0, chest_yaw=2.0, tail_sway=5.0,
                          swing_pitch=54.0)
         head_down = quad.HeadDown(body_pitch=20.0, crouch=0.09, chest=13.0,
@@ -384,15 +389,23 @@ def make_wild_quadruped(config):
         if zebra:
             head_down = quad.HeadDown(body_pitch=30.0, crouch=0.0, chest=10.0,
                                       neck=(25.0, 15.0), head=5.0)
+        head_down = config.get("head_down", head_down)
         params = quad.Params(gaits=[walk, fast],
-                             lie=quad.Lie(drop=0.42 if bear else 0.48,
-                                          hind_tuck=0.10, hind_out=0.07),
+                             lie=quad.Lie(drop=config.get("lie_drop", 0.42 if bear else 0.48),
+                                          hind_tuck=config.get("hind_tuck", 0.10),
+                                          hind_out=config.get("hind_out", 0.07)),
                              head_down=head_down,
                              sleep_neck=(42.0, 36.0) if wolf or kind == "polar_bear"
-                             else (26.0, 26.0),
-                             sleep_head=21.0 if wolf or kind == "polar_bear" else 14.0,
+                             else config.get("sleep_neck", (26.0, 26.0)),
+                             sleep_head=21.0 if wolf or kind == "polar_bear"
+                             else config.get("sleep_head", 14.0),
                              drink_height=0.06 if bear or zebra else 0.03,
-                             look_yaw=16.0, tail_idle=8.0)
+                             look_yaw=16.0, tail_idle=8.0,
+                             idle_shift=config.get("idle_shift", .012),
+                             idle_bob=config.get("idle_bob", .004),
+                             idle_roll=config.get("idle_roll", .7),
+                             call_neck=config.get("call_neck", -9.0),
+                             call_head=config.get("call_head", -14.0))
         return quad.standard_clips(solver, params)
 
     return Spec(name=name, bones=bones, parts=parts, paint=paint, texture_size=1024,
