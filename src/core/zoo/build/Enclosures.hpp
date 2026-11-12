@@ -109,9 +109,8 @@ struct Enclosure {
 /// tiles are connected when the edge between them carries no fence at all (a gate
 /// is a fence: it separates). Building footprints and water do not separate.
 ///  - Every component containing a tile outside the property is Outside.
-///  - The component of World::EntranceTile() is Public (on a map without a
-///    boundary wall, where the entrance tile is connected to the outside or does
-///    not exist, the component of tile (0, 0) is Public instead).
+///  - The component of World::EntranceTile() is Public (unless it is Outside: a
+///    map whose entrance is not closed by the boundary wall's gate has no public area).
 ///  - Every other component is an Enclosure.
 ///
 /// Identity: Rebuild() matches the new components with the previous enclosures by
@@ -157,14 +156,18 @@ private:
 
     int width_ = 0;
     int depth_ = 0;
-    /// Per tile: -2 outside, -1 public, otherwise the index into enclosures_.
-    std::vector<std::int32_t> regionOfTile_;
-    std::vector<Enclosure> enclosures_;
+    /// Per tile: kOutsideCode, kPublicCode, or the value of the enclosure's id.
+    std::vector<std::int32_t> codes_;
+    std::vector<Enclosure> enclosures_;  // ascending id
     std::uint32_t nextId_ = 1;
     std::uint32_t revision_ = 1;
     // scratch buffers, kept to avoid allocating on every rebuild
     std::vector<std::int32_t> labels_;
     std::vector<std::int32_t> stack_;
+    std::vector<std::int32_t> previousCodes_;
+
+    static constexpr std::int32_t kOutsideCode = -2;
+    static constexpr std::int32_t kPublicCode = -1;
 };
 
 }  // namespace zoo
