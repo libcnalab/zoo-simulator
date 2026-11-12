@@ -245,8 +245,14 @@ std::optional<ZooGame::Pose> ZooGame::StandPose(std::string_view what) const {
     const std::size_t colon = what.find(':');
     const std::string_view kind = what.substr(0, colon);
     int wanted = 0;
-    if (colon != std::string_view::npos)
-        wanted = std::atoi(std::string(what.substr(colon + 1)).c_str());
+    // "habitat:1:giraffe" looks at a giraffe of the second habitat.
+    std::string_view only;
+    if (colon != std::string_view::npos) {
+        const std::string_view rest = what.substr(colon + 1);
+        wanted = std::atoi(std::string(rest).c_str());
+        if (const std::size_t second = rest.find(':'); second != std::string_view::npos)
+            only = rest.substr(second + 1);
+    }
     const auto centre = [](zoo::TileCoord t) {
         return zoo::Vec2{(static_cast<float>(t.x) + 0.5f) * zoo::kTileSize,
                          (static_cast<float>(t.z) + 0.5f) * zoo::kTileSize};
@@ -277,17 +283,47 @@ std::optional<ZooGame::Pose> ZooGame::StandPose(std::string_view what) const {
                 }
                 return false;
             };
+            // How many fences the line of sight passes: one is the fence one stands at; more
+            // means looking through the next bay of a stepped boundary, all mesh and posts.
+            const auto fences = [&](zoo::Vec2 from, zoo::Vec2 to) {
+                const float sx = to.x - from.x;
+                const float sz = to.z - from.z;
+                const int steps = std::max(1, static_cast<int>(std::sqrt(sx * sx + sz * sz) / 0.2f));
+                int crossed = 0;
+                zoo::TileCoord tile = zoo::World::TileAt(from);
+                for (int step = 1; step <= steps; ++step) {
+                    const float along = static_cast<float>(step) / static_cast<float>(steps);
+                    const zoo::TileCoord next =
+                        zoo::World::TileAt({from.x + along * sx, from.z + along * sz});
+                    for (const zoo::Dir side :
+                         {zoo::Dir::North, zoo::Dir::East, zoo::Dir::South, zoo::Dir::West}) {
+                        const zoo::TileCoord way = zoo::Step(side);
+                        const bool moved = (way.x != 0 && next.x - tile.x == way.x) ||
+                                           (way.z != 0 && next.z - tile.z == way.z);
+                        if (moved && zoo_->Map().InBounds(tile) && zoo_->Map().FenceOn(tile, side).Exists())
+                            ++crossed;
+                    }
+                    tile = next;
+                }
+                return crossed;
+            };
             float best = 1.0e9f;
+            bool populated = false;
             Pose pose;
             for (const zoo::Animal& animal : zoo_->Fauna().All()) {
                 if (!animal.Visible() || !(animal.home == enclosure.id))
+                    continue;
+                populated = !enclosure.viewing.empty();
+                if (!only.empty() &&
+                    (animal.species < 0 ||
+                     zoo_->SpeciesList().All()[static_cast<std::size_t>(animal.species)].id != only))
                     continue;
                 for (const zoo::ViewingSpot& spot : enclosure.viewing) {
                     // Up at the fence, in front of whoever else is watching from that tile.
                     const zoo::TileCoord toward = zoo::Step(spot.side);
                     const zoo::Vec2 middle = centre(spot.tile);
-                    const zoo::Vec2 at{middle.x + 0.72f * static_cast<float>(toward.x),
-                                       middle.z + 0.72f * static_cast<float>(toward.z)};
+                    const zoo::Vec2 at{middle.x + 0.5f * static_cast<float>(toward.x),
+                                       middle.z + 0.5f * static_cast<float>(toward.z)};
                     const float dx = animal.position.x - at.x;
                     const float dz = animal.position.z - at.z;
                     const float sight = std::max(spot.visibility, 0.2f);
@@ -297,19 +333,51 @@ std::optional<ZooGame::Pose> ZooGame::StandPose(std::string_view what) const {
                     float score = (off * off + 1.0f) / (sight * sight * sight * sight);
                     if (score >= best)
                         continue;
+                    // Through the fence rather than along it: looking along it, the eye is
+                    // full of posts and rails and the animal is a strip between them.
+                    const float distanceNow = std::sqrt(dx * dx + dz * dz);
+                    const float square =
+                        (dx * static_cast<float>(toward.x) + dz * static_cast<float>(toward.z)) /
+                        std::max(distanceNow, 0.01f);
+                    if (square < 0.9f)
+                        score *= 1.0f + 16.0f * (0.9f - square);
+                    if (score >= best)
+                        continue;
                     if (blocked(at, {animal.position.x, animal.position.z}))
                         score *= 16.0f;
+                    if (score >= best)
+                        continue;
+                    if (fences(at, {animal.position.x, animal.position.z}) > 1)
+                        score *= 40.0f;
+                    // Not behind somebody's head.
+                    for (const zoo::Visitor& visitor : zoo_->Guests().All()) {
+                        const float vx = visitor.position.x - at.x;
+                        const float vz = visitor.position.z - at.z;
+                        const float ahead = (vx * dx + vz * dz) / std::max(distanceNow, 0.01f);
+                        const float aside2 = vx * vx + vz * vz - ahead * ahead;
+                        if (ahead > -0.3f && ahead < 2.5f && aside2 < 0.8f * 0.8f) {
+                            score *= 30.0f;
+                            break;
+                        }
+                    }
                     if (score < best) {
                         best = score;
-                        // Down at an animal that lies right at the fence, level at one far off.
+                        // At the middle of the animal: down at a wolf lying at the fence, level
+                        // at one far off, up at a giraffe.
                         const float distance = std::sqrt(dx * dx + dz * dz);
-                        const float down = std::atan2(1.2f, std::max(distance, 0.5f));
-                        pose = Pose{at.x, at.z, std::atan2(dx, dz), std::clamp(down, 0.06f, 0.9f)};
+                        float middleOfIt = 0.45f;
+                        if (animal.species >= 0)
+                            middleOfIt = 0.55f * zoo_->SpeciesList()
+                                                     .All()[static_cast<std::size_t>(animal.species)]
+                                                     .shoulderHeightM;
+                        const float down = std::atan2(1.65f - middleOfIt, std::max(distance, 0.5f));
+                        pose = Pose{at.x, at.z, std::atan2(dx, dz), std::clamp(down, -0.5f, 0.9f)};
                     }
                 }
             }
-            if (best < 1.0e9f && wanted-- == 0)
-                return pose;
+            // Habitats count by who lives in them, whichever species is asked for.
+            if (populated && wanted-- == 0)
+                return best < 1.0e9f ? std::optional<Pose>(pose) : std::nullopt;
         }
     } else if (kind == "board") {
         for (const zoo::Prop& prop : zoo_->Objects().Props()) {
