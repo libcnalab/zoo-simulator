@@ -26,8 +26,36 @@ void Basis(const Vector3& axis, Vector3& side, Vector3& up) {
 }  // namespace
 
 void MeshWriter::SetTransform(const Matrix& transform) {
-    transform_ = transform;
-    transformed_ = true;
+    placement_ = transform;
+    placed_ = true;
+    Combine();
+}
+
+void MeshWriter::ClearTransform() {
+    placed_ = false;
+    Combine();
+}
+
+void MeshWriter::SetLocal(const Matrix& local) {
+    local_ = local;
+    localized_ = true;
+    Combine();
+}
+
+void MeshWriter::ClearLocal() {
+    localized_ = false;
+    Combine();
+}
+
+void MeshWriter::Combine() {
+    transformed_ = placed_ || localized_;
+    if (placed_ && localized_) {
+        transform_ = local_ * placement_;
+    } else if (placed_) {
+        transform_ = placement_;
+    } else if (localized_) {
+        transform_ = local_;
+    }
 }
 
 std::uint32_t MeshWriter::Vertex(const Vector3& position, const Vector3& normal, float u, float v) {
@@ -379,6 +407,9 @@ MeshWriter& ModelBuilder::Use(const zoo::Color3& color, Pattern pattern) {
     if (transformed_) {
         part.writer.SetTransform(transform_);
     }
+    if (localized_) {
+        part.writer.SetLocal(local_);
+    }
     return part.writer;
 }
 
@@ -394,6 +425,21 @@ void ModelBuilder::ClearTransform() {
     transformed_ = false;
     for (ModelPart& part : parts_) {
         part.writer.ClearTransform();
+    }
+}
+
+void ModelBuilder::SetLocal(const Matrix& local) {
+    local_ = local;
+    localized_ = true;
+    for (ModelPart& part : parts_) {
+        part.writer.SetLocal(local);
+    }
+}
+
+void ModelBuilder::ClearLocal() {
+    localized_ = false;
+    for (ModelPart& part : parts_) {
+        part.writer.ClearLocal();
     }
 }
 

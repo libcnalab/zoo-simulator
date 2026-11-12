@@ -26,6 +26,8 @@ enum class Pattern : std::uint8_t {
     RoofTiles,
     Metal,
     Concrete,
+    WireMesh,  ///< see-through chain-link (drawn blended, both sides)
+    Glass,     ///< clear glass (drawn blended, both sides; the colour is ignored)
     Count
 };
 
@@ -41,14 +43,18 @@ struct Finish {
 /// coordinates. Texture coordinates are in metres along the surface, so that
 /// patterns keep their scale on every object (materials set the scale).
 ///
-/// Faces are given counter-clockwise as seen from outside, y up. An optional
-/// transform is applied to everything written while it is set.
+/// Faces are given counter-clockwise as seen from outside, y up. Two optional
+/// transforms apply to everything written while they are set: the local one
+/// first (a part within a model: a tilted desk, one wall of a house), then the
+/// placement (the model within the world).
 class MeshWriter {
 public:
     CnaEngine::Graphics::MeshData mesh;
 
     void SetTransform(const Matrix& transform);
-    void ClearTransform() { transformed_ = false; }
+    void ClearTransform();
+    void SetLocal(const Matrix& local);
+    void ClearLocal();
 
     /// Flat triangle.
     void Tri(const Vector3& a, const Vector3& b, const Vector3& c);
@@ -91,7 +97,13 @@ private:
     std::uint32_t Vertex(const Vector3& position, const Vector3& normal, float u, float v);
     void Face(std::uint32_t a, std::uint32_t b, std::uint32_t c);
 
+    void Combine();
+
+    Matrix placement_;
+    Matrix local_;
     Matrix transform_;
+    bool placed_ = false;
+    bool localized_ = false;
     bool transformed_ = false;
 };
 
@@ -109,6 +121,9 @@ public:
     /// Sets (or clears) the transform of every part, present and future.
     void SetTransform(const Matrix& transform);
     void ClearTransform();
+    /// The same for the local transform, which applies before the transform.
+    void SetLocal(const Matrix& local);
+    void ClearLocal();
 
     std::deque<ModelPart>& Parts() { return parts_; }
     const std::deque<ModelPart>& Parts() const { return parts_; }
@@ -116,7 +131,9 @@ public:
 private:
     std::deque<ModelPart> parts_;
     Matrix transform_;
+    Matrix local_;
     bool transformed_ = false;
+    bool localized_ = false;
 };
 
 }  // namespace zoogame

@@ -52,6 +52,8 @@ float Cloud(float u, float v, int cellsX, int cellsY, int octaves, std::uint32_t
 float Shade(Pattern pattern, float u, float v) {
     switch (pattern) {
         case Pattern::Plain:
+        case Pattern::WireMesh:
+        case Pattern::Glass:
         case Pattern::Count:
             return 1.0f;
         case Pattern::Wood: {
@@ -179,6 +181,8 @@ float Surfaces::PatternMetres(Pattern pattern) {
             return 1.2f;
         case Pattern::Concrete:
             return 3.0f;
+        case Pattern::WireMesh:
+            return 0.6f;
         default:
             return 1.0f;
     }
@@ -187,7 +191,9 @@ float Surfaces::PatternMetres(Pattern pattern) {
 Surfaces::Surfaces(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device) {
     for (std::size_t p = 0; p < patterns_.size(); ++p) {
         const auto pattern = static_cast<Pattern>(p);
-        const int size = pattern == Pattern::Plain ? 4 : kSize;
+        const bool flat =
+            pattern == Pattern::Plain || pattern == Pattern::WireMesh || pattern == Pattern::Glass;
+        const int size = flat ? 4 : kSize;
         Image image(size, size);
         for (int y = 0; y < size; ++y) {
             for (int x = 0; x < size; ++x) {
@@ -238,6 +244,12 @@ Surfaces::Surfaces(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device) 
 }
 
 const Material& Surfaces::Get(const Finish& finish) {
+    if (finish.pattern == Pattern::WireMesh) {
+        return WireMesh(finish.color);
+    }
+    if (finish.pattern == Pattern::Glass) {
+        return glass_;
+    }
     const std::uint32_t key = Key(finish.color, static_cast<std::uint32_t>(finish.pattern));
     auto& slot = opaque_[key];
     if (!slot) {
@@ -266,7 +278,8 @@ const Material& Surfaces::WireMesh(const zoo::Color3& color) {
         slot->doubleSided = true;
         slot->baseTexture = wire_.get();
         slot->sampler = &SamplerState::AnisotropicWrap;
-        slot->uvScale = Vector2(1.0f / 0.6f, 1.0f / 0.6f);  // four wire cells per 0.6 m
+        const float scale = 1.0f / PatternMetres(Pattern::WireMesh);  // four wire cells per repeat
+        slot->uvScale = Vector2(scale, scale);
     }
     return *slot;
 }

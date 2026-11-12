@@ -24,8 +24,8 @@ class Surfaces {
 public:
     explicit Surfaces(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device);
 
-    /// The opaque material of a finish. The reference stays valid for the
-    /// lifetime of this object.
+    /// The material of a finish (opaque but for Pattern::WireMesh and
+    /// Pattern::Glass). The reference stays valid for the lifetime of this object.
     const CnaEngine::Graphics::Material& Get(const Finish& finish);
     /// See-through wire mesh in the given colour (texture coordinates in metres).
     const CnaEngine::Graphics::Material& WireMesh(const zoo::Color3& color);
