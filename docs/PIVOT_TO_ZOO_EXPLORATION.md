@@ -83,7 +83,7 @@ Added or changed for the pivot (commits, oldest first):
 | `418205e`, `4359dd6` | `--stand` looks squarely through one fence, finds a habitat by its species, lists who is outdoors |
 | `f4a8ba4` | models of penguin, ostrich, flamingo and kangaroo: every species has one |
 | `f85e97c` | polar bears stay outdoors on a summer day (they sat in the cooled den from the opening) |
-| `ddf8a35` | the flamingo lagoon is seen through glass like the other habitats, not through mesh |
+| `ddf8a35`, `230d57c` | the flamingo lagoon is seen through glass like the other habitats, not through mesh, and under acacias: its willows hung over the view |
 
 The avatars come from CNA itself (its implementation of XNA's avatar API); CNA Extended is not
 used. No change to CNA or CNA Engine was needed for the pivot itself; the game relies on
