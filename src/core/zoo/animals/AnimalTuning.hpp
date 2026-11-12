@@ -18,8 +18,6 @@ inline constexpr float kDirtyPerMassPowerAreaPerDay = 2.2f;   // dirt units per 
 inline constexpr float kMaximumDirtPerDay = 0.4f;             // dirt units per game day
 inline constexpr float kNeedsRefreshTicks = 600.0f;           // simulation ticks per welfare refresh
 inline constexpr float kMotionSecondsPerTick = 0.05f;         // motion seconds per simulation tick
-inline constexpr float kDefaultMealSeconds = 15.0f;           // motion seconds per meal
-inline constexpr float kDefaultDrinkSeconds = 7.5f;           // motion seconds per drink
 inline constexpr float kMinimumActivitySeconds = 2.0f;        // motion seconds per activity
 inline constexpr float kWalkAcceleration = 2.0f;              // metres per second squared
 inline constexpr float kBrakeAcceleration = 4.0f;             // metres per second squared
@@ -28,7 +26,7 @@ inline constexpr float kAdultSpeedScale = 1.0f;               // speed fraction 
 inline constexpr float kYoungSpeedScale = 0.6f;               // speed fraction at birth size
 inline constexpr float kWadingShoulderFraction = 0.6f;        // shoulder height fraction
 inline constexpr float kWaypointArrivalM = 0.05f;             // metres from route waypoint
-inline constexpr float kRouteBrakingFactor = 2.0f;            // stopping distance equation factor
+inline constexpr float kRouteBrakingFactor = 1.0f;            // conservative braking speed equation factor
 inline constexpr float kArrivalPauseSeconds = 2.0f;           // motion seconds after arrival
 inline constexpr int kPathExpansionLimit = 6000;              // navigation nodes per route
 inline constexpr int kPathCallsPerStep = 8;                   // A* searches per simulation tick
@@ -105,5 +103,118 @@ inline constexpr float kPoorHabitatStressFactor = 0.6f;       // stress target m
 inline constexpr float kFatigueAwakeMultiplier = 1.0f;        // fatigue per awake hour numerator
 inline constexpr float kFatigueRestMultiplier = 0.5f;         // fatigue reduction per rest hour
 inline constexpr float kFatigueSleepMultiplier = 1.0f;        // fatigue reduction per sleep hour
+inline constexpr float kSecondsPerMinute = 60.0f;             // motion seconds per minute
+inline constexpr float kSecondsPerHour = 3600.0f;             // motion seconds per hour
+inline constexpr float kNeedSuckleThreshold = 0.9f;           // maternal hunger fraction
+inline constexpr float kShelterDecisionTemperatureC = 5.0f;   // degrees outside comfort range
+inline constexpr float kSleepDecisionThreshold = 1.0f;        // fatigue plus circadian fraction
+inline constexpr float kSleepWakeCircadian = 0.0f;            // circadian fraction
+inline constexpr float kPaceStressThreshold = 0.7f;           // stress fraction
+inline constexpr float kEscapeHourStride = 1.0f;              // hours per escape check
+inline constexpr float kLooseRoamRadiusM = 24.0f;             // metres
+inline constexpr float kDestinationClearanceM = 0.1f;         // metres around destinations
+inline constexpr float kOpenWaterDepthM = 0.15f;              // metres at drinking shore
+inline constexpr float kShelterTemperatureReliefC = 5.0f;     // degrees outside comfort range
+inline constexpr float kWelfarePoorHabitatStress = 0.6f;      // stress target multiplier
+inline constexpr float kCircadianMidday = 12.0f;              // game hour
+inline constexpr float kCircadianDayHours = 24.0f;            // game hours per day
+inline constexpr float kCircadianBiasMidpoint = 0.1f;         // between active and sleeping bias
+inline constexpr float kCircadianBiasAmplitude = 0.4f;        // bias distance from midpoint
+inline constexpr float kRoutineDecisionTicks = 1.0f;          // ticks between immediate decisions
+inline constexpr float kHeavyRainThreshold = 0.65f;           // precipitation fraction
+inline constexpr float kRainShelterThreshold = 0.45f;         // precipitation fraction
+inline constexpr float kNightBeginHour = 20.0f;               // game hour
+inline constexpr float kNightEndHour = 6.0f;                  // game hour
+inline constexpr float kSleepActivitySeconds = 60.0f;         // motion seconds per sleep bout
+inline constexpr float kRoutineRecheckSeconds = 30.0f;        // motion seconds per game-hour check
+inline constexpr float kHealthWeatherPerDay = 0.2f;           // health units per exposed game day
+inline constexpr float kAnimalClearanceM = 0.05f;             // metres between animal body circles
+/// The share of its step an animal still makes when companions leave it no way round.
+inline constexpr float kSqueezePastFactor = 0.35f;
+/// Ticks of walking after which an animal gives its errand up (three minutes of motion).
+inline constexpr std::int32_t kWalkGiveUpTicks = 3600;
+/// A slide that leaves less than this fraction of the step is a head-on meeting.
+inline constexpr float kHeadOnFraction = 0.3f;
+/// Squared metres by which a step may near an obstacle inside its clearance (rounding).
+inline constexpr float kIntrusionToleranceM2 = 1.0e-5f;
+/// An animal that came no nearer to its waypoint than this, metres, for kStallTicks is stalled.
+inline constexpr float kStallProgressM = 0.02f;
+inline constexpr std::int32_t kStallTicks = 30;
+/// Stalled this near to the waypoint (plus the body radius), metres, counts as arrived.
+inline constexpr float kStallArriveM = 1.0f;
+/// The sidestep out of a pocket: tries, first angle off the goal and its growth (radians), reach (metres).
+inline constexpr std::uint32_t kDetourAttempts = 6;
+inline constexpr float kDetourAngle = 1.2f;
+inline constexpr float kDetourAngleStep = 0.35f;
+inline constexpr float kDetourReachM = 3.0f;
+/// Sidesteps an errand may take before the animal gives it up.
+inline constexpr std::uint32_t kDetourLimit = 5;
+/// The share of the body radius (half its length) that is half its width.
+inline constexpr float kBodyWidthFraction = 0.6f;
+/// Metres between two animals that keep each other company.
+inline constexpr float kSocialGapM = 0.3f;
+/// Metres from a shelter's door at which an animal goes in.
+inline constexpr float kShelterDoorM = 1.9f;
+/// Precipitation and degrees outside the comfort range below which a sheltering animal comes out.
+inline constexpr float kRainLeaveThreshold = 0.25f;
+inline constexpr float kShelterLeaveTemperatureC = 2.0f;
+inline constexpr float kWanderWeight = 3.0f;                     // routine choice weight
+inline constexpr float kIdleWeight = 1.0f;                       // routine choice weight
+inline constexpr float kRestBaseWeight = 1.0f;                   // routine choice weight
+inline constexpr float kRestFatigueWeight = 1.0f;                // added rest weight per fatigue fraction
+inline constexpr float kForageWeight = 1.5f;                     // routine choice weight
+inline constexpr float kPlayWeight = 1.2f;                       // routine choice weight
+inline constexpr float kSocializeWeight = 1.0f;                  // routine choice weight
+inline constexpr float kVocalizeWeight = 0.7f;                   // routine choice weight
+inline constexpr float kVocalizePeakMultiplier = 2.0f;           // added weight at dawn and dusk
+inline constexpr float kVocalizeHungerMultiplier = 1.5f;         // added weight at full hunger need
+inline constexpr float kDawnStartHour = 5.0f;                    // game hour
+inline constexpr float kDawnEndHour = 7.0f;                      // game hour
+inline constexpr float kDuskStartHour = 17.0f;                   // game hour
+inline constexpr float kDuskEndHour = 19.0f;                     // game hour
+inline constexpr float kPlayNeedThreshold = 0.4f;                // boredom fraction
+inline constexpr float kVocalizeDurationSeconds = 3.0f;          // motion seconds
+inline constexpr float kIdleMinimumSeconds = 3.0f;               // motion seconds
+inline constexpr float kIdleMaximumSeconds = 10.0f;              // motion seconds
+inline constexpr float kTileCenterFenceClearanceM = 1.0f;        // metres from tile centre to tile edge
+inline constexpr float kDestinationProbeM = 3.0f;                // metres queried for blockers
+inline constexpr float kPredatorMassRatio = 1.5f;                // prey-to-predator adult mass ratio
+inline constexpr float kTargetChangeToleranceSquared = 0.0001f;  // squared metres
+inline constexpr float kMealMinimumSeconds = 10.0f;              // motion seconds per meal
+inline constexpr float kMealMaximumSeconds = 25.0f;              // motion seconds per meal
+inline constexpr float kDrinkMinimumSeconds = 5.0f;              // motion seconds per drink
+inline constexpr float kDrinkMaximumSeconds = 10.0f;             // motion seconds per drink
+inline constexpr float kPaceDecisionChance = 0.5f;               // chance per decision
+inline constexpr float kPaceMinimumSeconds = 30.0f;              // motion seconds per pacing bout
+inline constexpr float kPaceMaximumSeconds = 90.0f;              // motion seconds per pacing bout
+inline constexpr int kPacingSides = 4;                           // enclosure boundary sides
+inline constexpr int kDestinationAttempts = 8;                   // candidate positions per decision
+inline constexpr int kTreeCoolingSamples = 8;                    // candidate offsets around a tree
+inline constexpr float kObstacleSearchRadiusM = 2.0f;            // extra prop query radius in metres
+inline constexpr float kMotherFollowRadiusM = 4.0f;              // juvenile wander radius from its mother
+inline constexpr float kSocialWanderRadiusM = 8.0f;              // group attraction radius
+inline constexpr float kSocialWanderMinimumPreference = 0.35f;   // distant group preference multiplier
+inline constexpr float kPaceOffsetMinimumM = 6.0f;               // metres between pacing endpoints
+inline constexpr float kPaceOffsetMaximumM = 10.0f;              // metres between pacing endpoints
+inline constexpr float kWanderMinimumSeconds = 6.0f;             // motion seconds
+inline constexpr float kWanderMaximumSeconds = 20.0f;            // motion seconds
+inline constexpr float kRestMinimumSeconds = 20.0f;              // motion seconds
+inline constexpr float kRestMaximumSeconds = 90.0f;              // motion seconds
+inline constexpr float kForageMinimumSeconds = 6.0f;             // motion seconds
+inline constexpr float kForageMaximumSeconds = 20.0f;            // motion seconds
+inline constexpr float kPlayMinimumSeconds = 8.0f;               // motion seconds
+inline constexpr float kPlayMaximumSeconds = 20.0f;              // motion seconds
+inline constexpr float kSocializeMinimumSeconds = 6.0f;          // motion seconds
+inline constexpr float kSocializeMaximumSeconds = 15.0f;         // motion seconds
+inline constexpr float kMovementStartDistanceSquaredM2 = 0.01f;  // squared metres
+inline constexpr float kDefaultPropRadiusM = 0.5f;               // metres when catalog data is invalid
+inline constexpr float kMinimumSleepHours = 1.0f;                // game hours per day
+inline constexpr float kEnrichmentAreaScaleM2 = 500.0f;          // enclosure area for enrichment scaling
+inline constexpr float kVegetationCrowdRelief = 0.5f;            // crowd stress reduction at full cover
+inline constexpr float kHealthyNeedThreshold = 0.7f;             // need fraction for health recovery
+inline constexpr float kLifespanVariationBase = 0.85f;           // lifespan multiplier
+inline constexpr float kLifespanVariationRange = 0.3f;           // additional lifespan multiplier
+inline constexpr float kShelterStressMultiplier = 0.5f;          // stress target while sheltered
+inline constexpr float kEnrichmentBoredomRelief = 0.5f;          // boredom rate reduction at full enrichment
 
 }  // namespace zoo::tuning

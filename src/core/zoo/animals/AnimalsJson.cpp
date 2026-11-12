@@ -83,6 +83,10 @@ Json Encode(const Animal& a, const SpeciesCatalog& species) {
                 {"shelter", a.shelter.value},
                 {"route", route},
                 {"route_index", a.routeIndex},
+                {"stall_best", a.stallBest},
+                {"stall_ticks", a.stallTicks},
+                {"on_detour", a.onDetour},
+                {"detours", a.detours},
                 {"home", a.home.value},
                 {"loose", a.loose},
                 {"breeding", a.breeding},
@@ -159,6 +163,14 @@ Animal DecodeAnimal(const Json& value, const SpeciesCatalog& species) {
     if (routeIndex > a.route.size())
         throw std::runtime_error("route_index out of range");
     a.routeIndex = static_cast<std::uint32_t>(routeIndex);
+    if (value.contains("stall_best"))
+        a.stallBest = ReadFloat(value.at("stall_best"), "stall_best");
+    if (value.contains("stall_ticks"))
+        a.stallTicks = ReadInt(value.at("stall_ticks"), "stall_ticks");
+    if (value.contains("on_detour"))
+        a.onDetour = ReadBool(value.at("on_detour"), "on_detour");
+    if (value.contains("detours"))
+        a.detours = static_cast<std::uint32_t>(ReadUnsigned(value.at("detours"), "detours"));
     a.home = ReadId<EnclosureId>(value.at("home"), "home");
     a.loose = ReadBool(value.at("loose"), "loose");
     a.breeding = ReadBool(value.at("breeding"), "breeding");

@@ -182,6 +182,13 @@ struct Animal {
     BuildingId shelter;              ///< the shelter it is inside of (hidden from view), else null
     std::vector<Vec2> route;         ///< remaining waypoints while `moving`
     std::uint32_t routeIndex = 0;
+    /// The nearest it came to the waypoint it walks to (negative: not measured yet) and the
+    /// ticks since it last came nearer: how a walk that leads nowhere is noticed.
+    float stallBest = -1.0f;
+    std::int32_t stallTicks = 0;
+    /// The waypoint it walks to is a sidestep round an obstacle; how many this errand took.
+    bool onDetour = false;
+    std::uint32_t detours = 0;
 
     // -- life --
     /// The enclosure it belongs to: where it was last inside one. Null when that
@@ -307,10 +314,28 @@ private:
         float dirt = 0.0f;
         int viewers = 0;  // input, not saved
     };
+    struct HabitatCache {
+        EnclosureId enclosure;
+        int species = -1;
+        GroupInfo group;
+        WelfareReport report;
+        std::uint32_t enclosureRevision = 0;
+        std::uint32_t objectRevision = 0;
+        std::uint32_t worldRevision = 0;
+        std::int64_t refreshHour = -1;
+    };
 
     std::vector<Animal> animals_;      // ascending id
     std::vector<EnclosureCare> care_;  // ascending id
     std::vector<std::vector<std::size_t>> enclosureScratch_;
+    std::vector<PropId> propScratch_;
+    std::vector<HabitatCache> habitatScratch_;
+    void GroupAnimals(const Env& env);
+    void UpdateEnclosureDirt(const Env& env);
+    WelfareReport WelfareWithGroup(const Env& env, const Animal& animal, const GroupInfo& group,
+                                   const WelfareReport* cachedHabitat = nullptr) const;
+    const WelfareReport& CachedHabitat(const Env& env, const Animal& animal, const GroupInfo& group);
+    void StepAnimals(Env& env, const std::vector<Enclosure>& enclosures, int& pathCalls);
     std::uint32_t nextId_ = 1;
     Rng rng_;
     int births_ = 0;
