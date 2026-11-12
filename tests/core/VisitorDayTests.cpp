@@ -244,7 +244,11 @@ TEST(VisitorDayTests, ADayInTheStarterZoo) {
         };
         EXPECT_GT(ticks(VisitorActivity::Watching) * 12,
                   ticks(VisitorActivity::Walking) + ticks(VisitorActivity::Leaving));
+#if !defined(__SANITIZE_ADDRESS__) && !defined(__SANITIZE_THREAD__)
+        // A budget for the optimised build: an instrumented one runs several times slower
+        // and says nothing about it.
         EXPECT_LT(day->stepMs / kTicksPerDay, 1.0) << "milliseconds a tick for the whole zoo";
+#endif
     }
     EXPECT_EQ(first.scared, 0);
     EXPECT_GT(zoo.Accounts().Balance(), before - Dollars(4000)) << "the starter zoo roughly pays its way";
