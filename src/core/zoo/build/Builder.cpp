@@ -752,10 +752,7 @@ BuildError Builder::CheckBuilding(int defIndex, TileCoord origin, Dir facing) co
         }
     }
     std::vector<PropId> propIds;
-    const TileCoord propMin{origin.x * static_cast<int>(kTileSize), origin.z * static_cast<int>(kTileSize)};
-    const TileCoord propMax{(max.x + 1) * static_cast<int>(kTileSize) - 1,
-                            (max.z + 1) * static_cast<int>(kTileSize) - 1};
-    objects_.PropsInTiles(propMin, propMax, propIds);
+    objects_.PropsInTiles(origin, max, propIds);
     const Vec2 center{(static_cast<float>(origin.x + max.x + 1) * kTileSize) / 2.0f,
                       (static_cast<float>(origin.z + max.z + 1) * kTileSize) / 2.0f};
     const float halfDiagonal = std::sqrt(std::pow(static_cast<float>(size.x) * kTileSize / 2.0f, 2.0f) +

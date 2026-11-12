@@ -5,6 +5,7 @@
 #include "zoo/base/Rng.hpp"
 #include "zoo/build/Objects.hpp"
 #include "zoo/build/ObjectsJson.hpp"
+#include "zoo/world/World.hpp"
 namespace zoo {
 namespace {
 Catalog Load() {
@@ -58,7 +59,8 @@ TEST(ObjectsTests, SpatialQueriesMatchBruteForceWithNegativeCoordinates) {
     o.PropsInTiles({-10, -8}, {10, 9}, actual);
     expected.clear();
     for (const auto& p : o.Props())
-        if (p.position.x >= -10 && p.position.x < 11 && p.position.z >= -8 && p.position.z < 10)
+        if (p.position.x >= -10 * kTileSize && p.position.x < 11 * kTileSize && p.position.z >= -8 * kTileSize &&
+            p.position.z < 10 * kTileSize)
             expected.push_back(p.id);
     EXPECT_EQ(actual, expected);
 }

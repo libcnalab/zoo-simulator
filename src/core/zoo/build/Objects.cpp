@@ -5,6 +5,8 @@
 #include <cmath>
 #include <limits>
 
+#include "zoo/world/World.hpp"
+
 namespace zoo {
 namespace {
 template <typename T, typename IdType>
@@ -117,8 +119,8 @@ void ZooObjects::PropsInTiles(TileCoord min, TileCoord max, std::vector<PropId>&
     if (min.x > max.x || min.z > max.z)
         return;
     RebuildBuckets();
-    const float minX = static_cast<float>(min.x), minZ = static_cast<float>(min.z),
-                maxX = static_cast<float>(max.x + 1), maxZ = static_cast<float>(max.z + 1);
+    const float minX = static_cast<float>(min.x) * kTileSize, minZ = static_cast<float>(min.z) * kTileSize,
+                maxX = static_cast<float>(max.x + 1) * kTileSize, maxZ = static_cast<float>(max.z + 1) * kTileSize;
     for (const Prop& p : props_)
         if (p.position.x >= minX && p.position.x < maxX && p.position.z >= minZ && p.position.z < maxZ)
             out.push_back(p.id);
