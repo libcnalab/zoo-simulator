@@ -19,6 +19,7 @@
 #include "Surfaces.hpp"
 #include "TerrainRenderer.hpp"
 #include "Tools.hpp"
+#include "VisitorRenderer.hpp"
 #include "zoo/sim/Zoo.hpp"
 
 namespace zoogame {
@@ -81,6 +82,8 @@ private:
     std::unique_ptr<TerrainRenderer> terrain_;
     std::unique_ptr<SceneryRenderer> scenery_;
     std::unique_ptr<AnimalRenderer> animals_;
+    /// Outlives the zoos: its cast of avatars takes a while to assemble.
+    std::unique_ptr<VisitorRenderer> visitors_;
     std::unique_ptr<CnaEngine::Graphics::SkyDome> sky_;
     CnaEngine::Graphics::DayNightPalette palette_ = CnaEngine::Graphics::DayNightPalette::Default();
     CnaEngine::Graphics::TimeOfDay clock_;

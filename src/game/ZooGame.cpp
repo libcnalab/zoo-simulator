@@ -17,6 +17,8 @@
 #include "CnaEngine/Enhanced/PbrMaterialBinder.hpp"
 #include "CnaEngine/Enhanced/ShadowReception.hpp"
 
+#include "Microsoft/Xna/Framework/GamerServices/GamerServicesDispatcher.hpp"
+
 namespace zoogame {
 
 namespace {
@@ -153,6 +155,17 @@ void ZooGame::LoadGame() {
     clock_.latitudeDegrees = 48.0;
     (void)Enhanced::EnableShadows(*this, {.size = 4096, .radius = 90.0f, .ahead = 0.7f});
 
+    // Visitors are CNA avatars, which belong to its gamer services. Avatars
+    // draw themselves, so they get a pass of their own after the opaque scene.
+    using Microsoft::Xna::Framework::GamerServices::GamerServicesDispatcher;
+    if (!GamerServicesDispatcher::getIsInitializedProperty())
+        GamerServicesDispatcher::Initialize(getServicesProperty());
+    visitors_ = std::make_unique<VisitorRenderer>();
+    Renderer().AddPass(Graphics::PassPoint::AfterOpaque, "visitors",
+                       [this](auto&, const Graphics::Camera& camera, Graphics::RenderStatistics&) {
+                           visitors_->Draw(camera, Renderer().Lighting());
+                       });
+
     const int speed = play_.speed;
     Adopt(std::move(first));
     play_.speed = speed;
@@ -203,6 +216,8 @@ void ZooGame::Adopt(std::unique_ptr<zoo::Zoo> zoo) {
     scenery_->Update(zoo_->Map(), zoo_->Objects(), -1);
     animals_ = std::make_unique<AnimalRenderer>(getContentProperty(), *species_);
     animals_->Update(*zoo_, 0.0f, 0.0f);
+    visitors_->Clear();
+    visitors_->Update(*zoo_, 0.0f, 0.0f);
     tools_ = std::make_unique<WorldTools>(device, *surfaces_, *catalog_);
 
     camera_.SetMode(CameraMode::Overview, zoo_->Map());
@@ -407,6 +422,7 @@ void ZooGame::UpdateFrame(double seconds) {
     terrain_->Update(zoo_->Map());
     scenery_->Update(zoo_->Map(), zoo_->Objects());
     animals_->Update(*zoo_, dt * static_cast<float>(play_.speed), static_cast<float>(tickDebt_));
+    visitors_->Update(*zoo_, dt * static_cast<float>(play_.speed), static_cast<float>(tickDebt_));
     UpdateSky();
 }
 

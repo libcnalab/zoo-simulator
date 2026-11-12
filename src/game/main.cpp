@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+#include <cstdlib>
 #include <cstring>
 #include <vector>
 
@@ -12,5 +13,8 @@ int main(int argc, char** argv) {
         rest.insert(rest.end(), argv + 2, argv + argc);
         return zoogame::RunAnimalViewer(static_cast<int>(rest.size()), rest.data());
     }
+    // The game uses CNA's gamer services for its avatars only: their Guide
+    // (sign-in, friends) has no place in a zoo and must not open on a key.
+    setenv("CNA_GAMER_SERVICES_GUIDE_BUTTON", "0", 0);
     return CnaEngine::App::RunGame<zoogame::ZooGame>(argc, argv);
 }
