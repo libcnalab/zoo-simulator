@@ -45,6 +45,7 @@ Vec2 World::SpawnPoint() const {
 void World::TouchTile(TileCoord t) {
     if (!InBounds(t))
         return;
+    ++revision_;
     const int cx = t.x / kChunkTiles;
     const int cz = t.z / kChunkTiles;
     const auto bump = [this](int x, int z) {
@@ -80,6 +81,7 @@ void World::TouchVertex(int vx, int vz) {
             }
         }
     ++navRevision_;
+    ++revision_;
 }
 
 void World::SetTerrain(TileCoord t, Terrain terrain) {
@@ -102,6 +104,7 @@ void World::SetBuilding(TileCoord t, BuildingId building) {
         return;
     tiles_[Index(t)].building = building;
     ++navRevision_;
+    ++revision_;
 }
 
 void World::SetWater(TileCoord t, float level, float depth) {
@@ -426,6 +429,7 @@ void World::SetFence(EdgeRef e, Fence fence) {
     stored = fence;
     ++fenceRevision_;
     ++navRevision_;
+    ++revision_;
 }
 
 std::uint32_t World::ChunkRevision(int cx, int cz) const {

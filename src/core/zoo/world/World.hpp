@@ -57,17 +57,21 @@ struct EdgeRef {
 /// The edge of `tile` on side `d`, in normal form.
 constexpr EdgeRef EdgeOf(TileCoord tile, Dir d) {
     switch (d) {
-        case Dir::North: return {tile.x, tile.z, true};
-        case Dir::South: return {tile.x, tile.z + 1, true};
-        case Dir::West: return {tile.x, tile.z, false};
-        case Dir::East: return {tile.x + 1, tile.z, false};
+        case Dir::North:
+            return {tile.x, tile.z, true};
+        case Dir::South:
+            return {tile.x, tile.z + 1, true};
+        case Dir::West:
+            return {tile.x, tile.z, false};
+        case Dir::East:
+            return {tile.x + 1, tile.z, false};
     }
     return {};
 }
 
 struct WorldGenParams {
-    int width = 128;            ///< tiles along x
-    int depth = 128;            ///< tiles along z
+    int width = 128;  ///< tiles along x
+    int depth = 128;  ///< tiles along z
     std::uint64_t seed = 1;
     /// Scale of the generated relief; 0 gives a perfectly flat map (tests, tutorials).
     float relief = 1.0f;
@@ -190,14 +194,17 @@ public:
     /// Changes with every edit that can affect walkability: paths, fences, water,
     /// buildings, heights.
     std::uint32_t NavRevision() const { return navRevision_; }
+    /// Changes with every edit of any kind (heights, tiles, fences).
+    std::uint32_t Revision() const { return revision_; }
 
     bool operator==(const World& other) const;
 
 private:
-    friend struct WorldAccess;      // serialisation (WorldJson.cpp) and the generator
+    friend struct WorldAccess;  // serialisation (WorldJson.cpp) and the generator
 
     std::size_t Index(TileCoord t) const {
-        return static_cast<std::size_t>(t.z) * static_cast<std::size_t>(width_) + static_cast<std::size_t>(t.x);
+        return static_cast<std::size_t>(t.z) * static_cast<std::size_t>(width_) +
+               static_cast<std::size_t>(t.x);
     }
     void TouchTile(TileCoord t);
     void TouchVertex(int vx, int vz);
@@ -207,13 +214,14 @@ private:
     TileCoord propertyMin_{};
     TileCoord propertyMax_{};
     TileCoord entrance_{};
-    std::vector<Tile> tiles_;               // width * depth
-    std::vector<float> heights_;            // (width + 1) * (depth + 1)
-    std::vector<Fence> fencesHorizontal_;   // width * (depth + 1)
-    std::vector<Fence> fencesVertical_;     // (width + 1) * depth
+    std::vector<Tile> tiles_;              // width * depth
+    std::vector<float> heights_;           // (width + 1) * (depth + 1)
+    std::vector<Fence> fencesHorizontal_;  // width * (depth + 1)
+    std::vector<Fence> fencesVertical_;    // (width + 1) * depth
     std::vector<std::uint32_t> chunkRevisions_;
     std::uint32_t fenceRevision_ = 1;
     std::uint32_t navRevision_ = 1;
+    std::uint32_t revision_ = 1;
 };
 
 }  // namespace zoo
