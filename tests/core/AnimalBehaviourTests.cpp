@@ -254,5 +254,73 @@ TEST(AnimalBehaviourTests, DiurnalAnimalSleepsMostlyAtNightForItsDailySleepNeed)
     EXPECT_GT(asleepNightTicks, asleepTicks / 2);
 }
 
+TEST(AnimalBehaviourTests, AnAnimalThatFallsAsleepInWaterLiesDownOnDryGround) {
+    World world(40, 40);
+    ZooObjects objects;
+    Catalog catalog = Catalog::LoadDirectory(std::string(ZOO_SOURCE_DIR) + "/data/construction");
+    SpeciesCatalog species = SpeciesCatalog::LoadDirectory(std::string(ZOO_SOURCE_DIR) + "/data/species");
+    const int fence = catalog.fences.back().kind;
+    for (int x = 8; x <= 30; ++x) {
+        world.SetFence({x, 8, true}, {static_cast<std::uint8_t>(fence), false, 1.0f});
+        world.SetFence({x, 31, true}, {static_cast<std::uint8_t>(fence), false, 1.0f});
+    }
+    for (int z = 8; z <= 30; ++z) {
+        world.SetFence({8, z, false}, {static_cast<std::uint8_t>(fence), false, 1.0f});
+        world.SetFence({31, z, false}, {static_cast<std::uint8_t>(fence), false, 1.0f});
+    }
+    // A pool the tiger bathes in: seven tiles a side, so the bank is a few steps away.
+    for (int z = 14; z <= 20; ++z) {
+        for (int x = 14; x <= 20; ++x) {
+            world.SetWater({x, z}, 1.0f, 0.3f);
+        }
+    }
+    Enclosures enclosures;
+    enclosures.Rebuild(world, objects, catalog);
+    Navigator nav(world);
+    Animals animals(77U);
+    const int tiger = species.IndexOf("tiger");
+    ASSERT_GE(tiger, 0);
+    ASSERT_TRUE(species.All()[static_cast<std::size_t>(tiger)].canSwim);
+    Env env{world, objects, enclosures, catalog, species, nav, nullptr, nullptr, {}, {}};
+    const TileCoord pool{17, 17};
+    // Animals are set down on dry ground; this one then waded to the middle of its pool.
+    const AnimalId id = animals.Add(env, tiger, Sex::Female, 5.0f, World::TileCenter({11, 11}));
+    ASSERT_TRUE(id);
+    Animal* animal = animals.Find(id);
+    ASSERT_NE(animal, nullptr);
+    animal->position = World::TileCenter(pool);
+    animal->target = animal->position;
+    ASSERT_TRUE(world.HasWater(World::TileAt(animal->position)));
+    animal->hunger = 0.0f;
+    animal->thirst = 0.0f;
+    animal->fatigue = 1.0f;
+    animal->activityLeft = 0;
+
+    bool slept = false;
+    bool layDown = false;
+    for (int tick = 0; tick < 2 * kTicksPerGameHour && !layDown; ++tick) {
+        env.time.tick = tick;
+        animals.Step(env);
+        animal = animals.Find(id);
+        ASSERT_NE(animal, nullptr);
+        animal->hunger = 0.0f;
+        animal->thirst = 0.0f;
+        if (animal->activity != AnimalActivity::Sleep) {
+            ASSERT_FALSE(slept) << "woke before it had lain down, tick " << tick;
+            animal->fatigue = 1.0f;
+            continue;
+        }
+        slept = true;
+        // The place it chose is dry, in its own enclosure, and it walks there before it lies down.
+        const TileCoord bed = World::TileAt(animal->target);
+        EXPECT_FALSE(world.HasWater(bed)) << "sleeps afloat at " << bed.x << "," << bed.z;
+        EXPECT_EQ(enclosures.At(bed), enclosures.At(pool));
+        layDown = !animal->moving;
+    }
+    ASSERT_TRUE(slept);
+    ASSERT_TRUE(layDown);
+    EXPECT_FALSE(world.HasWater(World::TileAt(animal->position)));
+}
+
 }  // namespace
 }  // namespace zoo

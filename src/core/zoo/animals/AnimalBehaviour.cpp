@@ -225,6 +225,35 @@ Vec2 PropApproach(const SpeciesDef& species, const Env& env, const Prop& prop, i
     return prop.position + Vec2{std::sin(angle), std::cos(angle)} * radius;
 }
 
+/// Where an animal that is about to sleep lies down: where it stands, or, when that is in
+/// water, on the nearest dry ground of its enclosure. Nothing sleeps afloat.
+Vec2 SleepingPlace(const Animal& animal, const SpeciesDef& species, EnclosureId enclosureId, const Env& env) {
+    const TileCoord here = World::TileAt(animal.position);
+    if (!env.world.InBounds(here) || !env.world.HasWater(here)) {
+        return animal.position;
+    }
+    const NavProfile profile = NavProfile::Animal(0.0f, species.canSwim);
+    constexpr int kReach = 12;
+    float nearest = std::numeric_limits<float>::max();
+    Vec2 place = animal.position;
+    for (int dz = -kReach; dz <= kReach; ++dz) {
+        for (int dx = -kReach; dx <= kReach; ++dx) {
+            const TileCoord tile{here.x + dx, here.z + dz};
+            if (!env.world.InBounds(tile) || env.world.HasWater(tile) ||
+                env.enclosures.At(tile) != enclosureId || !env.nav.Passable(tile, profile)) {
+                continue;
+            }
+            const Vec2 candidate = World::TileCenter(tile);
+            const float distance = DistanceSquared(animal.position, candidate);
+            if (distance < nearest) {
+                nearest = distance;
+                place = candidate;
+            }
+        }
+    }
+    return place;
+}
+
 bool TryPaceLoop(Animal& animal, const SpeciesDef& species, const Enclosure& enclosure, const Env& env,
                  Rng& rng, std::vector<PropId>& propScratch, TileCoord firstTile, int side, int minX,
                  int maxX, int minZ, int maxZ) {
@@ -556,7 +585,7 @@ void DecideActivity(Animal& animal, const SpeciesDef& species, Env& env, std::sp
         return;
     }
     if (animal.activity == AnimalActivity::Sleep) {
-        Start(animal, AnimalActivity::Sleep, animal.position,
+        Start(animal, AnimalActivity::Sleep, SleepingPlace(animal, species, enclosureId, env),
               static_cast<std::int32_t>(tuning::kSleepActivitySeconds));
         return;
     } else if (animal.fatigue + circadian >= tuning::kSleepDecisionThreshold &&
@@ -582,7 +611,7 @@ void DecideActivity(Animal& animal, const SpeciesDef& species, Env& env, std::sp
                 }
             }
         }
-        Start(animal, AnimalActivity::Sleep, animal.position,
+        Start(animal, AnimalActivity::Sleep, SleepingPlace(animal, species, enclosureId, env),
               static_cast<std::int32_t>(tuning::kRoutineRecheckSeconds));
         return;
     }
