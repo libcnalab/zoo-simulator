@@ -173,6 +173,7 @@ void ZooGame::LoadGame() {
         throw std::runtime_error("zoo: the assets directory is missing beside the executable");
     canvas_ = std::make_unique<ui::Canvas>(device, getContentProperty(), *assets);
     ui_ = std::make_unique<ui::Ui>(*canvas_, controls_);
+    sounds_ = std::make_unique<Soundscape>(*assets);
     sky_ = std::make_unique<Graphics::SkyDome>(device);
     sky_->AttachTo(Renderer());
     clock_.latitudeDegrees = 48.0;
@@ -255,6 +256,8 @@ void ZooGame::Adopt(std::unique_ptr<zoo::Zoo> zoo) {
     auto& device = getGraphicsDeviceProperty();
     // What draws the old zoo goes before the zoo it refers to.
     tools_.reset();
+    if (sounds_)
+        sounds_->Reset();
     animals_.reset();
     scenery_.reset();
     terrain_.reset();

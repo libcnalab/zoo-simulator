@@ -197,6 +197,7 @@ void ZooGame::ReadVisitSettings() {
     s.invertY = file.GetBool("visit.invert_y", s.invertY);
     s.fieldOfView = file.GetFloat("visit.field_of_view", s.fieldOfView, 45.0f, 75.0f);
     s.headBob = file.GetBool("visit.head_bob", s.headBob);
+    s.volume = file.GetFloat("visit.volume", s.volume, 0.0f, 1.0f);
     s.diagnostics = file.GetBool("visit.diagnostics", s.diagnostics);
 }
 
@@ -207,6 +208,7 @@ void ZooGame::ApplyVisitSettings(bool store) {
     camera.SetPerspective(MathHelper::ToRadians(s.fieldOfView), camera.AspectRatio(), camera.NearPlane(),
                           camera.FarPlane());
     walker_.SetHeadBob(s.headBob ? 0.012f : 0.0f);
+    sounds_->SetVolume(s.volume);
     if (!store)
         return;
     auto& file = Preferences();
@@ -214,6 +216,7 @@ void ZooGame::ApplyVisitSettings(bool store) {
     file.SetBool("visit.invert_y", s.invertY);
     file.SetFloat("visit.field_of_view", s.fieldOfView, 1);
     file.SetBool("visit.head_bob", s.headBob);
+    file.SetFloat("visit.volume", s.volume, 2);
     file.SetBool("visit.diagnostics", s.diagnostics);
     std::string error;
     if (!SavePreferences(&error))
@@ -236,6 +239,7 @@ void ZooGame::FillVisitFigures() {
     f.feet = walker_.Feet();
     f.yawDegrees = walker_.Yaw() * 180.0f / kPi;
     f.speed = walker_.Speed();
+    f.sound = sounds_->Figures();
 
     const float hour = zoo_->Time().Hour();
     const int minutes = static_cast<int>(hour * 60.0f);
@@ -250,6 +254,10 @@ void ZooGame::PrintVisitFigures(const char* when) const {
                 static_cast<double>(walker_.Yaw() * 180.0f / kPi), zoo_->Guests().Count(), visitors_->InRange(),
                 visitors_->InView(), visitors_->Drawn(), visitors_->Ready(), visitors_->CastSize(), visitors_->Failed(),
                 zoo_->Fauna().All().size(), animals_->Drawn());
+    const SoundFigures& sound = sounds_->Figures();
+    std::printf("zoo: visit %s: sound %s, %d recordings (%d failed), %d voices (%d heard), %d steps, %d calls, last \"%s\"\n",
+                when, sound.device ? "plays" : "has no device", sound.files, sound.failed, sound.voices,
+                sound.audible, sound.steps, sound.calls, sound.lastCall.c_str());
     if (visit_.card.shown > 0.0f || !visit_.prompt.empty() || visit_.window != VisitWindow::None)
         std::printf("zoo: visit %s: looking at \"%s, %s\" (%s); E: \"%s\"; window %d\n", when,
                     visit_.card.shown > 0.0f ? visit_.card.name.c_str() : "", visit_.card.shown > 0.0f ? visit_.card.species.c_str() : "",
@@ -358,6 +366,14 @@ void ZooGame::UpdateVisit(double seconds) {
     animals_->Update(*zoo_, lived, static_cast<float>(tickDebt_));
     visitors_->Update(*zoo_, lived, static_cast<float>(tickDebt_));
     UpdateSky();
+
+    const bool afoot = visit_.screen == VisitScreen::Walking;
+    sounds_->Update(*zoo_, CnaEngine::Audio::ListenerFrom(MainCamera()),
+                    {.feet = walker_.Position(),
+                     .stepped = afoot && walker_.Stepped(),
+                     .running = visit_.running,
+                     .paused = visit_.screen == VisitScreen::Paused},
+                    dt);
 }
 
 }  // namespace zoogame

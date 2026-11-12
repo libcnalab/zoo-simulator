@@ -158,7 +158,7 @@ void VisitorHud::Title(ui::Ui& ui, Visit& visit) {
     const float left = band.Right() + 36.0f;
     const float top = std::round(0.16f * screen.h);
     if (visit.window == VisitWindow::Settings)
-        Settings(ui, visit, {left, top, 440.0f, 296.0f});
+        Settings(ui, visit, {left, top, 440.0f, 334.0f});
     else if (visit.window == VisitWindow::Load)
         Load(ui, visit, {left, top, std::min(560.0f, screen.w - left - 24.0f), 420.0f});
 }
@@ -168,7 +168,7 @@ void VisitorHud::Pause(ui::Ui& ui, Visit& visit) {
     ui.Claim(screen);
     ui.Paint().Fill(screen, ui::Rgb(6, 10, 14, 120));
     if (visit.window == VisitWindow::Settings) {
-        Settings(ui, visit, {std::round(screen.MidX() - 220.0f), std::round(screen.MidY() - 160.0f), 440.0f, 296.0f});
+        Settings(ui, visit, {std::round(screen.MidX() - 220.0f), std::round(screen.MidY() - 178.0f), 440.0f, 334.0f});
         return;
     }
     if (visit.window == VisitWindow::Load) {
@@ -224,6 +224,11 @@ void VisitorHud::Settings(ui::Ui& ui, Visit& visit, const Box& box) {
         visit.settingsChanged = true;
     }
     visit.settingsChanged |= Switch(ui, row(), "Sway with the steps", s.headBob);
+    if (const int step = Stepper(ui, row(), "Sound", Format("%.0f %%", static_cast<double>(s.volume) * 100.0),
+                                 s.volume > 0.05f, s.volume < 0.95f)) {
+        s.volume = std::clamp(std::round((s.volume + 0.1f * static_cast<float>(step)) * 10.0f) / 10.0f, 0.0f, 1.0f);
+        visit.settingsChanged = true;
+    }
     visit.settingsChanged |= Switch(ui, row(), "Diagnostics (F4)", s.diagnostics);
     hud::Note(ui, body, "F11 switches between a window and the full screen, F12 saves a picture.");
 }
@@ -452,7 +457,7 @@ void VisitorHud::Map(ui::Ui& ui, const Visit& visit) {
 
 void VisitorHud::Diagnostics(ui::Ui& ui, const Visit& visit) {
     const VisitFigures& f = visit.figures;
-    const Box panel{14.0f, 14.0f, 292.0f, 214.0f};
+    const Box panel{14.0f, 14.0f, 292.0f, 292.0f};
     ui.Paint().Round(panel, 6.0f, ui::Rgb(10, 14, 18, 190));
     Box body = panel.Inset(12.0f, 9.0f);
     hud::Heading(ui, body, "VISITORS");
@@ -470,6 +475,13 @@ void VisitorHud::Diagnostics(ui::Ui& ui, const Visit& visit) {
     hud::Fact(ui, body, "Here", Format("%.1f, %.1f  heading %.0f°", static_cast<double>(f.feet.X),
                                        static_cast<double>(f.feet.Z), static_cast<double>(f.yawDegrees)));
     hud::Fact(ui, body, "Frames a second", Format("%.0f", static_cast<double>(f.framesPerSecond)));
+    body.CutTop(4.0f);
+    hud::Heading(ui, body, "SOUND");
+    hud::Fact(ui, body, "Recordings", f.sound.failed > 0 ? Format("%d, %d failed", f.sound.files, f.sound.failed)
+                                                         : Format("%d", f.sound.files),
+              !f.sound.device || f.sound.files == 0 ? theme::kAlarm : theme::kText);
+    hud::Fact(ui, body, "Heard now", Format("%d of %d", f.sound.audible, f.sound.voices));
+    hud::Fact(ui, body, "Last call", f.sound.lastCall.empty() ? std::string("-") : f.sound.lastCall);
 }
 
 }  // namespace zoogame

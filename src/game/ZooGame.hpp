@@ -16,6 +16,7 @@
 #include "InputScript.hpp"
 #include "Play.hpp"
 #include "SceneryRenderer.hpp"
+#include "Soundscape.hpp"
 #include "Surfaces.hpp"
 #include "TerrainRenderer.hpp"
 #include "Tools.hpp"
@@ -132,6 +133,7 @@ private:
     std::unique_ptr<AnimalRenderer> animals_;
     /// Outlives the zoos: its cast of avatars takes a while to assemble.
     std::unique_ptr<VisitorRenderer> visitors_;
+    std::unique_ptr<Soundscape> sounds_;
     std::unique_ptr<CnaEngine::Graphics::SkyDome> sky_;
     CnaEngine::Graphics::DayNightPalette palette_ = CnaEngine::Graphics::DayNightPalette::Default();
     CnaEngine::Graphics::TimeOfDay clock_;

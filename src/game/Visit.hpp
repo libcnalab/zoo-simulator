@@ -71,8 +71,23 @@ struct VisitSettings {
     /// Vertical field of view, degrees (58 is about 90 across a 16:9 screen).
     float fieldOfView = 58.0f;
     bool headBob = true;
+    /// The sound of the zoo, 0 silent .. 1 full.
+    float volume = 0.8f;
     /// The figures of the visitors and their avatars on the screen (F4).
     bool diagnostics = false;
+};
+
+/// What the sound of the zoo reports about itself (F4, and the figures line of
+/// a scripted run: nobody listens there, so it has to say what it plays).
+struct SoundFigures {
+    bool device = false;   ///< an audio device plays
+    int files = 0;         ///< recordings loaded
+    int failed = 0;        ///< recordings of the library that could not be loaded
+    int voices = 0;        ///< sounds going on (heard or waiting for a voice)
+    int audible = 0;       ///< of them heard now
+    int calls = 0;         ///< animal calls since the visit began
+    int steps = 0;         ///< footsteps since the visit began
+    std::string lastCall;  ///< "lion_roar, 34 m away"
 };
 
 /// What the diagnostics overlay shows.
@@ -91,6 +106,7 @@ struct VisitFigures {
     Vector3 feet = Vector3(0.0f, 0.0f, 0.0f);
     float yawDegrees = 0.0f;
     float speed = 0.0f;
+    SoundFigures sound;
 };
 
 /// The state the visitor's interface and the game share.
