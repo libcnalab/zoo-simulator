@@ -231,6 +231,19 @@ void ZooGame::LoadGame() {
                 pose = *stand;
             else
                 std::fprintf(stderr, "zoo: --stand %s: there is no such place\n", standAt_.c_str());
+            // Who could be stood in front of: an animal indoors is not to be seen.
+            for (const zoo::Enclosure& enclosure : zoo_->Habitats().All()) {
+                int lives = 0;
+                int outdoors = 0;
+                for (const zoo::Animal& animal : zoo_->Fauna().All()) {
+                    if (!(animal.home == enclosure.id))
+                        continue;
+                    ++lives;
+                    outdoors += animal.Visible() ? 1 : 0;
+                }
+                std::fprintf(stderr, "zoo:   %s: %d animals, %d outdoors\n", enclosure.name.c_str(), lives,
+                             outdoors);
+            }
         }
         BeginWalk(pose);
         if (toTitle) {

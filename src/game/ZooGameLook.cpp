@@ -245,13 +245,19 @@ std::optional<ZooGame::Pose> ZooGame::StandPose(std::string_view what) const {
     const std::size_t colon = what.find(':');
     const std::string_view kind = what.substr(0, colon);
     int wanted = 0;
-    // "habitat:1:giraffe" looks at a giraffe of the second habitat.
+    // "habitat:1:giraffe" looks at a giraffe of the second habitat; "habitat:giraffe" at one
+    // wherever giraffes live, which does not depend on which habitats have somebody outdoors.
     std::string_view only;
+    bool bySpecies = false;
     if (colon != std::string_view::npos) {
         const std::string_view rest = what.substr(colon + 1);
         wanted = std::atoi(std::string(rest).c_str());
-        if (const std::size_t second = rest.find(':'); second != std::string_view::npos)
+        if (const std::size_t second = rest.find(':'); second != std::string_view::npos) {
             only = rest.substr(second + 1);
+        } else if (kind == "habitat" && !rest.empty() && (rest[0] < '0' || rest[0] > '9')) {
+            only = rest;
+            bySpecies = true;
+        }
     }
     const auto centre = [](zoo::TileCoord t) {
         return zoo::Vec2{(static_cast<float>(t.x) + 0.5f) * zoo::kTileSize,
@@ -374,6 +380,11 @@ std::optional<ZooGame::Pose> ZooGame::StandPose(std::string_view what) const {
                         pose = Pose{at.x, at.z, std::atan2(dx, dz), std::clamp(down, -0.5f, 0.9f)};
                     }
                 }
+            }
+            if (bySpecies) {
+                if (best < 1.0e9f)
+                    return pose;
+                continue;
             }
             // Habitats count by who lives in them, whichever species is asked for.
             if (populated && wanted-- == 0)
