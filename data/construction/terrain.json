@@ -1,0 +1,44 @@
+{
+  "terrains": [
+    {
+      "terrain": "grass",
+      "name": "Grass",
+      "cost": 8
+    },
+    {
+      "terrain": "savanna",
+      "name": "Savanna grass",
+      "cost": 10
+    },
+    {
+      "terrain": "dirt",
+      "name": "Bare earth",
+      "cost": 3
+    },
+    {
+      "terrain": "sand",
+      "name": "Sand",
+      "cost": 7
+    },
+    {
+      "terrain": "rock",
+      "name": "Rocky ground",
+      "cost": 18
+    },
+    {
+      "terrain": "snow",
+      "name": "Snow",
+      "cost": 14
+    },
+    {
+      "terrain": "forest_floor",
+      "name": "Forest floor",
+      "cost": 12
+    },
+    {
+      "terrain": "mud",
+      "name": "Mud",
+      "cost": 4
+    }
+  ]
+}

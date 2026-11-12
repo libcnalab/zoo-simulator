@@ -42,7 +42,7 @@
   "needsShelter": true,
   "tempMinC": -5,
   "tempMaxC": 42,
-  "fenceHeightM": 4.5,
+  "fenceHeightM": 2.4,
   "fenceStrength": 5,
   "price": 25000,
   "appeal": 95,

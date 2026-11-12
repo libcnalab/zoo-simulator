@@ -1,0 +1,60 @@
+{
+  "foods": [
+    {
+      "id": "meat",
+      "name": "Meat",
+      "costPerKg": 2.4,
+      "shelfLifeDays": 1,
+      "color": "#a34435"
+    },
+    {
+      "id": "fish",
+      "name": "Fish",
+      "costPerKg": 2.1,
+      "shelfLifeDays": 1,
+      "color": "#6997a6"
+    },
+    {
+      "id": "hay",
+      "name": "Hay",
+      "costPerKg": 0.22,
+      "shelfLifeDays": 14,
+      "color": "#c5a24c"
+    },
+    {
+      "id": "browse",
+      "name": "Leafy browse",
+      "costPerKg": 0.55,
+      "shelfLifeDays": 3,
+      "color": "#467b3e"
+    },
+    {
+      "id": "grass_pellets",
+      "name": "Grass pellets",
+      "costPerKg": 0.8,
+      "shelfLifeDays": 30,
+      "color": "#78904b"
+    },
+    {
+      "id": "fruit_veg",
+      "name": "Fruit and vegetables",
+      "costPerKg": 1.15,
+      "shelfLifeDays": 3,
+      "color": "#df8242"
+    },
+    {
+      "id": "insects",
+      "name": "Insects",
+      "costPerKg": 3.6,
+      "shelfLifeDays": 2,
+      "color": "#9b733c"
+    },
+    {
+      "id": "bamboo",
+      "name": "Bamboo",
+      "costPerKg": 0.65,
+      "shelfLifeDays": 5,
+      "color": "#729958"
+    }
+  ]
+}

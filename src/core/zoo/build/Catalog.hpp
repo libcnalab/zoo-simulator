@@ -19,31 +19,31 @@ using Color3 = std::array<float, 3>;
 
 /// How a fence is built and drawn.
 enum class FenceStyle : std::uint8_t {
-    Rail,       ///< wooden posts and horizontal rails
-    Mesh,       ///< posts with wire mesh
-    Bars,       ///< vertical steel bars
-    Glass,      ///< glass panels between posts
-    Wall,       ///< solid wall
-    Cable,      ///< heavy posts with steel cables
-    Hedge,      ///< clipped hedge (decoration)
+    Rail,   ///< wooden posts and horizontal rails
+    Mesh,   ///< posts with wire mesh
+    Bars,   ///< vertical steel bars
+    Glass,  ///< glass panels between posts
+    Wall,   ///< solid wall
+    Cable,  ///< heavy posts with steel cables
+    Hedge,  ///< clipped hedge (decoration)
     Count
 };
-std::string_view ToString(FenceStyle v);    // "rail", "mesh", "bars", "glass", "wall", "cable", "hedge"
+std::string_view ToString(FenceStyle v);  // "rail", "mesh", "bars", "glass", "wall", "cable", "hedge"
 
 struct FenceDef {
-    std::string id;             ///< "wire_mesh"
-    std::string name;           ///< "Wire mesh fence"
+    std::string id;    ///< "wire_mesh"
+    std::string name;  ///< "Wire mesh fence"
     /// The value stored in World::Fence::kind, 1..254. Part of the save format: never
     /// renumber a published fence.
     int kind = 0;
     FenceStyle style = FenceStyle::Mesh;
     float heightM = 2.0f;
-    int strength = 1;           ///< 1 (light) .. 5 (elephant-proof), see SpeciesDef::fenceStrength
+    int strength = 1;  ///< 1 (light) .. 5 (elephant-proof), see SpeciesDef::fenceStrength
     /// How well visitors see animals through it, 0 (solid wall) .. 1 (glass).
     float visibility = 0.8f;
-    Money cost = 0;             ///< per tile edge (2 m)
-    Money gateCost = 0;         ///< added for an edge that carries a gate
-    Money upkeepPerDay = 0;     ///< per edge and game day
+    Money cost = 0;          ///< per tile edge (2 m)
+    Money gateCost = 0;      ///< added for an edge that carries a gate
+    Money upkeepPerDay = 0;  ///< per edge and game day
     /// Condition lost per game day (1 = new, 0 = collapsed); mechanics repair it.
     float wearPerDay = 0.002f;
     Color3 color{0.5f, 0.5f, 0.5f};
@@ -54,8 +54,8 @@ struct FenceDef {
 
 struct PathDef {
     PathKind kind = PathKind::None;
-    std::string name;           ///< "Asphalt path"
-    Money cost = 0;             ///< per tile
+    std::string name;  ///< "Asphalt path"
+    Money cost = 0;    ///< per tile
     /// Walking speed factor of visitors on it (1 = normal).
     float speed = 1.0f;
     /// How pleasant visitors find it, -1..1.
@@ -64,16 +64,16 @@ struct PathDef {
 
 struct TerrainDef {
     Terrain terrain = Terrain::Grass;
-    std::string name;           ///< "Savanna grass"
-    Money cost = 0;             ///< per tile repainted
+    std::string name;  ///< "Savanna grass"
+    Money cost = 0;    ///< per tile repainted
 };
 
 // ---- food -----------------------------------------------------------------------------
 
 /// Animal food (SpeciesDef::foods names these ids).
 struct FoodDef {
-    std::string id;             ///< "meat"
-    std::string name;           ///< "Meat"
+    std::string id;    ///< "meat"
+    std::string name;  ///< "Meat"
     Money costPerKg = 0;
     /// Game days after which it spoils in a feeder.
     float shelfLifeDays = 1.0f;
@@ -84,31 +84,31 @@ struct FoodDef {
 
 /// What a building is for. Names are part of the save format; append only.
 enum class BuildingRole : std::uint8_t {
-    AnimalShelter,      ///< inside an enclosure: animals sleep and hide in it
+    AnimalShelter,  ///< inside an enclosure: animals sleep and hide in it
     FoodStall,
     DrinkStall,
     Restroom,
     GiftShop,
-    StaffRoom,          ///< staff rest here; extends how many staff the zoo can employ
+    StaffRoom,  ///< staff rest here; extends how many staff the zoo can employ
     VetClinic,
-    EducationCenter,    ///< visitors learn about the zoo's species
-    ResearchCenter,     ///< conservation projects
+    EducationCenter,  ///< visitors learn about the zoo's species
+    ResearchCenter,   ///< conservation projects
     Count
 };
 std::string_view ToString(BuildingRole v);  // "animal_shelter", "food_stall", ...
 
 /// Where something may stand.
 enum class Placement : std::uint8_t {
-    Anywhere,       ///< any property ground
-    Enclosure,      ///< only inside an animal enclosure
-    Public,         ///< only on public ground (reachable by visitors, outside enclosures)
+    Anywhere,   ///< any property ground
+    Enclosure,  ///< only inside an animal enclosure
+    Public,     ///< only on public ground (reachable by visitors, outside enclosures)
 };
-std::string_view ToString(Placement v);     // "anywhere", "enclosure", "public"
+std::string_view ToString(Placement v);  // "anywhere", "enclosure", "public"
 
 struct BuildingDef {
-    std::string id;             ///< "burger_stall"
-    std::string name;           ///< "Burger stall"
-    std::string description;    ///< one sentence for the build menu
+    std::string id;           ///< "burger_stall"
+    std::string name;         ///< "Burger stall"
+    std::string description;  ///< one sentence for the build menu
     BuildingRole role = BuildingRole::FoodStall;
     Placement placement = Placement::Public;
     /// Footprint in tiles when the building faces south: `width` along x, `depth`
@@ -116,26 +116,26 @@ struct BuildingDef {
     int width = 2;
     int depth = 2;
     int doorOffset = 0;
-    float heightM = 3.0f;       ///< eaves height
+    float heightM = 3.0f;  ///< eaves height
     Money cost = 0;
     Money upkeepPerDay = 0;
     /// Animals sheltered / visitors inside or served at a time / staff based here.
     int capacity = 4;
-    bool heated = false;        ///< shelters: keeps animals warm below their comfort range
-    bool cooled = false;        ///< shelters: keeps animals cool above their comfort range
+    bool heated = false;  ///< shelters: keeps animals warm below their comfort range
+    bool cooled = false;  ///< shelters: keeps animals cool above their comfort range
 
     // -- what a stall or shop sells (role FoodStall, DrinkStall, GiftShop) --
-    std::string item;           ///< "Burger"; empty when nothing is sold
-    Money itemPrice = 0;        ///< default selling price (the player may change it)
-    Money itemCost = 0;         ///< what one item costs the zoo
-    float serviceSeconds = 8.0f;    ///< motion seconds to serve one visitor
-    float hungerRelief = 0.0f;  ///< how much of a visitor's hunger one item removes, 0..1
+    std::string item;             ///< "Burger"; empty when nothing is sold
+    Money itemPrice = 0;          ///< default selling price (the player may change it)
+    Money itemCost = 0;           ///< what one item costs the zoo
+    float serviceSeconds = 8.0f;  ///< motion seconds to serve one visitor
+    float hungerRelief = 0.0f;    ///< how much of a visitor's hunger one item removes, 0..1
     float thirstRelief = 0.0f;
-    float fun = 0.0f;           ///< happiness one item or one visit gives, 0..1
-    float education = 0.0f;     ///< what a visit teaches, 0..1 (EducationCenter)
+    float fun = 0.0f;        ///< happiness one item or one visit gives, 0..1
+    float education = 0.0f;  ///< what a visit teaches, 0..1 (EducationCenter)
 
     // -- look (the renderer builds the model from these) --
-    std::string look;           ///< "hut", "barn", "kiosk", "house", "pavilion", "cave"
+    std::string look;  ///< "hut", "barn", "kiosk", "house", "pavilion", "cave"
     Color3 wallColor{0.8f, 0.75f, 0.65f};
     Color3 roofColor{0.5f, 0.25f, 0.2f};
 };
@@ -147,21 +147,21 @@ enum class PropRole : std::uint8_t {
     Tree,
     Bush,
     Rock,
-    Feeder,         ///< holds animal food; keepers fill it
-    WaterTrough,    ///< holds drinking water; keepers fill it
-    Enrichment,     ///< something for animals to play with, climb or scratch
+    Feeder,       ///< holds animal food; keepers fill it
+    WaterTrough,  ///< holds drinking water; keepers fill it
+    Enrichment,   ///< something for animals to play with, climb or scratch
     Bench,
-    Bin,            ///< litter bin
+    Bin,  ///< litter bin
     Lamp,
-    InfoBoard,      ///< education board about the species of the nearest enclosure
-    Decoration,     ///< flower beds, statues, fountains
+    InfoBoard,   ///< education board about the species of the nearest enclosure
+    Decoration,  ///< flower beds, statues, fountains
     Count
 };
-std::string_view ToString(PropRole v);      // "tree", "bush", "rock", "feeder", "water_trough", ...
+std::string_view ToString(PropRole v);  // "tree", "bush", "rock", "feeder", "water_trough", ...
 
 struct PropDef {
-    std::string id;             ///< "acacia"
-    std::string name;           ///< "Umbrella acacia"
+    std::string id;    ///< "acacia"
+    std::string name;  ///< "Umbrella acacia"
     PropRole role = PropRole::Tree;
     Placement placement = Placement::Anywhere;
     /// Radius of the circle it occupies on the ground; other blocking props keep
@@ -189,7 +189,7 @@ struct PropDef {
     float beauty = 0.0f;
 
     // -- look --
-    std::string look;           ///< "oak", "pine", "acacia", "palm", "boulder", "hay_rack", "bench", ...
+    std::string look;  ///< "oak", "pine", "acacia", "palm", "boulder", "hay_rack", "bench", ...
     Color3 color{0.3f, 0.5f, 0.2f};
     Color3 color2{0.4f, 0.3f, 0.2f};
 };
@@ -202,7 +202,7 @@ struct PropDef {
 /// catalog and are what Building::def and Prop::def store; saved games store
 /// the string ids.
 struct Catalog {
-    std::vector<FenceDef> fences;       ///< ordered by kind
+    std::vector<FenceDef> fences;  ///< ordered by kind
     std::array<PathDef, kPathKindCount> paths{};
     std::array<TerrainDef, kTerrainCount> terrains{};
     std::vector<FoodDef> foods;

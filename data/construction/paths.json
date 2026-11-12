@@ -1,0 +1,32 @@
+{
+  "paths": [
+    {
+      "kind": "asphalt",
+      "name": "Asphalt path",
+      "cost": 35,
+      "speed": 1.15,
+      "appeal": 0.05
+    },
+    {
+      "kind": "gravel",
+      "name": "Gravel path",
+      "cost": 18,
+      "speed": 0.95,
+      "appeal": 0.1
+    },
+    {
+      "kind": "cobblestone",
+      "name": "Cobblestone path",
+      "cost": 48,
+      "speed": 0.9,
+      "appeal": 0.25
+    },
+    {
+      "kind": "boardwalk",
+      "name": "Boardwalk",
+      "cost": 55,
+      "speed": 1.05,
+      "appeal": 0.2
+    }
+  ]
+}

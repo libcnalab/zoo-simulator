@@ -2,6 +2,8 @@
 #pragma once
 
 #include <cstdint>
+#include <map>
+#include <utility>
 #include <vector>
 
 #include "zoo/base/Ids.hpp"
@@ -14,13 +16,13 @@ namespace zoo {
 /// A placed building. Its footprint tiles carry its id in World::Tile::building.
 struct Building {
     BuildingId id;
-    int def = -1;               ///< index into Catalog::buildings
-    TileCoord origin;           ///< north-west tile of the (rotated) footprint
-    Dir facing = Dir::South;    ///< the side its door is on
-    float condition = 1.0f;     ///< 1 = new; worn buildings cost appeal until repaired
-    Money itemPrice = 0;        ///< current selling price (stalls and shops)
-    bool open = true;           ///< closed buildings serve nobody
-    int servedToday = 0;        ///< visitors served since the day began (statistics)
+    int def = -1;             ///< index into Catalog::buildings
+    TileCoord origin;         ///< north-west tile of the (rotated) footprint
+    Dir facing = Dir::South;  ///< the side its door is on
+    float condition = 1.0f;   ///< 1 = new; worn buildings cost appeal until repaired
+    Money itemPrice = 0;      ///< current selling price (stalls and shops)
+    bool open = true;         ///< closed buildings serve nobody
+    int servedToday = 0;      ///< visitors served since the day began (statistics)
     int servedTotal = 0;
 
     bool operator==(const Building&) const = default;
@@ -37,10 +39,14 @@ constexpr TileCoord FootprintSize(const BuildingDef& def, Dir facing) {
 /// rotations of the south-facing one about the vertical axis.
 constexpr TileCoord DoorTile(const BuildingDef& def, TileCoord origin, Dir facing) {
     switch (facing) {
-        case Dir::South: return {origin.x + def.doorOffset, origin.z + def.depth - 1};
-        case Dir::West: return {origin.x, origin.z + def.doorOffset};
-        case Dir::North: return {origin.x + def.width - 1 - def.doorOffset, origin.z};
-        case Dir::East: return {origin.x + def.depth - 1, origin.z + def.width - 1 - def.doorOffset};
+        case Dir::South:
+            return {origin.x + def.doorOffset, origin.z + def.depth - 1};
+        case Dir::West:
+            return {origin.x, origin.z + def.doorOffset};
+        case Dir::North:
+            return {origin.x + def.width - 1 - def.doorOffset, origin.z};
+        case Dir::East:
+            return {origin.x + def.depth - 1, origin.z + def.width - 1 - def.doorOffset};
     }
     return origin;
 }
@@ -53,10 +59,10 @@ constexpr TileCoord FrontTile(const BuildingDef& def, TileCoord origin, Dir faci
 /// A freely placed object: a tree, a rock, a feeder, a bench...
 struct Prop {
     PropId id;
-    int def = -1;               ///< index into Catalog::props
+    int def = -1;  ///< index into Catalog::props
     Vec2 position;
     float heading = 0.0f;
-    float scale = 1.0f;         ///< visual variation of plants and rocks, 0.7..1.3
+    float scale = 1.0f;  ///< visual variation of plants and rocks, 0.7..1.3
     /// Feeder: kg of food in it; WaterTrough: litres; Bin: litter items in it.
     float amount = 0.0f;
     /// Feeder: index into Catalog::foods of what it holds, -1 when empty.
@@ -102,7 +108,7 @@ public:
     bool operator==(const ZooObjects& other) const;
 
 private:
-    friend struct ObjectsAccess;        // serialisation
+    friend struct ObjectsAccess;  // serialisation
 
     void RebuildBuckets() const;
 
@@ -112,10 +118,8 @@ private:
     std::uint32_t nextProp_ = 1;
     std::uint32_t revision_ = 1;
 
-    static constexpr float kBucketSize = 16.0f;     ///< metres
-    mutable std::vector<std::vector<std::uint32_t>> buckets_;   ///< indices into props_
-    mutable int bucketsX_ = 0;
-    mutable int bucketsZ_ = 0;
+    static constexpr float kBucketSize = 16.0f;  ///< metres
+    mutable std::map<std::pair<int, int>, std::vector<std::uint32_t>> buckets_;
     mutable std::uint32_t bucketsRevision_ = 0;
 };
 
