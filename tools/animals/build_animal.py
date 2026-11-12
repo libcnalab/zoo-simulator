@@ -43,7 +43,7 @@ def main():
     if spec.rig is not None and not args.no_anim:
         from zoogen import anim as anim_mod
         anim = anim_mod
-        clips = anim_mod.bake_clips(spec, arm_ob)
+        clips = anim_mod.bake_clips(spec, arm_ob, info["bones"])
     os.makedirs(args.out, exist_ok=True)
     glb = os.path.join(args.out, spec.name + ".glb")
     build.export_glb(glb, mesh_ob, arm_ob)
@@ -67,7 +67,7 @@ def main():
             want = args.clips.split(",") if args.clips else [c["name"] for c in clips]
             for c in clips:
                 if c["name"] in want:
-                    anim.preview_clip(scene, cam, arm_ob, c, center, radius,
+                    anim.preview_clip(scene, cam, arm_ob, spec.name, c, center, radius,
                                       os.path.join(args.preview, f"{spec.name}_{c['name']}"))
 
 

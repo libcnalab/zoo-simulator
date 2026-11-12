@@ -9,7 +9,9 @@ slide under the skin.
 import numpy as np
 
 from zoogen import noise as nz
+from zoogen import quadruped as quad
 from zoogen.geom import Bone, Part, R, Spec
+from zoogen.rig import Leg, Rig
 
 Y_F = 0.17      # lateral offset of the front limbs
 Y_H = 0.16      # lateral offset of the hind limbs
@@ -197,6 +199,36 @@ def paint(ctx):
     return coat
 
 
+def _rig():
+    def front(s):
+        return Leg("upper_arm" + s, "forearm" + s, "hand" + s, "fingers" + s, "scapula" + s)
+
+    def hind(s):
+        return Leg("thigh" + s, "shin" + s, "foot" + s, "toes" + s)
+    return Rig(body="hips",
+               legs={"FL": front(".L"), "FR": front(".R"), "HL": hind(".L"), "HR": hind(".R")},
+               spine=["spine1", "spine2"], chest="chest", neck=["neck1", "neck2"], head="head",
+               jaw="jaw", tail=["tail1", "tail2", "tail3", "tail4"], ears=["ear.L", "ear.R"])
+
+
+def _clips(solver):
+    # A lion walks at about 1 m/s with long, low, almost lazy strides (lateral sequence, a
+    # foot on the ground for a little under two thirds of the cycle) and trots at 2-3 m/s.
+    walk = quad.Gait("walk", period=1.15, stance=0.74, duty=0.63, offsets=quad.WALK,
+                     lift=0.085, bob=0.012, hip_yaw=4.5, chest_yaw=3.5, sway=0.014,
+                     head_nod=1.5, tail_sway=7.0)
+    trot = quad.Gait("trot", period=0.62, stance=0.62, duty=0.42, offsets=quad.TROT,
+                     lift=0.12, bob=-0.018, hip_yaw=3.0, chest_yaw=2.0, sway=0.003, roll=0.4,
+                     swing_pitch=58.0, head_nod=0.8, tail_sway=4.0, lean=1.5)
+    params = quad.Params(
+        gaits=[walk, trot],
+        lie=quad.Lie(drop=0.55, hind_tuck=0.10, hind_out=0.06),
+        head_down=quad.HeadDown(body_pitch=22.0, crouch=0.12, chest=8.0, neck=(38.0, 20.0),
+                                head=6.0),
+        look_yaw=18.0, tail_idle=9.0)
+    return quad.standard_clips(solver, params)
+
+
 def make_spec():
     bones = _bones()
     return Spec(
@@ -204,4 +236,5 @@ def make_spec():
         texture_size=1024, voxel=0.011, target_tris=18000, smooth_iters=3,
         meta={"common_name": "African lion", "scientific_name": "Panthera leo",
               "shoulder_height_m": 1.2, "sex": "male", "roughness": 0.9},
+        rig=_rig(), clips=_clips,
     )

@@ -15,3 +15,16 @@ target_link_libraries(zoo_core_tests PRIVATE Zoo::Core zoo_warnings GTest::gtest
 target_include_directories(zoo_core_tests SYSTEM PRIVATE "${ZOO_NLOHMANN_JSON_INCLUDE}")
 target_compile_definitions(zoo_core_tests PRIVATE ZOO_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
 gtest_discover_tests(zoo_core_tests DISCOVERY_TIMEOUT 60)
+
+# The procedural animation maths of the asset pipeline is pure numpy and tested without Blender.
+find_package(Python3 COMPONENTS Interpreter)
+if(Python3_FOUND)
+    execute_process(COMMAND "${Python3_EXECUTABLE}" -c "import numpy"
+                    RESULT_VARIABLE ZOO_NUMPY_MISSING OUTPUT_QUIET ERROR_QUIET)
+    if(ZOO_NUMPY_MISSING EQUAL 0)
+        add_test(NAME zoogen_animation
+                 COMMAND "${Python3_EXECUTABLE}" -m unittest discover -s "${CMAKE_SOURCE_DIR}/tools/animals/tests")
+    else()
+        message(STATUS "numpy not found: the zoogen animation tests are skipped")
+    endif()
+endif()

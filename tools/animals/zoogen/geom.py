@@ -292,8 +292,8 @@ class Spec:
     target_tris: int = 16000
     smooth_iters: int = 6
     meta: dict = field(default_factory=dict)   # copied into the manifest
-    rig: object = None                # locomotion rig description (anim.py)
-    clips: list = field(default_factory=list)
+    rig: object = None                # rig.Rig: which bones play which role
+    clips: object = None              # callable(rig.Solver) -> [rig.Clip]
 
 
 def expand_bones(bones):
