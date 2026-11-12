@@ -11,8 +11,11 @@
 #include <filesystem>
 #include <fstream>
 
+#include "CnaEngine/App/AssetDirectory.hpp"
+
 #include "Saves.hpp"
 #include "zoo/sim/Scenario.hpp"
+#include "zoo/sim/VisitorZoo.hpp"
 #include "zoo/sim/ZooSave.hpp"
 
 #include "Microsoft/Xna/Framework/MathHelper.hpp"
@@ -52,14 +55,20 @@ std::string StampedTitle() {
 }  // namespace
 
 std::unique_ptr<zoo::Zoo> ZooGame::MakeVisitorZoo() {
-    zoo::ZooConfig config;
-    config.world.seed = seed_;
-    config.seed = seed_;
-    auto made = std::make_unique<zoo::Zoo>(*catalog_, *species_, config);
+    const auto began = std::chrono::steady_clock::now();
+    auto made = std::make_unique<zoo::Zoo>(*catalog_, *species_, zoo::VisitorZooConfig(seed_));
     if (!emptyMap_) {
-        const zoo::ScenarioReport report = zoo::BuildStarterZoo(*made);
-        std::printf("zoo: visitor zoo: %d enclosures, %d animals, %d buildings, %d props\n", report.enclosures,
-                    report.animals, report.buildings, report.props);
+        // A habitat whose animals the game cannot show yet is built and named, and waits for them.
+        zoo::VisitorZooOptions options;
+        const auto assets = CnaEngine::App::FindAssetDirectory("assets");
+        for (const zoo::SpeciesDef& def : species_->All()) {
+            if (!assets || !std::filesystem::exists(*assets / "animals" / (def.id + ".glb")))
+                options.withoutSpecies.push_back(def.id);
+        }
+        const zoo::ScenarioReport report = zoo::BuildVisitorZoo(*made, options);
+        const double took = std::chrono::duration<double>(std::chrono::steady_clock::now() - began).count();
+        std::printf("zoo: visitor zoo: %d enclosures, %d animals, %d buildings, %d props (%.2f s)\n", report.enclosures,
+                    report.animals, report.buildings, report.props, took);
         for (const std::string& problem : report.problems)
             std::printf("zoo: visitor zoo: %s\n", problem.c_str());
     }
