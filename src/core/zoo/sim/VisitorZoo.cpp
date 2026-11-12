@@ -156,7 +156,7 @@ HabitatStyle Style(std::string_view species) {
     if (species == "flamingo") {
         return {Terrain::Mud,
                 "wire_mesh",
-                "wire_mesh",
+                "glass_wall",
                 "heated_barn",
                 "fish_bucket_stand",
                 "willow",
