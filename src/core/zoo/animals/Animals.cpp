@@ -1,0 +1,885 @@
+// SPDX-License-Identifier: MIT
+#include "zoo/animals/Animals.hpp"
+
+#include <algorithm>
+#include <bit>
+#include <cmath>
+#include <iterator>
+#include <limits>
+#include <span>
+
+#include "zoo/animals/AnimalTuning.hpp"
+
+namespace zoo {
+namespace {
+float Clamp(float value) {
+    return Clamp01(value);
+}
+void Issue(WelfareReport& report, WelfareIssue issue) {
+    report.issues |= Bit(issue);
+}
+Event MakeEvent(EventType type, AnimalId animal, EnclosureId enclosure, Vec2 position, int detail = 0) {
+    Event event{};
+    event.type = type;
+    event.animal = animal;
+    event.enclosure = enclosure;
+    event.position = position;
+    event.detail = detail;
+    return event;
+}
+std::string ChooseAnimalName(Rng& rng, const std::vector<Animal>& animals, int species, Sex sex) {
+    constexpr std::string_view female[] = {
+        "Amina", "Anika",  "Aya",  "Bela", "Cleo", "Dara",  "Eleni", "Esme", "Farah", "Freya",
+        "Hana",  "Indira", "Ines", "Jaya", "Kaya", "Laila", "Leila", "Lina", "Mara",  "Mina",
+        "Nadia", "Nala",   "Noor", "Nora", "Rina", "Rosa",  "Sana",  "Sara", "Suki",  "Talia",
+        "Thea",  "Uma",    "Vera", "Yara", "Zara", "Zuri",  "Amara", "Bina", "Dalia", "Elif",
+        "Inez",  "Lumi",   "Mika", "Nia",  "Rhea", "Sora",  "Tara",  "Yuki"};
+    constexpr std::string_view male[] = {
+        "Aadi",  "Aki",   "Arun", "Basil",  "Cai",   "Davi",  "Eli",   "Emil",  "Enzo",  "Faris",
+        "Hugo",  "Idris", "Ivo",  "Jamal",  "Kenji", "Kian",  "Leo",   "Luca",  "Malik", "Milan",
+        "Niko",  "Noah",  "Omar", "Pavel",  "Rafi",  "Ravi",  "Ren",   "Rohan", "Samir", "Sami",
+        "Tariq", "Theo",  "Uri",  "Vikram", "Yusuf", "Zain",  "Adil",  "Beni",  "Dara",  "Eren",
+        "Ilan",  "Jiro",  "Kofi", "Musa",   "Nuri",  "Sacha", "Tomas", "Zev"};
+    const auto names = sex == Sex::Female ? std::span<const std::string_view>(female)
+                                          : std::span<const std::string_view>(male);
+    std::vector<std::size_t> available;
+    available.reserve(names.size());
+    for (std::size_t i = 0; i < names.size(); ++i) {
+        bool used = false;
+        for (const Animal& animal : animals) {
+            if (animal.species == species && animal.name == names[i]) {
+                used = true;
+                break;
+            }
+        }
+        if (!used)
+            available.push_back(i);
+    }
+    if (available.empty())
+        return std::string(
+            names[static_cast<std::size_t>(rng.RangeInt(0, static_cast<int>(names.size()) - 1))]);
+    const std::size_t choice =
+        available[static_cast<std::size_t>(rng.RangeInt(0, static_cast<int>(available.size()) - 1))];
+    return std::string(names[choice]);
+}
+float WeightedOverall(const WelfareReport& r) {
+    constexpr float weights[] = {1.5f, 1.0f, 0.7f, 0.7f, 0.8f, 1.2f, 0.8f};
+    const float values[] = {r.space, r.terrain, r.water, r.vegetation, r.shelter, r.social, r.enrichment};
+    float total = 0.0f;
+    float weight = 0.0f;
+    float minimum = 1.0f;
+    for (int i = 0; i < 7; ++i) {
+        total += values[i] * weights[i];
+        weight += weights[i];
+        minimum = std::min(minimum, values[i]);
+    }
+    return Clamp(0.7f * total / weight + 0.3f * minimum);
+}
+}  // namespace
+
+std::string_view ToString(Sex value) {
+    return value == Sex::Female ? "female" : "male";
+}
+std::string_view ToString(AnimalActivity value) {
+    constexpr std::string_view names[] = {"idle", "wander",  "forage",    "eat",       "drink",
+                                          "rest", "sleep",   "play",      "socialize", "vocalize",
+                                          "pace", "shelter", "break_out", "loose",     "crated"};
+    const auto index = static_cast<std::size_t>(value);
+    return index < std::size(names) ? names[index] : "idle";
+}
+std::string_view ToString(DeathCause value) {
+    constexpr std::string_view names[] = {"old_age", "starvation", "thirst", "illness",
+                                          "cold",    "heat",       "killed", "injury"};
+    const auto index = static_cast<std::size_t>(value);
+    return index < std::size(names) ? names[index] : "old_age";
+}
+std::string_view Describe(WelfareIssue issue) {
+    constexpr std::string_view names[] = {"This enclosure is too small.",
+                                          "The ground is unsuitable.",
+                                          "There is too little open water.",
+                                          "There is no deep water.",
+                                          "The habitat is too bare.",
+                                          "The habitat is overgrown.",
+                                          "There is no shelter.",
+                                          "The shelter is full.",
+                                          "This animal is lonely.",
+                                          "There are too many animals of this species.",
+                                          "There are too many adult males.",
+                                          "A predator is nearby.",
+                                          "There is no suitable food.",
+                                          "There is no drinking water.",
+                                          "This animal is hungry.",
+                                          "This animal is thirsty.",
+                                          "There is too little enrichment.",
+                                          "This animal is stressed.",
+                                          "The enclosure is dirty.",
+                                          "This animal is sick.",
+                                          "This animal is too cold.",
+                                          "This animal is too hot.",
+                                          "This animal is outside an enclosure."};
+    const auto index = static_cast<std::size_t>(issue);
+    return index < std::size(names) ? names[index] : "Unknown welfare issue.";
+}
+
+float SpaceNeededM2(const SpeciesDef& species, int count) {
+    const int extras = std::max(0, count - std::max(1, species.groupMin));
+    return species.minEnclosureM2 + static_cast<float>(extras) * species.spacePerExtraAnimalM2;
+}
+
+WelfareReport EvaluateHabitat(const SpeciesDef& species, const EnclosureStats& stats,
+                              const GroupInfo& group) {
+    WelfareReport r;
+    const float needed = SpaceNeededM2(species, group.sameSpecies) + group.otherSpeciesSpaceM2;
+    r.space = needed <= 0.0f ? 1.0f : Clamp(stats.areaM2 / needed);
+    if (r.space < tuning::kHabitatMinimumIssue)
+        Issue(r, WelfareIssue::TooSmall);
+    float weightedTerrain = 0.0f;
+    float maxSuitability = 0.0f;
+    for (std::size_t i = 0; i < species.terrainSuitability.size(); ++i) {
+        weightedTerrain += stats.terrainShare[i] * species.terrainSuitability[i];
+        maxSuitability = std::max(maxSuitability, species.terrainSuitability[i]);
+    }
+    const float dryShare = std::max(0.0f, 1.0f - stats.waterShare);
+    const float terrainDenominator = maxSuitability * dryShare;
+    r.terrain = terrainDenominator <= 0.0f ? 0.0f : Clamp(weightedTerrain / terrainDenominator);
+    if (r.terrain < tuning::kTerrainIssue)
+        Issue(r, WelfareIssue::PoorTerrain);
+    if (species.waterAreaFraction == 0.0f) {
+        r.water = stats.waterShare <= 0.5f ? 1.0f : Clamp(2.0f * (1.0f - stats.waterShare));
+    } else {
+        r.water = Clamp(stats.waterShare / species.waterAreaFraction);
+    }
+    if (species.needsDeepWater && !stats.deepWater) {
+        r.water = std::min(r.water, tuning::kDeepWaterCap);
+        Issue(r, WelfareIssue::NoDeepWater);
+    }
+    if (r.water < tuning::kWaterIssue)
+        Issue(r, WelfareIssue::TooLittleWater);
+    const float difference =
+        std::max(0.0f, std::abs(stats.vegetationDensity - species.vegetationDensity) - 0.15f);
+    r.vegetation = Clamp(1.0f - std::min(1.0f, difference / 0.5f));
+    if (r.vegetation < tuning::kVegetationIssue) {
+        Issue(r, stats.vegetationDensity < species.vegetationDensity ? WelfareIssue::TooBare
+                                                                     : WelfareIssue::TooOvergrown);
+    }
+    if (!species.needsShelter) {
+        r.shelter = 1.0f;
+    } else if (stats.shelterCapacity <= 0) {
+        r.shelter = tuning::kShelterBase;
+        Issue(r, WelfareIssue::NoShelter);
+    } else if (stats.shelterCapacity < group.allAnimals) {
+        r.shelter = tuning::kShelterPartialBase + 0.5f * static_cast<float>(stats.shelterCapacity) /
+                                                      static_cast<float>(std::max(1, group.allAnimals));
+        Issue(r, WelfareIssue::ShelterFull);
+    }
+    if (group.sameSpecies < species.groupMin) {
+        const float ratio = static_cast<float>(group.sameSpecies) / static_cast<float>(species.groupMin);
+        r.social = 1.0f - (1.0f - ratio) * (tuning::kSocialLonelyPenalty +
+                                            tuning::kSocialSociabilityPenalty * species.sociability);
+        Issue(r, WelfareIssue::Lonely);
+    } else if (group.sameSpecies > species.groupMax) {
+        r.social = std::max(0.2f, 1.0f - static_cast<float>(group.sameSpecies - species.groupMax) /
+                                             static_cast<float>(std::max(1, species.groupMax)));
+        Issue(r, WelfareIssue::Overcrowded);
+    }
+    if (species.maxAdultMales > 0 && group.adultMales > species.maxAdultMales) {
+        r.social *= tuning::kMaleSocialMultiplier;
+        Issue(r, WelfareIssue::TooManyMales);
+    }
+    if (group.predator) {
+        r.social = std::min(r.social, tuning::kPredatorSocialCap);
+        Issue(r, WelfareIssue::PredatorNearby);
+    }
+    if (species.playfulness < 0.05f) {
+        r.enrichment = 1.0f;
+    } else {
+        const float enrichmentNeeded =
+            species.playfulness * (0.5f + 0.25f * static_cast<float>(group.sameSpecies));
+        r.enrichment = Clamp(0.3f + 0.7f * stats.enrichment / std::max(0.001f, enrichmentNeeded));
+        if (r.enrichment < tuning::kEnrichmentIssue)
+            Issue(r, WelfareIssue::Bored);
+    }
+    r.overall = WeightedOverall(r);
+    return r;
+}
+
+float Containment(const SpeciesDef& species, const EnclosureStats& stats) {
+    if (stats.tiles <= 0)
+        return 0.0f;
+    const float need = std::max(0.001f, species.fenceHeightM);
+    const float height = Clamp((stats.minFenceHeightM - 0.6f * need) / (0.4f * need));
+    const float deficit = static_cast<float>(std::max(0, species.fenceStrength - stats.minFenceStrength));
+    const float strength =
+        stats.minFenceStrength >= species.fenceStrength ? 1.0f : std::max(0.0f, 1.0f - 0.4f * deficit);
+    const float condition = stats.minFenceCondition >= 0.5f ? 1.0f : Clamp(stats.minFenceCondition / 0.5f);
+    return std::min({height, strength, condition});
+}
+
+float AgeDays(const Animal& animal, GameTime now) {
+    return static_cast<float>(static_cast<double>(now.tick - animal.bornTick) /
+                              static_cast<double>(kTicksPerDay));
+}
+float AgeYears(const Animal& animal, GameTime now) {
+    return AgeDays(animal, now) / kGameDaysPerRealYear;
+}
+bool IsAdult(const Animal& animal, const SpeciesDef& species, GameTime now) {
+    return AgeYears(animal, now) >= species.maturityYears;
+}
+float BodyScale(const Animal& animal, const SpeciesDef& species, GameTime now) {
+    const float t = Clamp(AgeYears(animal, now) / std::max(0.001f, species.maturityYears));
+    const float smooth = t * t * (3.0f - 2.0f * t);
+    return 0.35f + 0.65f * smooth;
+}
+
+Animals::Animals(std::uint64_t seed) : rng_(seed) {}
+AnimalId Animals::Add(const Env& env, int species, Sex sex, float ageYears, Vec2 position) {
+    if (species < 0 || static_cast<std::size_t>(species) >= env.species.All().size() ||
+        !std::isfinite(ageYears) || ageYears < 0.0f || !env.world.InBounds(World::TileAt(position)) ||
+        !env.nav.Passable(World::TileAt(position), NavProfile::Animal(0.0f, false)))
+        return {};
+    if (nextId_ == 0 || nextId_ == std::numeric_limits<std::uint32_t>::max())
+        return {};
+    Animal animal;
+    animal.id = AnimalId{nextId_++};
+    animal.species = species;
+    animal.sex = sex;
+    animal.bornTick =
+        env.time.tick - static_cast<std::int64_t>(ageYears * kGameDaysPerRealYear * kTicksPerDay);
+    animal.position = position;
+    animal.target = position;
+    animal.hunger = rng_.Range(0.1f, 0.3f);
+    animal.thirst = rng_.Range(0.1f, 0.3f);
+    animal.fatigue = rng_.Range(0.1f, 0.3f);
+    animal.boredom = rng_.Range(0.1f, 0.3f);
+    animal.name = ChooseAnimalName(rng_, animals_, species, sex);
+    animals_.push_back(animal);
+    alertLatches_.push_back(0U);
+    const EnclosureId enclosure = env.enclosures.At(position);
+    if (enclosure) {
+        auto found = std::lower_bound(
+            care_.begin(), care_.end(), enclosure.value,
+            [](const EnclosureCare& item, std::uint32_t value) { return item.id.value < value; });
+        if (found == care_.end() || found->id != enclosure)
+            care_.insert(found, EnclosureCare{enclosure});
+        animal.home = enclosure;
+        animals_.back().home = enclosure;
+        animals_.back().welfare = Welfare(env, animals_.back()).overall;
+    }
+    return animals_.back().id;
+}
+
+bool Animals::Remove(AnimalId id) {
+    auto it =
+        std::lower_bound(animals_.begin(), animals_.end(), id.value,
+                         [](const Animal& animal, std::uint32_t value) { return animal.id.value < value; });
+    if (it == animals_.end() || it->id != id)
+        return false;
+    const std::size_t index = static_cast<std::size_t>(it - animals_.begin());
+    animals_.erase(it);
+    if (index < alertLatches_.size())
+        alertLatches_.erase(alertLatches_.begin() + static_cast<std::ptrdiff_t>(index));
+    return true;
+}
+Animal* Animals::Find(AnimalId id) {
+    auto it =
+        std::lower_bound(animals_.begin(), animals_.end(), id.value,
+                         [](const Animal& animal, std::uint32_t value) { return animal.id.value < value; });
+    return it != animals_.end() && it->id == id ? &*it : nullptr;
+}
+const Animal* Animals::Find(AnimalId id) const {
+    auto it =
+        std::lower_bound(animals_.begin(), animals_.end(), id.value,
+                         [](const Animal& animal, std::uint32_t value) { return animal.id.value < value; });
+    return it != animals_.end() && it->id == id ? &*it : nullptr;
+}
+
+void Animals::InEnclosure(const Env& env, EnclosureId enclosure, std::vector<AnimalId>& out) const {
+    out.clear();
+    for (const Animal& animal : animals_) {
+        if (animal.InWorld() && env.enclosures.At(animal.position) == enclosure)
+            out.push_back(animal.id);
+    }
+}
+GroupInfo Animals::GroupOf(const Env& env, const Animal& animal) const {
+    GroupInfo group;
+    group.sameSpecies = 0;
+    group.allAnimals = 0;
+    const EnclosureId enclosure = env.enclosures.At(animal.position);
+    if (!enclosure)
+        return {0, 0, 0, 0.0f, false};
+    const SpeciesDef& species = env.species.All()[static_cast<std::size_t>(animal.species)];
+    for (const Animal& other : animals_) {
+        if (!other.InWorld() || env.enclosures.At(other.position) != enclosure)
+            continue;
+        ++group.allAnimals;
+        const SpeciesDef& otherSpecies = env.species.All()[static_cast<std::size_t>(other.species)];
+        if (other.species == animal.species) {
+            ++group.sameSpecies;
+            if (other.sex == Sex::Male && IsAdult(other, species, env.time))
+                ++group.adultMales;
+        } else if (otherSpecies.dangerous &&
+                   (otherSpecies.diet == Diet::Carnivore || otherSpecies.diet == Diet::Omnivore) &&
+                   species.adultMassKg < 1.5f * otherSpecies.adultMassKg) {
+            group.predator = true;
+        } else {
+            group.otherSpeciesSpaceM2 += SpaceNeededM2(otherSpecies, 1);
+        }
+    }
+    return group;
+}
+WelfareReport Animals::Welfare(const Env& env, const Animal& animal) const {
+    const SpeciesDef& species = env.species.All()[static_cast<std::size_t>(animal.species)];
+    const EnclosureId enclosure = env.enclosures.At(animal.position);
+    WelfareReport report;
+    const Enclosure* current = env.enclosures.Find(enclosure);
+    if (animal.activity == AnimalActivity::Crated) {
+        report.space = report.terrain = report.water = report.vegetation = 0.5f;
+        report.shelter = report.social = report.enrichment = 0.5f;
+    } else if (!enclosure) {
+        report.space = report.terrain = report.water = report.vegetation = 0.3f;
+        report.shelter = report.social = report.enrichment = 0.3f;
+        Issue(report, WelfareIssue::Escaped);
+    } else if (current != nullptr) {
+        report = EvaluateHabitat(species, current->stats, GroupOf(env, animal));
+        const EnclosureCare* care = nullptr;
+        for (const EnclosureCare& item : care_) {
+            if (item.id == enclosure) {
+                care = &item;
+                break;
+            }
+        }
+        if (care != nullptr)
+            report.cleanliness = Clamp(1.0f - care->dirt);
+    }
+    const float worstNeed = std::max(animal.hunger, animal.thirst);
+    report.nutrition = worstNeed <= 0.4f ? 1.0f : Clamp(1.0f - (worstNeed - 0.4f) / 0.6f);
+    if (animal.hunger > tuning::kNeedIssue)
+        Issue(report, WelfareIssue::Hungry);
+    if (animal.thirst > tuning::kNeedIssue)
+        Issue(report, WelfareIssue::Thirsty);
+    bool edibleFood = false;
+    bool hasDrink = false;
+    bool hasOpenWater = false;
+    if (current != nullptr) {
+        for (PropId propId : current->feeders) {
+            const Prop* prop = env.objects.FindProp(propId);
+            if (prop == nullptr || prop->def < 0 ||
+                static_cast<std::size_t>(prop->def) >= env.catalog.props.size())
+                continue;
+            const PropDef& def = env.catalog.props[static_cast<std::size_t>(prop->def)];
+            for (const std::string& food : species.foods) {
+                if (std::find(def.foods.begin(), def.foods.end(), food) != def.foods.end())
+                    edibleFood = true;
+            }
+        }
+        hasDrink = !current->troughs.empty();
+        for (int z = current->min.z; z <= current->max.z; ++z) {
+            for (int x = current->min.x; x <= current->max.x; ++x) {
+                const TileCoord tile{x, z};
+                if (env.enclosures.At(tile) == enclosure && env.world.HasWater(tile))
+                    hasOpenWater = true;
+            }
+        }
+        if (!edibleFood)
+            Issue(report, WelfareIssue::NoFood);
+        if (!hasDrink && !hasOpenWater)
+            Issue(report, WelfareIssue::NoDrink);
+        const float temperature = env.weather.temperatureC;
+        float excess = std::max({species.tempMinC - temperature, temperature - species.tempMaxC, 0.0f});
+        const Building* shelter = env.objects.FindBuilding(animal.shelter);
+        const BuildingDef* shelterDef = nullptr;
+        if (shelter != nullptr && shelter->def >= 0 &&
+            static_cast<std::size_t>(shelter->def) < env.catalog.buildings.size())
+            shelterDef = &env.catalog.buildings[static_cast<std::size_t>(shelter->def)];
+        if (excess > 0.0f && shelterDef != nullptr) {
+            const bool helped = temperature < species.tempMinC ? shelterDef->heated : shelterDef->cooled;
+            excess = helped ? 0.0f : excess * tuning::kWarmthShelterFactor;
+        }
+        if (temperature > species.tempMaxC &&
+            (current->stats.shadeM2 > 0.0f || current->stats.waterShare > 0.0f))
+            excess = std::max(0.0f, excess - tuning::kHeatShadeReliefC);
+        report.comfort = Clamp(1.0f - excess / tuning::kTemperatureComfortSpanC);
+        if (report.comfort < tuning::kTemperatureIssue)
+            Issue(report, temperature < species.tempMinC ? WelfareIssue::TooCold : WelfareIssue::TooHot);
+        if (Dirt(enclosure) > tuning::kDirtyIssue)
+            Issue(report, WelfareIssue::Dirty);
+    }
+    if (animal.sick)
+        Issue(report, WelfareIssue::Sick);
+    report.health = Clamp(animal.health);
+    report.calm = Clamp(1.0f - animal.stress);
+    if (animal.stress > 0.6f)
+        Issue(report, WelfareIssue::Stressed);
+    report.overall = report.space;
+    const float aspects[] = {report.space,   report.terrain,     report.water,      report.vegetation,
+                             report.shelter, report.social,      report.enrichment, report.nutrition,
+                             report.comfort, report.cleanliness, report.health,     report.calm};
+    constexpr float weights[] = {1.5f, 1.0f, 0.7f, 0.7f, 0.8f, 1.2f, 0.8f, 1.5f, 0.8f, 0.6f, 1.5f, 1.0f};
+    float total = 0.0f;
+    float weight = 0.0f;
+    float minimum = 1.0f;
+    for (std::size_t i = 0; i < std::size(aspects); ++i) {
+        total += aspects[i] * weights[i];
+        weight += weights[i];
+        minimum = std::min(minimum, aspects[i]);
+    }
+    report.overall = Clamp(0.7f * total / weight + 0.3f * minimum);
+    return report;
+}
+Money Animals::Value(const Env& env, const Animal& animal) const {
+    const SpeciesDef& species = env.species.All()[static_cast<std::size_t>(animal.species)];
+    const float age = AgeYears(animal, env.time);
+    const float mature = species.maturityYears;
+    const float lifespan = species.lifespanYears * (0.85f + 0.3f * HashFloat(animal.id.value, 77u));
+    float ageFactor =
+        age < mature ? Lerp(tuning::kValueBirthFactor, 1.0f, Clamp(age / std::max(0.001f, mature))) : 1.0f;
+    const float declineStart = lifespan * tuning::kValueMatureEndFraction;
+    if (age > declineStart) {
+        ageFactor = Lerp(1.0f, tuning::kValueOldAgeFactor,
+                         Clamp((age - declineStart) / std::max(0.001f, lifespan - declineStart)));
+    }
+    const double amount =
+        static_cast<double>(species.price) * 100.0 * static_cast<double>(ageFactor) *
+        static_cast<double>(tuning::kValueHealthBase + tuning::kValueHealthFactor * animal.health);
+    return static_cast<Money>(std::llround(amount));
+}
+bool Animals::Crate(AnimalId id) {
+    Animal* animal = Find(id);
+    if (animal == nullptr || !animal->InWorld())
+        return false;
+    animal->activity = AnimalActivity::Crated;
+    animal->moving = false;
+    animal->speed = 0.0f;
+    animal->shelter = {};
+    animal->route.clear();
+    animal->routeIndex = 0;
+    return true;
+}
+bool Animals::Uncrate(const Env& env, AnimalId id, Vec2 position) {
+    Animal* animal = Find(id);
+    if (animal == nullptr || animal->InWorld() || !env.world.InBounds(World::TileAt(position)) ||
+        !env.nav.Passable(World::TileAt(position), NavProfile::Animal(0.0f, false)))
+        return false;
+    animal->position = position;
+    animal->target = position;
+    animal->activity = AnimalActivity::Idle;
+    animal->activityLeft = 0;
+    animal->home = env.enclosures.At(position);
+    animal->loose = false;
+    return true;
+}
+bool Animals::Recapture(const Env& env, AnimalId id) {
+    Animal* animal = Find(id);
+    if (animal == nullptr || !animal->loose)
+        return false;
+    const Enclosure* home = env.enclosures.Find(animal->home);
+    if (home == nullptr) {
+        animal->activity = AnimalActivity::Crated;
+        animal->loose = false;
+        if (env.events != nullptr)
+            env.Emit(MakeEvent(EventType::AnimalRecaptured, id, {}, animal->position));
+        return true;
+    }
+    const NavProfile profile = NavProfile::Animal(0.0f, false);
+    float best = std::numeric_limits<float>::max();
+    Vec2 spot{};
+    bool found = false;
+    for (int z = home->min.z; z <= home->max.z; ++z) {
+        for (int x = home->min.x; x <= home->max.x; ++x) {
+            const TileCoord tile{x, z};
+            if (env.enclosures.At(tile) != home->id || !env.nav.Passable(tile, profile))
+                continue;
+            const Vec2 candidate = World::TileCenter(tile);
+            const float distance = DistanceSquared(candidate, World::TileCenter(home->anchor));
+            if (distance < best) {
+                best = distance;
+                spot = candidate;
+                found = true;
+            }
+        }
+    }
+    if (!found) {
+        animal->activity = AnimalActivity::Crated;
+        animal->loose = false;
+    } else {
+        animal->position = spot;
+        animal->target = spot;
+        animal->activity = AnimalActivity::Idle;
+        animal->loose = false;
+    }
+    if (env.events != nullptr)
+        env.Emit(
+            MakeEvent(EventType::AnimalRecaptured, id, found ? home->id : EnclosureId{}, animal->position));
+    return true;
+}
+
+int Animals::FoodFor(const Env& env, const Prop& feeder) const {
+    if (feeder.def < 0 || static_cast<std::size_t>(feeder.def) >= env.catalog.props.size())
+        return -1;
+    const PropDef& def = env.catalog.props[static_cast<std::size_t>(feeder.def)];
+    if (def.role != PropRole::Feeder)
+        return -1;
+    const EnclosureId enclosure = env.enclosures.At(feeder.position);
+    if (!enclosure)
+        return -1;
+    std::vector<int> counts(env.catalog.foods.size(), 0);
+    for (const Animal& animal : animals_) {
+        if (!animal.InWorld() || env.enclosures.At(animal.position) != enclosure)
+            continue;
+        const SpeciesDef& species = env.species.All()[static_cast<std::size_t>(animal.species)];
+        for (const std::string& food : species.foods) {
+            const int index = env.catalog.FoodIndex(food);
+            if (index >= 0 && std::find(def.foods.begin(), def.foods.end(), food) != def.foods.end()) {
+                ++counts[static_cast<std::size_t>(index)];
+            }
+        }
+    }
+    int choice = -1;
+    int highest = 0;
+    for (const std::string& food : def.foods) {
+        const int index = env.catalog.FoodIndex(food);
+        if (index >= 0 && counts[static_cast<std::size_t>(index)] > highest) {
+            highest = counts[static_cast<std::size_t>(index)];
+            choice = index;
+        }
+    }
+    return choice;
+}
+Money Animals::RefillFeeder(Env& env, PropId id) {
+    Prop* feeder = env.objects.FindProp(id);
+    if (feeder == nullptr || feeder->def < 0 ||
+        static_cast<std::size_t>(feeder->def) >= env.catalog.props.size())
+        return 0;
+    const PropDef& def = env.catalog.props[static_cast<std::size_t>(feeder->def)];
+    if (def.role != PropRole::Feeder)
+        return 0;
+    const int food = FoodFor(env, *feeder);
+    if (food < 0) {
+        feeder->amount = 0.0f;
+        feeder->food = -1;
+        return 0;
+    }
+    const FoodDef& foodDef = env.catalog.foods[static_cast<std::size_t>(food)];
+    float amount = def.capacity;
+    if (env.finance != nullptr && foodDef.costPerKg > 0) {
+        const Money affordable = std::max<Money>(0, env.finance->Balance());
+        const double kg = static_cast<double>(affordable) / static_cast<double>(foodDef.costPerKg);
+        amount = std::min(amount, static_cast<float>(kg));
+    }
+    const Money price =
+        static_cast<Money>(std::ceil(static_cast<double>(amount) * static_cast<double>(foodDef.costPerKg)));
+    Money paid = price;
+    if (env.finance != nullptr && price > 0 && !env.finance->TrySpend(Account::AnimalFood, price)) {
+        const Money balance = std::max<Money>(0, env.finance->Balance());
+        amount = std::min(amount, static_cast<float>(static_cast<double>(balance) /
+                                                     static_cast<double>(foodDef.costPerKg)));
+        paid = static_cast<Money>(
+            std::ceil(static_cast<double>(amount) * static_cast<double>(foodDef.costPerKg)));
+        if (paid > balance || (paid > 0 && !env.finance->TrySpend(Account::AnimalFood, paid))) {
+            amount = 0.0f;
+            paid = 0;
+        }
+    }
+    feeder->amount = amount;
+    feeder->food = amount > 0.0f ? food : -1;
+    feeder->filledDay = static_cast<float>(env.time.Days());
+    return env.finance == nullptr || amount <= 0.0f ? 0 : paid;
+}
+void Animals::RefillTrough(Env& env, PropId id) {
+    Prop* prop = env.objects.FindProp(id);
+    if (prop != nullptr && prop->def >= 0 && static_cast<std::size_t>(prop->def) < env.catalog.props.size() &&
+        env.catalog.props[static_cast<std::size_t>(prop->def)].role == PropRole::WaterTrough) {
+        prop->amount = env.catalog.props[static_cast<std::size_t>(prop->def)].capacity;
+    }
+}
+float Animals::EdibleKg(const Env& env, const Prop& feeder) {
+    if (feeder.amount <= 0.0f || feeder.food < 0 ||
+        static_cast<std::size_t>(feeder.food) >= env.catalog.foods.size())
+        return 0.0f;
+    const FoodDef& food = env.catalog.foods[static_cast<std::size_t>(feeder.food)];
+    const float age = static_cast<float>(env.time.Days()) - feeder.filledDay;
+    return age <= food.shelfLifeDays ? feeder.amount : 0.0f;
+}
+float Animals::Dirt(EnclosureId enclosure) const {
+    for (const EnclosureCare& care : care_)
+        if (care.id == enclosure)
+            return care.dirt;
+    return 0.0f;
+}
+void Animals::Clean(EnclosureId enclosure, float amount) {
+    for (EnclosureCare& care : care_)
+        if (care.id == enclosure) {
+            care.dirt = Clamp(care.dirt - std::max(0.0f, amount));
+            return;
+        }
+}
+bool Animals::Treat(AnimalId id) {
+    Animal* animal = Find(id);
+    if (animal == nullptr || !animal->sick)
+        return false;
+    animal->treated = true;
+    return true;
+}
+void Animals::SetViewers(EnclosureId enclosure, int viewers) {
+    auto it = std::lower_bound(
+        care_.begin(), care_.end(), enclosure.value,
+        [](const EnclosureCare& item, std::uint32_t value) { return item.id.value < value; });
+    if (it == care_.end() || it->id != enclosure)
+        care_.insert(it, EnclosureCare{enclosure});
+    it->viewers = std::max(0, viewers);
+}
+int Animals::Viewers(EnclosureId enclosure) const {
+    for (const EnclosureCare& care : care_)
+        if (care.id == enclosure)
+            return care.viewers;
+    return 0;
+}
+
+void Animals::Step(Env& env) {
+    for (const Enclosure& enclosure : env.enclosures.All()) {
+        auto it = std::lower_bound(
+            care_.begin(), care_.end(), enclosure.id.value,
+            [](const EnclosureCare& item, std::uint32_t value) { return item.id.value < value; });
+        if (it == care_.end() || it->id != enclosure.id)
+            it = care_.insert(it, EnclosureCare{enclosure.id});
+        float load = 0.0f;
+        for (const Animal& animal : animals_) {
+            if (animal.InWorld() && env.enclosures.At(animal.position) == enclosure.id) {
+                const SpeciesDef& species = env.species.All()[static_cast<std::size_t>(animal.species)];
+                const float scale = BodyScale(animal, species, env.time);
+                load += std::pow(species.adultMassKg, 0.75f) * scale * scale;
+            }
+        }
+        const float area = std::max(1.0f, enclosure.stats.areaM2);
+        it->dirt = Clamp(it->dirt + std::min(tuning::kMaximumDirtPerDay,
+                                             tuning::kDirtyPerMassPowerAreaPerDay * load / area) *
+                                        kDaysPerTick);
+    }
+    for (std::size_t index = 0; index < animals_.size();) {
+        Animal& animal = animals_[index];
+        if (!animal.InWorld()) {
+            ++index;
+            continue;
+        }
+        if (alertLatches_.size() < animals_.size())
+            alertLatches_.resize(animals_.size(), 0U);
+        const SpeciesDef& species = env.species.All()[static_cast<std::size_t>(animal.species)];
+        const float scale = BodyScale(animal, species, env.time);
+        const float dailyKg = species.foodPerDayKg * scale * scale;
+        const float oldHunger = animal.hunger;
+        const float oldThirst = animal.thirst;
+        animal.hunger = Clamp(animal.hunger + tuning::kHungerPerDay * kDaysPerTick);
+        animal.thirst = Clamp(animal.thirst + tuning::kThirstPerDay * kDaysPerTick);
+        if (animal.hunger >= tuning::kStarvingThreshold && oldHunger < tuning::kStarvingThreshold &&
+            (alertLatches_[index] & 1U) == 0U) {
+            env.Emit(MakeEvent(EventType::AnimalStarving, animal.id, animal.home, animal.position));
+            alertLatches_[index] |= 1U;
+        }
+        if (animal.thirst >= tuning::kStarvingThreshold && oldThirst < tuning::kStarvingThreshold &&
+            (alertLatches_[index] & 2U) == 0U) {
+            env.Emit(MakeEvent(EventType::AnimalThirsty, animal.id, animal.home, animal.position));
+            alertLatches_[index] |= 2U;
+        }
+        if (animal.hunger < tuning::kNeedResetThreshold)
+            alertLatches_[index] &= static_cast<std::uint8_t>(~1U);
+        if (animal.thirst < tuning::kNeedResetThreshold)
+            alertLatches_[index] &= static_cast<std::uint8_t>(~2U);
+        if (animal.activity == AnimalActivity::Eat && animal.targetProp) {
+            Prop* feeder = env.objects.FindProp(animal.targetProp);
+            if (feeder == nullptr || EdibleKg(env, *feeder) <= 0.0f) {
+                animal.activity = AnimalActivity::Idle;
+                animal.activityLeft = 0;
+            } else {
+                const float wanted = std::min(
+                    EdibleKg(env, *feeder), animal.hunger * tuning::kFoodKgPerHunger * dailyKg *
+                                                tuning::kMotionSecondsPerTick / tuning::kDefaultMealSeconds);
+                const float consumed = std::min(wanted, feeder->amount);
+                feeder->amount -= consumed;
+                animal.hunger =
+                    Clamp(animal.hunger - consumed / std::max(0.001f, tuning::kFoodKgPerHunger * dailyKg));
+            }
+        }
+        const EnclosureId enclosureId = env.enclosures.At(animal.position);
+        const Enclosure* enclosure = env.enclosures.Find(enclosureId);
+        if (animal.activity == AnimalActivity::Drink && animal.targetProp) {
+            Prop* trough = env.objects.FindProp(animal.targetProp);
+            if (trough != nullptr && trough->amount > 0.0f) {
+                const float desired = animal.thirst * species.waterPerDayL * scale * scale *
+                                      tuning::kMotionSecondsPerTick / tuning::kDefaultDrinkSeconds;
+                const float water = std::min(desired, trough->amount);
+                trough->amount -= water;
+                animal.thirst =
+                    Clamp(animal.thirst - water / std::max(0.001f, species.waterPerDayL * scale * scale));
+            }
+        }
+        const bool urgentDrink = animal.thirst > tuning::kThirstUrgent;
+        const bool urgentEat = animal.hunger > tuning::kHungerUrgent;
+        if (animal.activity == AnimalActivity::Idle || animal.activityLeft <= 0 || urgentDrink || urgentEat) {
+            animal.activity = AnimalActivity::Idle;
+            animal.targetProp = {};
+            animal.moving = false;
+            animal.activityLeft = kTicksPerGameHour;
+            if (enclosure != nullptr) {
+                float nearest = std::numeric_limits<float>::max();
+                for (PropId propId : enclosure->feeders) {
+                    const Prop* prop = env.objects.FindProp(propId);
+                    if (prop == nullptr || EdibleKg(env, *prop) <= 0.0f || prop->food < 0)
+                        continue;
+                    if (std::find(species.foods.begin(), species.foods.end(),
+                                  env.catalog.foods[static_cast<std::size_t>(prop->food)].id) ==
+                        species.foods.end())
+                        continue;
+                    const float distance = DistanceSquared(animal.position, prop->position);
+                    if (distance < nearest) {
+                        nearest = distance;
+                        animal.targetProp = propId;
+                    }
+                }
+                if (urgentEat && animal.targetProp) {
+                    animal.activity = AnimalActivity::Eat;
+                    animal.activityLeft =
+                        static_cast<std::int32_t>(tuning::kDefaultMealSeconds * kTicksPerSecond);
+                } else {
+                    animal.targetProp = {};
+                }
+                nearest = std::numeric_limits<float>::max();
+                PropId drink{};
+                for (PropId propId : enclosure->troughs) {
+                    const Prop* prop = env.objects.FindProp(propId);
+                    if (prop == nullptr || prop->amount <= 0.0f)
+                        continue;
+                    const float distance = DistanceSquared(animal.position, prop->position);
+                    if (distance < nearest) {
+                        nearest = distance;
+                        drink = propId;
+                    }
+                }
+                if (urgentDrink && drink) {
+                    animal.activity = AnimalActivity::Drink;
+                    animal.targetProp = drink;
+                    animal.activityLeft =
+                        static_cast<std::int32_t>(tuning::kDefaultDrinkSeconds * kTicksPerSecond);
+                }
+            }
+        }
+        const float hungerDamage =
+            animal.hunger >= 1.0f ? tuning::kHealthAtCriticalHungerPerDay * kDaysPerTick : 0.0f;
+        const float thirstDamage =
+            animal.thirst >= 1.0f ? tuning::kHealthAtCriticalThirstPerDay * kDaysPerTick : 0.0f;
+        const float illnessDamage =
+            animal.sick && !animal.treated ? tuning::kHealthSickPerDay * kDaysPerTick : 0.0f;
+        const float age = AgeYears(animal, env.time);
+        const float lifespan = species.lifespanYears * (0.85f + 0.3f * HashFloat(animal.id.value, 77U));
+        const float ageDamage = age > lifespan ? tuning::kHealthOldAgePerDay * kDaysPerTick : 0.0f;
+        const float damage = std::max({hungerDamage, thirstDamage, illnessDamage, ageDamage});
+        if (animal.hunger < 0.7f && animal.thirst < 0.7f && !animal.sick) {
+            animal.health = Clamp(animal.health + tuning::kHealthRecoveryPerDay * kDaysPerTick);
+        } else {
+            animal.health = Clamp(animal.health - damage);
+        }
+        if (animal.health <= 0.0f) {
+            DeathCause cause = DeathCause::Illness;
+            if (ageDamage >= damage && ageDamage > 0.0f)
+                cause = DeathCause::OldAge;
+            else if (thirstDamage >= damage && thirstDamage > 0.0f)
+                cause = DeathCause::Thirst;
+            else if (hungerDamage >= damage && hungerDamage > 0.0f)
+                cause = DeathCause::Starvation;
+            env.Emit(MakeEvent(EventType::AnimalDied, animal.id, animal.home, animal.position,
+                               static_cast<int>(cause)));
+            animals_.erase(animals_.begin() + static_cast<std::ptrdiff_t>(index));
+            if (index < alertLatches_.size())
+                alertLatches_.erase(alertLatches_.begin() + static_cast<std::ptrdiff_t>(index));
+            ++deaths_;
+            continue;
+        }
+        if ((env.time.tick + static_cast<std::int64_t>(animal.id.value)) % kTicksPerGameHour == 0) {
+            WelfareReport report = Welfare(env, animal);
+            const float previous = animal.welfare;
+            animal.welfare += tuning::kWelfareSmoothing * (report.overall - animal.welfare);
+            animal.issues = report.issues;
+            if (previous >= tuning::kWelfareAlertThreshold &&
+                animal.welfare < tuning::kWelfareAlertThreshold) {
+                env.Emit(MakeEvent(EventType::AnimalUnhappy, animal.id, animal.home, animal.position));
+            }
+        }
+        ++animal.activityTicks;
+        if (animal.activityLeft > 0)
+            --animal.activityLeft;
+        ++index;
+    }
+    care_.erase(
+        std::remove_if(care_.begin(), care_.end(),
+                       [&env](const EnclosureCare& care) { return env.enclosures.Find(care.id) == nullptr; }),
+        care_.end());
+}
+
+std::uint64_t Animals::StateHash() const {
+    std::uint64_t hash = 14695981039346656037ULL;
+    const auto add = [&hash](std::uint64_t value) {
+        hash ^= value;
+        hash *= 1099511628211ULL;
+    };
+    add(nextId_);
+    add(rng_.State());
+    add(rng_.Stream());
+    add(static_cast<std::uint64_t>(births_));
+    add(static_cast<std::uint64_t>(deaths_));
+    add(static_cast<std::uint64_t>(escapes_));
+    for (const Animal& animal : animals_) {
+        add(animal.id.value);
+        add(static_cast<std::uint64_t>(animal.species));
+        for (unsigned char c : animal.name)
+            add(c);
+        add(static_cast<std::uint64_t>(animal.sex));
+        add(static_cast<std::uint64_t>(animal.bornTick));
+        add(animal.mother.value);
+        add(animal.father.value);
+        const float values[] = {animal.position.x, animal.position.z, animal.heading, animal.speed,
+                                animal.hunger,     animal.thirst,     animal.fatigue, animal.boredom,
+                                animal.stress,     animal.health,     animal.welfare, animal.target.x,
+                                animal.target.z};
+        for (float value : values)
+            add(std::bit_cast<std::uint32_t>(value));
+        add(animal.issues);
+        add(animal.sick);
+        add(animal.treated);
+        add(static_cast<std::uint64_t>(animal.activity));
+        add(animal.moving);
+        add(static_cast<std::uint32_t>(animal.activityTicks));
+        add(static_cast<std::uint32_t>(animal.activityLeft));
+        add(animal.targetProp.value);
+        add(animal.shelter.value);
+        add(animal.routeIndex);
+        add(animal.home.value);
+        add(animal.loose);
+        add(animal.breeding);
+        add(static_cast<std::uint64_t>(animal.dueTick));
+        add(animal.mate.value);
+        add(static_cast<std::uint64_t>(animal.lastBirthTick));
+        for (Vec2 point : animal.route) {
+            add(std::bit_cast<std::uint32_t>(point.x));
+            add(std::bit_cast<std::uint32_t>(point.z));
+        }
+    }
+    for (const EnclosureCare& care : care_) {
+        add(care.id.value);
+        add(std::bit_cast<std::uint32_t>(care.dirt));
+    }
+    for (std::uint8_t latch : alertLatches_)
+        add(latch);
+    return hash;
+}
+bool Animals::operator==(const Animals& other) const {
+    if (animals_ != other.animals_ || care_.size() != other.care_.size() || nextId_ != other.nextId_ ||
+        rng_.State() != other.rng_.State() || rng_.Stream() != other.rng_.Stream() ||
+        births_ != other.births_ || deaths_ != other.deaths_ || escapes_ != other.escapes_ ||
+        alertLatches_ != other.alertLatches_)
+        return false;
+    for (std::size_t i = 0; i < care_.size(); ++i) {
+        if (care_[i].id != other.care_[i].id || care_[i].dirt != other.care_[i].dirt)
+            return false;
+    }
+    return true;
+}
+}  // namespace zoo

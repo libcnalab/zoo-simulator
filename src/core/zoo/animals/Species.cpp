@@ -32,7 +32,7 @@ constexpr std::array<std::string_view, 4> kActivityNames = {"diurnal", "nocturna
                                                             "cathemeral"};
 constexpr std::array<std::string_view, 7> kStatusNames = {"LC", "NT", "VU", "EN", "CR", "EW", "NE"};
 constexpr std::array<std::string_view, 7> kStatusDisplay = {
-    "Least Concern", "Near Threatened", "Vulnerable", "Endangered",
+    "Least Concern",         "Near Threatened",     "Vulnerable",   "Endangered",
     "Critically Endangered", "Extinct in the Wild", "Not Evaluated"};
 const std::set<std::string> kKeys = {"id",
                                      "commonName",

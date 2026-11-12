@@ -306,8 +306,9 @@ private:
         int viewers = 0;  // input, not saved
     };
 
-    std::vector<Animal> animals_;      // ascending id
-    std::vector<EnclosureCare> care_;  // ascending id
+    std::vector<Animal> animals_;             // ascending id
+    std::vector<EnclosureCare> care_;         // ascending id
+    std::vector<std::uint8_t> alertLatches_;  // hunger and thirst alert state, aligned with animals_
     std::uint32_t nextId_ = 1;
     Rng rng_;
     int births_ = 0;
