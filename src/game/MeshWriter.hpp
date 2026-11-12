@@ -1,0 +1,122 @@
+// SPDX-License-Identifier: MIT
+#pragma once
+
+#include <cstdint>
+#include <deque>
+#include <vector>
+
+#include "CnaEngine/Graphics/MeshData.hpp"
+#include "Common.hpp"
+
+namespace zoogame {
+
+/// The procedural surface patterns. Each is a tileable greyscale texture that a
+/// material tints with its colour (Surfaces).
+enum class Pattern : std::uint8_t {
+    Plain,
+    Wood,    ///< sawn timber: grain along v
+    Planks,  ///< boards with gaps, along v
+    Bark,
+    Leaves,
+    Needles,
+    Stone,
+    Brick,
+    Plaster,
+    Thatch,
+    RoofTiles,
+    Metal,
+    Concrete,
+    Count
+};
+
+/// What a piece of geometry is made of.
+struct Finish {
+    zoo::Color3 color{0.5f, 0.5f, 0.5f};
+    Pattern pattern = Pattern::Plain;
+
+    bool operator==(const Finish&) const = default;
+};
+
+/// Writes primitives into a MeshData with positions, normals and texture
+/// coordinates. Texture coordinates are in metres along the surface, so that
+/// patterns keep their scale on every object (materials set the scale).
+///
+/// Faces are given counter-clockwise as seen from outside, y up. An optional
+/// transform is applied to everything written while it is set.
+class MeshWriter {
+public:
+    CnaEngine::Graphics::MeshData mesh;
+
+    void SetTransform(const Matrix& transform);
+    void ClearTransform() { transformed_ = false; }
+
+    /// Flat triangle.
+    void Tri(const Vector3& a, const Vector3& b, const Vector3& c);
+    /// Flat quad; u runs from a to b, v from a to d.
+    void Quad(const Vector3& a, const Vector3& b, const Vector3& c, const Vector3& d);
+    /// The same quad visible from both sides.
+    void QuadTwoSided(const Vector3& a, const Vector3& b, const Vector3& c, const Vector3& d);
+    /// Axis-aligned box.
+    void Box(const Vector3& min, const Vector3& max);
+    /// A box standing on the ground plane y = `base`, centred on (x, z), turned by `yaw`.
+    void BoxAt(float x, float z, float base, float sizeX, float sizeY, float sizeZ, float yaw = 0.0f);
+    /// A rectangular beam from `from` to `to`: `width` across (horizontally for a
+    /// beam that is not vertical), `height` the other way.
+    void Beam(const Vector3& from, const Vector3& to, float width, float height);
+    /// A round, possibly tapering tube with smooth sides.
+    void Tube(const Vector3& from, const Vector3& to, float radiusFrom, float radiusTo, int sides = 8,
+              bool capFrom = false, bool capTo = true);
+    /// A horizontal disc facing up.
+    void Disc(const Vector3& center, float radius, int sides = 12);
+    /// A lumpy ellipsoid with smooth normals: tree crowns, bushes, boulders.
+    /// `lumpiness` 0 gives a clean ellipsoid, 0.3 a rugged one. `flatBase` cuts
+    /// the lower part off at that fraction of the vertical radius below the centre
+    /// (1 = whole ellipsoid).
+    void Blob(const Vector3& center, const Vector3& radii, std::uint32_t seed, float lumpiness = 0.18f,
+              int segments = 9, int rings = 6, float flatBase = 1.0f);
+    /// A gable roof over the rectangle [minX, maxX] x [minZ, maxZ] (already
+    /// including any overhang): eaves at `eavesY`, ridge at `ridgeY` running along
+    /// x when `ridgeAlongX`. Writes the two slopes only; see GableEnds.
+    void GableRoof(float minX, float maxX, float minZ, float maxZ, float eavesY, float ridgeY,
+                   bool ridgeAlongX, float thickness = 0.12f);
+    /// The two triangular wall pieces under a gable roof.
+    void GableEnds(float minX, float maxX, float minZ, float maxZ, float eavesY, float ridgeY,
+                   bool ridgeAlongX);
+    /// A four-sided pyramid (hip) roof.
+    void HipRoof(float minX, float maxX, float minZ, float maxZ, float eavesY, float topY);
+
+    bool Empty() const { return mesh.indices.empty(); }
+
+private:
+    std::uint32_t Vertex(const Vector3& position, const Vector3& normal, float u, float v);
+    void Face(std::uint32_t a, std::uint32_t b, std::uint32_t c);
+
+    Matrix transform_;
+    bool transformed_ = false;
+};
+
+/// One material's share of a model.
+struct ModelPart {
+    Finish finish;
+    MeshWriter writer;
+};
+
+/// A model under construction: geometry sorted by finish.
+class ModelBuilder {
+public:
+    /// The writer for a finish (created on first use). The reference stays valid.
+    MeshWriter& Use(const zoo::Color3& color, Pattern pattern);
+    /// Sets (or clears) the transform of every part, present and future.
+    void SetTransform(const Matrix& transform);
+    void ClearTransform();
+
+    std::deque<ModelPart>& Parts() { return parts_; }
+    const std::deque<ModelPart>& Parts() const { return parts_; }
+
+private:
+    std::deque<ModelPart> parts_;
+    Matrix transform_;
+    bool transformed_ = false;
+};
+
+}  // namespace zoogame
