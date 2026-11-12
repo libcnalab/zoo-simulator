@@ -31,13 +31,27 @@ enum class Season : std::uint8_t { Spring = 0, Summer, Autumn, Winter };
 
 /// A point in simulation time: ticks since the game started. The game starts on
 /// day 0 (1 March of year 1) at kStartHour.
+///
+/// Two clocks live here. `tick` is the motion clock: it advances by one with every
+/// step, and everything a body does is timed by it (how long an animal has been
+/// hungry, when a visitor goes home; Days()). The calendar (the date, the hour, the
+/// season: what the sun, the weather and the opening hours follow) is the motion
+/// clock plus `shift`. In a management game the shift stays 0 and a day passes in
+/// twelve minutes; a zoo that is visited on foot holds its calendar back
+/// (Zoo::SetDayPace) so that a morning lasts as long as a visit does.
 struct GameTime {
     std::int64_t tick = 0;
+    /// Calendar ticks minus motion ticks (see above).
+    std::int64_t shift = 0;
 
     static constexpr int kStartHour = 8;
     static constexpr std::int64_t kStartOffset = static_cast<std::int64_t>(kStartHour) * kTicksPerGameHour;
 
-    constexpr std::int64_t AbsoluteTick() const { return tick + kStartOffset; }
+    /// Ticks of the calendar since midnight of day 0.
+    constexpr std::int64_t AbsoluteTick() const { return tick + shift + kStartOffset; }
+    /// The same of the motion clock: what daily routines that must keep the pace of
+    /// the bodies (refilling the feeders) go by.
+    constexpr std::int64_t MotionTick() const { return tick + kStartOffset; }
     /// Whole days since the start of the calendar.
     constexpr std::int64_t Day() const { return AbsoluteTick() / kTicksPerDay; }
     /// Time of day in hours, [0, 24).

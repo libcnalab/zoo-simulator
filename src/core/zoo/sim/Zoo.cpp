@@ -120,8 +120,30 @@ Env Zoo::MakeEnv() {
 
 // ---- time ---------------------------------------------------------------------------------
 
+void Zoo::SetDayPace(int pace) {
+    config_.dayPace = std::clamp(pace, 0, 1000);
+}
+
+void Zoo::SetCalendar(std::int64_t day, float hour) {
+    const std::int64_t wanted =
+        std::max<std::int64_t>(day, 0) * kTicksPerDay +
+        static_cast<std::int64_t>(std::clamp(hour, 0.0f, 23.999f) * static_cast<float>(kTicksPerGameHour));
+    time_.shift = wanted - time_.MotionTick();
+    // The weather of the new hour (the temperature, the light), as the last step would have left it.
+    GameTime before = time_;
+    if ((before.tick > 0 || before.shift != 0) && before.AbsoluteTick() > 0) {
+        --before.shift;
+    }
+    weather_.Restore(weather_.State(), before);
+}
+
 void Zoo::Step() {
-    weather_.Step(time_);
+    // The calendar moves with this step or stands (ZooConfig::dayPace); the sky moves with it.
+    const int pace = config_.dayPace;
+    const bool calendarMoves = pace == 1 || (pace > 1 && (time_.tick + 1) % pace == 0);
+    if (calendarMoves) {
+        weather_.Step(time_);
+    }
     if (events_.size() > kMaxPendingEvents) {
         events_.erase(events_.begin(), events_.begin() + static_cast<std::ptrdiff_t>(events_.size() / 2));
     }
@@ -139,7 +161,8 @@ void Zoo::Step() {
     }
 
     if (config_.autoCare) {
-        const std::int64_t tickOfDay = time_.AbsoluteTick() % kTicksPerDay;
+        // By the motion clock: the animals eat at the pace they move at.
+        const std::int64_t tickOfDay = time_.MotionTick() % kTicksPerDay;
         for (const int hour : kCareHours) {
             if (tickOfDay == static_cast<std::int64_t>(hour) * kTicksPerGameHour) {
                 AutoCare(env);
@@ -149,6 +172,9 @@ void Zoo::Step() {
 
     const std::int64_t day = time_.Day();
     ++time_.tick;
+    if (!calendarMoves) {
+        --time_.shift;
+    }
     if (time_.Day() != day) {
         CloseDay(day);
     }
@@ -568,6 +594,7 @@ float Zoo::MeanWelfare() const {
 std::uint64_t Zoo::StateHash() const {
     Hasher h;
     h.Add(time_.tick);
+    h.Add(time_.shift);
     h.Add(animals_.StateHash());
     h.Add(visitors_.StateHash());
     h.Add(finance_.Balance());

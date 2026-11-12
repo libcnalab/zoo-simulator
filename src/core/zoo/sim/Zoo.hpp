@@ -39,6 +39,10 @@ struct ZooConfig {
     /// without keepers and vets having to be hired (the food and the treatment are
     /// still paid for). On by default until a zoo has staff of its own.
     bool autoCare = true;
+    /// How many steps one tick of the calendar takes (GameTime): 1 is the pace of a
+    /// management game (a day in twelve minutes), 12 lets a game hour last six
+    /// minutes, 0 stops the calendar. Bodies move at the same speed whatever it is.
+    int dayPace = 1;
     Climate climate;
 
     bool operator==(const ZooConfig&) const = default;
@@ -115,6 +119,12 @@ public:
     void Rename(std::string name);
     bool Sandbox() const { return config_.sandbox; }
     void SetAutoCare(bool on) { config_.autoCare = on; }
+    /// See ZooConfig::dayPace; 0..1000.
+    void SetDayPace(int pace);
+    /// Puts the calendar on `day` (days since 1 March of year 1) at `hour` [0, 24).
+    /// Nothing else changes: nobody ages, no day is closed. For a zoo that opens
+    /// on a late morning in summer rather than at eight on 1 March.
+    void SetCalendar(std::int64_t day, float hour);
 
     const Catalog& Definitions() const { return catalog_; }
     const SpeciesCatalog& SpeciesList() const { return species_; }

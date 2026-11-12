@@ -32,7 +32,12 @@ struct ZooAccess {
                                          std::deque<Notification> notifications,
                                          std::uint32_t nextNotification, std::string* error) {
         WeatherSystem sky(config.seed, config.climate);
-        sky.Restore(weather, GameTime{time.tick > 0 ? time.tick - 1 : 0});
+        // The sky as its last step left it: that was one tick of the calendar ago.
+        GameTime before = time;
+        if ((before.tick > 0 || before.shift != 0) && before.AbsoluteTick() > 0) {
+            --before.shift;
+        }
+        sky.Restore(weather, before);
         Zoo::Parts parts{std::move(config),  std::move(world),    std::move(objects), std::move(finance),
                          std::move(animals), std::move(visitors), std::move(sky),     time};
         std::unique_ptr<Zoo> zoo(new Zoo(catalog, species, std::move(parts)));
@@ -73,6 +78,7 @@ Json ConfigToJson(const ZooConfig& c) {
                 {"starting_money", c.startingMoney},
                 {"sandbox", c.sandbox},
                 {"auto_care", c.autoCare},
+                {"day_pace", c.dayPace},
                 {"climate", ClimateToJson(c.climate)},
                 {"map", Json{{"width", c.world.width},
                              {"depth", c.world.depth},
@@ -92,6 +98,11 @@ ZooConfig ConfigFromJson(const Json& j) {
     c.startingMoney = j.at("starting_money").get<Money>();
     c.sandbox = j.at("sandbox").get<bool>();
     c.autoCare = j.at("auto_care").get<bool>();
+    // Since 0.2: saves of the management game have neither and keep its pace.
+    c.dayPace = j.value("day_pace", 1);
+    if (c.dayPace < 0 || c.dayPace > 1000) {
+        throw std::runtime_error("the pace of the day must be 0 to 1000");
+    }
     c.climate = ClimateFromJson(j.at("climate"));
     const Json& map = j.at("map");
     c.world.width = map.at("width").get<int>();
@@ -239,6 +250,7 @@ Json ZooToJson(const Zoo& zoo) {
     }
     Json body{{"config", ConfigToJson(ZooAccess::Config(zoo))},
               {"tick", zoo.Time().tick},
+              {"calendar_shift", zoo.Time().shift},
               {"weather", WeatherToJson(zoo.Sky().State())},
               {"world", ToJson(zoo.Map())},
               {"objects", ToJson(zoo.Objects(), zoo.Definitions())},
@@ -296,7 +308,8 @@ std::unique_ptr<Zoo> ZooFromJson(const Json& json, const Catalog& catalog, const
         ZooConfig config = ConfigFromJson(body.at("config"));
         GameTime time;
         time.tick = body.at("tick").get<std::int64_t>();
-        if (time.tick < 0) {
+        time.shift = body.value("calendar_shift", std::int64_t{0});
+        if (time.tick < 0 || time.AbsoluteTick() < 0) {
             throw std::runtime_error("the clock is before the start of the game");
         }
         const WeatherState weather = WeatherFromJson(body.at("weather"));
