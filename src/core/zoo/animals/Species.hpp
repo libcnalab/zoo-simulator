@@ -15,12 +15,13 @@ enum class Diet : std::uint8_t { Carnivore, Herbivore, Omnivore, Piscivore, Inse
 enum class ActivityPattern : std::uint8_t { Diurnal, Nocturnal, Crepuscular, Cathemeral };
 /// IUCN Red List category.
 enum class ConservationStatus : std::uint8_t {
-    LeastConcern, NearThreatened, Vulnerable, Endangered, CriticallyEndangered, ExtinctInTheWild
+    LeastConcern, NearThreatened, Vulnerable, Endangered, CriticallyEndangered, ExtinctInTheWild,
+    NotEvaluated    ///< domestic forms and taxa the IUCN Red List does not assess
 };
 
 std::string_view ToString(Diet v);                  // "carnivore", "herbivore", "omnivore", "piscivore", "insectivore"
 std::string_view ToString(ActivityPattern v);       // "diurnal", "nocturnal", "crepuscular", "cathemeral"
-std::string_view ToString(ConservationStatus v);    // "LC", "NT", "VU", "EN", "CR", "EW"
+std::string_view ToString(ConservationStatus v);    // "LC", "NT", "VU", "EN", "CR", "EW", "NE"
 /// "Least Concern", "Near Threatened", ...
 std::string_view DisplayName(ConservationStatus v);
 

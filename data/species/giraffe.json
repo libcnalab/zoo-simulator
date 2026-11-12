@@ -1,0 +1,73 @@
+{
+  "id": "giraffe",
+  "commonName": "Reticulated giraffe",
+  "scientificName": "Giraffa reticulata",
+  "family": "Giraffidae",
+  "group": "ungulate",
+  "adultMassKg": 900,
+  "shoulderHeightM": 5.2,
+  "bodyLengthM": 4.3,
+  "bodyRadiusM": 1.0,
+  "walkSpeed": 1.2,
+  "runSpeed": 5,
+  "lifespanYears": 25,
+  "maturityYears": 5,
+  "gestationDays": 450,
+  "litterMin": 1,
+  "litterMax": 1,
+  "birthIntervalYears": 2,
+  "diet": "herbivore",
+  "foods": [
+    "browse",
+    "hay"
+  ],
+  "foodPerDayKg": 25,
+  "waterPerDayL": 60,
+  "activity": "diurnal",
+  "sleepHoursPerDay": 5,
+  "groupMin": 2,
+  "groupMax": 12,
+  "maxAdultMales": 1,
+  "sociability": 0.45,
+  "playfulness": 0.5,
+  "shyness": 0.45,
+  "aggression": 0.3,
+  "dangerous": false,
+  "minEnclosureM2": 700,
+  "spacePerExtraAnimalM2": 70,
+  "waterAreaFraction": 0.04,
+  "needsDeepWater": false,
+  "vegetationDensity": 0.35,
+  "needsShelter": true,
+  "tempMinC": 5,
+  "tempMaxC": 40,
+  "fenceHeightM": 5.0,
+  "fenceStrength": 4,
+  "price": 7000,
+  "appeal": 87,
+  "status": "EN",
+  "nativeRange": "Northeastern Kenya",
+  "biome": "Dry savanna and woodland",
+  "terrainSuitability": {
+    "savanna": 1,
+    "grass": 0.6,
+    "dirt": 0.5,
+    "sand": 0.3
+  },
+  "canSwim": false,
+  "canClimb": false,
+  "jumpHeightM": 1.0,
+  "facts": [
+    "A giraffe’s long neck helps it reach leaves high in trees.",
+    "Reticulated giraffes have sharply defined pale lines around dark patches.",
+    "Giraffes give birth standing, and calves can stand soon after birth.",
+    "Reticulated giraffes are threatened by habitat loss and illegal hunting."
+  ],
+  "sounds": [
+    "giraffe_grunt"
+  ],
+  "sources": [
+    "IUCN Red List; AZA Giraffe Care Manual; estimate: daily water intake."
+  ],
+  "model": "giraffe"
+}

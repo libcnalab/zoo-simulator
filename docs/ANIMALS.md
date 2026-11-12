@@ -1,0 +1,23 @@
+# Animals
+
+## Species data
+
+Each species is defined by one JSON file in `data/species/`. Biological values use real-world units; prices and appeal are game values. Minimum enclosure area is scaled to roughly half of common husbandry recommendations for the smallest proper group, and additional-animal space is scaled in proportion. Prices and appeal share one game-wide scale, from inexpensive small species to large, rare, or especially popular animals.
+
+| Common name | Scientific name | Status | Group size | Minimum enclosure m2 | Fence height / strength | Walk / run speed (m/s) | Price | Appeal |
+|---|---|---:|---:|---:|---:|---:|---:|---:|
+| Brown bear | Ursus arctos | LC | 1–3 | 900 | 4.5 m / 4 | 1.0 / 4 | 8000 | 83 |
+| Bactrian camel | Camelus bactrianus | NE | 2–12 | 700 | 2.3 m / 3 | 1.1 / 4 | 6500 | 73 |
+| African bush elephant | Loxodonta africana | EN | 3–12 | 1800 | 4.5 m / 5 | 1.3 / 5 | 25000 | 95 |
+| Greater flamingo | Phoenicopterus roseus | LC | 10–100 | 220 | 1.6 m / 2 | 0.7 / 1.5 | 1800 | 78 |
+| Reticulated giraffe | Giraffa reticulata | EN | 2–12 | 700 | 5.0 m / 4 | 1.2 / 5 | 7000 | 87 |
+| Red kangaroo | Osphranter rufus | LC | 2–20 | 400 | 2.2 m / 3 | 1.0 / 7 | 4000 | 79 |
+| African lion | Panthera leo | VU | 2–12 | 900 | 3.2 m / 4 | 1.1 / 4 | 9000 | 92 |
+| Meerkat | Suricata suricatta | LC | 4–20 | 100 | 1.5 m / 1 | 0.6 / 2.5 | 800 | 88 |
+| Common ostrich | Struthio camelus | LC | 2–20 | 500 | 2.4 m / 3 | 1.2 / 8 | 3500 | 70 |
+| African penguin | Spheniscus demersus | CR | 10–60 | 180 | 1.8 m / 2 | 0.5 / 1.2 | 1500 | 90 |
+| Polar bear | Ursus maritimus | VU | 1–3 | 1200 | 4.5 m / 4 | 1.0 / 4 | 12000 | 94 |
+| Southern white rhinoceros | Ceratotherium simum simum | NT | 2–8 | 1000 | 2.0 m / 5 | 1.2 / 4 | 12000 | 82 |
+| Bengal tiger | Panthera tigris tigris | EN | 1–2 | 800 | 4.0 m / 4 | 1.0 / 5 | 8500 | 90 |
+| Grey wolf | Canis lupus | LC | 4–10 | 600 | 2.5 m / 3 | 1.2 / 6 | 4500 | 76 |
+| Plains zebra | Equus quagga | NT | 4–20 | 500 | 2.4 m / 3 | 1.5 / 7 | 3000 | 58 |

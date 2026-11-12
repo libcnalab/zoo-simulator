@@ -1,0 +1,73 @@
+{
+  "id": "lion",
+  "commonName": "African lion",
+  "scientificName": "Panthera leo",
+  "family": "Felidae",
+  "group": "big_cat",
+  "adultMassKg": 190,
+  "shoulderHeightM": 1.15,
+  "bodyLengthM": 2.1,
+  "bodyRadiusM": 0.75,
+  "walkSpeed": 1.1,
+  "runSpeed": 4,
+  "lifespanYears": 20,
+  "maturityYears": 4,
+  "gestationDays": 110,
+  "litterMin": 1,
+  "litterMax": 4,
+  "birthIntervalYears": 2,
+  "diet": "carnivore",
+  "foods": [
+    "meat"
+  ],
+  "foodPerDayKg": 7,
+  "waterPerDayL": 20,
+  "activity": "cathemeral",
+  "sleepHoursPerDay": 16,
+  "groupMin": 2,
+  "groupMax": 12,
+  "maxAdultMales": 1,
+  "sociability": 0.55,
+  "playfulness": 0.7,
+  "shyness": 0.55,
+  "aggression": 0.7,
+  "dangerous": true,
+  "minEnclosureM2": 900,
+  "spacePerExtraAnimalM2": 75,
+  "waterAreaFraction": 0.12,
+  "needsDeepWater": false,
+  "vegetationDensity": 0.25,
+  "needsShelter": true,
+  "tempMinC": 5,
+  "tempMaxC": 38,
+  "fenceHeightM": 3.2,
+  "fenceStrength": 4,
+  "price": 9000,
+  "appeal": 92,
+  "status": "VU",
+  "nativeRange": "Sub-Saharan Africa",
+  "biome": "Savanna and open woodland",
+  "terrainSuitability": {
+    "savanna": 1,
+    "grass": 0.7,
+    "dirt": 0.6,
+    "rock": 0.4
+  },
+  "canSwim": true,
+  "canClimb": false,
+  "jumpHeightM": 1.2,
+  "facts": [
+    "Lions live in social groups called prides, an unusual pattern among cats.",
+    "Females do most cooperative hunting, while males help defend the pride.",
+    "Roaring helps lions advertise territory and locate pride members.",
+    "African lion populations have declined because of habitat loss and conflict."
+  ],
+  "sounds": [
+    "lion_roar",
+    "lion_growl"
+  ],
+  "sources": [
+    "IUCN Red List; AZA Lion Care Manual; estimate: adult mass is a representative male-female average."
+  ],
+  "model": "lion"
+}

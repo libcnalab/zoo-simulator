@@ -1,0 +1,73 @@
+{
+  "id": "flamingo",
+  "commonName": "Greater flamingo",
+  "scientificName": "Phoenicopterus roseus",
+  "family": "Phoenicopteridae",
+  "group": "bird",
+  "adultMassKg": 3.2,
+  "shoulderHeightM": 1.4,
+  "bodyLengthM": 1.2,
+  "bodyRadiusM": 0.25,
+  "walkSpeed": 0.7,
+  "runSpeed": 1.5,
+  "lifespanYears": 30,
+  "maturityYears": 5,
+  "gestationDays": 28,
+  "litterMin": 1,
+  "litterMax": 1,
+  "birthIntervalYears": 1,
+  "diet": "omnivore",
+  "foods": [
+    "fish",
+    "insects"
+  ],
+  "foodPerDayKg": 0.3,
+  "waterPerDayL": 0.5,
+  "activity": "diurnal",
+  "sleepHoursPerDay": 8,
+  "groupMin": 10,
+  "groupMax": 100,
+  "maxAdultMales": 0,
+  "sociability": 0.95,
+  "playfulness": 0.55,
+  "shyness": 0.25,
+  "aggression": 0.15,
+  "dangerous": false,
+  "minEnclosureM2": 220,
+  "spacePerExtraAnimalM2": 8,
+  "waterAreaFraction": 0.5,
+  "needsDeepWater": true,
+  "vegetationDensity": 0.15,
+  "needsShelter": true,
+  "tempMinC": 0,
+  "tempMaxC": 38,
+  "fenceHeightM": 1.6,
+  "fenceStrength": 2,
+  "price": 1800,
+  "appeal": 78,
+  "status": "LC",
+  "nativeRange": "Africa, Europe, and Asia",
+  "biome": "Shallow saline lakes and lagoons",
+  "terrainSuitability": {
+    "mud": 1,
+    "sand": 0.8,
+    "rock": 0.3,
+    "grass": 0.2
+  },
+  "canSwim": true,
+  "canClimb": false,
+  "jumpHeightM": 0.2,
+  "facts": [
+    "Greater flamingos feed by filtering small organisms from shallow water.",
+    "Their pink colour comes from pigments in algae and small crustaceans.",
+    "They breed in colonies and build raised mud nests.",
+    "The species occupies wetlands across parts of Africa, Europe, and Asia."
+  ],
+  "sounds": [
+    "flamingo_call"
+  ],
+  "sources": [
+    "IUCN Red List; Animal Diversity Web; estimate: food and water intake in managed flocks."
+  ],
+  "model": "flamingo"
+}

@@ -1,0 +1,71 @@
+{
+  "id": "penguin",
+  "commonName": "African penguin",
+  "scientificName": "Spheniscus demersus",
+  "family": "Spheniscidae",
+  "group": "bird",
+  "adultMassKg": 3.5,
+  "shoulderHeightM": 0.65,
+  "bodyLengthM": 0.65,
+  "bodyRadiusM": 0.2,
+  "walkSpeed": 0.5,
+  "runSpeed": 1.2,
+  "lifespanYears": 25,
+  "maturityYears": 3,
+  "gestationDays": 40,
+  "litterMin": 1,
+  "litterMax": 2,
+  "birthIntervalYears": 1,
+  "diet": "piscivore",
+  "foods": [
+    "fish"
+  ],
+  "foodPerDayKg": 0.5,
+  "waterPerDayL": 1,
+  "activity": "diurnal",
+  "sleepHoursPerDay": 10,
+  "groupMin": 10,
+  "groupMax": 60,
+  "maxAdultMales": 0,
+  "sociability": 0.9,
+  "playfulness": 0.75,
+  "shyness": 0.4,
+  "aggression": 0.2,
+  "dangerous": false,
+  "minEnclosureM2": 180,
+  "spacePerExtraAnimalM2": 12,
+  "waterAreaFraction": 0.35,
+  "needsDeepWater": true,
+  "vegetationDensity": 0.05,
+  "needsShelter": true,
+  "tempMinC": 5,
+  "tempMaxC": 30,
+  "fenceHeightM": 1.8,
+  "fenceStrength": 2,
+  "price": 1500,
+  "appeal": 90,
+  "status": "CR",
+  "nativeRange": "Coasts of southern Africa",
+  "biome": "Coastal islands and beaches",
+  "terrainSuitability": {
+    "sand": 1,
+    "rock": 0.8,
+    "grass": 0.3
+  },
+  "canSwim": true,
+  "canClimb": false,
+  "jumpHeightM": 0.3,
+  "facts": [
+    "African penguins nest in burrows or sheltered surface sites on coastal islands.",
+    "Their braying calls gave them the nickname jackass penguin.",
+    "They catch small fish while swimming with their flipper-like wings.",
+    "The species has declined sharply due to food shortages, pollution, and disturbance."
+  ],
+  "sounds": [
+    "penguin_bray"
+  ],
+  "sources": [
+    "IUCN Red List (uplisted to Critically Endangered in 2024); AZA Penguin Care Manual; estimate: daily fish intake."
+  ],
+  "model": "penguin"
+}
