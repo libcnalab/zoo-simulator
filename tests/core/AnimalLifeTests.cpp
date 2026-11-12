@@ -112,6 +112,9 @@ TEST(AnimalLifeTests, HealthyPairConceivesAndBirthsAYoungWithRecordedParents) {
     const std::int64_t dueTick = mother->dueTick;
     env.time.tick = ((dueTick + kTicksPerGameHour - 1) / kTicksPerGameHour) * kTicksPerGameHour;
     animals.Step(env);
+    // The births have grown the list: the mother may have moved.
+    mother = animals.Find(motherId);
+    ASSERT_NE(mother, nullptr);
     std::vector<const Animal*> young;
     for (const Animal& animal : animals.All()) {
         if (animal.mother == motherId) {
