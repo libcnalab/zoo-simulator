@@ -4,6 +4,7 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "CnaEngine/App/EngineGame.hpp"
@@ -50,6 +51,9 @@ protected:
 private:
     /// Makes `zoo` the game being played: the world is drawn anew, the interface starts afresh.
     void Adopt(std::unique_ptr<zoo::Zoo> zoo);
+    /// A still picture while the game gets ready: the name, what is being done and how far
+    /// along it is (0..1). Presented at once; nothing before the canvas exists.
+    void ShowLoading(std::string_view what, float done);
     /// Carries out what the interface asked for this frame (saving, loading, a new zoo, quitting).
     void HandleRequest();
     void SaveTo(const std::string& path, bool quietly);

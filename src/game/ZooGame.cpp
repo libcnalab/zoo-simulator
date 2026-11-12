@@ -148,6 +148,16 @@ void ZooGame::LoadGame() {
     for (const std::string& error : catalog_->errors)
         std::printf("zoo: data: %s\n", error.c_str());
 
+    // The canvas first: building and filling the zoo takes seconds, and a window that
+    // says so is better than a black one.
+    surfaces_ = std::make_unique<Surfaces>(device);
+    const auto assets = App::FindAssetDirectory("assets");
+    if (!assets)
+        throw std::runtime_error("zoo: the assets directory is missing beside the executable");
+    canvas_ = std::make_unique<ui::Canvas>(device, getContentProperty(), *assets);
+    ui_ = std::make_unique<ui::Ui>(*canvas_, controls_);
+    ShowLoading("Building the habitats and planting the park", 0.05f);
+
     std::unique_ptr<zoo::Zoo> first;
     if (editor_) {
         zoo::ZooConfig config;
@@ -167,12 +177,7 @@ void ZooGame::LoadGame() {
         first = MakeVisitorZoo();
     }
 
-    surfaces_ = std::make_unique<Surfaces>(device);
-    const auto assets = App::FindAssetDirectory("assets");
-    if (!assets)
-        throw std::runtime_error("zoo: the assets directory is missing beside the executable");
-    canvas_ = std::make_unique<ui::Canvas>(device, getContentProperty(), *assets);
-    ui_ = std::make_unique<ui::Ui>(*canvas_, controls_);
+    ShowLoading("Laying the paths and the lawns", 0.7f);
     sounds_ = std::make_unique<Soundscape>(*assets);
     sky_ = std::make_unique<Graphics::SkyDome>(device);
     sky_->AttachTo(Renderer());
@@ -250,6 +255,26 @@ void ZooGame::LoadGame() {
         play_.mainMenu = true;
         play_.started = false;
     }
+}
+
+void ZooGame::ShowLoading(std::string_view what, float done) {
+    if (!canvas_)
+        return;
+    auto& device = getGraphicsDeviceProperty();
+    device.Clear(Microsoft::Xna::Framework::Color(18, 28, 24));
+    canvas_->Begin();
+    const Microsoft::Xna::Framework::Vector2 screen = canvas_->Size();
+    const float left = std::round(0.09f * screen.X) + 40.0f;
+    const float top = std::round(0.16f * screen.Y);
+    canvas_->Text(editor_ ? "Zoo Simulator" : "Greenhill Zoo", {left, top}, 36.0f, ui::theme::kText, true);
+    canvas_->Fill({left, top + 48.0f, 64.0f, 3.0f}, ui::theme::kAccent);
+    canvas_->Text(what, {left, top + 70.0f}, ui::theme::kBody, ui::theme::kMuted);
+    const ui::Box bar{left, top + 104.0f, 300.0f, 6.0f};
+    canvas_->Round(bar, 3.0f, ui::Rgb(255, 255, 255, 40));
+    canvas_->Round({bar.x, bar.y, std::round(bar.w * std::clamp(done, 0.0f, 1.0f)), bar.h}, 3.0f,
+                   ui::theme::kAccent);
+    canvas_->Flush();
+    device.Present();
 }
 
 void ZooGame::Adopt(std::unique_ptr<zoo::Zoo> zoo) {

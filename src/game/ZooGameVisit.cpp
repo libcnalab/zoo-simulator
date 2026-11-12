@@ -80,6 +80,7 @@ std::unique_ptr<zoo::Zoo> ZooGame::MakeVisitorZoo() {
         for (const std::string& problem : report.problems)
             std::printf("zoo: visitor zoo: %s\n", problem.c_str());
     }
+    ShowLoading("The gates opened at nine: the morning's visitors are coming in", 0.3f);
     PrepareVisit(*made, true);
     return made;
 }
