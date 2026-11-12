@@ -157,17 +157,17 @@ private:
     int width_ = 0;
     int depth_ = 0;
     /// Per tile: kOutsideCode, kPublicCode, or the value of the enclosure's id.
-    std::vector<std::int32_t> codes_;
+    std::vector<std::int64_t> codes_;
     std::vector<Enclosure> enclosures_;  // ascending id
     std::uint32_t nextId_ = 1;
     std::uint32_t revision_ = 1;
     // scratch buffers, kept to avoid allocating on every rebuild
     std::vector<std::int32_t> labels_;
     std::vector<std::int32_t> stack_;
-    std::vector<std::int32_t> previousCodes_;
+    std::vector<std::int64_t> previousCodes_;
 
-    static constexpr std::int32_t kOutsideCode = -2;
-    static constexpr std::int32_t kPublicCode = -1;
+    static constexpr std::int64_t kOutsideCode = -2;
+    static constexpr std::int64_t kPublicCode = -1;
 };
 
 }  // namespace zoo

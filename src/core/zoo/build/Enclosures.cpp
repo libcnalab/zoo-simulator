@@ -14,7 +14,7 @@ constexpr std::size_t kMaxNameLength = 40;
 struct Component {
     TileCoord anchor;
     bool outside = false;
-    std::int32_t code = 0;  // filled in by the classification
+    std::int64_t code = 0;  // filled in by the classification
     int enclosure = -1;     // index into the new enclosure list
 };
 
@@ -105,7 +105,7 @@ void Enclosures::Rebuild(const World& world, const ZooObjects& objects, const Ca
     }
 
     // ---- classification and identity ------------------------------------------------
-    constexpr std::int32_t kUnclaimed = 0;
+    constexpr std::int64_t kUnclaimed = 0;
     for (Component& component : components) {
         component.code = component.outside ? kOutsideCode : kUnclaimed;
     }
@@ -124,7 +124,7 @@ void Enclosures::Rebuild(const World& world, const ZooObjects& objects, const Ca
         if (component.code != kUnclaimed) {
             continue;
         }
-        component.code = static_cast<std::int32_t>(old.id.value);
+        component.code = static_cast<std::int64_t>(old.id.value);
         Enclosure kept;
         kept.id = old.id;
         kept.name = std::move(old.name);
@@ -137,21 +137,25 @@ void Enclosures::Rebuild(const World& world, const ZooObjects& objects, const Ca
         Enclosure fresh;
         fresh.id = EnclosureId{nextId_++};
         fresh.name = "Enclosure " + std::to_string(fresh.id.value);
-        component.code = static_cast<std::int32_t>(fresh.id.value);
+        component.code = static_cast<std::int64_t>(fresh.id.value);
         next.push_back(std::move(fresh));
     }
     std::sort(next.begin(), next.end(), [](const Enclosure& a, const Enclosure& b) { return a.id < b.id; });
-    for (std::size_t i = 0; i < next.size(); ++i) {
-        const auto code = static_cast<std::int32_t>(next[i].id.value);
-        for (Component& component : components) {
-            if (component.code == code) {
-                component.enclosure = static_cast<int>(i);
-                next[i].anchor = component.anchor;
-                next[i].min = component.anchor;
-                next[i].max = component.anchor;
-                break;
-            }
+    for (Component& component : components) {
+        if (component.code <= 0) {
+            continue;
         }
+        const EnclosureId id{static_cast<std::uint32_t>(component.code)};
+        const auto found = std::lower_bound(
+            next.begin(), next.end(), id,
+            [](const Enclosure& enclosure, EnclosureId wanted) { return enclosure.id < wanted; });
+        if (found == next.end() || found->id != id) {
+            continue;
+        }
+        component.enclosure = static_cast<int>(std::distance(next.begin(), found));
+        found->anchor = component.anchor;
+        found->min = component.anchor;
+        found->max = component.anchor;
     }
 
     previousCodes_.swap(codes_);
@@ -320,7 +324,7 @@ Region Enclosures::RegionAt(TileCoord t) const {
     if (t.x < 0 || t.z < 0 || t.x >= width_ || t.z >= depth_) {
         return Region::Outside;
     }
-    const std::int32_t code = codes_[static_cast<std::size_t>(t.z) * static_cast<std::size_t>(width_) +
+    const std::int64_t code = codes_[static_cast<std::size_t>(t.z) * static_cast<std::size_t>(width_) +
                                      static_cast<std::size_t>(t.x)];
     if (code == kOutsideCode) {
         return Region::Outside;
@@ -332,7 +336,7 @@ EnclosureId Enclosures::At(TileCoord t) const {
     if (t.x < 0 || t.z < 0 || t.x >= width_ || t.z >= depth_) {
         return {};
     }
-    const std::int32_t code = codes_[static_cast<std::size_t>(t.z) * static_cast<std::size_t>(width_) +
+    const std::int64_t code = codes_[static_cast<std::size_t>(t.z) * static_cast<std::size_t>(width_) +
                                      static_cast<std::size_t>(t.x)];
     return code > 0 ? EnclosureId{static_cast<std::uint32_t>(code)} : EnclosureId{};
 }

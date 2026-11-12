@@ -245,11 +245,24 @@ public:
     const Catalog& Definitions() const { return catalog_; }
 
 private:
+    BuildPlan DoFence(std::span<const EdgeRef> edges, int kind, bool gate, bool apply);
+    BuildPlan DoRemoveFence(std::span<const EdgeRef> edges, bool apply);
+    BuildPlan DoPath(std::span<const TileCoord> tiles, PathKind kind, bool apply);
+    BuildPlan DoTerrain(std::span<const TileCoord> tiles, Terrain terrain, bool apply);
+    BuildPlan DoWater(std::span<const TileCoord> tiles, float depth, bool apply);
+    BuildPlan DoRemoveWater(std::span<const TileCoord> tiles, bool apply);
+    BuildPlan DoTerraform(Brush brush, Vec2 center, float radius, float amount, bool apply);
+    BuildPlan DoBuilding(int def, TileCoord origin, Dir facing, bool apply);
+    BuildPlan DoDemolish(BuildingId id, bool apply);
+    BuildPlan DoProp(int def, Vec2 position, float heading, float scale, bool apply);
+    BuildPlan DoRemoveProp(PropId id, bool apply);
+
     World& world_;
     ZooObjects& objects_;
     Enclosures& enclosures_;
     const Catalog& catalog_;
     Finance* finance_ = nullptr;
+    float largestPropRadius_ = 0.0f;
 };
 
 }  // namespace zoo
