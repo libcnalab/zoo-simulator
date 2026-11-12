@@ -143,13 +143,15 @@ void ZooGame::LookAtAnimals(float seconds) {
         if (!animal.Visible() || animal.species < 0)
             continue;
         const zoo::SpeciesDef& def = species[static_cast<std::size_t>(animal.species)];
-        const Vector3 body(animal.position.x, zoo_->Map().HeightAt(animal.position) + 0.55f * def.shoulderHeightM,
+        const Vector3 body(animal.position.x,
+                           zoo_->Map().HeightAt(animal.position) + 0.55f * def.shoulderHeightM,
                            animal.position.z);
         const Vector3 to = body - eye;
         const float along = to.X * gaze.X + to.Y * gaze.Y + to.Z * gaze.Z;
         if (along < 0.8f || along > kLookReach)
             continue;
-        const float aside = std::sqrt(std::max(0.0f, to.X * to.X + to.Y * to.Y + to.Z * to.Z - along * along));
+        const float aside =
+            std::sqrt(std::max(0.0f, to.X * to.X + to.Y * to.Y + to.Z * to.Z - along * along));
         // A far animal is a small target: the eyes are allowed a little more there.
         const float size = std::max(0.45f, 0.5f * def.bodyLengthM) + 0.2f + 0.012f * along;
         const float miss = aside / size;
@@ -190,9 +192,8 @@ void ZooGame::OpenBoard(const zoo::Prop& board) {
         const float distance = DistanceToTiles(board.position, enclosure.min, enclosure.max);
         if (distance >= nearest)
             continue;
-        const bool livedIn = std::ranges::any_of(zoo_->Fauna().All(), [&](const zoo::Animal& a) {
-            return a.InWorld() && a.home == enclosure.id;
-        });
+        const bool livedIn = std::ranges::any_of(
+            zoo_->Fauna().All(), [&](const zoo::Animal& a) { return a.InWorld() && a.home == enclosure.id; });
         if (livedIn) {
             nearest = distance;
             home = &enclosure;
@@ -224,7 +225,8 @@ void ZooGame::OpenBoard(const zoo::Prop& board) {
     text.rows.emplace_back("Diet", DietText(def.diet));
     text.rows.emplace_back("Adult weight", "about " + MassText(def.adultMassKg));
     text.rows.emplace_back("Height", Format("about %.1f m", static_cast<double>(def.shoulderHeightM)));
-    text.rows.emplace_back("Lifespan", Format("about %.0f years in human care", static_cast<double>(def.lifespanYears)));
+    text.rows.emplace_back("Lifespan",
+                           Format("about %.0f years in human care", static_cast<double>(def.lifespanYears)));
     text.rows.emplace_back("Conservation", std::string(zoo::DisplayName(def.status)));
     text.facts = def.facts;
     text.residents = "Living here: " + Names(living[chosen]);
@@ -273,14 +275,16 @@ std::optional<ZooGame::Pose> ZooGame::StandPose(std::string_view what) const {
     } else if (kind == "board") {
         for (const zoo::Prop& prop : zoo_->Objects().Props()) {
             if (prop.def < 0 ||
-                zoo_->Definitions().props[static_cast<std::size_t>(prop.def)].role != zoo::PropRole::InfoBoard ||
+                zoo_->Definitions().props[static_cast<std::size_t>(prop.def)].role !=
+                    zoo::PropRole::InfoBoard ||
                 wanted-- != 0)
                 continue;
             // From the path side when there is one.
             zoo::Vec2 at{prop.position.x, prop.position.z + 1.7f};
             for (int step = 0; step < 8; ++step) {
                 const float angle = 0.785398f * static_cast<float>(step);
-                const zoo::Vec2 tried{prop.position.x + 1.7f * std::sin(angle), prop.position.z + 1.7f * std::cos(angle)};
+                const zoo::Vec2 tried{prop.position.x + 1.7f * std::sin(angle),
+                                      prop.position.z + 1.7f * std::cos(angle)};
                 const zoo::TileCoord tile = zoo::World::TileAt(tried);
                 if (zoo_->Map().InBounds(tile) && zoo_->Map().At(tile).path != zoo::PathKind::None) {
                     at = tried;
@@ -325,7 +329,8 @@ void ZooGame::BuildVisitMap() {
             while (end <= max.x && kindOf({end, z}) == kind)
                 ++end;
             if (kind != Kind::Ground)
-                map.shapes.push_back({static_cast<float>(x) * zoo::kTileSize, static_cast<float>(z) * zoo::kTileSize,
+                map.shapes.push_back({static_cast<float>(x) * zoo::kTileSize,
+                                      static_cast<float>(z) * zoo::kTileSize,
                                       static_cast<float>(end - x) * zoo::kTileSize, zoo::kTileSize, kind});
             x = end;
         }
@@ -348,8 +353,9 @@ void ZooGame::BuildVisitMap() {
     map.shapes.insert(map.shapes.begin(),
                       {map.minX, map.minZ, map.maxX - map.minX, map.maxZ - map.minZ, Kind::Ground});
     const zoo::TileCoord gate = world.EntranceTile();
-    map.shapes.push_back({(static_cast<float>(gate.x) - 0.5f) * zoo::kTileSize, static_cast<float>(gate.z) * zoo::kTileSize,
-                          2.0f * zoo::kTileSize, zoo::kTileSize, Kind::Entrance});
+    map.shapes.push_back({(static_cast<float>(gate.x) - 0.5f) * zoo::kTileSize,
+                          static_cast<float>(gate.z) * zoo::kTileSize, 2.0f * zoo::kTileSize, zoo::kTileSize,
+                          Kind::Entrance});
 
     // The names on the plan: who lives in each enclosure, what each house for visitors is.
     const auto& species = zoo_->SpeciesList().All();
@@ -358,17 +364,22 @@ void ZooGame::BuildVisitMap() {
         for (const zoo::Animal& animal : zoo_->Fauna().All())
             if (animal.InWorld() && animal.home == enclosure.id && animal.species >= 0)
                 ++living[animal.species];
-        if (living.empty())
-            continue;
-        std::string text;
-        for (const auto& [index, count] : living) {
-            if (!text.empty())
-                text += ", ";
-            text += species[static_cast<std::size_t>(index)].commonName;
+        // A habitat with a name of its own ("Lion Rock") shows it, also while it stands empty;
+        // one that was only numbered shows who lives in it.
+        std::string text = enclosure.name.starts_with("Enclosure ") ? std::string() : enclosure.name;
+        if (text.empty()) {
+            for (const auto& [index, count] : living) {
+                if (!text.empty())
+                    text += ", ";
+                text += species[static_cast<std::size_t>(index)].commonName;
+            }
         }
-        map.labels.push_back({0.5f * static_cast<float>(enclosure.min.x + enclosure.max.x + 1) * zoo::kTileSize,
-                              0.5f * static_cast<float>(enclosure.min.z + enclosure.max.z + 1) * zoo::kTileSize,
-                              std::move(text), true});
+        if (text.empty())
+            continue;
+        map.labels.push_back(
+            {0.5f * static_cast<float>(enclosure.min.x + enclosure.max.x + 1) * zoo::kTileSize,
+             0.5f * static_cast<float>(enclosure.min.z + enclosure.max.z + 1) * zoo::kTileSize,
+             std::move(text), true});
     }
     for (const zoo::Building& building : zoo_->Objects().Buildings()) {
         if (building.def < 0)
@@ -378,9 +389,16 @@ void ZooGame::BuildVisitMap() {
             def.role == zoo::BuildingRole::VetClinic || def.role == zoo::BuildingRole::ResearchCenter)
             continue;
         const zoo::TileCoord size = zoo::FootprintSize(def, building.facing);
-        map.labels.push_back({(static_cast<float>(building.origin.x) + 0.5f * static_cast<float>(size.x)) * zoo::kTileSize,
-                              (static_cast<float>(building.origin.z) + 0.5f * static_cast<float>(size.z)) * zoo::kTileSize,
-                              def.name, false});
+        const float x =
+            (static_cast<float>(building.origin.x) + 0.5f * static_cast<float>(size.x)) * zoo::kTileSize;
+        const float z =
+            (static_cast<float>(building.origin.z) + 0.5f * static_cast<float>(size.z)) * zoo::kTileSize;
+        // A row of stalls is named once, not stall by stall.
+        const bool named = std::ranges::any_of(map.labels, [&](const VisitMap::Label& other) {
+            return !other.habitat && other.text == def.name && std::hypot(other.x - x, other.z - z) < 70.0f;
+        });
+        if (!named)
+            map.labels.push_back({x, z, def.name, false});
     }
     map.labels.push_back({(static_cast<float>(gate.x) + 0.5f) * zoo::kTileSize,
                           (static_cast<float>(gate.z) - 1.2f) * zoo::kTileSize, "Entrance", false});

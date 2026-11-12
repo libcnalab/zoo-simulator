@@ -168,11 +168,13 @@ void VisitorHud::Pause(ui::Ui& ui, Visit& visit) {
     ui.Claim(screen);
     ui.Paint().Fill(screen, ui::Rgb(6, 10, 14, 120));
     if (visit.window == VisitWindow::Settings) {
-        Settings(ui, visit, {std::round(screen.MidX() - 220.0f), std::round(screen.MidY() - 178.0f), 440.0f, 334.0f});
+        Settings(ui, visit,
+                 {std::round(screen.MidX() - 220.0f), std::round(screen.MidY() - 178.0f), 440.0f, 334.0f});
         return;
     }
     if (visit.window == VisitWindow::Load) {
-        Load(ui, visit, {std::round(screen.MidX() - 280.0f), std::round(screen.MidY() - 210.0f), 560.0f, 420.0f});
+        Load(ui, visit,
+             {std::round(screen.MidX() - 280.0f), std::round(screen.MidY() - 210.0f), 560.0f, 420.0f});
         return;
     }
     const Box panel{std::round(screen.MidX() - 160.0f), std::round(screen.MidY() - 190.0f), 320.0f, 366.0f};
@@ -213,20 +215,22 @@ void VisitorHud::Settings(ui::Ui& ui, Visit& visit, const Box& box) {
     };
     if (const int step = Stepper(ui, row(), "Mouse speed", Format("%.1f", static_cast<double>(s.sensitivity)),
                                  s.sensitivity > 0.25f, s.sensitivity < 2.95f)) {
-        s.sensitivity = std::clamp(std::round((s.sensitivity + 0.1f * static_cast<float>(step)) * 10.0f) / 10.0f,
-                                   0.2f, 3.0f);
+        s.sensitivity = std::clamp(
+            std::round((s.sensitivity + 0.1f * static_cast<float>(step)) * 10.0f) / 10.0f, 0.2f, 3.0f);
         visit.settingsChanged = true;
     }
     visit.settingsChanged |= Switch(ui, row(), "Invert the mouse up and down", s.invertY);
-    if (const int step = Stepper(ui, row(), "Field of view", Format("%.0f°", static_cast<double>(s.fieldOfView)),
-                                 s.fieldOfView > 45.5f, s.fieldOfView < 74.5f)) {
+    if (const int step =
+            Stepper(ui, row(), "Field of view", Format("%.0f°", static_cast<double>(s.fieldOfView)),
+                    s.fieldOfView > 45.5f, s.fieldOfView < 74.5f)) {
         s.fieldOfView = std::clamp(s.fieldOfView + 2.0f * static_cast<float>(step), 45.0f, 75.0f);
         visit.settingsChanged = true;
     }
     visit.settingsChanged |= Switch(ui, row(), "Sway with the steps", s.headBob);
     if (const int step = Stepper(ui, row(), "Sound", Format("%.0f %%", static_cast<double>(s.volume) * 100.0),
                                  s.volume > 0.05f, s.volume < 0.95f)) {
-        s.volume = std::clamp(std::round((s.volume + 0.1f * static_cast<float>(step)) * 10.0f) / 10.0f, 0.0f, 1.0f);
+        s.volume =
+            std::clamp(std::round((s.volume + 0.1f * static_cast<float>(step)) * 10.0f) / 10.0f, 0.0f, 1.0f);
         visit.settingsChanged = true;
     }
     visit.settingsChanged |= Switch(ui, row(), "Diagnostics (F4)", s.diagnostics);
@@ -239,7 +243,8 @@ void VisitorHud::Load(ui::Ui& ui, Visit& visit, const Box& box) {
     if (closed)
         visit.window = VisitWindow::None;
     if (saves_.empty()) {
-        hud::Note(ui, body, Format("No saved visits yet. They are kept in %s", SaveDirectory().string().c_str()));
+        hud::Note(ui, body,
+                  Format("No saved visits yet. They are kept in %s", SaveDirectory().string().c_str()));
         return;
     }
     constexpr float kLine = 34.0f;
@@ -289,7 +294,11 @@ void VisitorHud::Walking(ui::Ui& ui, Visit& visit) {
     visit.hintLeft = std::max(0.0f, visit.hintLeft - ui.Seconds());
     if (visit.hintLeft > 0.0f && visit.window == VisitWindow::None)
         KeyHints(ui, middle.X, screen.Y - 52.0f,
-                 {{"W A S D", "Walk"}, {"Mouse", "Look around"}, {"Shift", "Walk / run"}, {"M", "Map"}, {"Esc", "Menu"}},
+                 {{"W A S D", "Walk"},
+                  {"Mouse", "Look around"},
+                  {"Shift", "Walk / run"},
+                  {"M", "Map"},
+                  {"Esc", "Menu"}},
                  std::min(1.0f, visit.hintLeft / 1.5f));
 }
 
@@ -313,14 +322,17 @@ void VisitorHud::Card(ui::Ui& ui, const Visit& visit) {
     const std::string second = card.about + "  -  " + card.doing;
     const float width = std::max({ui.Paint().TextWidth(first, theme::kBody + 1.0f, true),
                                   ui.Paint().TextWidth(card.latin, theme::kSmall),
-                                  ui.Paint().TextWidth(second, theme::kSmall)}) + 36.0f;
+                                  ui.Paint().TextWidth(second, theme::kSmall)}) +
+                        36.0f;
     const Vector2 screen = ui.Screen();
     const Box plate{std::round(0.5f * (screen.X - width)), std::round(screen.Y * 0.74f), width, 74.0f};
     ui.Paint().Round(plate, 8.0f, ui::Rgb(10, 14, 18, static_cast<int>(165.0f * alpha)));
     Box body = plate.Inset(18.0f, 9.0f);
-    ui.LabelIn(body.CutTop(22.0f), first, theme::kBody + 1.0f, ui::Faded(theme::kText, alpha), Align::Center, true);
+    ui.LabelIn(body.CutTop(22.0f), first, theme::kBody + 1.0f, ui::Faded(theme::kText, alpha), Align::Center,
+               true);
     ui.LabelIn(body.CutTop(16.0f), card.latin, theme::kSmall, ui::Faded(theme::kMuted, alpha), Align::Center);
-    ui.LabelIn(body.CutTop(18.0f), second, theme::kSmall, ui::Faded(theme::kText, 0.92f * alpha), Align::Center);
+    ui.LabelIn(body.CutTop(18.0f), second, theme::kSmall, ui::Faded(theme::kText, 0.92f * alpha),
+               Align::Center);
 }
 
 void VisitorHud::Board(ui::Ui& ui, const Visit& visit) {
@@ -332,10 +344,11 @@ void VisitorHud::Board(ui::Ui& ui, const Visit& visit) {
     float height = 26.0f + 30.0f + 20.0f + 14.0f + 21.0f * static_cast<float>(text.rows.size()) + 12.0f;
     for (const std::string& fact : text.facts)
         height += static_cast<float>(ui.Paint().Wrap(fact, inner - 14.0f, theme::kSmall + 1.0f).size()) *
-                      ui.Paint().LineHeight(theme::kSmall + 1.0f) + 7.0f;
+                      ui.Paint().LineHeight(theme::kSmall + 1.0f) +
+                  7.0f;
     height += (text.residents.empty() ? 0.0f : 24.0f) + (text.others.empty() ? 0.0f : 20.0f) + 44.0f;
-    const Box panel{std::round(0.5f * (screen.X - kWidth)), std::round(std::max(20.0f, 0.5f * (screen.Y - height))),
-                    kWidth, height};
+    const Box panel{std::round(0.5f * (screen.X - kWidth)),
+                    std::round(std::max(20.0f, 0.5f * (screen.Y - height))), kWidth, height};
     ui.Paint().Shadow(panel, 18.0f, 0.5f);
     ui.Paint().Frame(panel, 8.0f, ui::Rgb(238, 232, 214, 246), ui::Rgb(94, 72, 44, 255), 3.0f);
     const ui::Rgba ink = ui::Rgb(38, 34, 28, 255);
@@ -373,16 +386,17 @@ void VisitorHud::Map(ui::Ui& ui, const Visit& visit) {
     const float spanX = std::max(1.0f, map.maxX - map.minX);
     const float spanZ = std::max(1.0f, map.maxZ - map.minZ);
     const float scale = std::min((screen.X - 120.0f) / spanX, (screen.Y - 150.0f) / spanZ);
-    const Box plan{std::round(0.5f * (screen.X - spanX * scale)), std::round(0.5f * (screen.Y - spanZ * scale)) + 8.0f,
-                   std::round(spanX * scale), std::round(spanZ * scale)};
+    const Box plan{std::round(0.5f * (screen.X - spanX * scale)),
+                   std::round(0.5f * (screen.Y - spanZ * scale)) + 8.0f, std::round(spanX * scale),
+                   std::round(spanZ * scale)};
     const Box panel{plan.x - 16.0f, plan.y - 46.0f, plan.w + 32.0f, plan.h + 62.0f};
     ui.Paint().Fill({0.0f, 0.0f, screen.X, screen.Y}, ui::Rgb(0, 0, 0, 90));
     ui.Paint().Shadow(panel, 18.0f, 0.5f);
     ui.Paint().Frame(panel, 8.0f, ui::Rgb(238, 232, 214, 250), ui::Rgb(94, 72, 44, 255), 3.0f);
-    ui.LabelIn({panel.x + 18.0f, panel.y + 8.0f, 300.0f, 30.0f}, "Zoo map", theme::kTitle, ui::Rgb(38, 34, 28, 255),
-               Align::Left, true);
-    ui.LabelIn({panel.Right() - 318.0f, panel.y + 10.0f, 300.0f, 26.0f}, "North is up   -   M closes", theme::kSmall,
-               ui::Rgb(104, 92, 74, 255), Align::Right);
+    ui.LabelIn({panel.x + 18.0f, panel.y + 8.0f, 300.0f, 30.0f}, "Zoo map", theme::kTitle,
+               ui::Rgb(38, 34, 28, 255), Align::Left, true);
+    ui.LabelIn({panel.Right() - 318.0f, panel.y + 10.0f, 300.0f, 26.0f}, "North is up   -   M closes",
+               theme::kSmall, ui::Rgb(104, 92, 74, 255), Align::Right);
 
     // North (-z) is up: the plan reads like the ground one walks, the entrance at the foot.
     ui.Paint().PushClip(plan);
@@ -418,7 +432,9 @@ void VisitorHud::Map(ui::Ui& ui, const Visit& visit) {
     for (const VisitMap::Label& label : map.labels) {
         const float size = label.habitat ? theme::kSmall + 1.0f : theme::kSmall - 1.0f;
         const float width = ui.Paint().TextWidth(label.text, size, label.habitat);
-        const float x = std::round(plan.x + (label.x - map.minX) * scale - 0.5f * width);
+        // A name near the plan's edge moves in rather than being cut.
+        const float x = std::clamp(std::round(plan.x + (label.x - map.minX) * scale - 0.5f * width),
+                                   plan.x + 7.0f, std::max(plan.x + 7.0f, plan.Right() - width - 7.0f));
         float y = std::round(plan.y + (label.z - map.minZ) * scale - 8.0f);
         const auto covered = [&] {
             return std::ranges::any_of(placed, [&](const Box& other) {
@@ -437,7 +453,8 @@ void VisitorHud::Map(ui::Ui& ui, const Visit& visit) {
         ui.Paint().Round({x - 5.0f, y - 2.0f, width + 10.0f, 19.0f}, 4.0f,
                          label.habitat ? ui::Rgb(38, 34, 28, 200) : ui::Rgb(255, 255, 255, 190));
         ui.Paint().Text(label.text, Vector2(x, y), size,
-                        label.habitat ? ui::Rgb(250, 244, 226, 255) : ui::Rgb(60, 50, 40, 255), label.habitat);
+                        label.habitat ? ui::Rgb(250, 244, 226, 255) : ui::Rgb(60, 50, 40, 255),
+                        label.habitat);
     }
     // You are here: a dot and, ahead of it, where you look.
     const Vector2 you(plan.x + (map.you.X - map.minX) * scale, plan.y + (map.you.Y - map.minZ) * scale);
@@ -472,13 +489,15 @@ void VisitorHud::Diagnostics(ui::Ui& ui, const Visit& visit) {
     body.CutTop(4.0f);
     hud::Heading(ui, body, "WORLD");
     hud::Fact(ui, body, "Animals (drawn)", Format("%d (%d)", f.animals, f.animalsDrawn));
-    hud::Fact(ui, body, "Here", Format("%.1f, %.1f  heading %.0f°", static_cast<double>(f.feet.X),
-                                       static_cast<double>(f.feet.Z), static_cast<double>(f.yawDegrees)));
+    hud::Fact(ui, body, "Here",
+              Format("%.1f, %.1f  heading %.0f°", static_cast<double>(f.feet.X),
+                     static_cast<double>(f.feet.Z), static_cast<double>(f.yawDegrees)));
     hud::Fact(ui, body, "Frames a second", Format("%.0f", static_cast<double>(f.framesPerSecond)));
     body.CutTop(4.0f);
     hud::Heading(ui, body, "SOUND");
-    hud::Fact(ui, body, "Recordings", f.sound.failed > 0 ? Format("%d, %d failed", f.sound.files, f.sound.failed)
-                                                         : Format("%d", f.sound.files),
+    hud::Fact(ui, body, "Recordings",
+              f.sound.failed > 0 ? Format("%d, %d failed", f.sound.files, f.sound.failed)
+                                 : Format("%d", f.sound.files),
               !f.sound.device || f.sound.files == 0 ? theme::kAlarm : theme::kText);
     hud::Fact(ui, body, "Heard now", Format("%d of %d", f.sound.audible, f.sound.voices));
     hud::Fact(ui, body, "Last call", f.sound.lastCall.empty() ? std::string("-") : f.sound.lastCall);
