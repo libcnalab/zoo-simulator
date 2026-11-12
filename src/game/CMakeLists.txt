@@ -9,6 +9,7 @@ cna_engine_add_game(zoo-simulator
     PROFILE enhanced
     LIBRARIES Zoo::Core CNA::GamerServices)
 target_include_directories(zoo-simulator PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
+target_include_directories(zoo-simulator SYSTEM PRIVATE "${ZOO_NLOHMANN_JSON_INCLUDE}")
 set_target_properties(zoo-simulator PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
 # The data-driven definitions travel beside the executable like the assets.
 add_custom_command(TARGET zoo-simulator POST_BUILD

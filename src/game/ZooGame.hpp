@@ -9,6 +9,7 @@
 #include "CnaEngine/App/EngineGame.hpp"
 #include "CnaEngine/Graphics/Sky.hpp"
 
+#include "AnimalRenderer.hpp"
 #include "CameraRig.hpp"
 #include "Controls.hpp"
 #include "SceneryRenderer.hpp"
@@ -45,6 +46,7 @@ private:
     /// Ticks simulated before the first frame (screenshots of a zoo in full swing).
     std::int64_t warmUpTicks_ = 0;
     bool emptyMap_ = false;
+    bool listAnimals_ = false;
 
     // The simulation. The catalogs outlive the zoo, which refers to them.
     std::unique_ptr<zoo::Catalog> catalog_;
@@ -58,6 +60,7 @@ private:
     std::unique_ptr<Surfaces> surfaces_;
     std::unique_ptr<TerrainRenderer> terrain_;
     std::unique_ptr<SceneryRenderer> scenery_;
+    std::unique_ptr<AnimalRenderer> animals_;
     std::unique_ptr<CnaEngine::Graphics::SkyDome> sky_;
     CnaEngine::Graphics::DayNightPalette palette_ = CnaEngine::Graphics::DayNightPalette::Default();
     CnaEngine::Graphics::TimeOfDay clock_;

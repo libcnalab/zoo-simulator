@@ -57,6 +57,10 @@ bool ZooGame::ParseArgument(std::span<const std::string_view> arguments, std::si
         return Parse(arguments[++index], warmUpTicks_);
     if (name == "--speed" && hasValue)
         return Parse(arguments[++index], speed_);
+    if (name == "--list-animals") {
+        listAnimals_ = true;
+        return true;
+    }
     if (name == "--empty") {
         emptyMap_ = true;
         return true;
@@ -117,6 +121,19 @@ void ZooGame::LoadGame() {
     scenery_->Update(zoo_->Map(), zoo_->Objects(), -1);
     std::printf("zoo: scenery: %zu triangles in %zu draw calls\n", scenery_->Triangles(),
                 scenery_->DrawCalls());
+
+    animals_ = std::make_unique<AnimalRenderer>(getContentProperty(), *species_);
+    animals_->Update(*zoo_, 0.0f, 0.0f);
+    if (listAnimals_) {
+        for (const zoo::Animal& animal : zoo_->Fauna().All()) {
+            std::printf(
+                "zoo: animal %u %s %s at %.1f,%.1f heading %.0f %s%s\n", animal.id.value,
+                species_->All()[static_cast<std::size_t>(animal.species)].id.c_str(), animal.name.c_str(),
+                static_cast<double>(animal.position.x), static_cast<double>(animal.position.z),
+                static_cast<double>(animal.heading * 57.29578f),
+                std::string(zoo::ToString(animal.activity)).c_str(), animal.shelter ? " (in shelter)" : "");
+        }
+    }
 
     sky_ = std::make_unique<Graphics::SkyDome>(device);
     sky_->AttachTo(Renderer());
@@ -192,12 +209,14 @@ void ZooGame::UpdateFrame(double seconds) {
     UpdateShadowArea();
     terrain_->Update(zoo_->Map());
     scenery_->Update(zoo_->Map(), zoo_->Objects());
+    animals_->Update(*zoo_, dt * static_cast<float>(speed_), static_cast<float>(tickDebt_));
     UpdateSky();
 }
 
 void ZooGame::Submit(App::Frame& frame) {
     terrain_->Submit(frame);
     scenery_->Submit(frame);
+    animals_->Submit(frame);
 }
 
 }  // namespace zoogame
