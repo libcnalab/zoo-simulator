@@ -40,12 +40,17 @@ struct NavProfile {
     }
     /// Staff: anywhere dry, through gates, preferring paths.
     static constexpr NavProfile Staff() {
-        return {.useGates = true, .useEntrance = true, .leaveProperty = true, .maxWaterDepth = 0.3f,
-                .offPathCost = 3.0f, .waterCost = 4.0f};
+        return {.useGates = true,
+                .useEntrance = true,
+                .leaveProperty = true,
+                .maxWaterDepth = 0.3f,
+                .offPathCost = 3.0f,
+                .waterCost = 4.0f};
     }
     /// An animal: anywhere fences let it, wading up to `wadeDepth` (swimmers: any depth).
     static constexpr NavProfile Animal(float wadeDepth, bool canSwim) {
-        return {.maxWaterDepth = canSwim ? 1.0e6f : wadeDepth, .maxRelief = 2.5f,
+        return {.maxWaterDepth = canSwim ? 1.0e6f : wadeDepth,
+                .maxRelief = 2.5f,
                 .waterCost = canSwim ? 1.5f : 3.0f};
     }
 };
@@ -95,12 +100,14 @@ public:
 
     /// The passable tile nearest to `around` (by straight tile distance, ties in
     /// row-major order) within `maxRadius` tiles, if any.
-    std::optional<TileCoord> NearestPassable(TileCoord around, const NavProfile& profile, int maxRadius) const;
+    std::optional<TileCoord> NearestPassable(TileCoord around, const NavProfile& profile,
+                                             int maxRadius) const;
 
     /// Dijkstra from a set of goal tiles over the whole map: out[z * Width() + x] is
     /// the walking cost in tiles to the nearest goal, or a negative value where no
     /// goal is reachable. Used for "nearest restroom" style choices by many walkers.
-    void DistanceField(std::span<const TileCoord> goals, const NavProfile& profile, std::vector<float>& out) const;
+    void DistanceField(std::span<const TileCoord> goals, const NavProfile& profile,
+                       std::vector<float>& out) const;
 
     /// Connected component of each tile for a profile (cached per NavRevision):
     /// equal non-negative labels mean mutually reachable, -1 means impassable.
@@ -111,6 +118,11 @@ public:
     }
 
 private:
+    struct OpenNode {
+        std::int32_t index = 0;
+        float g = 0.0f;
+        float h = 0.0f;
+    };
     struct Scratch;
     struct ComponentCache {
         NavProfile profile;
@@ -122,6 +134,7 @@ private:
     mutable std::vector<float> cost_;
     mutable std::vector<std::int32_t> parent_;
     mutable std::vector<std::uint32_t> stamp_;
+    mutable std::vector<OpenNode> open_;
     mutable std::uint32_t generation_ = 0;
     mutable std::vector<ComponentCache> components_;
 };

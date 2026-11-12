@@ -18,19 +18,19 @@ enum class Account : std::uint8_t {
     FoodSales,
     GiftSales,
     Donations,
-    Grants,             ///< conservation and education grants
+    Grants,  ///< conservation and education grants
     AnimalSales,
-    Refunds,            ///< money back for demolished construction
+    Refunds,  ///< money back for demolished construction
     // expenses
     Construction,
-    Landscaping,        ///< terrain, water, plants
+    Landscaping,  ///< terrain, water, plants
     AnimalPurchases,
     AnimalFood,
     Wages,
-    Upkeep,             ///< buildings and fences
+    Upkeep,  ///< buildings and fences
     Veterinary,
-    Goods,              ///< cost of what the stalls sell
-    Conservation,       ///< release programmes, research
+    Goods,         ///< cost of what the stalls sell
+    Conservation,  ///< release programmes, research
     LoanInterest,
     Count
 };
@@ -41,15 +41,17 @@ inline constexpr int kAccountCount = static_cast<int>(Account::Count);
 std::string_view ToString(Account a);
 /// "Tickets", "Food sales", ... (UI).
 std::string_view DisplayName(Account a);
-constexpr bool IsIncome(Account a) { return a <= Account::Refunds; }
+constexpr bool IsIncome(Account a) {
+    return a <= Account::Refunds;
+}
 
 /// One closed day of bookkeeping.
 struct DayReport {
-    std::int64_t day = 0;                           ///< GameTime::Day() of the day that ended
-    std::array<Money, kAccountCount> amounts{};     ///< always >= 0; income or expense by account
-    Money balance = 0;                              ///< at the end of the day
-    Money loan = 0;                                 ///< outstanding at the end of the day
-    int visitors = 0;                               ///< tickets sold that day
+    std::int64_t day = 0;                        ///< GameTime::Day() of the day that ended
+    std::array<Money, kAccountCount> amounts{};  ///< always >= 0; income or expense by account
+    Money balance = 0;                           ///< at the end of the day
+    Money loan = 0;                              ///< outstanding at the end of the day
+    int visitors = 0;                            ///< tickets sold that day
 
     Money Income() const;
     Money Expenses() const;
@@ -65,7 +67,7 @@ struct DayReport {
 /// refuses what the zoo cannot afford.
 class Finance {
 public:
-    static constexpr int kHistoryDays = 96;                 ///< two game years of day reports are kept
+    static constexpr int kHistoryDays = 96;  ///< two game years of day reports are kept
     static constexpr Money kLoanStep = Dollars(5000);
     static constexpr Money kLoanLimit = Dollars(100000);
     /// Interest per game day on the outstanding loan, in basis points (1/100 %).
@@ -109,7 +111,7 @@ public:
     bool operator==(const Finance&) const = default;
 
 private:
-    friend struct FinanceAccess;        // serialisation
+    friend struct FinanceAccess;  // serialisation
 
     Money balance_ = 0;
     Money loan_ = 0;
