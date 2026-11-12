@@ -44,6 +44,10 @@ public:
         return Vector2(static_cast<float>(now_.mouse.getXProperty() - before_.mouse.getXProperty()),
                        static_cast<float>(now_.mouse.getYProperty() - before_.mouse.getYProperty()));
     }
+    /// The pointer's movement while a button is held (nothing on the frame it goes down).
+    Vector2 Drag(MouseKey key) const {
+        return IsDown(now_, key) && IsDown(before_, key) ? MouseMove() : Vector2(0.0f, 0.0f);
+    }
     /// Wheel movement in notches, positive away from the user.
     float Wheel() const {
         return static_cast<float>(now_.mouse.getScrollWheelValueProperty() -

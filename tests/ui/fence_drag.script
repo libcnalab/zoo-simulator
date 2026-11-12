@@ -1,0 +1,6 @@
+2 move 640 300
+4 shot ../build-probe/shots/a1.png
+5 drag 500 300 800 420 6
+10 shot ../build-probe/shots/a2.png
+14 move 700 250
+16 shot ../build-probe/shots/a3.png

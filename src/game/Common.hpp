@@ -4,6 +4,8 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
+#include <cstdio>
+#include <string>
 
 #include "Microsoft/Xna/Framework/Color.hpp"
 #include "Microsoft/Xna/Framework/Matrix.hpp"
@@ -55,6 +57,29 @@ inline zoo::Color3 Mix(const zoo::Color3& a, const zoo::Color3& b, float t) {
 inline Matrix Placement(const Vector3& position, float heading, float scale = 1.0f) {
     return Matrix::CreateScale(scale) * Matrix::CreateRotationY(heading) *
            Matrix::CreateTranslation(position);
+}
+
+/// The heading that turns a model whose door looks along +z to a facing.
+inline float FacingAngle(zoo::Dir facing) {
+    constexpr float kHalfPi = 1.57079633f;
+    switch (facing) {
+        case zoo::Dir::South:
+            return 0.0f;
+        case zoo::Dir::East:
+            return kHalfPi;
+        case zoo::Dir::North:
+            return 2.0f * kHalfPi;
+        case zoo::Dir::West:
+            return -kHalfPi;
+    }
+    return 0.0f;
+}
+
+/// printf into a string (short texts of the interface).
+inline std::string Format(const char* format, auto... values) {
+    char buffer[240];
+    std::snprintf(buffer, sizeof buffer, format, values...);
+    return buffer;
 }
 
 }  // namespace zoogame

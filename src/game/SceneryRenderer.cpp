@@ -46,21 +46,6 @@ bool IsEntrance(zoo::Fence fence) {
     return fence.kind == zoo::kPerimeterFence && fence.gate;
 }
 
-/// The heading that turns a model whose door looks along +z to a facing.
-float FacingAngle(zoo::Dir facing) {
-    switch (facing) {
-        case zoo::Dir::South:
-            return 0.0f;
-        case zoo::Dir::East:
-            return kPi * 0.5f;
-        case zoo::Dir::North:
-            return kPi;
-        case zoo::Dir::West:
-            return -kPi * 0.5f;
-    }
-    return 0.0f;
-}
-
 }  // namespace
 
 struct SceneryRenderer::Cell {

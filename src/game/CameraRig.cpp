@@ -96,7 +96,7 @@ void CameraRig::Orbit(const Controls& controls, float seconds, float minDistance
         pitchGoal_ += KeyAxis(controls, Keys::F, Keys::R) * 0.9f * seconds;
     }
     if (controls.Down(MouseKey::Middle)) {
-        const Vector2 move = controls.MouseMove();
+        const Vector2 move = controls.Drag(MouseKey::Middle);
         yawGoal_ -= move.X * 0.006f;
         pitchGoal_ += move.Y * 0.005f;
     }
@@ -134,7 +134,7 @@ void CameraRig::UpdateOverview(const Controls& controls, float seconds, const zo
     focusGoal_.z += (right.Y * moveRight + ahead.Y * moveAhead) * speed * seconds;
     if (controls.Down(MouseKey::Right)) {
         // Dragging the ground: it follows the pointer.
-        const Vector2 move = controls.MouseMove();
+        const Vector2 move = controls.Drag(MouseKey::Right);
         const float perPixel = distance_ * 0.0016f;
         focusGoal_.x -= (right.X * move.X - ahead.X * move.Y) * perPixel;
         focusGoal_.z -= (right.Y * move.X - ahead.Y * move.Y) * perPixel;
@@ -150,7 +150,8 @@ void CameraRig::UpdateWalk(const Controls& controls, float seconds, const zoo::W
     if (controls.KeyboardFree())
         walkYaw_ += KeyAxis(controls, Keys::E, Keys::Q) * 1.8f * seconds;
     if (controls.Down(MouseKey::Right) || controls.Down(MouseKey::Middle)) {
-        const Vector2 move = controls.MouseMove();
+        const Vector2 move =
+            controls.Down(MouseKey::Right) ? controls.Drag(MouseKey::Right) : controls.Drag(MouseKey::Middle);
         walkYaw_ -= move.X * 0.005f;
         walkPitch_ = std::clamp(walkPitch_ + move.Y * 0.005f, -1.2f, 1.2f);
     }

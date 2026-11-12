@@ -241,6 +241,20 @@ Surfaces::Surfaces(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device) 
     water_.alpha = 0.78f;
     water_.roughness = 0.12f;
     water_.baseTexture = patterns_[0].get();
+
+    // Marks glow in their own colour, whatever the light.
+    const Vector3 colors[] = {Vector3(0.15f, 0.9f, 0.3f), Vector3(1.0f, 0.12f, 0.08f),
+                              Vector3(0.25f, 0.6f, 1.0f), Vector3(1.0f, 0.85f, 0.2f)};
+    for (std::size_t i = 0; i < marks_.size(); ++i) {
+        auto& mark = marks_[i];
+        mark.name = "mark";
+        mark.shading = CnaEngine::Graphics::ShadingModel::Unlit;
+        mark.blend = CnaEngine::Graphics::BlendMode::AlphaBlend;
+        mark.diffuseColor = colors[i];
+        mark.alpha = 0.42f;
+        mark.doubleSided = true;
+        mark.baseTexture = patterns_[0].get();
+    }
 }
 
 const Material& Surfaces::Get(const Finish& finish) {

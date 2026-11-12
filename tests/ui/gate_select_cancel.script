@@ -1,0 +1,20 @@
+2 click 196 690          # Fences
+5 click 210 363          # Gate
+8 move 850 500
+10 shot ../build-probe/shots/d1.png
+11 move 742 440          # on the enclosure's fence
+14 shot ../build-probe/shots/d2.png
+15 click 742 440
+18 rclick 1100 300       # put the tool down
+21 click 1000 420        # the barn
+24 move 1100 300
+26 shot ../build-probe/shots/d3.png
+27 click 800 600         # the enclosure
+30 move 1100 300
+32 shot ../build-probe/shots/d4.png
+33 click 123 690         # Paths
+36 move 900 300
+38 shot ../build-probe/shots/d5.png
+39 key Escape
+42 key Escape
+44 shot ../build-probe/shots/d6.png

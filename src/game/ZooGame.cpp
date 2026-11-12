@@ -56,7 +56,7 @@ bool ZooGame::ParseArgument(std::span<const std::string_view> arguments, std::si
     if (name == "--ticks" && hasValue)
         return Parse(arguments[++index], warmUpTicks_);
     if (name == "--speed" && hasValue)
-        return Parse(arguments[++index], speed_);
+        return Parse(arguments[++index], play_.speed);
     if (name == "--list-animals") {
         listAnimals_ = true;
         return true;
@@ -64,6 +64,25 @@ bool ZooGame::ParseArgument(std::span<const std::string_view> arguments, std::si
     if (name == "--empty") {
         emptyMap_ = true;
         return true;
+    }
+    if (name == "--script" && hasValue) {
+        std::string error;
+        script_ = InputScript::Load(std::string(arguments[++index]), error);
+        if (!script_)
+            std::printf("zoo: script: %s\n", error.c_str());
+        return script_.has_value();
+    }
+    if (name == "--palette" && hasValue) {
+        static constexpr std::string_view kNames[] = {"none",  "paths",     "fences",  "ground",
+                                                      "water", "buildings", "scenery", "animals"};
+        const std::string_view value = arguments[++index];
+        for (std::size_t i = 0; i < std::size(kNames); ++i) {
+            if (value == kNames[i]) {
+                startPalette_ = static_cast<Palette>(i);
+                return true;
+            }
+        }
+        return false;
     }
     if (name == "--view" && hasValue) {
         // x,z,yaw degrees,pitch degrees,distance
@@ -147,6 +166,19 @@ void ZooGame::LoadGame() {
         camera_.SetOverview({startView_->x, startView_->z}, startView_->yaw, startView_->pitch,
                             startView_->distance);
     UpdateSky();
+
+    const auto assets = App::FindAssetDirectory("assets");
+    if (!assets)
+        throw std::runtime_error("zoo: the assets directory is missing beside the executable");
+    canvas_ = std::make_unique<ui::Canvas>(device, getContentProperty(), *assets);
+    ui_ = std::make_unique<ui::Ui>(*canvas_, controls_);
+    play_.zoo = zoo_.get();
+    play_.catalog = catalog_.get();
+    play_.species = species_.get();
+    play_.camera = &camera_;
+    play_.animals = animals_.get();
+    tools_ = std::make_unique<WorldTools>(device, *surfaces_, *catalog_);
+    OpenPalette(play_, startPalette_);
 }
 
 void ZooGame::UpdateShadowArea() {
@@ -162,9 +194,9 @@ void ZooGame::UpdateShadowArea() {
 }
 
 void ZooGame::StepSimulation(double seconds) {
-    tickDebt_ += seconds * static_cast<double>(zoo::kTicksPerSecond) * static_cast<double>(speed_);
+    tickDebt_ += seconds * static_cast<double>(zoo::kTicksPerSecond) * static_cast<double>(play_.speed);
     // A slow frame must not snowball: what cannot be caught up with is dropped.
-    const int most = 4 * std::max(speed_, 1);
+    const int most = 4 * std::max(play_.speed, 1);
     int done = 0;
     while (tickDebt_ >= 1.0 && done < most) {
         zoo_->Step();
@@ -191,25 +223,42 @@ void ZooGame::UpdateSky() {
 }
 
 void ZooGame::UpdateFrame(double seconds) {
-    controls_.Begin(CurrentInput());
+    const auto dt = static_cast<float>(seconds);
+    if (script_) {
+        shots_.clear();
+        controls_.Begin(script_->Next(shots_));
+        for (const std::string& path : shots_)
+            Screenshots().Request({.path = path, .opaque = true});
+    } else {
+        controls_.Begin(CurrentInput());
+    }
+    ui_->Begin(dt);
+    hud_.Build(*ui_, play_);
     if (controls_.KeyboardFree()) {
         if (controls_.Pressed(Keys::Space))
-            speed_ = speed_ == 0 ? 1 : 0;
+            play_.speed = play_.speed == 0 ? 1 : 0;
         if (controls_.Pressed(Keys::D1))
-            speed_ = 1;
+            play_.speed = 0;
         if (controls_.Pressed(Keys::D2))
-            speed_ = 2;
+            play_.speed = 1;
         if (controls_.Pressed(Keys::D3))
-            speed_ = 4;
+            play_.speed = 3;
+        if (controls_.Pressed(Keys::D4))
+            play_.speed = 8;
     }
+    const auto& viewport = getGraphicsDeviceProperty().getViewportProperty();
+    tools_->Update(play_, controls_, MainCamera(),
+                   Vector2(static_cast<float>(viewport.getWidthProperty()),
+                           static_cast<float>(viewport.getHeightProperty())),
+                   dt);
+    ui_->End();
     StepSimulation(seconds);
-    const auto dt = static_cast<float>(seconds);
     camera_.Update(controls_, dt, zoo_->Map());
     camera_.Apply(MainCamera());
     UpdateShadowArea();
     terrain_->Update(zoo_->Map());
     scenery_->Update(zoo_->Map(), zoo_->Objects());
-    animals_->Update(*zoo_, dt * static_cast<float>(speed_), static_cast<float>(tickDebt_));
+    animals_->Update(*zoo_, dt * static_cast<float>(play_.speed), static_cast<float>(tickDebt_));
     UpdateSky();
 }
 
@@ -217,6 +266,11 @@ void ZooGame::Submit(App::Frame& frame) {
     terrain_->Submit(frame);
     scenery_->Submit(frame);
     animals_->Submit(frame);
+    tools_->Submit(frame);
+}
+
+void ZooGame::DrawOverlay(Microsoft::Xna::Framework::Graphics::GraphicsDevice&) {
+    canvas_->Flush();
 }
 
 }  // namespace zoogame

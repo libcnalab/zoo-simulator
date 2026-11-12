@@ -1,0 +1,25 @@
+2 click 433 690          # Buildings
+5 click 140 240          # a row of the list
+8 move 900 230
+10 shot ../build-probe/shots/b1.png
+11 key X
+14 shot ../build-probe/shots/b2.png
+15 click 900 230
+18 move 1000 330
+20 shot ../build-probe/shots/b3.png
+22 click 523 690         # Scenery
+25 click 140 132         # first plant
+27 drag 760 180 1100 200 10
+40 move 960 300
+42 shot ../build-probe/shots/b4.png
+44 click 275 690         # Ground
+47 click 140 180         # a ground cover
+49 drag 880 360 1000 400 6
+58 shot ../build-probe/shots/b5.png
+60 click 352 690         # Water
+63 drag 1000 250 1100 300 5
+66 shot ../build-probe/shots/b6.png
+72 shot ../build-probe/shots/b7.png
+74 click 707 690         # Bulldoze
+77 move 640 293
+80 shot ../build-probe/shots/b8.png

@@ -1,0 +1,18 @@
+2 click 608 690          # Animals
+5 shot ../build-probe/shots/c1.png
+6 click 140 130          # a species
+9 move 700 300
+11 shot ../build-probe/shots/c2.png
+12 click 700 300
+15 move 760 420
+17 shot ../build-probe/shots/c3.png
+18 key Escape
+21 click 700 300         # inspect what was released
+24 move 900 500
+26 shot ../build-probe/shots/c4.png
+28 click 196 690         # Fences
+31 hold Shift
+32 drag 820 420 1000 520 6
+36 shot ../build-probe/shots/c5.png
+42 release Shift
+44 shot ../build-probe/shots/c6.png

@@ -20,6 +20,15 @@ namespace zoogame {
 ///
 /// Everything is physically based so that terrain, buildings, plants and the
 /// imported animal models share one lighting model.
+/// The see-through colours the tools draw over the world.
+enum class Mark : std::uint8_t {
+    Good,    ///< what would be built
+    Bad,     ///< where it cannot be
+    Note,    ///< an area a tool covers
+    Select,  ///< what is selected
+    Count
+};
+
 class Surfaces {
 public:
     explicit Surfaces(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device);
@@ -31,6 +40,9 @@ public:
     const CnaEngine::Graphics::Material& WireMesh(const zoo::Color3& color);
     const CnaEngine::Graphics::Material& Glass() const { return glass_; }
     const CnaEngine::Graphics::Material& Water() const { return water_; }
+    const CnaEngine::Graphics::Material& Marker(Mark mark) const {
+        return marks_[static_cast<std::size_t>(mark)];
+    }
 
     /// Edge length in metres that one repeat of a pattern covers.
     static float PatternMetres(Pattern pattern);
@@ -44,6 +56,7 @@ private:
     std::map<std::uint32_t, std::unique_ptr<CnaEngine::Graphics::Material>> meshes_;
     CnaEngine::Graphics::Material glass_;
     CnaEngine::Graphics::Material water_;
+    std::array<CnaEngine::Graphics::Material, static_cast<std::size_t>(Mark::Count)> marks_;
 };
 
 }  // namespace zoogame

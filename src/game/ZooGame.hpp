@@ -12,9 +12,13 @@
 #include "AnimalRenderer.hpp"
 #include "CameraRig.hpp"
 #include "Controls.hpp"
+#include "Hud.hpp"
+#include "InputScript.hpp"
+#include "Play.hpp"
 #include "SceneryRenderer.hpp"
 #include "Surfaces.hpp"
 #include "TerrainRenderer.hpp"
+#include "Tools.hpp"
 #include "zoo/sim/Zoo.hpp"
 
 namespace zoogame {
@@ -30,6 +34,9 @@ protected:
     void LoadGame() override;
     void UpdateFrame(double seconds) override;
     void Submit(CnaEngine::App::Frame& frame) override;
+    void DrawOverlay(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device) override;
+    /// Escape belongs to the game (it puts the tool down, opens the menu), not to the engine.
+    void OnQuit() override {}
 
 private:
     void StepSimulation(double seconds);
@@ -47,13 +54,16 @@ private:
     std::int64_t warmUpTicks_ = 0;
     bool emptyMap_ = false;
     bool listAnimals_ = false;
+    /// Scripted input of an automated run (--script).
+    std::optional<InputScript> script_;
+    std::vector<std::string> shots_;
+    /// The palette open at the start (--palette, for screenshots).
+    Palette startPalette_ = Palette::None;
 
     // The simulation. The catalogs outlive the zoo, which refers to them.
     std::unique_ptr<zoo::Catalog> catalog_;
     std::unique_ptr<zoo::SpeciesCatalog> species_;
     std::unique_ptr<zoo::Zoo> zoo_;
-    /// Game speed: ticks per tick of real time (0 = paused).
-    int speed_ = 1;
     double tickDebt_ = 0.0;
     std::vector<zoo::Event> events_;
 
@@ -67,6 +77,12 @@ private:
 
     Controls controls_;
     CameraRig camera_;
+
+    std::unique_ptr<ui::Canvas> canvas_;
+    std::unique_ptr<ui::Ui> ui_;
+    Hud hud_;
+    Play play_;
+    std::unique_ptr<WorldTools> tools_;
 };
 
 }  // namespace zoogame
