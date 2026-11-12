@@ -1,0 +1,112 @@
+{
+  "bones": 26,
+  "clips": [
+    {
+      "duration": 0.6,
+      "events": [
+        {
+          "name": "step",
+          "time": 0.0
+        },
+        {
+          "name": "step",
+          "time": 0.3
+        }
+      ],
+      "frames": 19,
+      "loop": true,
+      "name": "walk",
+      "speed": 0.7
+    },
+    {
+      "duration": 0.4,
+      "events": [
+        {
+          "name": "step",
+          "time": 0.0
+        },
+        {
+          "name": "step",
+          "time": 0.2
+        }
+      ],
+      "frames": 13,
+      "loop": true,
+      "name": "trot",
+      "speed": 1.45
+    },
+    {
+      "duration": 5.0,
+      "events": [],
+      "frames": 151,
+      "loop": true,
+      "name": "idle",
+      "speed": 0.0
+    },
+    {
+      "duration": 5.0,
+      "events": [],
+      "frames": 151,
+      "loop": true,
+      "name": "eat",
+      "speed": 0.0
+    },
+    {
+      "duration": 5.0,
+      "events": [],
+      "frames": 151,
+      "loop": true,
+      "name": "drink",
+      "speed": 0.0
+    },
+    {
+      "duration": 5.0,
+      "events": [],
+      "frames": 151,
+      "loop": true,
+      "name": "rest",
+      "speed": 0.0
+    },
+    {
+      "duration": 5.0,
+      "events": [],
+      "frames": 151,
+      "loop": true,
+      "name": "sleep",
+      "speed": 0.0
+    },
+    {
+      "duration": 5.0,
+      "events": [],
+      "frames": 151,
+      "loop": true,
+      "name": "vocalize",
+      "speed": 0.0
+    }
+  ],
+  "generator": "tools/animals (zoogen)",
+  "license": "MIT",
+  "meta": {
+    "body_length_m": 1.2,
+    "common_name": "Greater flamingo",
+    "roughness": 0.89,
+    "scientific_name": "Phoenicopterus roseus",
+    "shoulder_height_m": 1.4
+  },
+  "name": "flamingo",
+  "skeleton_bounds_animal_space": {
+    "max": [
+      0.39,
+      0.13,
+      1.35
+    ],
+    "min": [
+      -0.43,
+      -0.13,
+      0.0
+    ]
+  },
+  "texture": 1024,
+  "triangles": 12718,
+  "vertices": 6381
+}

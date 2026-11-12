@@ -295,6 +295,7 @@ class Spec:
     rig: object = None                # rig.Rig: which bones play which role
     clips: object = None              # callable(rig.Solver) -> [rig.Clip]
     validate_mesh: bool = False       # remove duplicate/invalid faces before UV and export
+    key_all_locations: bool = False   # explicit zero locations prevent posture leaking between clips
 
 
 def expand_bones(bones):

@@ -5,9 +5,11 @@ gaits (no foot sliding, no over-extension, seamless loops) and the standing clip
     python3 -m unittest discover -s tools/animals/tests
 """
 import importlib
+import json
 import math
 import os
 import sys
+import struct
 import unittest
 
 import numpy as np
@@ -18,7 +20,7 @@ from zoogen import geom, quadruped  # noqa: E402
 from zoogen.rig import Pose, Solver, quat_from_matrix, rot_x, rot_y, rot_z  # noqa: E402
 
 SPECIES = ["lion", "tiger", "wolf", "brown_bear", "polar_bear", "zebra", "rhino", "camel",
-           "elephant", "giraffe", "meerkat"]
+           "elephant", "giraffe", "meerkat", "penguin", "ostrich", "flamingo", "kangaroo"]
 
 
 def make_solver(species):
@@ -149,8 +151,10 @@ class ClipTests(unittest.TestCase):
                 if clip.speed <= 0.0:
                     continue
                 n = 48
-                for key, leg in solver.rig.legs.items():
+                for key in getattr(clip, "contact_keys", solver.rig.legs):
+                    leg = solver.rig.legs[key]
                     rest = solver.toe_base(key)
+                    rest[2] = solver.rig.extra.get("contact_height", {}).get(key, rest[2])
                     on_ground = 0
                     for i in range(n):
                         u0, u1 = i / n, (i + 1) / n
@@ -171,7 +175,7 @@ class ClipTests(unittest.TestCase):
             for clip in clips:
                 if clip.speed <= 0.0:
                     continue
-                self.assertEqual(len(clip.events), len(solver.rig.legs))
+                self.assertEqual(len(clip.events), len(getattr(clip, "contact_keys", solver.rig.legs)))
                 for u, name in clip.events:
                     self.assertEqual(name, "step")
                     self.assertTrue(0.0 <= u < 1.0)
@@ -250,6 +254,214 @@ class AnatomyTests(unittest.TestCase):
             shoulder = world["chest"][:3, 3]
             self.assertGreater(float(shoulder[2] - pelvis[2]), .12)
             self.assertLess(abs(float(shoulder[0] - pelvis[0])), .04)
+
+
+BIPEDS = [species for species in SPECIES if species in ("penguin", "ostrich", "flamingo", "kangaroo")]
+
+
+class BipedTests(unittest.TestCase):
+    def test_height_metadata_and_geometry_agree_with_simulation(self):
+        root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+        for species in BIPEDS:
+            spec, _ = make_solver(species)
+            with open(os.path.join(root, "data", "species", species + ".json")) as source:
+                data = json.load(source)
+            self.assertEqual(spec.meta["shoulder_height_m"], data["shoulderHeightM"])
+            vertices = np.concatenate([geom.loft(part)[0] for part in geom.expand_parts(spec.parts)])
+            self.assertAlmostEqual(float(vertices[:, 2].max()), data["shoulderHeightM"],
+                                   delta=.03 * data["shoulderHeightM"], msg=species)
+            self.assertLessEqual(len(geom.expand_bones(spec.bones)), 60)
+
+    def test_manifest_budgets_and_ground_speeds(self):
+        root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+        budgets = {"penguin": (6000, 12000), "ostrich": (12000, 24000),
+                   "flamingo": (8000, 16000), "kangaroo": (12000, 24000)}
+        for species in BIPEDS:
+            with open(os.path.join(root, "data", "species", species + ".json")) as source:
+                data = json.load(source)
+            with open(os.path.join(root, "assets", "animals", species + ".json")) as source:
+                manifest = json.load(source)
+            self.assertGreaterEqual(manifest["triangles"], budgets[species][0])
+            self.assertLessEqual(manifest["triangles"], budgets[species][1])
+            self.assertEqual(manifest["texture"], 1024)
+            clips = {clip["name"]: clip for clip in manifest["clips"]}
+            self.assertEqual(set(clips),
+                             {"idle", "walk", "trot", "eat", "drink", "rest", "sleep", "vocalize"})
+            self.assertAlmostEqual(clips["walk"]["speed"], data["walkSpeed"],
+                                   delta=.1 * data["walkSpeed"])
+            self.assertGreaterEqual(clips["trot"]["speed"], 2 * clips["walk"]["speed"])
+            self.assertLessEqual(clips["trot"]["speed"], data["runSpeed"])
+
+    def test_walking_birds_always_have_a_supporting_foot(self):
+        for species in BIPEDS:
+            if species == "kangaroo":
+                continue
+            spec, solver = make_solver(species)
+            walk = next(clip for clip in spec.clips(solver) if clip.name == "walk")
+            for index in range(120):
+                world = solver.solve(walk.pose(index / 120))
+                contacts = [world[leg.toes][2, 3] <= solver.toe_base(key)[2] + 1e-7
+                            for key, leg in spec.rig.legs.items()]
+                self.assertTrue(any(contacts), f"{species} at {index / 120}")
+
+    def test_full_pose_loops_close_including_rotations(self):
+        for species in BIPEDS:
+            spec, solver = make_solver(species)
+            for clip in spec.clips(solver):
+                if not clip.loop:
+                    continue
+                first = solver.solve(clip.pose(0))
+                last = solver.solve(clip.pose(1 - 1e-9))
+                for name in first:
+                    self.assertTrue(np.allclose(first[name], last[name], atol=1e-6),
+                                    f"{species}/{clip.name}/{name}")
+
+    def test_dense_gait_samples_have_reach_margin_and_feet_stay_on_their_side(self):
+        for species in BIPEDS:
+            spec, solver = make_solver(species)
+            for clip in spec.clips(solver):
+                if clip.name not in ("walk", "trot"):
+                    continue
+                solver.reset_stats()
+                for index in range(120):
+                    world = solver.solve(clip.pose(index / 120))
+                    for key, leg in spec.rig.legs.items():
+                        side = 1 if key.endswith("L") else -1
+                        self.assertGreater(side * world[leg.toes][1, 3], 0, f"{species}/{clip.name}/{key}")
+                self.assertLess(solver.ik_error, 1e-6, f"{species}/{clip.name}")
+                self.assertLess(solver.extension, .99, f"{species}/{clip.name}")
+
+
+    def test_signature_biped_anatomy(self):
+        for species in BIPEDS:
+            spec, _ = make_solver(species)
+            if species in ("ostrich", "flamingo"):
+                self.assertGreaterEqual(len(spec.rig.neck), 5 if species == "flamingo" else 4)
+            if species == "penguin":
+                for side in ("L", "R"):
+                    self.assertEqual(len(spec.rig.extra["wings"][side]), 2)
+            if species == "kangaroo":
+                self.assertGreaterEqual(len(spec.rig.tail), 5)
+                self.assertEqual(len(spec.rig.ears), 2)
+
+    def test_flamingo_one_leg_and_inverted_feeding(self):
+        if "flamingo" not in BIPEDS:
+            return
+        spec, solver = make_solver("flamingo")
+        clips = {clip.name: clip for clip in spec.clips(solver)}
+        for name in ("idle", "rest", "sleep"):
+            for phase in (0, .25, .5, .75):
+                world = solver.solve(clips[name].pose(phase))
+                self.assertAlmostEqual(world[spec.rig.legs["L"].toes][2, 3], solver.toe_base("L")[2])
+                self.assertGreater(world[spec.rig.legs["R"].toes][2, 3], .6)
+        for name in ("eat", "drink"):
+            world = solver.solve(clips[name].pose(0))
+            delta = world[spec.rig.head][:3, :3] @ solver.rest[spec.rig.head][:3, :3].T
+            self.assertLess((delta @ np.array([0, 0, 1]))[2], 0, name)
+
+    def test_kangaroo_hop_is_synchronous_with_flight(self):
+        if "kangaroo" not in BIPEDS:
+            return
+        spec, solver = make_solver("kangaroo")
+        hop = next(clip for clip in spec.clips(solver) if clip.name == "trot")
+        flight = 0
+        stance = 0
+        for index in range(120):
+            world = solver.solve(hop.pose(index / 120))
+            left = world[spec.rig.legs["L"].toes][:3, 3]
+            right = world[spec.rig.legs["R"].toes][:3, 3]
+            self.assertTrue(np.allclose(left[[0, 2]], right[[0, 2]], atol=1e-8))
+            if left[2] > solver.toe_base("L")[2] + .02:
+                flight += 1
+            if abs(left[2] - solver.toe_base("L")[2]) < 1e-7:
+                stance += 1
+        self.assertGreater(flight, 30)
+        self.assertGreater(stance, 30)
+
+    def test_kangaroo_crawl_supports_and_tail_do_not_slide(self):
+        if "kangaroo" not in BIPEDS:
+            return
+        spec, solver = make_solver("kangaroo")
+        walk = next(clip for clip in spec.clips(solver) if clip.name == "walk")
+        tail_contacts = 0
+        count = 120
+        for index in range(count):
+            phase = index / count
+            world = solver.solve(walk.pose(phase))
+            next_world = solver.solve(walk.pose(((index + 1) / count) % 1))
+            heights = spec.rig.extra["contact_height"]
+            supports = [abs(world[leg.toes][2, 3] - heights[key]) < 1e-6
+                        for key, leg in spec.rig.legs.items()]
+            self.assertTrue(any(supports), str(phase))
+            left = world[spec.rig.legs["L"].toes][:3, 3]
+            right = world[spec.rig.legs["R"].toes][:3, 3]
+            self.assertTrue(np.allclose(left[[0, 2]], right[[0, 2]], atol=1e-8))
+            tip = solver.point(world, spec.rig.tail[-1], spec.rig.extra["support_tail_tip"])
+            next_tip = solver.point(next_world, spec.rig.tail[-1], spec.rig.extra["support_tail_tip"])
+            if abs(tip[2] - .030) < 1e-6 and abs(next_tip[2] - .030) < 1e-6:
+                tail_contacts += 1
+                self.assertAlmostEqual((next_tip[0] - tip[0]) / (walk.duration / count),
+                                       -walk.speed, delta=.02 * walk.speed)
+                self.assertAlmostEqual(tip[1], 0, places=6)
+                for key in ("FL", "FR"):
+                    self.assertAlmostEqual(world[spec.rig.legs[key].toes][2, 3], heights[key], places=6)
+        self.assertGreater(tail_contacts, .5 * count)
+
+
+    def test_exported_body_positions_match_procedural_postures(self):
+        root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+        for species in BIPEDS:
+            with open(os.path.join(root, "assets", "animals", species + ".glb"), "rb") as source:
+                magic, version, _ = struct.unpack("<III", source.read(12))
+                self.assertEqual(magic, 0x46546C67)
+                self.assertEqual(version, 2)
+                length, _ = struct.unpack("<II", source.read(8))
+                document = json.loads(source.read(length))
+                length, _ = struct.unpack("<II", source.read(8))
+                binary = source.read(length)
+            self.assertEqual(len(document["images"]), 1, species)
+            texture = document["images"][0]
+            self.assertEqual(texture["mimeType"], "image/png", species)
+            texture_view = document["bufferViews"][texture["bufferView"]]
+            texture_offset = texture_view.get("byteOffset", 0)
+            self.assertEqual(binary[texture_offset:texture_offset + 8], b"\x89PNG\r\n\x1a\n")
+            self.assertEqual(struct.unpack_from(">II", binary, texture_offset + 16), (1024, 1024))
+            with open(os.path.join(root, "assets", "animals", species + ".json")) as source:
+                manifest = json.load(source)
+            triangles = sum(document["accessors"][primitive["indices"]]["count"] // 3
+                            for mesh in document["meshes"] for primitive in mesh["primitives"])
+            self.assertEqual(triangles, manifest["triangles"], species)
+            spec, solver = make_solver(species)
+            body = next(index for index, node in enumerate(document["nodes"])
+                        if node.get("name") == spec.rig.body)
+            clips = {clip.name: clip for clip in spec.clips(solver)}
+            self.assertEqual({animation["name"] for animation in document["animations"]}, set(clips))
+            for animation in document["animations"]:
+                channel = next(channel for channel in animation["channels"]
+                               if channel["target"] == {"node": body, "path": "translation"})
+                accessor = document["accessors"][animation["samplers"][channel["sampler"]]["output"]]
+                view = document["bufferViews"][accessor["bufferView"]]
+                offset = view.get("byteOffset", 0) + accessor.get("byteOffset", 0)
+                position = np.array(struct.unpack_from("<3f", binary, offset))
+                expected = solver.solve(clips[animation["name"]].pose(0))[spec.rig.body][:3, 3]
+                # Animal XYZ becomes YZX in glTF after Blender's two coordinate transforms.
+                # Blender stores rest joints as floats; long-chain reach fitting adds micrometre differences.
+                self.assertTrue(np.allclose(position, expected[[1, 2, 0]], atol=2e-5),
+                                f"{species}/{animation['name']}")
+
+
+    def test_kangaroo_feeds_on_four_contacts_and_rests_on_an_elbow(self):
+        if "kangaroo" not in BIPEDS:
+            return
+        spec, solver = make_solver("kangaroo")
+        clips = {clip.name: clip for clip in spec.clips(solver)}
+        for name in ("eat", "drink"):
+            world = solver.solve(clips[name].pose(0))
+            for key, leg in spec.rig.legs.items():
+                self.assertAlmostEqual(world[leg.toes][2, 3], spec.rig.extra["contact_height"][key])
+        world = solver.solve(clips["rest"].pose(0))
+        self.assertLess(world["forearm.R"][2, 3], .06)
+        self.assertGreater(world[spec.rig.head][2, 3], .35)
 
 
 if __name__ == "__main__":

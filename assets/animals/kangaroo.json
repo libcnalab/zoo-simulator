@@ -1,0 +1,121 @@
+{
+  "bones": 28,
+  "clips": [
+    {
+      "duration": 0.6,
+      "events": [
+        {
+          "name": "step",
+          "time": 0.0
+        },
+        {
+          "name": "step",
+          "time": 0.0
+        },
+        {
+          "name": "step",
+          "time": 0.228
+        },
+        {
+          "name": "step",
+          "time": 0.228
+        }
+      ],
+      "frames": 19,
+      "loop": true,
+      "name": "walk",
+      "speed": 1.0
+    },
+    {
+      "duration": 0.5,
+      "events": [
+        {
+          "name": "step",
+          "time": 0.0
+        },
+        {
+          "name": "step",
+          "time": 0.0
+        }
+      ],
+      "frames": 16,
+      "loop": true,
+      "name": "trot",
+      "speed": 2.8
+    },
+    {
+      "duration": 5.0,
+      "events": [],
+      "frames": 151,
+      "loop": true,
+      "name": "idle",
+      "speed": 0.0
+    },
+    {
+      "duration": 5.0,
+      "events": [],
+      "frames": 151,
+      "loop": true,
+      "name": "eat",
+      "speed": 0.0
+    },
+    {
+      "duration": 5.0,
+      "events": [],
+      "frames": 151,
+      "loop": true,
+      "name": "drink",
+      "speed": 0.0
+    },
+    {
+      "duration": 5.0,
+      "events": [],
+      "frames": 151,
+      "loop": true,
+      "name": "rest",
+      "speed": 0.0
+    },
+    {
+      "duration": 5.0,
+      "events": [],
+      "frames": 151,
+      "loop": true,
+      "name": "sleep",
+      "speed": 0.0
+    },
+    {
+      "duration": 5.0,
+      "events": [],
+      "frames": 151,
+      "loop": true,
+      "name": "vocalize",
+      "speed": 0.0
+    }
+  ],
+  "generator": "tools/animals (zoogen)",
+  "license": "MIT",
+  "meta": {
+    "body_length_m": 1.5,
+    "common_name": "Red kangaroo",
+    "roughness": 0.9,
+    "scientific_name": "Osphranter rufus",
+    "sex": "male",
+    "shoulder_height_m": 1.6
+  },
+  "name": "kangaroo",
+  "skeleton_bounds_animal_space": {
+    "max": [
+      0.5,
+      0.17,
+      1.57
+    ],
+    "min": [
+      -1.36,
+      -0.17,
+      0.0
+    ]
+  },
+  "texture": 1024,
+  "triangles": 16804,
+  "vertices": 8414
+}

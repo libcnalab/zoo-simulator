@@ -1,0 +1,112 @@
+{
+  "bones": 18,
+  "clips": [
+    {
+      "duration": 0.4,
+      "events": [
+        {
+          "name": "step",
+          "time": 0.0
+        },
+        {
+          "name": "step",
+          "time": 0.2
+        }
+      ],
+      "frames": 13,
+      "loop": true,
+      "name": "walk",
+      "speed": 0.5
+    },
+    {
+      "duration": 0.3,
+      "events": [
+        {
+          "name": "step",
+          "time": 0.0
+        },
+        {
+          "name": "step",
+          "time": 0.15
+        }
+      ],
+      "frames": 10,
+      "loop": true,
+      "name": "trot",
+      "speed": 1.05
+    },
+    {
+      "duration": 4.0,
+      "events": [],
+      "frames": 121,
+      "loop": true,
+      "name": "idle",
+      "speed": 0.0
+    },
+    {
+      "duration": 4.0,
+      "events": [],
+      "frames": 121,
+      "loop": true,
+      "name": "eat",
+      "speed": 0.0
+    },
+    {
+      "duration": 4.0,
+      "events": [],
+      "frames": 121,
+      "loop": true,
+      "name": "drink",
+      "speed": 0.0
+    },
+    {
+      "duration": 4.0,
+      "events": [],
+      "frames": 121,
+      "loop": true,
+      "name": "rest",
+      "speed": 0.0
+    },
+    {
+      "duration": 4.0,
+      "events": [],
+      "frames": 121,
+      "loop": true,
+      "name": "sleep",
+      "speed": 0.0
+    },
+    {
+      "duration": 4.0,
+      "events": [],
+      "frames": 121,
+      "loop": true,
+      "name": "vocalize",
+      "speed": 0.0
+    }
+  ],
+  "generator": "tools/animals (zoogen)",
+  "license": "MIT",
+  "meta": {
+    "body_length_m": 0.65,
+    "common_name": "African penguin",
+    "roughness": 0.88,
+    "scientific_name": "Spheniscus demersus",
+    "shoulder_height_m": 0.65
+  },
+  "name": "penguin",
+  "skeleton_bounds_animal_space": {
+    "max": [
+      0.145,
+      0.2,
+      0.57
+    ],
+    "min": [
+      -0.19,
+      -0.2,
+      0.0
+    ]
+  },
+  "texture": 1024,
+  "triangles": 9888,
+  "vertices": 4958
+}

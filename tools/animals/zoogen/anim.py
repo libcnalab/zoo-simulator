@@ -79,7 +79,7 @@ def bake_clips(spec, arm_ob, bones, fps=30):
             path = f'pose.bones["{name}"]'
             for k in range(4):
                 _curve(action, path + ".rotation_quaternion", k, name, frames, quats[name][:, k])
-            if np.abs(locs[name]).max() > 1e-5:
+            if spec.key_all_locations or np.abs(locs[name]).max() > 1e-5:
                 for k in range(3):
                     _curve(action, path + ".location", k, name, frames, locs[name][:, k])
         track = ad.nla_tracks.new()
