@@ -11,6 +11,8 @@
 #include "Microsoft/Xna/Framework/BoundingSphere.hpp"
 #include "Microsoft/Xna/Framework/GamerServices/AvatarBodyType.hpp"
 #include "Microsoft/Xna/Framework/GamerServices/AvatarRendererState.hpp"
+#include "Microsoft/Xna/Framework/Vector2.hpp"
+#include "Microsoft/Xna/Framework/Vector4.hpp"
 
 #include "zoo/base/Rng.hpp"
 
@@ -24,6 +26,9 @@ using Microsoft::Xna::Framework::GamerServices::AvatarBodyType;
 using Microsoft::Xna::Framework::GamerServices::AvatarDescription;
 using Microsoft::Xna::Framework::GamerServices::AvatarRenderer;
 using Microsoft::Xna::Framework::GamerServices::AvatarRendererState;
+using Microsoft::Xna::Framework::Graphics::GraphicsDevice;
+using Microsoft::Xna::Framework::Vector2;
+using Microsoft::Xna::Framework::Vector4;
 using zoo::VisitorActivity;
 using zoo::VisitorThought;
 
@@ -35,6 +40,26 @@ constexpr std::size_t kCast = 28;
 constexpr int kAssembling = 4;
 /// Nobody is drawn farther from the camera than this, metres.
 constexpr float kFarthest = 260.0f;
+/// A person nearer than this is drawn as an avatar; one who was an avatar stays one up to
+/// the second distance. At 16 m a person stands some 70 pixels tall on a 720-line screen
+/// and a picture of 96 lines is as sharp as the avatar.
+constexpr float kCloseNear = 16.0f;
+constexpr float kCloseFar = 20.0f;
+/// The patch of shade under a person is not drawn farther away than this.
+constexpr float kShadeFarthest = 90.0f;
+/// A member's sheet of pictures: one column a pose (standing, sitting, the moments of a
+/// step), one row a side it is seen from.
+constexpr int kCellWide = 64;
+constexpr int kCellTall = 96;
+constexpr int kSheetSteps = 8;
+constexpr int kSheetStand = 0;
+constexpr int kSheetSit = 1;
+constexpr int kSheetWalk = 2;
+constexpr int kSheetPoses = kSheetWalk + kSheetSteps;
+constexpr int kSheetSides = 8;
+/// The light the pictures are drawn in.
+constexpr float kSheetAmbient = 0.62f;
+constexpr float kSheetLight = 0.5f;
 /// The seat of a bench above the ground, and the hip joint above the seat, metres.
 constexpr float kSeatHeight = 0.43f;
 constexpr float kHipAboveSeat = 0.1f;
@@ -66,10 +91,10 @@ VisitorRenderer::~VisitorRenderer() {
     if (std::getenv("ZOO_AVATAR_DEBUG") != nullptr && frames_ > 0) {
         const double frames = static_cast<double>(frames_);
         std::printf(
-            "zoo: visitors: %d of the cast ready; a frame drew %.1f people, posing %.3f ms, drawing %.3f "
-            "ms\n",
+            "zoo: visitors: %d of the cast ready; a frame drew %.1f people, posing %.3f ms, drawing avatars "
+            "%.3f ms, flat people %.3f ms\n",
             ready_, static_cast<double>(drawnInAll_) / frames, poseSeconds_ * 1000.0 / frames,
-            drawSeconds_ * 1000.0 / frames);
+            drawSeconds_ * 1000.0 / frames, flatSeconds_ * 1000.0 / frames);
     }
 }
 
@@ -396,10 +421,74 @@ void VisitorRenderer::Pose(Actor& actor, const Member& member, float scale) {
     ToMatrices(pose_, bones_);
 }
 
-void VisitorRenderer::Draw(const CnaEngine::Graphics::Camera& camera,
+void VisitorRenderer::Prepare(GraphicsDevice& device) {
+    if (!flat_)
+        return;
+    for (const auto& slot : cast_) {
+        if (slot->ready && slot->sheet == nullptr) {
+            Capture(device, *slot);
+            return;  // one a frame: a sheet is eighty avatars drawn
+        }
+    }
+}
+
+void VisitorRenderer::Capture(GraphicsDevice& device, Member& member) {
+    namespace Xna = Microsoft::Xna::Framework::Graphics;
+    member.sheet = std::make_unique<Xna::RenderTarget2D>(device, kSheetPoses * kCellWide, kSheetSides * kCellTall,
+                                                         true, Xna::SurfaceFormat::Color,
+                                                         Xna::DepthFormat::Depth24);
+    // A picture shows the member with some room about them: a step and a swung arm reach out.
+    member.cellTall = member.height * 1.1f;
+    member.cellWide = member.cellTall * static_cast<float>(kCellWide) / static_cast<float>(kCellTall);
+    const Xna::Viewport before = device.getViewportProperty();
+    device.SetRenderTarget(member.sheet.get());
+    // Nothing where nobody is; the colour is what the edge of a body fades into when the
+    // picture is drawn small, so it is a middling cloth colour and not black.
+    device.Clear(Xna::ClearOptions::Target | Xna::ClearOptions::DepthBuffer, Vector4(0.36f, 0.33f, 0.31f, 0.0f),
+                 1.0f, 0);
+    AvatarRenderer& renderer = *member.renderer;
+    renderer.setWorldProperty(Matrix::getIdentityProperty());
+    renderer.setProjectionProperty(Matrix::CreateOrthographic(member.cellWide, member.cellTall, 1.0f, 20.0f));
+    // Lit as on a dull day, a little from above and the side: the form shows, and the
+    // picture is tinted with the light of the hour when it is drawn.
+    renderer.setLightColorProperty(Vector3(kSheetLight, kSheetLight, kSheetLight));
+    renderer.setAmbientLightColorProperty(Vector3(kSheetAmbient, kSheetAmbient, kSheetAmbient));
+    const Vector3 middle(0.0f, 0.5f * member.cellTall, 0.0f);
+    for (int pose = 0; pose < kSheetPoses; ++pose) {
+        Actor actor;
+        actor.base = Preset::Stand0;
+        actor.baseTime = 0.4f;
+        if (pose == kSheetSit) {
+            actor.sit = 1.0f;
+        } else if (pose >= kSheetWalk) {
+            actor.gait = 1.0f;
+            actor.phase = static_cast<float>(pose - kSheetWalk) / static_cast<float>(kSheetSteps);
+        }
+        Pose(actor, member, 1.0f);
+        for (int side = 0; side < kSheetSides; ++side) {
+            // An avatar looks along -Z: side 0 is seen from the front, and the eye goes round.
+            const float angle = 2.0f * kPi * static_cast<float>(side) / static_cast<float>(kSheetSides);
+            const Vector3 from(std::sin(angle), 0.0f, -std::cos(angle));
+            const Vector3 eye = middle + from * 10.0f;
+            const Vector3 right = Vector3::Cross(from * -1.0f, Vector3(0.0f, 1.0f, 0.0f));
+            Vector3 light = from * -1.0f + Vector3(0.0f, -0.7f, 0.0f) + right * 0.45f;
+            light.Normalize();
+            device.setViewportProperty(Xna::Viewport(pose * kCellWide, side * kCellTall, kCellWide, kCellTall));
+            renderer.setViewProperty(Matrix::CreateLookAt(eye, middle, Vector3(0.0f, 1.0f, 0.0f)));
+            renderer.setLightDirectionProperty(light);
+            renderer.Draw(bones_, expression_);
+        }
+    }
+    device.SetRenderTarget(nullptr);
+    device.setViewportProperty(before);
+}
+
+void VisitorRenderer::Draw(GraphicsDevice& device, const CnaEngine::Graphics::Camera& camera,
                            const CnaEngine::Graphics::ForwardLighting& lighting) {
     drawn_ = 0;
+    drawnFlat_ = 0;
     inRange_ = 0;
+    inViewCount_ = 0;
     if (ready_ == 0)
         return;
     const auto& frustum = camera.Frustum();
@@ -429,8 +518,13 @@ void VisitorRenderer::Draw(const CnaEngine::Graphics::Camera& camera,
         return feet;
     };
     inView_.clear();
+    far_.clear();
+    shades_.clear();
     for (auto& [id, actor] : actors_) {
-        if (actor.hidden || Playing(actor) == nullptr)
+        const bool wasClose = actor.close;
+        actor.close = false;
+        const Member* member = actor.hidden ? nullptr : Playing(actor);
+        if (member == nullptr)
             continue;
         const Vector3 feet = standing(actor);
         const Vector3 away = feet - eye;
@@ -441,17 +535,38 @@ void VisitorRenderer::Draw(const CnaEngine::Graphics::Camera& camera,
         if (frustum.Contains(BoundingSphere(feet + Vector3(0.0f, 0.9f, 0.0f), 1.4f)) ==
             ContainmentType::Disjoint)
             continue;
-        inView_.emplace_back(distance, &actor);
+        ++inViewCount_;
+        // Flat beyond the distance at which a picture is as good as the avatar on the screen;
+        // who was an avatar on the last frame stays one a few metres longer.
+        const float limit = wasClose ? kCloseFar : kCloseNear;
+        if (flat_ && distance > limit * limit)
+            far_.push_back(Far{member, &actor, feet});
+        else
+            inView_.emplace_back(distance, &actor);
     }
-    inViewCount_ = inView_.size();
     if (inView_.size() > budget_) {
         std::nth_element(inView_.begin(), inView_.begin() + static_cast<std::ptrdiff_t>(budget_), inView_.end(),
                          [](const auto& a, const auto& b) { return a.first < b.first; });
+        if (flat_) {
+            for (std::size_t i = budget_; i < inView_.size(); ++i) {
+                const Actor& actor = *inView_[i].second;
+                far_.push_back(Far{Playing(actor), &actor, standing(actor)});
+            }
+        }
         inView_.resize(budget_);
     }
+    // Whose pictures are not drawn yet is not seen for the frames that takes.
+    std::erase_if(far_, [](const Far& one) { return one.member->sheet == nullptr; });
+    for (const Far& one : far_)
+        shades_.push_back(one.feet);
+    for (const auto& [distance, seen] : inView_)
+        shades_.push_back(standing(*seen));
+
+    DrawShade(device, camera, lighting);
 
     for (const auto& [distance, seen] : inView_) {
         Actor& actor = *seen;
+        actor.close = true;
         const Member* member = Playing(actor);
         const Vector3 feet = standing(actor);
         const float scale = actor.heightM / member->height;
@@ -472,8 +587,200 @@ void VisitorRenderer::Draw(const CnaEngine::Graphics::Camera& camera,
         poseSeconds_ += std::chrono::duration<double>(posed - before).count();
         drawSeconds_ += std::chrono::duration<double>(std::chrono::steady_clock::now() - posed).count();
     }
+
+    const auto before = std::chrono::steady_clock::now();
+    DrawFlat(device, camera, lighting);
+    flatSeconds_ += std::chrono::duration<double>(std::chrono::steady_clock::now() - before).count();
+    drawnFlat_ = far_.size();
+    drawn_ += drawnFlat_;
     ++frames_;
     drawnInAll_ += drawn_;
+}
+
+namespace {
+
+/// Restores what the engine's renderer had set when a pass of the game's own is over.
+struct DeviceState {
+    explicit DeviceState(GraphicsDevice& of)
+        : device(of), blend(of.getBlendStateProperty()), depth(of.getDepthStencilStateProperty()),
+          rasterizer(of.getRasterizerStateProperty()), sampler(of.getSamplerStatesProperty()[0]) {}
+    ~DeviceState() {
+        device.setBlendStateProperty(blend);
+        device.setDepthStencilStateProperty(depth);
+        device.setRasterizerStateProperty(rasterizer);
+        device.getSamplerStatesProperty()[0] = sampler;
+    }
+    GraphicsDevice& device;
+    Microsoft::Xna::Framework::Graphics::BlendState blend;
+    Microsoft::Xna::Framework::Graphics::DepthStencilState depth;
+    Microsoft::Xna::Framework::Graphics::RasterizerState rasterizer;
+    Microsoft::Xna::Framework::Graphics::SamplerState sampler;
+};
+
+}  // namespace
+
+void VisitorRenderer::DrawShade(GraphicsDevice& device, const CnaEngine::Graphics::Camera& camera,
+                                const CnaEngine::Graphics::ForwardLighting& lighting) {
+    namespace Xna = Microsoft::Xna::Framework::Graphics;
+    using Microsoft::Xna::Framework::Color;
+    if (shades_.empty())
+        return;
+    if (shadeEffect_ == nullptr) {
+        // A round patch, dark in the middle and gone at the rim (premultiplied: black with alpha).
+        constexpr int kSize = 32;
+        std::vector<Color> pixels(static_cast<std::size_t>(kSize * kSize));
+        for (int y = 0; y < kSize; ++y) {
+            for (int x = 0; x < kSize; ++x) {
+                const float u = (static_cast<float>(x) + 0.5f) / kSize * 2.0f - 1.0f;
+                const float v = (static_cast<float>(y) + 0.5f) / kSize * 2.0f - 1.0f;
+                const float alpha = SmoothStep(1.0f - std::sqrt(u * u + v * v));
+                pixels[static_cast<std::size_t>(y * kSize + x)] = Color(0.0f, 0.0f, 0.0f, alpha);
+            }
+        }
+        shadeTexture_ = std::make_unique<Xna::Texture2D>(device, kSize, kSize);
+        shadeTexture_->SetData(pixels.data(), static_cast<int>(pixels.size()));
+        shadeEffect_ = std::make_unique<Xna::BasicEffect>(device);
+        shadeEffect_->setLightingEnabledProperty(false);
+        shadeEffect_->setTextureEnabledProperty(true);
+        shadeEffect_->setVertexColorEnabledProperty(true);
+        shadeEffect_->setTextureProperty(shadeTexture_.get());
+    }
+    // Under a high sun the patch is short and dark, towards evening longer and fainter; it
+    // lies where the light throws it. Under cloud or at dusk only a faint patch is left.
+    const Vector3 ray = lighting.lightDirection;
+    const float flatLength = std::sqrt(ray.X * ray.X + ray.Z * ray.Z);
+    const float bright = std::clamp((lighting.lightColor.X + lighting.lightColor.Y + lighting.lightColor.Z) / 3.0f,
+                                    0.0f, 1.0f);
+    const float low = ray.Y < -0.05f ? std::clamp(flatLength / -ray.Y, 0.0f, 2.5f) : 2.5f;
+    const Vector3 along = flatLength > 0.001f ? Vector3(ray.X / flatLength, 0.0f, ray.Z / flatLength)
+                                               : Vector3(1.0f, 0.0f, 0.0f);
+    const Vector3 across(-along.Z, 0.0f, along.X);
+    const float reach = 0.34f + 0.42f * low;
+    const float strength = (0.22f + 0.33f * bright) / (1.0f + 0.25f * low);
+    const Color tint(strength, strength, strength, strength);
+    const Vector3 eye = camera.Position();
+    quads_.clear();
+    for (const Vector3& feet : shades_) {
+        const float dx = feet.X - eye.X;
+        const float dz = feet.Z - eye.Z;
+        if (dx * dx + dz * dz > kShadeFarthest * kShadeFarthest)
+            continue;
+        const Vector3 middle = feet + Vector3(0.0f, 0.035f, 0.0f) + along * (reach - 0.3f);
+        const Vector3 a = middle - along * reach - across * 0.34f;
+        const Vector3 b = middle + along * reach - across * 0.34f;
+        const Vector3 c = middle + along * reach + across * 0.34f;
+        const Vector3 d = middle - along * reach + across * 0.34f;
+        quads_.emplace_back(a, tint, Vector2(0.0f, 0.0f));
+        quads_.emplace_back(b, tint, Vector2(1.0f, 0.0f));
+        quads_.emplace_back(c, tint, Vector2(1.0f, 1.0f));
+        quads_.emplace_back(a, tint, Vector2(0.0f, 0.0f));
+        quads_.emplace_back(c, tint, Vector2(1.0f, 1.0f));
+        quads_.emplace_back(d, tint, Vector2(0.0f, 1.0f));
+    }
+    if (quads_.empty())
+        return;
+    const DeviceState restore(device);
+    device.setBlendStateProperty(Xna::BlendState::AlphaBlend);
+    device.setDepthStencilStateProperty(Xna::DepthStencilState::DepthRead);
+    device.setRasterizerStateProperty(Xna::RasterizerState::CullNone);
+    device.getSamplerStatesProperty()[0] = Xna::SamplerState::LinearClamp;
+    shadeEffect_->setWorldProperty(Matrix::getIdentityProperty());
+    shadeEffect_->setViewProperty(camera.View());
+    shadeEffect_->setProjectionProperty(camera.Projection());
+    shadeEffect_->Apply();
+    device.DrawUserPrimitives(Xna::PrimitiveType::TriangleList, quads_.data(), 0,
+                              static_cast<int>(quads_.size() / 3));
+}
+
+void VisitorRenderer::DrawFlat(GraphicsDevice& device, const CnaEngine::Graphics::Camera& camera,
+                               const CnaEngine::Graphics::ForwardLighting& lighting) {
+    namespace Xna = Microsoft::Xna::Framework::Graphics;
+    using Microsoft::Xna::Framework::Color;
+    if (far_.empty())
+        return;
+    if (flatEffect_ == nullptr) {
+        flatEffect_ = std::make_unique<Xna::AlphaTestEffect>(device);
+        flatEffect_->setVertexColorEnabledProperty(true);
+        flatEffect_->setAlphaFunctionProperty(Xna::CompareFunction::Greater);
+        flatEffect_->setReferenceAlphaProperty(96);
+    }
+    // One sheet after another: each is one draw call.
+    std::sort(far_.begin(), far_.end(), [](const Far& a, const Far& b) { return a.member < b.member; });
+    const Vector3 eye = camera.Position();
+    const Vector3 sun = lighting.lightColor * 0.9f;
+    Vector3 ambient = lighting.ambientColor;
+    if (!lighting.fillLights.empty())
+        ambient = ambient + lighting.fillLights.front().diffuse * 0.55f;
+    const DeviceState restore(device);
+    device.setBlendStateProperty(Xna::BlendState::Opaque);
+    device.setDepthStencilStateProperty(Xna::DepthStencilState::Default);
+    device.setRasterizerStateProperty(Xna::RasterizerState::CullNone);
+    device.getSamplerStatesProperty()[0] = Xna::SamplerState::LinearClamp;
+    flatEffect_->setWorldProperty(Matrix::getIdentityProperty());
+    flatEffect_->setViewProperty(camera.View());
+    flatEffect_->setProjectionProperty(camera.Projection());
+
+    std::size_t at = 0;
+    while (at < far_.size()) {
+        const Member& member = *far_[at].member;
+        quads_.clear();
+        for (; at < far_.size() && far_[at].member == &member; ++at) {
+            const Actor& actor = *far_[at].actor;
+            const Vector3& feet = far_[at].feet;
+            // The rectangle stands upright and turns about its foot to face the eye.
+            Vector3 toEye(eye.X - feet.X, 0.0f, eye.Z - feet.Z);
+            const float apart = std::sqrt(toEye.X * toEye.X + toEye.Z * toEye.Z);
+            if (apart < 0.01f)
+                continue;
+            toEye = toEye * (1.0f / apart);
+            const Vector3 right = Vector3::Cross(toEye * -1.0f, Vector3(0.0f, 1.0f, 0.0f));
+            // Which picture: the side the eye is on, as the avatar itself would see it
+            // (drawn, it is turned by heading + pi about the vertical).
+            const float turn = -(actor.heading + kPi);
+            const float localX = toEye.X * std::cos(turn) + toEye.Z * std::sin(turn);
+            const float localZ = -toEye.X * std::sin(turn) + toEye.Z * std::cos(turn);
+            const float angle = std::atan2(localX, -localZ);
+            int side = static_cast<int>(std::lround(angle / (2.0f * kPi) * kSheetSides));
+            side = ((side % kSheetSides) + kSheetSides) % kSheetSides;
+            int pose = kSheetStand;
+            if (actor.sit > 0.5f)
+                pose = kSheetSit;
+            else if (actor.gait > 0.5f)
+                pose = kSheetWalk + static_cast<int>(actor.phase * kSheetSteps) % kSheetSteps;
+
+            const float scale = actor.heightM / member.height;
+            const float halfWide = 0.5f * member.cellWide * scale;
+            const float tall = member.cellTall * scale;
+            // The sun on the side one sees, or on the far one.
+            const float facing = -(toEye.X * lighting.lightDirection.X + toEye.Z * lighting.lightDirection.Z);
+            const float lit = 0.38f + 0.30f * std::clamp(facing, -1.0f, 1.0f);
+            const Vector3 light = (ambient + sun * lit) * (1.0f / (kSheetAmbient + 0.45f * kSheetLight));
+            const Color tint(std::min(light.X, 1.0f), std::min(light.Y, 1.0f), std::min(light.Z, 1.0f), 1.0f);
+
+            // Half a texel in from the picture's edge: its neighbours do not show.
+            const float u0 = (static_cast<float>(pose * kCellWide) + 0.5f) / (kSheetPoses * kCellWide);
+            const float u1 = (static_cast<float>((pose + 1) * kCellWide) - 0.5f) / (kSheetPoses * kCellWide);
+            const float v0 = (static_cast<float>(side * kCellTall) + 0.5f) / (kSheetSides * kCellTall);
+            const float v1 = (static_cast<float>((side + 1) * kCellTall) - 0.5f) / (kSheetSides * kCellTall);
+            const Vector3 up(0.0f, tall, 0.0f);
+            const Vector3 a = feet - right * halfWide + up;
+            const Vector3 b = feet + right * halfWide + up;
+            const Vector3 c = feet + right * halfWide;
+            const Vector3 d = feet - right * halfWide;
+            quads_.emplace_back(a, tint, Vector2(u0, v0));
+            quads_.emplace_back(b, tint, Vector2(u1, v0));
+            quads_.emplace_back(c, tint, Vector2(u1, v1));
+            quads_.emplace_back(a, tint, Vector2(u0, v0));
+            quads_.emplace_back(c, tint, Vector2(u1, v1));
+            quads_.emplace_back(d, tint, Vector2(u0, v1));
+        }
+        if (quads_.empty())
+            continue;
+        flatEffect_->setTextureProperty(member.sheet.get());
+        flatEffect_->Apply();
+        device.DrawUserPrimitives(Xna::PrimitiveType::TriangleList, quads_.data(), 0,
+                                  static_cast<int>(quads_.size() / 3));
+    }
 }
 
 std::optional<Vector3> VisitorRenderer::PositionOf(zoo::VisitorId id) const {

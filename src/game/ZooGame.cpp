@@ -85,6 +85,7 @@ bool ZooGame::ParseArgument(std::span<const std::string_view> arguments, std::si
                      : what == "terrain"    ? &without_.terrain
                      : what == "shadows"    ? &without_.shadows
                      : what == "simulation" ? &without_.simulation
+                     : what == "flat"       ? &without_.flatPeople
                                             : nullptr;
         if (part == nullptr)
             return false;
@@ -212,13 +213,16 @@ void ZooGame::LoadGame() {
         GamerServicesDispatcher::Initialize(getServicesProperty());
     visitors_ = std::make_unique<VisitorRenderer>();
     // From the ground one looks along whole avenues of people: the nearest are drawn.
-    visitors_->SetBudget(peopleBudget_ > 0 ? peopleBudget_ : editor_ ? 400 : 120);
+    // On foot the nearest are avatars and everybody behind them is drawn flat; from above
+    // (the editor) there are only avatars, and no more than the budget.
+    visitors_->SetFlat(!editor_ && !without_.flatPeople);
+    visitors_->SetBudget(peopleBudget_ > 0 ? peopleBudget_ : editor_ ? 400 : without_.flatPeople ? 120 : 40);
     Renderer().AddPass(Graphics::PassPoint::AfterOpaque, "visitors",
                        [this](auto&, const Graphics::Camera& camera, Graphics::RenderStatistics&) {
                            if (without_.people)
                                return;
                            const Bench::Scope timed(bench_, Bench::PeoplePass);
-                           visitors_->Draw(camera, Renderer().Lighting());
+                           visitors_->Draw(getGraphicsDeviceProperty(), camera, Renderer().Lighting());
                        });
 
     const int speed = play_.speed;
@@ -557,6 +561,7 @@ void ZooGame::UpdateEditor(double seconds) {
     scenery_->Update(zoo_->Map(), zoo_->Objects());
     animals_->Update(*zoo_, dt * static_cast<float>(play_.speed), static_cast<float>(tickDebt_));
     visitors_->Update(*zoo_, dt * static_cast<float>(play_.speed), static_cast<float>(tickDebt_));
+    visitors_->Prepare(getGraphicsDeviceProperty());
     UpdateSky();
 }
 

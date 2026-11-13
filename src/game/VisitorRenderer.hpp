@@ -12,6 +12,13 @@
 #include "CnaEngine/Graphics/Camera.hpp"
 #include "CnaEngine/Graphics/ForwardRenderer.hpp"
 
+#include "Microsoft/Xna/Framework/Graphics/AlphaTestEffect.hpp"
+#include "Microsoft/Xna/Framework/Graphics/BasicEffect.hpp"
+#include "Microsoft/Xna/Framework/Graphics/GraphicsDevice.hpp"
+#include "Microsoft/Xna/Framework/Graphics/RenderTarget2D.hpp"
+#include "Microsoft/Xna/Framework/Graphics/Texture2D.hpp"
+#include "Microsoft/Xna/Framework/Graphics/VertexPositionColorTexture.hpp"
+
 #include "Microsoft/Xna/Framework/GamerServices/AvatarDescription.hpp"
 #include "Microsoft/Xna/Framework/GamerServices/AvatarRenderer.hpp"
 
@@ -34,7 +41,17 @@ namespace zoogame {
 ///
 /// Avatars draw themselves with CNA's own effect, not through the engine's
 /// renderer: Draw() is called from a render pass after the opaque scene, with
-/// the scene's light. They cast no shadow in the shadow map.
+/// the scene's light. They cast no shadow in the shadow map; everybody gets a
+/// soft patch of shade on the ground under them instead.
+///
+/// An avatar is some thirty draw calls, each with its own effect state: about
+/// 0.17 ms of the processor's time a person (measured, docs/PERFORMANCE.md).
+/// So only the people near the eyes are drawn as avatars. Everybody farther
+/// away is drawn flat: each member of the cast is drawn once into a sheet of
+/// small pictures (standing, sitting and eight moments of a step, each from
+/// eight sides), and a distant person is one upright rectangle with the picture
+/// that fits what they do and where they are seen from. A whole avenue of them
+/// costs a few draw calls.
 class VisitorRenderer {
 public:
     VisitorRenderer();
@@ -46,8 +63,12 @@ public:
     /// 0 while paused); `tickFraction` is how far the game is into the next
     /// simulation step (0..1).
     void Update(const zoo::Zoo& zoo, float seconds, float tickFraction);
+    /// Makes what drawing needs and is not made yet (the sheet of pictures of one member
+    /// of the cast at most a call). Called between frames: it draws into its own target.
+    void Prepare(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device);
     /// Draws everybody the camera sees.
-    void Draw(const CnaEngine::Graphics::Camera& camera,
+    void Draw(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
+              const CnaEngine::Graphics::Camera& camera,
               const CnaEngine::Graphics::ForwardLighting& lighting);
 
     /// Where a visitor is drawn (the ground under it); nothing for one that is not drawn.
@@ -59,9 +80,14 @@ public:
     std::size_t InRange() const { return inRange_; }
     /// Of them those the camera looked at; Drawn() is less when they were more than the budget.
     std::size_t InView() const { return inViewCount_; }
-    /// The most people a frame draws: the nearest of those in view.
+    /// The most people a frame draws as avatars: the nearest of those in view.
     void SetBudget(std::size_t people) { budget_ = std::max<std::size_t>(people, 1); }
     std::size_t Budget() const { return budget_; }
+    /// Whether the people beyond the nearest are drawn flat (true: a visit on foot) or not
+    /// at all (a camera that looks down on the zoo would see the rectangles for what they are).
+    void SetFlat(bool flat) { flat_ = flat; }
+    /// Of the people drawn on the last frame, those drawn flat.
+    std::size_t DrawnFlat() const { return drawnFlat_; }
     /// People the simulation has in the zoo (those inside buildings too).
     std::size_t Known() const { return actors_.size(); }
     /// The cast: how many avatars there are to play the visitors, and how many
@@ -84,6 +110,11 @@ private:
         bool female = false;
         bool ready = false;
         bool failed = false;
+        /// The member's pictures for the distance; null until Prepare() has drawn them.
+        std::unique_ptr<Microsoft::Xna::Framework::Graphics::RenderTarget2D> sheet;
+        /// The size of what one picture shows, metres.
+        float cellWide = 1.0f;
+        float cellTall = 2.0f;
     };
     struct Actor {
         std::size_t member = 0;
@@ -97,6 +128,9 @@ private:
         zoo::VisitorThought thought = zoo::VisitorThought::None;
         std::int64_t thoughtTick = -1;
         bool seated = false;
+        /// Drawn as an avatar on the last frame (kept a little beyond the distance at which
+        /// one becomes one, so that nobody flickers between the two at the boundary).
+        bool close = false;
         bool hidden = false;
         bool seen = false;
         // Weights of the things a body can be doing, eased towards 0 or 1.
@@ -124,6 +158,13 @@ private:
     void React(Actor& actor, zoo::VisitorId id, const Member* member, bool fresh);
     Preset Fidget(const Actor& actor, zoo::VisitorId id, bool female);
     void Pose(Actor& actor, const Member& member, float scale);
+    void Capture(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, Member& member);
+    void DrawShade(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
+                   const CnaEngine::Graphics::Camera& camera,
+                   const CnaEngine::Graphics::ForwardLighting& lighting);
+    void DrawFlat(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
+                  const CnaEngine::Graphics::Camera& camera,
+                  const CnaEngine::Graphics::ForwardLighting& lighting);
 
     std::vector<std::unique_ptr<Member>> cast_;
     std::array<std::optional<AvatarClip>, 64> clips_;
@@ -136,7 +177,21 @@ private:
     std::size_t inRange_ = 0;
     std::size_t inViewCount_ = 0;
     std::size_t budget_ = 400;
+    bool flat_ = false;
+    std::size_t drawnFlat_ = 0;
     std::vector<std::pair<float, Actor*>> inView_;
+    /// Of those in view: who is drawn flat, and where everybody drawn stands.
+    struct Far {
+        const Member* member;
+        const Actor* actor;
+        Vector3 feet;
+    };
+    std::vector<Far> far_;
+    std::vector<Vector3> shades_;
+    std::vector<Microsoft::Xna::Framework::Graphics::VertexPositionColorTexture> quads_;
+    std::unique_ptr<Microsoft::Xna::Framework::Graphics::AlphaTestEffect> flatEffect_;
+    std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> shadeEffect_;
+    std::unique_ptr<Microsoft::Xna::Framework::Graphics::Texture2D> shadeTexture_;
     int ready_ = 0;
     int failed_ = 0;
     bool available_ = true;
@@ -146,6 +201,7 @@ private:
     std::uint64_t drawnInAll_ = 0;
     double poseSeconds_ = 0.0;
     double drawSeconds_ = 0.0;
+    double flatSeconds_ = 0.0;
 };
 
 }  // namespace zoogame

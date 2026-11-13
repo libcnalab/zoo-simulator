@@ -19,14 +19,18 @@ run() {
         grep -E "^zoo: bench|^zoo: visit: 800|^zoo: visitor zoo|^zoo: ground|^zoo: scenery" |
         sed "s|^zoo: |[$label] |"
 }
-echo "== places, 120 people drawn at most (the game's own figure)"
+echo "== places, as the game is played (the nearest 40 people avatars, the rest drawn flat)"
 run entrance
 for place in lion penguin elephant giraffe meerkat flamingo; do
     run "$place" --stand "habitat:$place"
 done
-echo "== people drawn at most, at the entrance"
+echo "== avatars at most, at the entrance (everybody else in view is drawn flat)"
+for people in 1 20 40 80; do
+    run "avatars-$people" --people "$people"
+done
+echo "== avatars only, as it was: no flat people, the nearest N drawn and nobody else"
 for people in 1 30 60 120 250 400; do
-    run "people-$people" --people "$people"
+    run "only-avatars-$people" --without flat --people "$people"
 done
 echo "== a part left out, at the entrance"
 for part in animals people scenery terrain shadows simulation; do

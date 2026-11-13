@@ -453,6 +453,7 @@ void ZooGame::UpdateVisit(double seconds) {
     {
         const Bench::Scope timed(bench_, Bench::People);
         visitors_->Update(*zoo_, lived, static_cast<float>(tickDebt_));
+        visitors_->Prepare(getGraphicsDeviceProperty());
     }
     UpdateSky();
 

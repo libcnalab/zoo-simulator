@@ -100,11 +100,12 @@ private:
     bool ownSaves_ = false;
     /// --bench: frame times, the cost of the game's parts and memory, printed at the end.
     Bench bench_;
-    /// --without animals|people|scenery|terrain|shadows|simulation: a part left out, to
-    /// measure what it costs by the difference.
+    /// --without animals|people|scenery|terrain|shadows|simulation|flat: a part left out, to
+    /// measure what it costs by the difference ("flat": every person in view an avatar, as
+    /// it was before the distant ones were drawn flat).
     struct Without {
         bool animals = false, people = false, scenery = false, terrain = false, shadows = false,
-             simulation = false;
+             simulation = false, flatPeople = false;
     } without_;
     /// --people N: the most visitors a frame draws (0: the mode's own figure).
     std::size_t peopleBudget_ = 0;
