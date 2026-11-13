@@ -34,8 +34,8 @@ class Surfaces {
 public:
     explicit Surfaces(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device);
 
-    /// The material of a finish (opaque but for Pattern::WireMesh and
-    /// Pattern::Glass). The reference stays valid for the lifetime of this object.
+    /// The material of a finish (opaque but for Pattern::WireMesh, Pattern::Glass and the
+    /// cut-out sprays of foliage). The reference stays valid for the lifetime of this object.
     const CnaEngine::Graphics::Material& Get(const Finish& finish);
     /// See-through wire mesh in the given colour (texture coordinates in metres).
     const CnaEngine::Graphics::Material& WireMesh(const zoo::Color3& color);
@@ -57,10 +57,13 @@ private:
 
     std::array<std::unique_ptr<Texture>, static_cast<std::size_t>(Pattern::Count)> patterns_;
     std::unique_ptr<Texture> wire_;
+    std::unique_ptr<Texture> leafSpray_;
+    std::unique_ptr<Texture> needleSpray_;
     std::vector<std::unique_ptr<Texture>> ripples_;  ///< one loop of the water's surface
     double rippleTime_ = 0.0;
     std::map<std::uint32_t, std::unique_ptr<CnaEngine::Graphics::Material>> opaque_;
     std::map<std::uint32_t, std::unique_ptr<CnaEngine::Graphics::Material>> meshes_;
+    std::map<std::uint32_t, std::unique_ptr<CnaEngine::Graphics::Material>> sprays_;
     CnaEngine::Graphics::Material glass_;
     CnaEngine::Graphics::Material water_;
     std::array<CnaEngine::Graphics::Material, static_cast<std::size_t>(Mark::Count)> marks_;

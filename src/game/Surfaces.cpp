@@ -8,6 +8,8 @@
 #include "CnaEngine/Core/Noise.hpp"
 #include "CnaEngine/Graphics/Image.hpp"
 
+#include "FoliageTextures.hpp"
+
 namespace zoogame {
 
 namespace {
@@ -55,6 +57,8 @@ float Shade(Pattern pattern, float u, float v) {
         case Pattern::Plain:
         case Pattern::WireMesh:
         case Pattern::Glass:
+        case Pattern::LeafSpray:
+        case Pattern::NeedleSpray:
         case Pattern::Count:
             return 1.0f;
         case Pattern::Wood: {
@@ -248,8 +252,9 @@ float Surfaces::PatternMetres(Pattern pattern) {
 Surfaces::Surfaces(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device) {
     for (std::size_t p = 0; p < patterns_.size(); ++p) {
         const auto pattern = static_cast<Pattern>(p);
-        const bool flat =
-            pattern == Pattern::Plain || pattern == Pattern::WireMesh || pattern == Pattern::Glass;
+        const bool flat = pattern == Pattern::Plain || pattern == Pattern::WireMesh ||
+                          pattern == Pattern::Glass || pattern == Pattern::LeafSpray ||
+                          pattern == Pattern::NeedleSpray;
         const int size = flat ? 4 : kSize;
         Image image(size, size);
         for (int y = 0; y < size; ++y) {
@@ -290,6 +295,16 @@ Surfaces::Surfaces(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device) 
         }
         wire_ = CnaEngine::Graphics::UploadTexture(device, image, {.srgb = true});
     }
+
+    // Foliage: sprays of leaves and boughs of needles cut out of cards. The smaller mip levels
+    // keep the share of each card that is leaf, or a crown would thin out with distance.
+    const auto spray = [&device](const SprayAtlas& atlas) {
+        Image image(atlas.size, atlas.size);
+        image.Bytes() = atlas.rgba;
+        return CnaEngine::Graphics::UploadTexture(device, image, {.srgb = true, .alphaTestReference = 127});
+    };
+    leafSpray_ = spray(LeafSprays());
+    needleSpray_ = spray(NeedleSprays());
 
     glass_.name = "glass";
     glass_.shading = CnaEngine::Graphics::ShadingModel::PhysicallyBased;
@@ -345,6 +360,23 @@ const Material& Surfaces::Get(const Finish& finish) {
     }
     if (finish.pattern == Pattern::Glass) {
         return glass_;
+    }
+    if (finish.pattern == Pattern::LeafSpray || finish.pattern == Pattern::NeedleSpray) {
+        auto& slot = sprays_[Key(finish.color, static_cast<std::uint32_t>(finish.pattern))];
+        if (!slot) {
+            slot = std::make_unique<Material>();
+            slot->name = "foliage";
+            slot->shading = CnaEngine::Graphics::ShadingModel::PhysicallyBased;
+            slot->blend = CnaEngine::Graphics::BlendMode::AlphaTest;
+            slot->alphaCutoff = 0.5f;
+            slot->diffuseColor = ToVector(finish.color);
+            slot->roughness = 0.72f;
+            // One-sided: the cards are written with both windings and one shading normal
+            // (MeshWriter::Card), which a two-sided material would turn round on the back.
+            slot->baseTexture = (finish.pattern == Pattern::LeafSpray ? leafSpray_ : needleSpray_).get();
+            slot->sampler = &SamplerState::AnisotropicClamp;
+        }
+        return *slot;
     }
     const std::uint32_t key = Key(finish.color, static_cast<std::uint32_t>(finish.pattern));
     auto& slot = opaque_[key];

@@ -26,6 +26,7 @@ loudspeaker stays muted and nobody has listened to any of it.
 | Animals stand in the sun, not in their own shadow | every skinned model was drawn shadowed by itself (an engine defect, `docs/UPSTREAM.md` ZOO-UP-001); lit and shaded now, and normal maps on animals show for the first time | `src/game/SunShadows.cpp`, `evidence/animal-self-shadow-2026-11-13.jpg` |
 | Habitat fronts a zoo would build | elephants and rhinos behind a 4 m planted stand-off with a leaning rail, hoofstock behind 2 m; heavy dark mesh instead of bars at bears and cats; chain-link one looks through; nobody walks on the planting | `docs/VISITOR_ZOO.md`, `evidence/habitat-fronts-2026-11-13.jpg` |
 | People at every habitat | 192 to 260 of 800 stand watching (was 110 to 215) and no habitat is left without watchers (several were, most of the time) | `docs/VISITOR_ZOO.md` "Who watches where" |
+| Trees and shrubs with leaves | every crown and bush was a lumpy green blob; now a dark core that casts the shadow, covered with cut-out sprays of leaves or needles (two painted 512 px atlases, alpha-tested with coverage kept through the mip levels); spruces are tiers of boughs | `src/game/FoliageTextures.*`, `src/game/PropModels.cpp`, `evidence/foliage-2026-11-13.jpg`, `docs/PERFORMANCE.md` |
 
 ### Light from the sky and the ground (2026-11-13)
 
@@ -66,9 +67,12 @@ where an animal wades, and there are no swimming clips yet.
 1. Animals: thirteen of fifteen species are still the stylised first generation
    (`docs/ANIMALS.md`). Of the sculpt-based cats only the lioness is good: the male needs a
    real head and mane, the tiger a face. No young animal lives in the zoo yet.
-2. Habitat fronts: hoofstock is still seen through chain-link behind its strip; shrubs in
-   the strips are coarse blobs.
+2. Habitat fronts: hoofstock is still seen through chain-link behind its strip.
 3. Meerkat Lookout's pool is too large and props stand in it.
-4. Trees: 760,000 of 1,063,415 scenery triangles, no distance form, canopies read as blobs.
+4. Plants: trees and shrubs have leaves now, but there is no distance form (1.93 million
+   of the scenery's 2.18 million triangles are plants), cut-out edges far away are pixelated (no
+   alpha-to-coverage), cut-out leaves cast no shadow (the engine's shadow pass skips
+   alpha-tested items; the crown's core casts it), and palms, ferns and hedge fences are
+   still the old solid shapes. The pines of Bear Ridge stand in an odd dense clump.
 5. Keepers are not seen. No swimming clips. Bear growl is quiet in the mix.
 6. Loading 5.5 s, 2.4 s of it painting the ground.

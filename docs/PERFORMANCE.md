@@ -193,3 +193,24 @@ load average 1.6: **109.6 fps**, frame 9.1 ms mean, 12.2 ms p95, 15.0 ms max; pe
 through the engine's passes; 1,333 MB resident (about 1,050 MB before the sculpted cats and
 the strips; not broken down yet). The planting did not cost a visible frame rate here; the
 memory growth is open.
+
+## After the cut-out foliage (2026-11-13)
+
+Crowns and bushes went from one solid blob each to a dark core and 20 to 120 two-sided
+cards (`docs/REALISM.md`). The whole zoo's scenery grew from 1,347,525 to 2,177,095
+triangles in 121 draw calls (was 108); 1.93 million of them are plants. A shrub is 460
+triangles (929 of them: 427,340), an acacia 1,602 (273: 437,346), a willow 2,262, a baobab
+2,134, a bamboo clump 1,592, a pine 908, a birch 708, a spruce 450, an oak 1,372.
+
+`--bench --frames 300` at the entrance, three runs within a percent of each other (a
+fourth, later: 106.2 fps, 9.42 ms mean, 13.26 p95, 1,405 MB), load average about 2 (another task's Blender builds were running, so the comparison with the
+109.6 fps above is not clean; one earlier run with a quieter machine and heavier shrubs
+gave 132.7 fps): **100.5 fps**, frame 9.95 ms mean, 10.73 median, 12.88 p95, 15.34 p99,
+16.75 max; 428 draw calls (was 417: two more finishes in a cell) and 4.37 million
+triangles a frame through the engine's passes (was 3.82 million); 1,423 MB resident (was
+1,333 MB; the two atlases with mip levels are under 3 MB, the rest is vertex data in the
+static batches, and the whole figure is still not broken down).
+
+What this says: the foliage costs about 0.55 million triangles a frame and 90 MB, and at
+most a millisecond of frame time on this machine. A distance form for trees would win
+both back and is the next step if the triangle count has to drop.

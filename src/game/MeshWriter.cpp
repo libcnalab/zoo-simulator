@@ -121,6 +121,18 @@ void MeshWriter::QuadTwoSided(const Vector3& a, const Vector3& b, const Vector3&
     Quad(b, a, d, c);
 }
 
+void MeshWriter::Card(const Vector3& center, const Vector3& halfU, const Vector3& halfV, const Vector3& normal,
+                      float u0, float v0, float u1, float v1) {
+    const std::uint32_t a = Vertex(center - halfU + halfV, normal, u0, v0);
+    const std::uint32_t b = Vertex(center + halfU + halfV, normal, u1, v0);
+    const std::uint32_t c = Vertex(center + halfU - halfV, normal, u1, v1);
+    const std::uint32_t d = Vertex(center - halfU - halfV, normal, u0, v1);
+    Face(a, b, c);
+    Face(a, c, d);
+    Face(a, c, b);
+    Face(a, d, c);
+}
+
 void MeshWriter::Box(const Vector3& min, const Vector3& max) {
     const float x0 = min.X, y0 = min.Y, z0 = min.Z;
     const float x1 = max.X, y1 = max.Y, z1 = max.Z;

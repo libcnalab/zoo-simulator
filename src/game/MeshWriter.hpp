@@ -28,6 +28,8 @@ enum class Pattern : std::uint8_t {
     Concrete,
     WireMesh,  ///< see-through chain-link (drawn blended, both sides)
     Glass,     ///< clear glass (drawn blended, both sides; the colour is ignored)
+    LeafSpray,    ///< a twig's worth of leaves, cut out (MeshWriter::Card; texture coordinates 0..1)
+    NeedleSpray,  ///< a conifer bough, cut out (the same)
     Count
 };
 
@@ -62,6 +64,12 @@ public:
     void Quad(const Vector3& a, const Vector3& b, const Vector3& c, const Vector3& d);
     /// The same quad visible from both sides.
     void QuadTwoSided(const Vector3& a, const Vector3& b, const Vector3& c, const Vector3& d);
+    /// A flat card seen from both sides and shaded with one given normal on both (a spray of
+    /// leaves takes the light of the crown it belongs to, not of its own plane). `halfU` and
+    /// `halfV` run from the centre to the middle of two edges; the texture coordinates are
+    /// given as they are, (u0, v0) at centre - halfU + halfV (the top left of the picture).
+    void Card(const Vector3& center, const Vector3& halfU, const Vector3& halfV, const Vector3& normal,
+              float u0, float v0, float u1, float v1);
     /// Axis-aligned box.
     void Box(const Vector3& min, const Vector3& max);
     /// A box standing on the ground plane y = `base`, centred on (x, z), turned by `yaw`.
