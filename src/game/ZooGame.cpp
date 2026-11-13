@@ -11,6 +11,7 @@
 #include <utility>
 
 #include "Saves.hpp"
+#include "SunShadows.hpp"
 #include "zoo/sim/Scenario.hpp"
 #include "zoo/sim/ZooSave.hpp"
 
@@ -207,7 +208,7 @@ void ZooGame::LoadGame() {
         skyLight_ = std::make_unique<SkyLight>(device);
     clock_.latitudeDegrees = 48.0;
     if (!without_.shadows)
-        (void)Enhanced::EnableShadows(*this, {.size = 4096, .radius = 90.0f, .ahead = 0.7f});
+        (void)EnableSunShadows(*this, {.size = 4096, .radius = 90.0f, .ahead = 0.7f});
 
     // Visitors are CNA avatars, which belong to its gamer services. Avatars
     // draw themselves, so they get a pass of their own after the opaque scene.

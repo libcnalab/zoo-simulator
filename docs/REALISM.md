@@ -23,6 +23,7 @@ loudspeaker stays muted and nobody has listened to any of it.
 | Light from the sky and the ground | below | `src/game/SkyLight.*` |
 | Water with ripples | below | `src/game/Surfaces.cpp` |
 | Lion, lioness, cub and tiger on a professional sculpt (CC BY 4.0) | real cat anatomy; the lioness has no mane any more | `docs/ANIMALS.md`, `evidence/big-cats-sculpt-2026-11-13.jpg` |
+| Animals stand in the sun, not in their own shadow | every skinned model was drawn shadowed by itself (an engine defect, `docs/UPSTREAM.md` ZOO-UP-001); lit and shaded now, and normal maps on animals show for the first time | `src/game/SunShadows.cpp`, `evidence/animal-self-shadow-2026-11-13.jpg` |
 
 ### Light from the sky and the ground (2026-11-13)
 

@@ -5,6 +5,7 @@
 #include "AnimalViewer.hpp"
 
 #include "AnimalTextures.hpp"
+#include "SunShadows.hpp"
 
 #include "CnaEngine/Animation/Animator.hpp"
 #include "CnaEngine/App/AssetDirectory.hpp"
@@ -88,6 +89,14 @@ protected:
         view_ = std::make_unique<Graphics::ModelView>(*model_, Enhanced::PbrMaterialFromEffect);
         textures_ = zoogame::GiveMipmaps(*view_);
         std::printf("zoo: viewer: %zu texture(s) given mip levels\n", textures_.size());
+        for (const Graphics::ModelPart& part : view_->Parts()) {
+            const Graphics::Material& material = part.material.material;
+            std::printf("zoo: viewer: part %s: base %s, normal map %s, occlusion/roughness/metal %s, tangents %s\n",
+                        part.meshName.c_str(), material.baseTexture != nullptr ? "yes" : "no",
+                        material.normalTexture != nullptr ? "yes" : "no",
+                        material.occlusionRoughnessMetallicTexture != nullptr ? "yes" : "no",
+                        part.mesh.Attributes().Has(Graphics::VertexAttribute::Tangent) ? "yes" : "no");
+        }
         if (const auto* skin = Enhanced::FindSkinningData(*model_)) {
             skeleton_ = Enhanced::SkeletonFromSkinningData(*skin);
             clips_ = Enhanced::ClipsFromSkinningData(*skin);
@@ -114,7 +123,7 @@ protected:
         groundMaterial_.shading = Graphics::ShadingModel::PhysicallyBased;
         groundMaterial_.diffuseColor = Vector3(0.3f, 0.45f, 0.28f);
         groundMaterial_.roughness = 0.9f;
-        Enhanced::EnableShadows(*this, {.size = 2048, .radius = 12.0f});
+        (void)zoogame::EnableSunShadows(*this, {.size = 2048, .radius = 12.0f});
 
         // The whole animal in the picture, from where a visitor's eyes are: the generator's
         // sidecar says how big it is. The model looks along +z.
@@ -138,6 +147,12 @@ protected:
     }
 
     void UpdateFrame(const double seconds) override {
+        // What the renderer could not draw as the material asks, said once.
+        if (!fallbacksSaid_ && ++frames_ > 2) {
+            fallbacksSaid_ = true;
+            for (const std::string& fallback : Renderer().LastFallbacks())
+                std::printf("zoo: viewer: fallback: %s\n", fallback.c_str());
+        }
         if (animator_ && at_ < 0.0f) {
             animator_->Update(static_cast<float>(seconds));
         }
@@ -155,6 +170,8 @@ private:
     float distance_ = 0.0f;
     float eye_ = 1.6f;
     float at_ = -1.0f;
+    int frames_ = 0;
+    bool fallbacksSaid_ = false;
     std::unique_ptr<Xna::Model> model_;
     std::unique_ptr<Graphics::ModelView> view_;
     std::vector<std::unique_ptr<Xna::Texture2D>> textures_;
