@@ -16,6 +16,15 @@ float ClampLife(float value) {
     return Clamp01(value);
 }
 
+float HealthRoll(const Animal& animal, GameTime time, std::uint32_t purpose) {
+    // A new walk or social choice must not reroll illness. Birth time separates
+    // cohorts; id separates individuals. This stateless stream is reconstructible
+    // from old saves and independent of the behaviour RNG's consumption.
+    const auto cohort = static_cast<std::uint32_t>(animal.bornTick);
+    const auto hour = static_cast<std::uint32_t>(time.tick / kTicksPerGameHour);
+    return HashFloat(HashU32(animal.id.value, cohort), HashU32(hour, purpose));
+}
+
 Event LifeEvent(EventType type, AnimalId animal, AnimalId other, EnclosureId enclosure, Vec2 position,
                 int detail = 0) {
     Event event{};
@@ -36,6 +45,9 @@ bool IsCarnivore(const SpeciesDef& species) {
 
 void Animals::ForgetAnimalReferences(AnimalId id) {
     for (Animal& animal : animals_) {
+        if (animal.following == id) {
+            animal.following = {};
+        }
         if (animal.mate == id && !animal.Pregnant()) {
             animal.mate = {};
         }
@@ -80,7 +92,7 @@ void Animals::AdvanceLife(Env& env) {
                        animal.sickSinceTick > 0 &&
                        env.time.tick - animal.sickSinceTick >=
                            static_cast<std::int64_t>(tuning::kUntreatedRecoveryMinimumDays * kTicksPerDay) &&
-                       rng_.Chance(tuning::kUntreatedRecoveryChancePerHour)) {
+                       HealthRoll(animal, env.time, 0x7265636fU) < tuning::kUntreatedRecoveryChancePerHour) {
                 animal.sick = false;
                 animal.sickSinceTick = 0;
                 env.Emit(LifeEvent(EventType::AnimalRecovered, animal.id, {}, enclosureId, animal.position));
@@ -124,7 +136,11 @@ void Animals::AdvanceLife(Env& env) {
             if (contagious) {
                 riskPerDay += tuning::kIllnessContagionChancePerDay;
             }
-            if (rng_.Chance(std::min(1.0f, riskPerDay / tuning::kLifeChecksPerGameDay))) {
+            // Preserve the established stream advancement for other life events,
+            // but use an independent roll for the health outcome itself.
+            static_cast<void>(rng_.NextFloat());
+            if (HealthRoll(animal, env.time, 0x696c6c6eU) <
+                std::min(1.0f, riskPerDay / tuning::kLifeChecksPerGameDay)) {
                 animal.sick = true;
                 animal.treated = false;
                 animal.sickSinceTick = std::max<std::int64_t>(1, env.time.tick);

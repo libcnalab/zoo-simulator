@@ -25,6 +25,8 @@ inline constexpr float kTurnRadiansPerSecond = 3.0f;          // radians per mot
 inline constexpr float kAdultSpeedScale = 1.0f;               // speed fraction at adult size
 inline constexpr float kYoungSpeedScale = 0.6f;               // speed fraction at birth size
 inline constexpr float kWadingShoulderFraction = 0.6f;        // shoulder height fraction
+// A wading bird chooses water that leaves its body clear: up to the joint of its legs.
+inline constexpr float kWaderStandingFraction = 0.3f;         // height fraction
 inline constexpr float kWaypointArrivalM = 0.05f;             // metres from route waypoint
 inline constexpr float kRouteBrakingFactor = 1.0f;            // conservative braking speed equation factor
 inline constexpr float kArrivalPauseSeconds = 2.0f;           // motion seconds after arrival

@@ -7,12 +7,11 @@
 #include <limits>
 #include <utility>
 
+#include "zoo/animals/AnimalProfile.hpp"
 #include "zoo/animals/AnimalTuning.hpp"
 
 namespace zoo::animal_internal {
-namespace {
-
-void Start(Animal& animal, AnimalActivity activity, Vec2 target, std::int32_t seconds, PropId prop = {}) {
+void StartActivity(Animal& animal, AnimalActivity activity, Vec2 target, std::int32_t seconds, PropId prop) {
     if (activity == AnimalActivity::Play) {
         animal.boredom = std::max(0.0f, animal.boredom - tuning::kBoredomPlayRelief);
     } else if (activity == AnimalActivity::Socialize) {
@@ -29,6 +28,8 @@ void Start(Animal& animal, AnimalActivity activity, Vec2 target, std::int32_t se
     animal.route.clear();
     animal.routeIndex = 0;
 }
+
+namespace {
 
 bool IsRepeatBlocked(AnimalActivity current, AnimalActivity next) {
     return current == next && next != AnimalActivity::Wander && next != AnimalActivity::Idle;
@@ -255,6 +256,18 @@ Vec2 SleepingPlace(const Animal& animal, const SpeciesDef& species, EnclosureId 
     return place;
 }
 
+Vec2 SpeciesSleepingPlace(const Animal& animal, const SpeciesDef& species, EnclosureId enclosureId,
+                          const Env& env, std::span<const Animal> animals,
+                          std::span<const std::size_t> neighbors, std::vector<PropId>& propScratch) {
+    const BehaviourProfile* profile = ProfileFor(species);
+    const Enclosure* enclosure = env.enclosures.Find(enclosureId);
+    if (profile == nullptr || enclosure == nullptr) {
+        return SleepingPlace(animal, species, enclosureId, env);
+    }
+    AnimalActivity sleep = AnimalActivity::Sleep;
+    return RoutinePlace(animal, species, *profile, sleep, *enclosure, env, animals, neighbors, propScratch);
+}
+
 bool TryPaceLoop(Animal& animal, const SpeciesDef& species, const Enclosure& enclosure, const Env& env,
                  Rng& rng, std::vector<PropId>& propScratch, TileCoord firstTile, int side, int minX,
                  int maxX, int minZ, int maxZ) {
@@ -290,8 +303,8 @@ bool TryPaceLoop(Animal& animal, const SpeciesDef& species, const Enclosure& enc
         !env.nav.Walkable(second, first, profile)) {
         return false;
     }
-    Start(animal, AnimalActivity::Pace, first,
-          RandomDuration(rng, tuning::kPaceMinimumSeconds, tuning::kPaceMaximumSeconds));
+    StartActivity(animal, AnimalActivity::Pace, first,
+                  RandomDuration(rng, tuning::kPaceMinimumSeconds, tuning::kPaceMaximumSeconds));
     animal.route.push_back(first);
     animal.route.push_back(second);
     animal.route.push_back(first);
@@ -303,7 +316,8 @@ bool TryPaceLoop(Animal& animal, const SpeciesDef& species, const Enclosure& enc
 }  // namespace
 
 void DecideActivity(Animal& animal, const SpeciesDef& species, Env& env, std::span<const Animal> animals,
-                    std::span<const std::size_t> neighbors, Rng& rng, std::vector<PropId>& propScratch) {
+                    std::span<const std::size_t> neighbors, Rng& rng, std::vector<PropId>& propScratch,
+                    int viewers) {
     const EnclosureId enclosureId = env.enclosures.At(animal.position);
     const Enclosure* enclosure = env.enclosures.Find(enclosureId);
     if (!enclosureId) {
@@ -338,8 +352,9 @@ void DecideActivity(Animal& animal, const SpeciesDef& species, Env& env, std::sp
                 }
             }
             if (foundShore) {
-                Start(animal, AnimalActivity::Drink, shore,
-                      RandomDuration(rng, tuning::kDrinkMinimumSeconds, tuning::kDrinkMaximumSeconds));
+                StartActivity(
+                    animal, AnimalActivity::Drink, shore,
+                    RandomDuration(rng, tuning::kDrinkMinimumSeconds, tuning::kDrinkMaximumSeconds));
                 return;
             }
         }
@@ -353,25 +368,25 @@ void DecideActivity(Animal& animal, const SpeciesDef& species, Env& env, std::sp
             const TileCoord tile = World::TileAt(target);
             if (env.world.InBounds(tile) && env.enclosures.RegionAt(tile) == Region::Public &&
                 env.nav.Passable(tile, profile)) {
-                Start(animal, AnimalActivity::Loose, target,
-                      RandomDuration(rng, tuning::kIdleMinimumSeconds, tuning::kIdleMaximumSeconds));
+                StartActivity(animal, AnimalActivity::Loose, target,
+                              RandomDuration(rng, tuning::kIdleMinimumSeconds, tuning::kIdleMaximumSeconds));
                 return;
             }
         }
-        Start(animal, AnimalActivity::Idle, animal.position,
-              RandomDuration(rng, tuning::kIdleMinimumSeconds, tuning::kIdleMaximumSeconds));
+        StartActivity(animal, AnimalActivity::Idle, animal.position,
+                      RandomDuration(rng, tuning::kIdleMinimumSeconds, tuning::kIdleMaximumSeconds));
         return;
     }
     animal.loose = false;
     animal.home = enclosureId;
     const float hour = env.time.Hour();
+    const float sleepUrgency = ProfileFor(species) == nullptr ? tuning::kUrgentNeedSleep : 0.65f;
     const bool night = hour >= tuning::kNightBeginHour || hour < tuning::kNightEndHour;
     const float circadian = CircadianBias(species.activity, hour);
 
     if (animal.shelter) {
         const Building* currentShelter = env.objects.FindBuilding(animal.shelter);
-        const bool pressed =
-            animal.hunger > tuning::kUrgentNeedSleep || animal.thirst > tuning::kUrgentNeedSleep;
+        const bool pressed = animal.hunger > sleepUrgency || animal.thirst > sleepUrgency;
         // It stays in to sleep its sleep out, or while the weather that drove it in lasts.
         const bool asleep =
             animal.activity == AnimalActivity::Sleep &&
@@ -393,9 +408,15 @@ void DecideActivity(Animal& animal, const SpeciesDef& species, Env& env, std::sp
     }
 
     const float drinkUrgency =
-        animal.activity == AnimalActivity::Sleep ? tuning::kUrgentNeedSleep : tuning::kThirstUrgent;
+        animal.activity == AnimalActivity::Sleep
+            ? (animal_internal::ProfileFor(species) != nullptr ? 0.65f : tuning::kUrgentNeedSleep)
+        : animal.activity == AnimalActivity::Sentinel ? 0.5f
+                                                      : tuning::kThirstUrgent;
     const float eatUrgency =
-        animal.activity == AnimalActivity::Sleep ? tuning::kUrgentNeedSleep : tuning::kHungerUrgent;
+        animal.activity == AnimalActivity::Sleep
+            ? (animal_internal::ProfileFor(species) != nullptr ? 0.65f : tuning::kUrgentNeedSleep)
+        : animal.activity == AnimalActivity::Sentinel ? 0.5f
+                                                      : tuning::kHungerUrgent;
     if (animal.thirst > drinkUrgency && animal.activity != AnimalActivity::Drink) {
         float nearest = std::numeric_limits<float>::max();
         PropId chosen{};
@@ -413,11 +434,11 @@ void DecideActivity(Animal& animal, const SpeciesDef& species, Env& env, std::sp
         if (chosen) {
             const Prop* prop = std::as_const(env.objects).FindProp(chosen);
             if (prop != nullptr) {
-                Start(animal, AnimalActivity::Drink,
-                      PropApproach(species, env, *prop,
-                                   PropSlot(animal, species, env, *prop, animals, neighbors)),
-                      RandomDuration(rng, tuning::kDrinkMinimumSeconds, tuning::kDrinkMaximumSeconds),
-                      chosen);
+                StartActivity(animal, AnimalActivity::Drink,
+                              PropApproach(species, env, *prop,
+                                           PropSlot(animal, species, env, *prop, animals, neighbors)),
+                              RandomDuration(rng, tuning::kDrinkMinimumSeconds, tuning::kDrinkMaximumSeconds),
+                              chosen);
                 return;
             }
         }
@@ -449,8 +470,8 @@ void DecideActivity(Animal& animal, const SpeciesDef& species, Env& env, std::sp
             }
         }
         if (foundShore) {
-            Start(animal, AnimalActivity::Drink, shore,
-                  RandomDuration(rng, tuning::kDrinkMinimumSeconds, tuning::kDrinkMaximumSeconds));
+            StartActivity(animal, AnimalActivity::Drink, shore,
+                          RandomDuration(rng, tuning::kDrinkMinimumSeconds, tuning::kDrinkMaximumSeconds));
             return;
         }
     }
@@ -477,10 +498,11 @@ void DecideActivity(Animal& animal, const SpeciesDef& species, Env& env, std::sp
         if (chosen) {
             const Prop* prop = std::as_const(env.objects).FindProp(chosen);
             if (prop != nullptr) {
-                Start(animal, AnimalActivity::Eat,
-                      PropApproach(species, env, *prop,
-                                   PropSlot(animal, species, env, *prop, animals, neighbors)),
-                      RandomDuration(rng, tuning::kMealMinimumSeconds, tuning::kMealMaximumSeconds), chosen);
+                StartActivity(animal, AnimalActivity::Eat,
+                              PropApproach(species, env, *prop,
+                                           PropSlot(animal, species, env, *prop, animals, neighbors)),
+                              RandomDuration(rng, tuning::kMealMinimumSeconds, tuning::kMealMaximumSeconds),
+                              chosen);
                 return;
             }
         }
@@ -508,8 +530,8 @@ void DecideActivity(Animal& animal, const SpeciesDef& species, Env& env, std::sp
             if (env.enclosures.At(target) == enclosureId &&
                 env.nav.Passable(front, NavProfile::Animal(0.0f, species.canSwim)) &&
                 ShelterHasRoom(animal, buildingId, target, definition, animals, neighbors)) {
-                Start(animal, AnimalActivity::Shelter, target,
-                      static_cast<std::int32_t>(tuning::kRoutineRecheckSeconds));
+                StartActivity(animal, AnimalActivity::Shelter, target,
+                              static_cast<std::int32_t>(tuning::kRoutineRecheckSeconds));
                 return;
             }
         }
@@ -524,8 +546,8 @@ void DecideActivity(Animal& animal, const SpeciesDef& species, Env& env, std::sp
             for (int z = enclosure->min.z; z <= enclosure->max.z; ++z) {
                 for (int x = enclosure->min.x; x <= enclosure->max.x; ++x) {
                     const TileCoord tile{x, z};
-                    if (!env.world.HasWater(tile) || env.enclosures.At(tile) != enclosureId ||
-                        !env.nav.Passable(tile, profile)) {
+                    if (!species.canSwim || !env.world.HasWater(tile) ||
+                        env.enclosures.At(tile) != enclosureId || !env.nav.Passable(tile, profile)) {
                         continue;
                     }
                     const Vec2 candidate = World::TileCenter(tile);
@@ -569,25 +591,40 @@ void DecideActivity(Animal& animal, const SpeciesDef& species, Env& env, std::sp
                 }
             }
             if (foundCoolSpot) {
-                Start(animal, AnimalActivity::Shelter, coolSpot,
-                      static_cast<std::int32_t>(tuning::kRoutineRecheckSeconds));
+                StartActivity(animal, AnimalActivity::Shelter, coolSpot,
+                              static_cast<std::int32_t>(tuning::kRoutineRecheckSeconds));
                 return;
             }
         }
     }
 
-    const bool wakeFromSleep =
-        animal.activity == AnimalActivity::Sleep &&
-        ((animal.fatigue < tuning::kSleepWakeFatigue && circadian < 0.0f) ||
-         animal.hunger > tuning::kUrgentNeedSleep || animal.thirst > tuning::kUrgentNeedSleep);
+    const BehaviourProfile* profile = ProfileFor(species);
+    if (profile != nullptr && species.id != "lion" && species.id != "tiger" && species.id != "wolf") {
+        const float sleepHours = std::min(10.0f, species.sleepHoursPerDay);
+        const float nightHour = std::fmod(hour + 24.0f - 20.0f - HashFloat(animal.id.value, 43U), 24.0f);
+        if (nightHour < sleepHours && animal.hunger < sleepUrgency && animal.thirst < sleepUrgency) {
+            StartActivity(
+                animal, AnimalActivity::Sleep,
+                SpeciesSleepingPlace(animal, species, enclosureId, env, animals, neighbors, propScratch), 20);
+            return;
+        }
+        if (animal.activity == AnimalActivity::Sleep && nightHour >= sleepHours) {
+            animal.activity = AnimalActivity::Idle;
+        }
+    }
+    const bool wakeFromSleep = animal.activity == AnimalActivity::Sleep &&
+                               ((animal.fatigue < tuning::kSleepWakeFatigue && circadian < 0.0f) ||
+                                animal.hunger > sleepUrgency || animal.thirst > sleepUrgency);
     if (wakeFromSleep) {
-        Start(animal, AnimalActivity::Idle, animal.position,
-              static_cast<std::int32_t>(tuning::kIdleMinimumSeconds));
+        StartActivity(animal, AnimalActivity::Idle, animal.position,
+                      static_cast<std::int32_t>(tuning::kIdleMinimumSeconds));
         return;
     }
     if (animal.activity == AnimalActivity::Sleep) {
-        Start(animal, AnimalActivity::Sleep, SleepingPlace(animal, species, enclosureId, env),
-              static_cast<std::int32_t>(tuning::kSleepActivitySeconds));
+        StartActivity(
+            animal, AnimalActivity::Sleep,
+            SpeciesSleepingPlace(animal, species, enclosureId, env, animals, neighbors, propScratch),
+            static_cast<std::int32_t>(tuning::kSleepActivitySeconds));
         return;
     } else if (animal.fatigue + circadian >= tuning::kSleepDecisionThreshold &&
                animal.activity != AnimalActivity::Sleep) {
@@ -606,19 +643,21 @@ void DecideActivity(Animal& animal, const SpeciesDef& species, Env& env, std::sp
                     env.enclosures.At(front) == enclosureId &&
                     env.nav.Passable(front, NavProfile::Animal(0.0f, species.canSwim)) &&
                     ShelterHasRoom(animal, buildingId, target, definition, animals, neighbors)) {
-                    Start(animal, AnimalActivity::Sleep, target,
-                          static_cast<std::int32_t>(tuning::kRoutineRecheckSeconds));
+                    StartActivity(animal, AnimalActivity::Sleep, target,
+                                  static_cast<std::int32_t>(tuning::kRoutineRecheckSeconds));
                     return;
                 }
             }
         }
-        Start(animal, AnimalActivity::Sleep, SleepingPlace(animal, species, enclosureId, env),
-              static_cast<std::int32_t>(tuning::kRoutineRecheckSeconds));
+        StartActivity(
+            animal, AnimalActivity::Sleep,
+            SpeciesSleepingPlace(animal, species, enclosureId, env, animals, neighbors, propScratch),
+            static_cast<std::int32_t>(tuning::kRoutineRecheckSeconds));
         return;
     }
 
     if (animal.stress > tuning::kPaceStressThreshold && animal.activity != AnimalActivity::Pace &&
-        rng.Chance(tuning::kPaceDecisionChance)) {
+        rng.Chance(tuning::kPaceDecisionChance / (1.0f + enclosure->stats.enrichment))) {
         const int minX = std::max(enclosure->min.x, 0);
         const int maxX = std::min(enclosure->max.x, env.world.Width() - 1);
         const int minZ = std::max(enclosure->min.z, 0);
@@ -636,30 +675,59 @@ void DecideActivity(Animal& animal, const SpeciesDef& species, Env& env, std::sp
                 return;
             }
         }
-        Start(animal, AnimalActivity::Pace, animal.position,
-              RandomDuration(rng, tuning::kPaceMinimumSeconds, tuning::kPaceMaximumSeconds));
+        StartActivity(animal, AnimalActivity::Pace, animal.position,
+                      RandomDuration(rng, tuning::kPaceMinimumSeconds, tuning::kPaceMaximumSeconds));
         return;
     }
 
-    const AnimalActivity next = ChooseRoutineActivity(animal, species, hour, rng);
+    float routineRoll = profile == nullptr ? 0.0f : rng.NextFloat();
+    const Animal* leader = GroupLeader(animal, species, env, animals, neighbors);
+    if (profile != nullptr && profile->spreadM > 0.0f && leader != nullptr) {
+        // Group bouts share a varying stimulus, but individuals join at different times.
+        const auto phase =
+            static_cast<std::uint32_t>((env.time.tick + animal.id.value % 101U) / (30 * kTicksPerSecond));
+        routineRoll = HashFloat(leader->id.value, phase);
+    }
+    AnimalActivity next = profile == nullptr ? ChooseRoutineActivity(animal, species, hour, rng)
+                                             : ProfileActivity(animal, species, *profile, hour, routineRoll);
+    if (profile != nullptr && !IsAdult(animal, species, env.time) && !animal.sick &&
+        next == AnimalActivity::Wander && rng.Chance(0.35f)) {
+        next = AnimalActivity::Play;
+    }
+    if (profile != nullptr && (species.id == "brown_bear" || species.id == "rhino") &&
+        env.weather.temperatureC > species.tempMaxC - 4.0f &&
+        (next == AnimalActivity::Play || next == AnimalActivity::Wander)) {
+        next = AnimalActivity::Bathe;
+    }
+    if (profile != nullptr && species.id == "elephant" && next == AnimalActivity::DustBathe &&
+        env.weather.temperatureC > species.tempMaxC - 8.0f) {
+        next = AnimalActivity::Bathe;
+    }
+    if (profile != nullptr && (species.id == "wolf") && hour >= 17.0f && hour < 21.0f &&
+        next == AnimalActivity::Wander) {
+        next = AnimalActivity::Patrol;
+    }
     if (next == AnimalActivity::Play && !enclosure->enrichments.empty()) {
         const Prop* toy = std::as_const(env.objects).FindProp(enclosure->enrichments.front());
         if (toy != nullptr) {
             const PropId propId = enclosure->enrichments.front();
-            Start(animal, next,
-                  PropApproach(species, env, *toy, PropSlot(animal, species, env, *toy, animals, neighbors)),
-                  RandomDuration(rng, tuning::kPlayMinimumSeconds, tuning::kPlayMaximumSeconds), propId);
+            StartActivity(
+                animal, next,
+                PropApproach(species, env, *toy, PropSlot(animal, species, env, *toy, animals, neighbors)),
+                RandomDuration(rng, tuning::kPlayMinimumSeconds, tuning::kPlayMaximumSeconds), propId);
             return;
         }
     }
-    if (next == AnimalActivity::Socialize) {
+    const bool youngPlay = next == AnimalActivity::Play && !IsAdult(animal, species, env.time);
+    if (next == AnimalActivity::Socialize || youngPlay) {
         // To the nearest companion in sight, and beside it rather than onto it.
         const Animal* companion = nullptr;
         float nearest = std::numeric_limits<float>::max();
         for (std::size_t otherIndex : neighbors) {
             const Animal& other = animals[otherIndex];
             if (other.id == animal.id || other.species != animal.species || !other.Visible() ||
-                env.enclosures.At(other.position) != enclosureId) {
+                env.enclosures.At(other.position) != enclosureId ||
+                (youngPlay && IsAdult(other, species, env.time))) {
                 continue;
             }
             const float distance = DistanceSquared(animal.position, other.position);
@@ -669,6 +737,9 @@ void DecideActivity(Animal& animal, const SpeciesDef& species, Env& env, std::sp
             }
         }
         if (companion != nullptr) {
+            if (youngPlay) {
+                animal.following = companion->id;
+            }
             const float apart = species.bodyRadiusM * (BodyScale(animal, species, env.time) +
                                                        BodyScale(*companion, species, env.time)) +
                                 tuning::kSocialGapM;
@@ -676,10 +747,18 @@ void DecideActivity(Animal& animal, const SpeciesDef& species, Env& env, std::sp
             const Vec2 beside =
                 companion->position +
                 (LengthSquared(offset) > 1.0e-6f ? Normalized(offset) : Vec2{1.0f, 0.0f}) * apart;
-            Start(animal, next, nearest > apart * apart ? beside : animal.position,
-                  RandomDuration(rng, tuning::kSocializeMinimumSeconds, tuning::kSocializeMaximumSeconds));
+            StartActivity(
+                animal, next, nearest > apart * apart ? beside : animal.position,
+                RandomDuration(rng, tuning::kSocializeMinimumSeconds, tuning::kSocializeMaximumSeconds));
             return;
         }
+    }
+    if (profile != nullptr) {
+        AnimalActivity placedActivity = next;
+        const Vec2 place = RoutinePlace(animal, species, *profile, placedActivity, *enclosure, env, animals,
+                                        neighbors, propScratch, viewers);
+        StartActivity(animal, placedActivity, place, ProfileDuration(*profile, placedActivity, rng));
+        return;
     }
     const int minX = std::max(enclosure->min.x, 0);
     const int maxX = std::min(enclosure->max.x, env.world.Width() - 1);
@@ -745,7 +824,7 @@ void DecideActivity(Animal& animal, const SpeciesDef& species, Env& env, std::sp
         : next == AnimalActivity::Idle
             ? RandomDuration(rng, tuning::kIdleMinimumSeconds, tuning::kIdleMaximumSeconds)
             : RandomDuration(rng, tuning::kPlayMinimumSeconds, tuning::kPlayMaximumSeconds);
-    Start(animal, next, target, duration);
+    StartActivity(animal, next, target, profile == nullptr ? duration : ProfileDuration(*profile, next, rng));
     if (next == AnimalActivity::Vocalize) {
         Event event{};
         event.type = EventType::AnimalCalled;
@@ -794,7 +873,7 @@ bool TryEscape(Animal& animal, const SpeciesDef& species, const Env& env, Rng& r
     if (!env.nav.Passable(inside, profile)) {
         return false;
     }
-    Start(animal, AnimalActivity::BreakOut, target, 1);
+    StartActivity(animal, AnimalActivity::BreakOut, target, 1);
     return true;
 }
 

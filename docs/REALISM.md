@@ -31,6 +31,7 @@ loudspeaker stays muted and nobody has listened to any of it.
 | Habitat fronts a zoo would build | elephants and rhinos behind a 4 m planted stand-off with a leaning rail, hoofstock behind 2 m; heavy dark mesh instead of bars at bears and cats; chain-link one looks through; nobody walks on the planting | `docs/VISITOR_ZOO.md`, `evidence/habitat-fronts-2026-11-13.jpg` |
 | People at every habitat | 192 to 260 of 800 stand watching (was 110 to 215) and no habitat is left without watchers (several were, most of the time) | `docs/VISITOR_ZOO.md` "Who watches where" |
 | Trees and shrubs with leaves | every crown and bush was a lumpy green blob; now a dark core that casts the shadow, covered with cut-out sprays of leaves or needles (two painted 512 px atlases, alpha-tested with coverage kept through the mip levels); spruces are tiers of boughs | `src/game/FoliageTextures.*`, `src/game/PropModels.cpp`, `evidence/foliage-2026-11-13.jpg`, `docs/PERFORMANCE.md` |
+| Animals with a species' day | each species has its own shares of resting, feeding, walking and a signature activity (browse, ruminate, bathe, dust bathe, preen, sentinel, dig, filter feed, patrol, huddle), chooses its place in the habitat (shade at midday, high ground for the sentry, the group), and keeps them through a save; lions rest 70 % of the day, elephants move or feed 62 %, a meerkat sentry is posted 85 % of daylight | `docs/ANIMAL_BEHAVIOUR.md`, `evidence/animal-routines-2026-11-13.jpg` |
 
 ### Light from the sky and the ground (2026-11-13)
 
@@ -83,3 +84,8 @@ paddles with its walk clip.
 5. Keepers are not seen. Only penguin, rhinoceros and elephant have swimming clips. Bear growl
    is quiet in the mix.
 6. Loading 5.5 s, 2.4 s of it painting the ground.
+7. Animals get stuck: 5.4 % of the ticks in which an animal is under way it does not move
+   (3.0 % before the species routines), and one tiger stands pinned in the bamboo thicket for
+   most of an hour; the navigator does not know what plants and rocks block
+   (`docs/ANIMAL_BEHAVIOUR.md` "In the game"). Flamingos keep to the bank because the lagoon
+   has no shallows. No model has clips for preening, dust bathing, digging or sentry duty.

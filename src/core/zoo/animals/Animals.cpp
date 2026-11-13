@@ -10,6 +10,7 @@
 #include <utility>
 
 #include "zoo/animals/AnimalInternal.hpp"
+#include "zoo/animals/AnimalProfile.hpp"
 #include "zoo/animals/AnimalTuning.hpp"
 
 namespace zoo {
@@ -113,9 +114,11 @@ std::string_view ToString(Sex value) {
     return value == Sex::Female ? "female" : "male";
 }
 std::string_view ToString(AnimalActivity value) {
-    constexpr std::string_view names[] = {"idle", "wander",  "forage",    "eat",       "drink",
-                                          "rest", "sleep",   "play",      "socialize", "vocalize",
-                                          "pace", "shelter", "break_out", "loose",     "crated"};
+    constexpr std::string_view names[] = {"idle",     "wander",   "forage",      "eat",        "drink",
+                                          "rest",     "sleep",    "play",        "socialize",  "vocalize",
+                                          "pace",     "shelter",  "break_out",   "loose",      "crated",
+                                          "browse",   "ruminate", "bathe",       "dust_bathe", "preen",
+                                          "sentinel", "dig",      "filter_feed", "patrol",     "huddle"};
     const auto index = static_cast<std::size_t>(value);
     return index < std::size(names) ? names[index] : "idle";
 }
@@ -796,7 +799,7 @@ void Animals::StepAnimals(Env& env, const std::vector<Enclosure>& enclosures, in
             const std::size_t enclosureIndex = static_cast<std::size_t>(enclosure - enclosures.data());
             for (std::size_t memberIndex : enclosureScratch_[enclosureIndex]) {
                 const Animal& other = animals_[memberIndex];
-                if (other.id == animal.id) {
+                if (other.id == animal.id || other.species == animal.species) {
                     continue;
                 }
                 const SpeciesDef& otherSpecies = env.species.All()[static_cast<std::size_t>(other.species)];
@@ -816,14 +819,15 @@ void Animals::StepAnimals(Env& env, const std::vector<Enclosure>& enclosures, in
             const std::size_t enclosureIndex = static_cast<std::size_t>(enclosure - enclosures.data());
             neighbors = enclosureScratch_[enclosureIndex];
         }
-        if (animal.activity == AnimalActivity::Forage && animal.moving == false &&
+        if (animal_internal::FeedingActivity(animal.activity) && animal.moving == false &&
             species.diet != Diet::Carnivore && species.diet != Diet::Piscivore) {
             const Terrain terrain = env.world.At(World::TileAt(animal.position)).terrain;
             const TileCoord tile = World::TileAt(animal.position);
             if (!env.world.HasWater(tile) && (terrain == Terrain::Grass || terrain == Terrain::Savanna ||
                                               terrain == Terrain::ForestFloor)) {
-                animal.hunger = std::max(tuning::kForageMinimumHunger,
-                                         animal.hunger - tuning::kForageHungerPerDay * kDaysPerTick);
+                animal.hunger = std::min(
+                    animal.hunger, std::max(tuning::kForageMinimumHunger,
+                                            animal.hunger - tuning::kForageHungerPerDay * kDaysPerTick));
             }
         }
         if (animal.activity == AnimalActivity::Drink && animal.targetProp && !animal.moving) {
@@ -848,13 +852,19 @@ void Animals::StepAnimals(Env& env, const std::vector<Enclosure>& enclosures, in
             animal.thirst = Clamp(animal.thirst - animal.thirst / remainingTicks);
         }
         const float drinkUrgency =
-            animal.activity == AnimalActivity::Sleep ? tuning::kUrgentNeedSleep : tuning::kThirstUrgent;
+            animal.activity == AnimalActivity::Sleep
+                ? (animal_internal::ProfileFor(species) != nullptr ? 0.65f : tuning::kUrgentNeedSleep)
+            : animal.activity == AnimalActivity::Sentinel ? 0.5f
+                                                          : tuning::kThirstUrgent;
         const float eatUrgency =
-            animal.activity == AnimalActivity::Sleep ? tuning::kUrgentNeedSleep : tuning::kHungerUrgent;
+            animal.activity == AnimalActivity::Sleep
+                ? (animal_internal::ProfileFor(species) != nullptr ? 0.65f : tuning::kUrgentNeedSleep)
+            : animal.activity == AnimalActivity::Sentinel ? 0.5f
+                                                          : tuning::kHungerUrgent;
         const bool urgentDrink = animal.thirst > drinkUrgency;
         const bool urgentEat = animal.hunger > eatUrgency;
         bool urgentInterrupt = false;
-        if (animal.activity != AnimalActivity::BreakOut) {
+        if (animal.activity != AnimalActivity::BreakOut && env.time.tick >= animal.nextNeedCheck) {
             // A drink satisfies the higher-priority need without restarting it for hunger each tick.
             if (animal.activity == AnimalActivity::Drink) {
                 urgentInterrupt = false;
@@ -868,6 +878,9 @@ void Animals::StepAnimals(Env& env, const std::vector<Enclosure>& enclosures, in
         if (escapeTick % kTicksPerGameHour == 0) {
             animal_internal::TryEscape(animal, species, env, rng_);
         }
+        const float previousHeading = animal.heading;
+        animal_internal::UpdateSpeciesBehaviour(animal, species, env, animals_, neighbors,
+                                                Viewers(enclosureId), rng_, propScratch_);
         const bool completed = animal.activityLeft <= 0 && !animal.moving;
         if (animal.targetProp && std::as_const(env.objects).FindProp(animal.targetProp) == nullptr) {
             animal.targetProp = {};
@@ -902,7 +915,9 @@ void Animals::StepAnimals(Env& env, const std::vector<Enclosure>& enclosures, in
             animal.route.clear();
             animal.routeIndex = 0;
         } else if (urgentInterrupt || completed) {
-            animal_internal::DecideActivity(animal, species, env, animals_, neighbors, rng_, propScratch_);
+            animal_internal::DecideActivity(animal, species, env, animals_, neighbors, rng_, propScratch_,
+                                            Viewers(enclosureId));
+            animal.nextNeedCheck = env.time.tick + 2 * kTicksPerSecond;
         }
         if ((animal.activity == AnimalActivity::Eat || animal.activity == AnimalActivity::Drink ||
              animal.activity == AnimalActivity::Play) &&
@@ -942,6 +957,8 @@ void Animals::StepAnimals(Env& env, const std::vector<Enclosure>& enclosures, in
             }
         }
         animal_internal::AdvanceMovement(animal, species, env, pathCalls, animals_, neighbors, propScratch_);
+        animal.heading = TurnTowards(previousHeading, animal.heading,
+                                     tuning::kTurnRadiansPerSecond * tuning::kMotionSecondsPerTick);
         if ((animal.activity == AnimalActivity::Shelter || animal.activity == AnimalActivity::Sleep) &&
             !animal.moving && !animal.shelter && enclosure != nullptr) {
             for (BuildingId buildingId : enclosure->shelters) {
@@ -1056,6 +1073,13 @@ std::uint64_t Animals::StateHash() const {
         add(static_cast<std::uint32_t>(animal.stallTicks));
         add(animal.onDetour);
         add(animal.detours);
+        add(static_cast<std::uint64_t>(animal.nextNeedCheck));
+        add(static_cast<std::uint64_t>(animal.answeredCallTick));
+        add(static_cast<std::uint64_t>(animal.lastCallTick));
+        add(std::bit_cast<std::uint32_t>(animal.attentionHeading));
+        add(static_cast<std::uint32_t>(animal.attentionLeft));
+        add(static_cast<std::uint32_t>(animal.stillTicks));
+        add(animal.following.value);
         add(animal.home.value);
         add(animal.loose);
         add(animal.breeding);

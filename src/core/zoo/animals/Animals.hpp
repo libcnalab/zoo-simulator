@@ -22,21 +22,31 @@ std::string_view ToString(Sex v);  // "female", "male"
 /// What an animal is doing (or, while Animal::moving, is on its way to do).
 /// Names are part of the save format; append only.
 enum class AnimalActivity : std::uint8_t {
-    Idle,       ///< standing, looking around
-    Wander,     ///< strolling to another spot of its enclosure
-    Forage,     ///< nose down: grazing, sniffing, pecking
-    Eat,        ///< at a feeder
-    Drink,      ///< at a trough or at the water's edge
-    Rest,       ///< lying down awake
-    Sleep,      ///< asleep, in the open or in a shelter (Animal::shelter)
-    Play,       ///< with an enrichment item, or a burst of running
-    Socialize,  ///< seeking the company of a group mate
-    Vocalize,   ///< roaring, howling, trumpeting...
-    Pace,       ///< stereotypic pacing along the barrier: the visible sign of poor welfare
-    Shelter,    ///< hiding in a shelter from weather or crowds, awake
-    BreakOut,   ///< heading for the weak spot of the barrier, then over or through it
-    Loose,      ///< roaming outside any enclosure
-    Crated,     ///< in a transport crate: not in the world at all
+    Idle,        ///< standing, looking around
+    Wander,      ///< strolling to another spot of its enclosure
+    Forage,      ///< nose down: grazing, sniffing, pecking
+    Eat,         ///< at a feeder
+    Drink,       ///< at a trough or at the water's edge
+    Rest,        ///< lying down awake
+    Sleep,       ///< asleep, in the open or in a shelter (Animal::shelter)
+    Play,        ///< with an enrichment item, or a burst of running
+    Socialize,   ///< seeking the company of a group mate
+    Vocalize,    ///< roaring, howling, trumpeting...
+    Pace,        ///< stereotypic pacing along the barrier: the visible sign of poor welfare
+    Shelter,     ///< hiding in a shelter from weather or crowds, awake
+    BreakOut,    ///< heading for the weak spot of the barrier, then over or through it
+    Loose,       ///< roaming outside any enclosure
+    Crated,      ///< in a transport crate: not in the world at all
+    Browse,      ///< feeding with head raised to foliage
+    Ruminate,    ///< standing, chewing cud
+    Bathe,       ///< swimming or wallowing at a suitable water site
+    DustBathe,   ///< rolling or throwing dry substrate
+    Preen,       ///< tending feathers
+    Sentinel,    ///< scanning from a vantage point while companions feed
+    Dig,         ///< excavating and investigating substrate
+    FilterFeed,  ///< feeding head down in shallow water
+    Patrol,      ///< purposeful boundary travel, distinct from stereotypic pacing
+    Huddle,      ///< resting upright in a flock; flamingos use one leg
     Count
 };
 std::string_view ToString(AnimalActivity v);  // "idle", "wander", ... (save format)
@@ -191,6 +201,19 @@ struct Animal {
     /// The waypoint it walks to is a sidestep round an obstacle; how many this errand took.
     bool onDetour = false;
     std::uint32_t detours = 0;
+
+    /// A failed food/water search is retried after a short delay, not every tick.
+    std::int64_t nextNeedCheck = 0;
+    /// Shared call timestamp last answered, and the tick of this individual's call.
+    std::int64_t answeredCallTick = -1;
+    std::int64_t lastCallTick = -1;
+    /// Interest direction and time until the next glance; motion time, not calendar time.
+    float attentionHeading = 0.0f;
+    std::int32_t attentionLeft = 0;
+    /// Motionless awake ticks, including repeated bouts of the same activity.
+    std::int32_t stillTicks = 0;
+    /// Mother or juvenile playmate currently followed; null for independent movement.
+    AnimalId following;
 
     // -- life --
     /// The enclosure it belongs to: where it was last inside one. Null when that

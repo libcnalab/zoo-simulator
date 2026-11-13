@@ -87,6 +87,9 @@
   "generator": "tools/animals (zoogen)",
   "license": "MIT",
   "meta": {
+    "activity_clips": {
+      "dust_bathe": "rest"
+    },
     "body_length_m": 2.1,
     "common_name": "Common ostrich",
     "roughness": 0.93,

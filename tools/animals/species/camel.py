@@ -111,4 +111,6 @@ def make_spec():
     spec.voxel = .014
     spec.smooth_iters = 5
     spec.meta["roughness"] = .94
+    # The game's clip for a still activity: a camel chews the cud couched.
+    spec.meta["activity_clips"] = {"ruminate": "rest"}
     return spec

@@ -148,4 +148,6 @@ def make_spec():
     return Spec("ostrich", bones, _parts(bones), paint=paint, voxel=.009,
                 target_tris=14000, smooth_iters=4, rig=rig, clips=_clips, key_all_locations=True,
                 meta={"common_name": "Common ostrich", "scientific_name": "Struthio camelus",
-                      "shoulder_height_m": 2.4, "body_length_m": 2.1, "sex": "male", "roughness": .93})
+                      "shoulder_height_m": 2.4, "body_length_m": 2.1, "sex": "male", "roughness": .93,
+                      # The game's clip for a still activity: an ostrich dust-bathes sitting down.
+                      "activity_clips": {"dust_bathe": "rest"}})

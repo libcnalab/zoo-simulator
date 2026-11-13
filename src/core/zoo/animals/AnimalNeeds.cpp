@@ -3,6 +3,7 @@
 
 #include <algorithm>
 
+#include "zoo/animals/AnimalProfile.hpp"
 #include "zoo/animals/AnimalTuning.hpp"
 
 namespace zoo::animal_internal {
@@ -50,7 +51,7 @@ void AdvanceNeeds(Animal& animal, const SpeciesDef& species, Env& env, const Enc
     const float hoursPerTick =
         tuning::kMotionSecondsPerTick / (static_cast<float>(kTicksPerGameHour) / kTicksPerSecond);
     const bool sleeping = animal.activity == AnimalActivity::Sleep;
-    const bool resting = animal.activity == AnimalActivity::Rest;
+    const bool resting = RestingActivity(animal.activity);
     const float sleepHours = std::max(tuning::kMinimumSleepHours, species.sleepHoursPerDay);
     if (sleeping) {
         animal.fatigue = ClampNeed(animal.fatigue - hoursPerTick / sleepHours);

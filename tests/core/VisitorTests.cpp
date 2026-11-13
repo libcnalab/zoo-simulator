@@ -239,6 +239,15 @@ TEST(VisitorTests, WatchersStandAtTheFenceAndTheAnimalsKnow) {
         }
     }
     ASSERT_GE(watching, 10);
+    // A group that has just arrived still turns from the path to the fence (`face` is where it
+    // turns to): those who watch now are given the time of a half turn before their heading counts.
+    std::vector<std::uint32_t> arrived;
+    for (const Visitor& v : zoo->Guests().All()) {
+        if (v.activity == VisitorActivity::Watching) {
+            arrived.push_back(v.id.value);
+        }
+    }
+    Advance(*zoo, static_cast<std::int64_t>(std::ceil(3.2f / (visitor_tuning::kTurnRadiansPerSecond * kTickSeconds))) + 1);
     int checked = 0;
     for (const Visitor& v : zoo->Guests().All()) {
         if (v.activity != VisitorActivity::Watching) {
@@ -247,13 +256,27 @@ TEST(VisitorTests, WatchersStandAtTheFenceAndTheAnimalsKnow) {
         const Enclosure* enclosure = zoo->Habitats().Find(v.targetEnclosure);
         ASSERT_NE(enclosure, nullptr);
         const TileCoord tile = World::TileAt(v.position);
-        const auto spot = std::find_if(enclosure->viewing.begin(), enclosure->viewing.end(),
-                                       [tile](const ViewingSpot& s) { return s.tile == tile; });
-        ASSERT_NE(spot, enclosure->viewing.end()) << "visitor " << v.id.value << " watches from nowhere";
+        // A path tile at a corner of the habitat is a viewing place of two of its sides, so the
+        // tile alone does not say which fence the visitor stands at: any of them will do.
+        bool stands = false;
+        bool turnsIn = false;
+        bool looksIn = false;
+        for (const ViewingSpot& spot : enclosure->viewing) {
+            if (spot.tile != tile) {
+                continue;
+            }
+            stands = true;
+            const Vec2 in{static_cast<float>(Step(spot.side).x), static_cast<float>(Step(spot.side).z)};
+            turnsIn = turnsIn || Dot(HeadingVector(v.face), in) > 0.7f;
+            looksIn = looksIn || Dot(HeadingVector(v.heading), in) > 0.7f;
+        }
+        ASSERT_TRUE(stands) << "visitor " << v.id.value << " watches from nowhere";
         // Looking in, not at the path.
-        const Vec2 in{static_cast<float>(Step(spot->side).x), static_cast<float>(Step(spot->side).z)};
-        EXPECT_GT(Dot(HeadingVector(v.heading), in), 0.7f);
-        ++checked;
+        EXPECT_TRUE(turnsIn) << "visitor " << v.id.value << " at the fence turns away from the habitat";
+        if (std::find(arrived.begin(), arrived.end(), v.id.value) != arrived.end()) {
+            EXPECT_TRUE(looksIn) << "visitor " << v.id.value << " at the fence looks away from the habitat";
+            ++checked;
+        }
     }
     EXPECT_GE(checked, 10);
 }

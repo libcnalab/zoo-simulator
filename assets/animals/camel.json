@@ -108,6 +108,9 @@
   "generator": "tools/animals (zoogen)",
   "license": "MIT",
   "meta": {
+    "activity_clips": {
+      "ruminate": "rest"
+    },
     "body_length_m": 3.0,
     "common_name": "Bactrian camel",
     "roughness": 0.94,

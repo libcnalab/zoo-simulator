@@ -2,6 +2,7 @@
 #include "zoo/animals/AnimalsJson.hpp"
 
 #include <algorithm>
+#include <cmath>
 #include <limits>
 #include <stdexcept>
 
@@ -89,6 +90,13 @@ Json Encode(const Animal& a, const SpeciesCatalog& species) {
                 {"stall_ticks", a.stallTicks},
                 {"on_detour", a.onDetour},
                 {"detours", a.detours},
+                {"next_need_check", a.nextNeedCheck},
+                {"answered_call_tick", a.answeredCallTick},
+                {"last_call_tick", a.lastCallTick},
+                {"attention_heading", a.attentionHeading},
+                {"attention_left", a.attentionLeft},
+                {"still_ticks", a.stillTicks},
+                {"following", a.following.value},
                 {"home", a.home.value},
                 {"loose", a.loose},
                 {"breeding", a.breeding},
@@ -179,6 +187,19 @@ Animal DecodeAnimal(const Json& value, const SpeciesCatalog& species) {
         a.onDetour = ReadBool(value.at("on_detour"), "on_detour");
     if (value.contains("detours"))
         a.detours = static_cast<std::uint32_t>(ReadUnsigned(value.at("detours"), "detours"));
+    a.nextNeedCheck = value.value("next_need_check", std::int64_t{0});
+    a.answeredCallTick = value.value("answered_call_tick", std::int64_t{-1});
+    a.lastCallTick = value.value("last_call_tick", std::int64_t{-1});
+    a.attentionHeading = value.value("attention_heading", 0.0f);
+    a.attentionLeft = value.value("attention_left", 0);
+    a.stillTicks = value.value("still_ticks", 0);
+    if (!std::isfinite(a.attentionHeading) || a.attentionLeft < 0 || a.stillTicks < 0 ||
+        a.nextNeedCheck < 0 || a.answeredCallTick < -1 || a.lastCallTick < -1) {
+        throw std::runtime_error("invalid animal routine state");
+    }
+    if (value.contains("following")) {
+        a.following = ReadId<AnimalId>(value.at("following"), "following");
+    }
     a.home = ReadId<EnclosureId>(value.at("home"), "home");
     a.loose = ReadBool(value.at("loose"), "loose");
     a.breeding = ReadBool(value.at("breeding"), "breeding");

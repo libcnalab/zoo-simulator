@@ -38,7 +38,7 @@ TEST(AnimalBehaviourTests, DecisionsChooseActivitiesAndKeepNeedPriority) {
     animal->fatigue = 0.0f;
     animal->activityLeft = 0;
     Env env{world, objects, enclosures, catalog, species, nav, nullptr, nullptr, {}, {}};
-    bool sawWander = false;
+    bool sawMovement = false;
     bool sawRest = false;
     bool sawSleep = false;
     for (int tick = 0; tick < 5000; ++tick) {
@@ -46,11 +46,11 @@ TEST(AnimalBehaviourTests, DecisionsChooseActivitiesAndKeepNeedPriority) {
         animals.Step(env);
         animal = animals.Find(id);
         ASSERT_NE(animal, nullptr);
-        sawWander = sawWander || animal->activity == AnimalActivity::Wander;
+        sawMovement = sawMovement || animal->moving;
         sawRest = sawRest || animal->activity == AnimalActivity::Rest;
         sawSleep = sawSleep || animal->activity == AnimalActivity::Sleep;
     }
-    EXPECT_TRUE(sawWander);
+    EXPECT_TRUE(sawMovement);
     EXPECT_TRUE(sawRest || sawSleep);
 }
 

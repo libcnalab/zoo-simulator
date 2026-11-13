@@ -29,8 +29,9 @@ void AdvanceMovement(Animal& animal, const SpeciesDef& species, const Env& env, 
     }
     const float bodyScale = BodyScale(animal, species, env.time);
     const TileCoord currentTile = World::TileAt(animal.position);
-    const NavProfile profile = NavProfile::Animal(
-        tuning::kWadingShoulderFraction * species.shoulderHeightM * bodyScale, species.canSwim);
+    const float wadeDepth =
+        species.canSwim ? tuning::kWadingShoulderFraction * species.shoulderHeightM * bodyScale : 0.0f;
+    const NavProfile profile = NavProfile::Animal(wadeDepth, species.canSwim);
     if (!env.nav.Passable(currentTile, profile)) {
         const Region region = env.enclosures.RegionAt(currentTile);
         const EnclosureId enclosure = env.enclosures.At(currentTile);
@@ -65,10 +66,16 @@ void AdvanceMovement(Animal& animal, const SpeciesDef& species, const Env& env, 
     }
     const float speedScale =
         tuning::kYoungSpeedScale + (tuning::kAdultSpeedScale - tuning::kYoungSpeedScale) * bodyScale;
-    const bool running = animal.activity == AnimalActivity::BreakOut ||
-                         animal.activity == AnimalActivity::Loose ||
-                         (animal.activity == AnimalActivity::Play && !animal.targetProp);
-    const float maxSpeed = (running ? species.runSpeed : species.walkSpeed) * speedScale;
+    const bool running =
+        animal.activity == AnimalActivity::BreakOut || animal.activity == AnimalActivity::Loose ||
+        (animal.activity == AnimalActivity::Play && !animal.targetProp &&
+         animal.activityTicks < 3 * kTicksPerSecond &&
+         HashFloat(animal.id.value, static_cast<std::uint32_t>(env.time.tick - animal.activityTicks)) <
+             0.15f);
+    const float gait = animal.activity == AnimalActivity::Patrol
+                           ? std::min(species.runSpeed, species.walkSpeed * 1.5f)
+                           : (running ? species.runSpeed : species.walkSpeed);
+    const float maxSpeed = gait * speedScale;
     if (!animal.moving) {
         animal.moving = false;
         animal.route.clear();
@@ -77,7 +84,7 @@ void AdvanceMovement(Animal& animal, const SpeciesDef& species, const Env& env, 
         animal.stallTicks = 0;
         animal.onDetour = false;
         animal.detours = 0;
-        if (animal.targetProp) {
+        if (animal.targetProp && animal.attentionLeft <= 0) {
             const Prop* prop = std::as_const(env.objects).FindProp(animal.targetProp);
             if (prop != nullptr) {
                 animal.heading = TurnTowards(animal.heading, HeadingOf(prop->position - animal.position),
@@ -219,9 +226,8 @@ void AdvanceMovement(Animal& animal, const SpeciesDef& species, const Env& env, 
         // What the animal is walking up to (its feeder, its trough) it may come right up to,
         // but not through: a kangaroo bound for the far side of its trough walked across it
         // (seen 0.9 m from the centre of a trough of 1 m, 2026-11-13).
-        clearance = propId == animal.targetProp
-                        ? definition.radiusM
-                        : definition.radiusM + girth + tuning::kObstacleClearanceM;
+        clearance = propId == animal.targetProp ? definition.radiusM
+                                                : definition.radiusM + girth + tuning::kObstacleClearanceM;
         return prop;
     };
     env.objects.PropsNear(animal.position,
@@ -242,11 +248,8 @@ void AdvanceMovement(Animal& animal, const SpeciesDef& species, const Env& env, 
             }
             const SpeciesDef& otherSpecies = env.species.All()[static_cast<std::size_t>(other.species)];
             const float otherRadius = otherSpecies.bodyRadiusM * BodyScale(other, otherSpecies, env.time);
-            const float clearance = bodyRadius + otherRadius + tuning::kAnimalClearanceM;
-            // Arriving beside a companion (two at one trough) is not a collision.
-            if (finalWaypoint && animal.targetProp && remaining < clearance) {
-                continue;
-            }
+            const float clearance =
+                girth + otherRadius * tuning::kBodyWidthFraction + tuning::kAnimalClearanceM;
             if (pass == 0) {
                 slide(other.position, clearance);
             } else if (runsInto(other.position, clearance)) {
@@ -255,8 +258,9 @@ void AdvanceMovement(Animal& animal, const SpeciesDef& species, const Env& env, 
         }
     }
     if (crowded) {
-        // Hemmed in by its companions: squeeze past slowly rather than wait for ever.
-        step = planned * tuning::kSqueezePastFactor;
+        // A detour resolves a blocked route; stepping through a companion would
+        // break spacing and can leave two animals stationary at the same spot.
+        step = {};
     }
     for (PropId propId : propScratch) {
         float clearance = 0.0f;

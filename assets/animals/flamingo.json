@@ -87,6 +87,9 @@
   "generator": "tools/animals (zoogen)",
   "license": "CC-BY-4.0",
   "meta": {
+    "activity_clips": {
+      "huddle": "rest"
+    },
     "asset_license": "CC-BY-4.0",
     "body_length_m": 1.2,
     "common_name": "Greater flamingo",

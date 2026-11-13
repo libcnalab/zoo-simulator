@@ -57,6 +57,48 @@ bool LiesDown(AnimalPose pose) {
     return pose == AnimalPose::Rest || pose == AnimalPose::Sleep;
 }
 
+using ShownPoses = std::array<AnimalPose, static_cast<std::size_t>(zoo::AnimalActivity::Count)>;
+
+/// What a still animal plays for each activity when its model says nothing else. Activities
+/// without a clip of their own are shown by the nearest posture the standard clips have.
+ShownPoses DefaultShownPoses() {
+    using zoo::AnimalActivity;
+    ShownPoses shown;
+    shown.fill(AnimalPose::Idle);
+    const auto set = [&shown](AnimalActivity activity, AnimalPose pose) {
+        shown[static_cast<std::size_t>(activity)] = pose;
+    };
+    set(AnimalActivity::Forage, AnimalPose::Eat);
+    set(AnimalActivity::Eat, AnimalPose::Eat);
+    set(AnimalActivity::Drink, AnimalPose::Drink);
+    set(AnimalActivity::Rest, AnimalPose::Rest);
+    set(AnimalActivity::Sleep, AnimalPose::Sleep);
+    // Nose or bill down: digging for grubs, sieving the shallows.
+    set(AnimalActivity::Dig, AnimalPose::Eat);
+    set(AnimalActivity::FilterFeed, AnimalPose::Eat);
+    // A wallow too shallow to float in: the animal lies in it.
+    set(AnimalActivity::Bathe, AnimalPose::Rest);
+    return shown;
+}
+
+/// `meta.activity_clips` of a model's sidecar: {"huddle": "rest", ...}, activity names as the
+/// save format writes them, clip names as the models carry them. Unknown names are left out.
+void ReadActivityClips(const nlohmann::json& clips, ShownPoses& shown) {
+    for (std::size_t activity = 0; activity < shown.size(); ++activity) {
+        const std::string name{zoo::ToString(static_cast<zoo::AnimalActivity>(activity))};
+        const auto found = clips.find(name);
+        if (found == clips.end() || !found->is_string())
+            continue;
+        const std::string clip = found->get<std::string>();
+        // Only the still clips: a gait or a water clip would be played in place.
+        for (const AnimalPose pose : {AnimalPose::Idle, AnimalPose::Eat, AnimalPose::Drink, AnimalPose::Rest,
+                                      AnimalPose::Sleep}) {
+            if (clip == kClipNames[static_cast<std::size_t>(pose)])
+                shown[activity] = pose;
+        }
+    }
+}
+
 }  // namespace
 
 AnimalRenderer::AnimalRenderer(Microsoft::Xna::Framework::Content::ContentManager& content,
@@ -75,6 +117,7 @@ const AnimalRenderer::Kind* AnimalRenderer::Load(const std::string& model) {
     if (!directory_ || !std::filesystem::exists(*directory_ / "animals" / (model + ".glb")))
         return nullptr;
     auto kind = std::make_unique<Kind>();
+    kind->shown = DefaultShownPoses();
     try {
         kind->model = std::make_unique<Xna::Model>(content_.Load<Xna::Model>("animals/" + model));
     } catch (const std::exception& error) {
@@ -124,6 +167,8 @@ const AnimalRenderer::Kind* AnimalRenderer::Load(const std::string& model) {
         kind->floatDepth = kind->swimDepth;
         if (const auto still = meta.find("float"); still != meta.end() && still->is_object())
             kind->floatDepth = still->value("depth_m", kind->floatDepth);
+        if (const auto shown = meta.find("activity_clips"); shown != meta.end() && shown->is_object())
+            ReadActivityClips(*shown, kind->shown);
     } catch (const std::exception& error) {
         std::printf("zoo: animals: %s.json: %s\n", model.c_str(), error.what());
     }
@@ -169,24 +214,14 @@ AnimalPose AnimalRenderer::Choose(const zoo::Animal& animal, const Actor& actor)
         const float margin = actor.pose == AnimalPose::Trot ? 0.9f : 1.1f;
         return animal.speed > change * margin ? AnimalPose::Trot : AnimalPose::Walk;
     }
-    switch (animal.activity) {
-        case AnimalActivity::Forage:
-        case AnimalActivity::Eat:
-            return AnimalPose::Eat;
-        case AnimalActivity::Drink:
-            return AnimalPose::Drink;
-        case AnimalActivity::Rest:
-            return AnimalPose::Rest;
-        case AnimalActivity::Sleep:
-            return AnimalPose::Sleep;
-        case AnimalActivity::Vocalize:
-            // The call is given once; then the animal stands.
-            if (actor.pose == AnimalPose::Vocalize && actor.animator.Finished())
-                return AnimalPose::Idle;
-            return actor.pose == AnimalPose::Idle && actor.called ? AnimalPose::Idle : AnimalPose::Vocalize;
-        default:
+    if (animal.activity == AnimalActivity::Vocalize) {
+        // The call is given once; then the animal stands.
+        if (actor.pose == AnimalPose::Vocalize && actor.animator.Finished())
             return AnimalPose::Idle;
+        return actor.pose == AnimalPose::Idle && actor.called ? AnimalPose::Idle : AnimalPose::Vocalize;
     }
+    const auto activity = static_cast<std::size_t>(animal.activity);
+    return activity < actor.kind->shown.size() ? actor.kind->shown[activity] : AnimalPose::Idle;
 }
 
 void AnimalRenderer::Update(const zoo::Zoo& zoo, float seconds, float tickFraction) {

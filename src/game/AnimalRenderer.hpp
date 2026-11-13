@@ -74,6 +74,9 @@ private:
         /// way (`swim`), and lying still on the water (`float`, for a model that has the clip).
         float swimDepth = 0.0f;
         float floatDepth = 0.0f;
+        /// The clip a still animal plays for each activity: the defaults, changed by the model's
+        /// sidecar (`meta.activity_clips`) where its clips suit a species better.
+        std::array<AnimalPose, static_cast<std::size_t>(zoo::AnimalActivity::Count)> shown{};
     };
     struct Actor {
         explicit Actor(const Kind& k) : kind(&k), animator(k.skeleton) {}

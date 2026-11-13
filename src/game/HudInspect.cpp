@@ -62,6 +62,15 @@ std::string ActivityText(const zoo::Animal& animal) {
                 return "Off to play";
             case AnimalActivity::Socialize:
                 return "Joining its companions";
+            case AnimalActivity::Browse:
+            case AnimalActivity::FilterFeed:
+                return "Going to feed";
+            case AnimalActivity::Bathe:
+                return "Going to the water";
+            case AnimalActivity::Sentinel:
+                return "Taking up its lookout";
+            case AnimalActivity::Huddle:
+                return "Joining the flock";
             default:
                 break;
         }
@@ -97,6 +106,26 @@ std::string ActivityText(const zoo::Animal& animal) {
             return "On the loose";
         case AnimalActivity::Crated:
             return "In a transport crate";
+        case AnimalActivity::Browse:
+            return "Browsing";
+        case AnimalActivity::Ruminate:
+            return "Chewing the cud";
+        case AnimalActivity::Bathe:
+            return "Bathing";
+        case AnimalActivity::DustBathe:
+            return "Dust bathing";
+        case AnimalActivity::Preen:
+            return "Preening";
+        case AnimalActivity::Sentinel:
+            return "On sentry duty";
+        case AnimalActivity::Dig:
+            return "Digging";
+        case AnimalActivity::FilterFeed:
+            return "Sieving the shallows";
+        case AnimalActivity::Patrol:
+            return "Patrolling its territory";
+        case AnimalActivity::Huddle:
+            return "Standing with the flock";
         case AnimalActivity::Count:
             break;
     }
