@@ -76,32 +76,16 @@ An exploratory stricter spawn/early-fill check found animals initially centred o
 at the required end-of-observation checks, including both full fills. The occupancy check
 immediately after building requires valid terrain and enclosure membership, not settled steering.
 
-### Persistence defect retained as a disabled regression
+### Saving and loading at visiting time
 
-`DISABLED_SaveLoadAtVisitingTime` writes under `build-probe/tests/`, loads, compares subsystem
-state and the total hash, steps both zoos 500 times, and compares again. The immediate total
-hash matches. `VisitorsJson` does not persist `VisitorPace`; a loaded visit gets default pace.
-The visitor hash and object state diverge after 500 steps, while animals, calendar, weather,
-finance and enclosures match in the observed runs. `Visitors::StateHash()` also omits pace,
-which explains why the initial hash comparison alone cannot detect this defect.
-
-After the 600-step fill plus 500 further steps:
-
-| Seed | Original total hash | Loaded total hash |
-| --- | --- | --- |
-| 1 | 5040814174084344319 | 6339438778776651873 |
-| 2 | 4908663276595380393 | 8794901899873470253 |
-
-The visitor subsystem hashes after those 500 further steps are:
-
-| Seed | Original visitors | Loaded visitors |
-| --- | --- | --- |
-| 1 | 17079943081762482478 | 4558618693641361404 |
-| 2 | 395849853729248759 | 2783761485865137719 |
-
-Persistence was not changed: fixing it would change results and `ZooSave.*` is explicitly
-read-only. The lead should persist and restore visitor pace and include it in state equality/hash
-in a separate change. The game currently reapplies visit pace during load; core `LoadZoo` does not.
+`SaveLoadAtVisitingTime` writes under `build-probe/tests/`, loads, compares subsystem state and
+the total hash, steps both zoos 500 times, and compares again. `VisitorPace` is a setting, not
+state (`Visitors::Pace()` says so): it is not saved and takes no part in `StateHash()`; the game
+sets it again after loading (`ZooGame::PrepareVisit`). The investigation first read that as a
+defect, because a loaded zoo that is stepped *without* setting the pace again diverges from the
+original after a few hundred steps (visitors and objects; animals, calendar, weather, finance
+and enclosures stay equal). The test now does what the game does, sets the pace on the loaded
+zoo, and requires equal state immediately and after 500 further steps, for both seeds.
 
 ## Results
 

@@ -288,9 +288,10 @@ void ExpectHashes(const Zoo& original, const Zoo& loaded) {
     EXPECT_EQ(original.StateHash(), loaded.StateHash()) << "whole zoo";
 }
 
-// VisitorsJson omits VisitorPace: the immediate hash matches, but after 500 steps
-// visitors and object state diverge (both seeds). ZooSave is deliberately unchanged.
-TEST_P(VisitorZooHabitat, DISABLED_SaveLoadAtVisitingTime) {
+// The pace of a visit is a setting, not state (Visitors::Pace): a saved zoo does not carry it,
+// and whoever loads a visit sets it again, as ZooGame::LoadVisit does through PrepareVisit.
+// With that, the loaded zoo goes on exactly as the one that was saved.
+TEST_P(VisitorZooHabitat, SaveLoadAtVisitingTime) {
     Zoo zoo(testdata::GameCatalog(), testdata::GameSpecies(), VisitorZooConfig(GetParam()));
     BuildVisitorZoo(zoo);
     FillForVisit(zoo, {.fillTicks = 600});
@@ -303,9 +304,8 @@ TEST_P(VisitorZooHabitat, DISABLED_SaveLoadAtVisitingTime) {
     ASSERT_NE(loaded, nullptr) << error;
     SCOPED_TRACE("after load / after 500 further steps");
     ExpectHashes(zoo, *loaded);
-    EXPECT_FLOAT_EQ(zoo.Guests().Pace().linger, loaded->Guests().Pace().linger);
-    EXPECT_FLOAT_EQ(zoo.Guests().Pace().stay, loaded->Guests().Pace().stay);
-    EXPECT_FLOAT_EQ(zoo.Guests().Pace().arrivals, loaded->Guests().Pace().arrivals);
+    EXPECT_FLOAT_EQ(loaded->Guests().Pace().linger, VisitorPace{}.linger);
+    loaded->Guests().SetPace(zoo.Guests().Pace());
     for (int i = 0; i < 500; ++i) {
         zoo.Step();
         loaded->Step();
