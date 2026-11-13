@@ -101,6 +101,21 @@ void Soundscape::Load(const std::filesystem::path& directory) {
     }
     if (!manifest.contains("sounds") || !manifest["sounds"].is_array())
         return;
+    // The mix: recordings are normalised to their peaks, which leaves a camel's grunt 20 LU
+    // louder than a bear's growl. tools/audio/audit_audio.py measures each take and writes
+    // the gain that sets it right; a take the mix does not know plays as recorded.
+    nlohmann::json mix;
+    if (std::ifstream mixFile(directory / "mix.json"); mixFile) {
+        try {
+            mix = nlohmann::json::parse(mixFile);
+        } catch (const std::exception& error) {
+            std::printf("zoo: sound: mix.json: %s\n", error.what());
+        }
+    }
+    const nlohmann::json* gains = mix.is_object() && mix.contains("gains_db") && mix["gains_db"].is_object()
+                                      ? &mix["gains_db"]
+                                      : nullptr;
+    int mixed = 0;
     for (const auto& entry : manifest["sounds"]) {
         if (!entry.is_object() || !entry.contains("name") || !entry.contains("files"))
             continue;
@@ -108,10 +123,16 @@ void Soundscape::Load(const std::filesystem::path& directory) {
         for (const auto& item : entry["files"]) {
             if (!item.is_string())
                 continue;
-            const std::filesystem::path path = directory / item.get<std::string>();
+            const std::string relative = item.get<std::string>();
+            const std::filesystem::path path = directory / relative;
             try {
                 library_[name].push_back(std::make_unique<Sound>(path.string()));
                 ++figures_.files;
+                if (gains && gains->contains(relative) && (*gains)[relative].is_number()) {
+                    const float decibels = std::clamp((*gains)[relative].get<float>(), -40.0f, 0.0f);
+                    gains_[library_[name].back().get()] = std::pow(10.0f, decibels / 20.0f);
+                    ++mixed;
+                }
             } catch (const std::exception& error) {
                 ++figures_.failed;
                 // Without an audio device every file fails the same way: say it once.
@@ -120,8 +141,8 @@ void Soundscape::Load(const std::filesystem::path& directory) {
             }
         }
     }
-    std::printf("zoo: sound: %d recordings under %zu names, %d failed\n", figures_.files, library_.size(),
-                figures_.failed);
+    std::printf("zoo: sound: %d recordings under %zu names, %d failed; the mix sets %d of them\n", figures_.files,
+                library_.size(), figures_.failed, mixed);
 }
 
 float Soundscape::Chance() {
@@ -310,9 +331,10 @@ void Soundscape::Call(const zoo::Zoo& zoo, const zoo::Animal& animal, const Vect
     const float away = Vector3::Distance(mouth, ears);
     if (away > chosenReach)
         return;
+    const auto gain = gains_.find(sound);
     system_.Play(*sound,
                  {.category = "animals",
-                  .volume = 1.0f,
+                  .volume = gain != gains_.end() ? gain->second : 1.0f,
                   .pitch = (Chance() - 0.5f) * 0.1f,
                   .position = mouth,
                   .falloff = {.reference = chosenReach * 0.07f, .radius = chosenReach, .rolloff = 0.85f},

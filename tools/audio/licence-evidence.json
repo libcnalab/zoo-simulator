@@ -452,5 +452,675 @@
       },
       "licence_note": "Current PLOS Figshare record explicitly licenses these original WAV files CC BY 4.0. The separate Commons Ogg derivative is tagged CC BY 2.5 and was not used."
     }
+  },
+  "https://ndownloader.figshare.com/files/424062": {
+    "title": "Bee Threat Elicits Alarm Call in African Elephants — Audio S1 (natural bee rumbles)",
+    "source_page": "https://plos.figshare.com/articles/dataset/Bee_Threat_Elicits_Alarm_Call_in_African_Elephants/143732",
+    "download_url": "https://ndownloader.figshare.com/files/424062",
+    "author": "Lucy E. King, Joseph Soltis, Iain Douglas-Hamilton, Anne Savage, Fritz Vollrath",
+    "licence": "CC BY 4.0",
+    "licence_url": "https://creativecommons.org/licenses/by/4.0/",
+    "cache_file": "round2-b8170a78feb1ec805f56.wav",
+    "source_sha256": "021df33847f814ba0937725ecada79031dae692fb57e09440ddf1c26a5001824",
+    "verified_date": "2026-11-13",
+    "metadata": {
+      "files": [
+        {
+          "id": 424062,
+          "name": "Audio_S1.wav",
+          "size": 396944,
+          "is_link_only": false,
+          "download_url": "https://ndownloader.figshare.com/files/424062",
+          "supplied_md5": "f9ac1cd8b5b1a63e6764575bca17de32",
+          "computed_md5": "f9ac1cd8b5b1a63e6764575bca17de32",
+          "mimetype": "audio/x-wav"
+        },
+        {
+          "id": 424073,
+          "name": "Audio_S2.wav",
+          "size": 359857,
+          "is_link_only": false,
+          "download_url": "https://ndownloader.figshare.com/files/424073",
+          "supplied_md5": "15bcdbfcb6134d10b734d73341905bea",
+          "computed_md5": "15bcdbfcb6134d10b734d73341905bea",
+          "mimetype": "audio/x-wav"
+        },
+        {
+          "id": 424086,
+          "name": "Audio_S3.wav",
+          "size": 565188,
+          "is_link_only": false,
+          "download_url": "https://ndownloader.figshare.com/files/424086",
+          "supplied_md5": "0f1adc0c7ba8acc1102b1613b1216dd4",
+          "computed_md5": "0f1adc0c7ba8acc1102b1613b1216dd4",
+          "mimetype": "audio/x-wav"
+        },
+        {
+          "id": 424097,
+          "name": "Video_S4.mov",
+          "size": 3609856,
+          "is_link_only": false,
+          "download_url": "https://ndownloader.figshare.com/files/424097",
+          "supplied_md5": "3aaccac7d6fa7bed867bd67dedfa8269",
+          "computed_md5": "3aaccac7d6fa7bed867bd67dedfa8269",
+          "mimetype": "video/x-m4v"
+        }
+      ],
+      "folder_structure": {},
+      "authors": [
+        {
+          "id": 249854,
+          "full_name": "Lucy E. King",
+          "first_name": "Lucy",
+          "last_name": "E. King",
+          "is_active": false,
+          "url_name": "_",
+          "orcid_id": ""
+        },
+        {
+          "id": 249861,
+          "full_name": "Joseph Soltis",
+          "first_name": "Joseph",
+          "last_name": "Soltis",
+          "is_active": false,
+          "url_name": "_",
+          "orcid_id": ""
+        },
+        {
+          "id": 103255,
+          "full_name": "Iain Douglas-Hamilton",
+          "first_name": "Iain",
+          "last_name": "Douglas-Hamilton",
+          "is_active": false,
+          "url_name": "_",
+          "orcid_id": ""
+        },
+        {
+          "id": 249868,
+          "full_name": "Anne Savage",
+          "first_name": "Anne",
+          "last_name": "Savage",
+          "is_active": false,
+          "url_name": "_",
+          "orcid_id": ""
+        },
+        {
+          "id": 249873,
+          "full_name": "Fritz Vollrath",
+          "first_name": "Fritz",
+          "last_name": "Vollrath",
+          "is_active": false,
+          "url_name": "_",
+          "orcid_id": ""
+        }
+      ],
+      "custom_fields": [],
+      "figshare_url": "https://plos.figshare.com/articles/dataset/Bee_Threat_Elicits_Alarm_Call_in_African_Elephants/143732",
+      "download_disabled": false,
+      "description": "<div><p>Unlike the smaller and more vulnerable mammals, African elephants have relatively few predators that threaten their survival. The sound of disturbed African honeybees <em>Apis meliffera scutellata</em> causes African elephants <em>Loxodonta africana</em> to retreat and produce warning vocalizations that lead other elephants to join the flight. In our first experiment, audio playbacks of bee sounds induced elephants to retreat and elicited more head-shaking and dusting, reactive behaviors that may prevent bee stings, compared to white noise control playbacks. Most importantly, elephants produced distinctive “rumble” vocalizations in response to bee sounds. These rumbles exhibited an upward shift in the second formant location, which implies active vocal tract modulation, compared to rumbles made in response to white noise playbacks. In a second experiment, audio playbacks of these rumbles produced in response to bees elicited increased headshaking, and further and faster retreat behavior in other elephants, compared to control rumble playbacks with lower second formant frequencies. These responses to the bee rumble stimuli occurred in the absence of any bees or bee sounds. This suggests that these elephant rumbles may function as referential signals, in which a formant frequency shift alerts nearby elephants about an external threat, in this case, the threat of bees.</p></div>",
+      "funding": null,
+      "funding_list": [],
+      "version": 1,
+      "status": "public",
+      "size": 4931845,
+      "created_date": "2010-04-26T01:02:12Z",
+      "modified_date": "2023-06-01T10:01:19Z",
+      "is_public": true,
+      "is_confidential": false,
+      "is_metadata_record": false,
+      "confidential_reason": "",
+      "metadata_reason": "",
+      "license": {
+        "value": 1,
+        "name": "CC BY 4.0",
+        "url": "https://creativecommons.org/licenses/by/4.0/"
+      },
+      "tags": [
+        "elicits",
+        "african",
+        "elephants"
+      ],
+      "keywords": [
+        "elicits",
+        "african",
+        "elephants"
+      ],
+      "categories": [
+        {
+          "id": 64,
+          "title": "Cancer",
+          "parent_id": 48,
+          "path": "",
+          "source_id": "",
+          "taxonomy_id": 10
+        },
+        {
+          "id": 39,
+          "title": "Ecology",
+          "parent_id": 33,
+          "path": "",
+          "source_id": "",
+          "taxonomy_id": 10
+        }
+      ],
+      "references": [
+        "https://doi.org/10.1371/journal.pone.0010346"
+      ],
+      "has_linked_file": false,
+      "citation": "E. King, Lucy; Soltis, Joseph; Douglas-Hamilton, Iain; Savage, Anne; Vollrath, Fritz (2016). Bee Threat Elicits Alarm Call in African Elephants. PLOS ONE. Dataset. https://doi.org/10.1371/journal.pone.0010346",
+      "related_materials": [
+        {
+          "id": 17690216,
+          "identifier": "10.1371/journal.pone.0010346",
+          "title": "Bee Threat Elicits Alarm Call in African Elephants",
+          "relation": "IsSupplementTo",
+          "identifier_type": "DOI",
+          "is_linkout": true,
+          "link": "https://doi.org/10.1371/journal.pone.0010346"
+        }
+      ],
+      "is_embargoed": false,
+      "embargo_date": null,
+      "embargo_type": null,
+      "embargo_title": "",
+      "embargo_reason": "",
+      "embargo_options": [],
+      "id": 143732,
+      "title": "Bee Threat Elicits Alarm Call in African Elephants",
+      "doi": "10.1371/journal.pone.0010346",
+      "handle": "",
+      "url": "https://api.figshare.com/v2/articles/143732",
+      "published_date": "2010-04-26T01:02:12Z",
+      "thumb": "https://s3-eu-west-1.amazonaws.com/ppreviews-plos-725668748/424097/thumb.png",
+      "defined_type": 3,
+      "defined_type_name": "dataset",
+      "group_id": 107,
+      "url_private_api": "https://api.figshare.com/v2/account/articles/143732",
+      "url_public_api": "https://api.figshare.com/v2/articles/143732",
+      "url_private_html": "https://figshare.com/account/articles/143732",
+      "url_public_html": "https://plos.figshare.com/articles/dataset/Bee_Threat_Elicits_Alarm_Call_in_African_Elephants/143732",
+      "timeline": {
+        "posted": "2010-04-26T01:02:12",
+        "firstOnline": "2016-01-18"
+      },
+      "resource_title": "Bee Threat Elicits Alarm Call in African Elephants",
+      "resource_doi": "10.1371/journal.pone.0010346"
+    },
+    "species_as_source_names_it": "Loxodonta africana",
+    "source_call_quote": "Recording of Bee Rumble.",
+    "inspection": "Natural bee-response rumble, Audio S1; continuous low-frequency call and higher formants dominate the inspected waveform/spectrogram. No pitch or formant alteration; no high-pass.",
+    "publisher_caption_note": "The source caption describes three bee rumbles recorded from a family responding to bee stimuli, used in playback experiments. The experimental formant alteration belongs to Audio S2, which is not used.",
+    "publisher_caption_cache": "round2-2860e4a5dcc06f737845.html"
+  },
+  "https://ndownloader.figshare.com/files/291227": {
+    "title": "Visualizing Sound Emission of Elephant Vocalizations — Movie S3 (oral rumble, 25 fps)",
+    "source_page": "https://plos.figshare.com/articles/dataset/Visualizing_Sound_Emission_of_Elephant_Vocalizations_Evidence_for_Two_Rumble_Production_Types__/117289",
+    "download_url": "https://ndownloader.figshare.com/files/291227",
+    "author": "Angela S. Stoeger, Gunnar Heilmann, Matthias Zeppelzauer, André Ganswindt, Sean Hensman, Benjamin D. Charlton",
+    "licence": "CC BY 4.0",
+    "licence_url": "https://creativecommons.org/licenses/by/4.0/",
+    "cache_file": "round2-9021f9a0baacb8de46f6.avi",
+    "source_sha256": "85d9d7628a5f13976ae8c462818c0c36fe6ffd99cb27474f8cde391e427d7737",
+    "verified_date": "2026-11-13",
+    "metadata": {
+      "files": [
+        {
+          "id": 290980,
+          "name": "Movie_S1.avi",
+          "size": 10007388,
+          "is_link_only": false,
+          "download_url": "https://ndownloader.figshare.com/files/290980",
+          "supplied_md5": "d58671f57a51d2f3f9769286886ba328",
+          "computed_md5": "d58671f57a51d2f3f9769286886ba328",
+          "mimetype": "video/x-msvideo"
+        },
+        {
+          "id": 291137,
+          "name": "Movie_S2.avi",
+          "size": 9568256,
+          "is_link_only": false,
+          "download_url": "https://ndownloader.figshare.com/files/291137",
+          "supplied_md5": "eff02e4a8bd0c6b415df0a535272b679",
+          "computed_md5": "eff02e4a8bd0c6b415df0a535272b679",
+          "mimetype": "video/x-msvideo"
+        },
+        {
+          "id": 291227,
+          "name": "Movie_S3.avi",
+          "size": 3364646,
+          "is_link_only": false,
+          "download_url": "https://ndownloader.figshare.com/files/291227",
+          "supplied_md5": "787d2d89ab3cd3d3f15c431def27d84b",
+          "computed_md5": "787d2d89ab3cd3d3f15c431def27d84b",
+          "mimetype": "video/x-msvideo"
+        },
+        {
+          "id": 291327,
+          "name": "Movie_S4.avi",
+          "size": 2792570,
+          "is_link_only": false,
+          "download_url": "https://ndownloader.figshare.com/files/291327",
+          "supplied_md5": "9bb3c3de14556efdd16b072998107b5f",
+          "computed_md5": "9bb3c3de14556efdd16b072998107b5f",
+          "mimetype": "video/x-msvideo"
+        },
+        {
+          "id": 291415,
+          "name": "Figure_S1.tif",
+          "size": 130580,
+          "is_link_only": false,
+          "download_url": "https://ndownloader.figshare.com/files/291415",
+          "supplied_md5": "16c3b3aade72ba4b53f84ffbdc823d79",
+          "computed_md5": "16c3b3aade72ba4b53f84ffbdc823d79",
+          "mimetype": "image/tiff"
+        },
+        {
+          "id": 291445,
+          "name": "Figure_S2.tif",
+          "size": 91940,
+          "is_link_only": false,
+          "download_url": "https://ndownloader.figshare.com/files/291445",
+          "supplied_md5": "da90c6538594bdac0a60efe735a5e4ce",
+          "computed_md5": "da90c6538594bdac0a60efe735a5e4ce",
+          "mimetype": "image/tiff"
+        }
+      ],
+      "folder_structure": {},
+      "authors": [
+        {
+          "id": 119891,
+          "full_name": "Angela S. Stoeger",
+          "first_name": "Angela",
+          "last_name": "S. Stoeger",
+          "is_active": false,
+          "url_name": "_",
+          "orcid_id": ""
+        },
+        {
+          "id": 119896,
+          "full_name": "Gunnar Heilmann",
+          "first_name": "Gunnar",
+          "last_name": "Heilmann",
+          "is_active": false,
+          "url_name": "_",
+          "orcid_id": ""
+        },
+        {
+          "id": 119900,
+          "full_name": "Matthias Zeppelzauer",
+          "first_name": "Matthias",
+          "last_name": "Zeppelzauer",
+          "is_active": false,
+          "url_name": "_",
+          "orcid_id": ""
+        },
+        {
+          "id": 119903,
+          "full_name": "André Ganswindt",
+          "first_name": "André",
+          "last_name": "Ganswindt",
+          "is_active": false,
+          "url_name": "_",
+          "orcid_id": ""
+        },
+        {
+          "id": 119908,
+          "full_name": "Sean Hensman",
+          "first_name": "Sean",
+          "last_name": "Hensman",
+          "is_active": false,
+          "url_name": "_",
+          "orcid_id": ""
+        },
+        {
+          "id": 119913,
+          "full_name": "Benjamin D. Charlton",
+          "first_name": "Benjamin",
+          "last_name": "D. Charlton",
+          "is_active": false,
+          "url_name": "_",
+          "orcid_id": ""
+        }
+      ],
+      "custom_fields": [],
+      "figshare_url": "https://plos.figshare.com/articles/dataset/Visualizing_Sound_Emission_of_Elephant_Vocalizations_Evidence_for_Two_Rumble_Production_Types__/117289",
+      "download_disabled": false,
+      "description": "<div><p>Recent comparative data reveal that formant frequencies are cues to body size in animals, due to a close relationship between formant frequency spacing, vocal tract length and overall body size. Accordingly, intriguing morphological adaptations to elongate the vocal tract in order to lower formants occur in several species, with the size exaggeration hypothesis being proposed to justify most of these observations. While the elephant trunk is strongly implicated to account for the low formants of elephant rumbles, it is unknown whether elephants emit these vocalizations exclusively through the trunk, or whether the mouth is also involved in rumble production. In this study we used a sound visualization method (an acoustic camera) to record rumbles of five captive African elephants during spatial separation and subsequent bonding situations. Our results showed that the female elephants in our analysis produced two distinct types of rumble vocalizations based on vocal path differences: a nasally- and an orally-emitted rumble. Interestingly, nasal rumbles predominated during contact calling, whereas oral rumbles were mainly produced in bonding situations. In addition, nasal and oral rumbles varied considerably in their acoustic structure. In particular, the values of the first two formants reflected the estimated lengths of the vocal paths, corresponding to a vocal tract length of around 2 meters for nasal, and around 0.7 meters for oral rumbles. These results suggest that African elephants may be switching vocal paths to actively vary vocal tract length (with considerable variation in formants) according to context, and call for further research investigating the function of formant modulation in elephant vocalizations. Furthermore, by confirming the use of the elephant trunk in long distance rumble production, our findings provide an explanation for the extremely low formants in these calls, and may also indicate that formant lowering functions to increase call propagation distances in this species'.</p> </div>",
+      "funding": null,
+      "funding_list": [],
+      "version": 1,
+      "status": "public",
+      "size": 25955380,
+      "created_date": "2012-11-14T02:01:29Z",
+      "modified_date": "2023-05-30T21:36:43Z",
+      "is_public": true,
+      "is_confidential": false,
+      "is_metadata_record": false,
+      "confidential_reason": "",
+      "metadata_reason": "",
+      "license": {
+        "value": 1,
+        "name": "CC BY 4.0",
+        "url": "https://creativecommons.org/licenses/by/4.0/"
+      },
+      "tags": [
+        "visualizing",
+        "rumble",
+        "types"
+      ],
+      "keywords": [
+        "visualizing",
+        "rumble",
+        "types"
+      ],
+      "categories": [
+        {
+          "id": 16,
+          "title": "Physiology",
+          "parent_id": 48,
+          "path": "",
+          "source_id": "",
+          "taxonomy_id": 10
+        },
+        {
+          "id": 24,
+          "title": "Evolutionary Biology",
+          "parent_id": 48,
+          "path": "",
+          "source_id": "",
+          "taxonomy_id": 10
+        }
+      ],
+      "references": [
+        "https://doi.org/10.1371/journal.pone.0048907"
+      ],
+      "has_linked_file": false,
+      "citation": "S. Stoeger, Angela; Heilmann, Gunnar; Zeppelzauer, Matthias; Ganswindt, André; Hensman, Sean; D. Charlton, Benjamin (2016). Visualizing Sound Emission of Elephant Vocalizations: Evidence for Two Rumble Production Types. PLOS ONE. Dataset. https://doi.org/10.1371/journal.pone.0048907",
+      "related_materials": [
+        {
+          "id": 4979687,
+          "identifier": "10.1371/journal.pone.0048907",
+          "title": "Visualizing Sound Emission of Elephant Vocalizations: Evidence for Two Rumble Production Types",
+          "relation": "IsSupplementTo",
+          "identifier_type": "DOI",
+          "is_linkout": true,
+          "link": "https://doi.org/10.1371/journal.pone.0048907"
+        }
+      ],
+      "is_embargoed": false,
+      "embargo_date": null,
+      "embargo_type": null,
+      "embargo_title": "",
+      "embargo_reason": "",
+      "embargo_options": [],
+      "id": 117289,
+      "title": "Visualizing Sound Emission of Elephant Vocalizations: Evidence for Two Rumble Production Types",
+      "doi": "10.1371/journal.pone.0048907",
+      "handle": "",
+      "url": "https://api.figshare.com/v2/articles/117289",
+      "published_date": "2012-11-14T02:01:29Z",
+      "thumb": "https://s3-eu-west-1.amazonaws.com/ppreviews-plos-725668748/291445/thumb.png",
+      "defined_type": 3,
+      "defined_type_name": "dataset",
+      "group_id": 107,
+      "url_private_api": "https://api.figshare.com/v2/account/articles/117289",
+      "url_public_api": "https://api.figshare.com/v2/articles/117289",
+      "url_private_html": "https://figshare.com/account/articles/117289",
+      "url_public_html": "https://plos.figshare.com/articles/dataset/Visualizing_Sound_Emission_of_Elephant_Vocalizations_Evidence_for_Two_Rumble_Production_Types__/117289",
+      "timeline": {
+        "posted": "2012-11-14T02:01:29",
+        "firstOnline": "2016-01-19"
+      },
+      "resource_title": "Visualizing Sound Emission of Elephant Vocalizations: Evidence for Two Rumble Production Types",
+      "resource_doi": "10.1371/journal.pone.0048907"
+    },
+    "species_as_source_names_it": "Loxodonta africana",
+    "source_call_quote": "Oral rumble-25 fps-sound: Sound visualization of an oral rumble.",
+    "inspection": "Original-speed oral rumble from Movie S3; rising and falling low-frequency harmonic/formant band dominates the inspected waveform/spectrogram. Background remains; no high-pass or pitch alteration."
+  },
+  "https://ndownloader.figshare.com/files/1615092": {
+    "title": "The Vocal Repertoire of the African Penguin — Video S3 (ecstatic display song)",
+    "source_page": "https://plos.figshare.com/articles/dataset/The_Vocal_Repertoire_of_the_African_Penguin_Spheniscus_demersus_Structure_and_Function_of_Calls/1122424",
+    "download_url": "https://ndownloader.figshare.com/files/1615092",
+    "author": "Livio Favaro, Laura Ozella, Daniela Pessani",
+    "licence": "CC BY 4.0",
+    "licence_url": "https://creativecommons.org/licenses/by/4.0/",
+    "cache_file": "round2-a550589701bd3136637e.m4v",
+    "source_sha256": "e382d76eb98c27170201cbeb2e58ca10de3716062a83e16beba8223f42990d80",
+    "verified_date": "2026-11-13",
+    "metadata": {
+      "files": [
+        {
+          "id": 1615089,
+          "name": "Table_S1.pdf",
+          "size": 77212,
+          "is_link_only": false,
+          "download_url": "https://ndownloader.figshare.com/files/1615089",
+          "supplied_md5": "669eef67502ef99ff4a490b533ae16dc",
+          "computed_md5": "669eef67502ef99ff4a490b533ae16dc",
+          "mimetype": "application/pdf"
+        },
+        {
+          "id": 1615090,
+          "name": "Video_S1.m4v",
+          "size": 4283841,
+          "is_link_only": false,
+          "download_url": "https://ndownloader.figshare.com/files/1615090",
+          "supplied_md5": "0b9554772c1cd1d7f24ded3251be951d",
+          "computed_md5": "0b9554772c1cd1d7f24ded3251be951d",
+          "mimetype": "video/x-m4v"
+        },
+        {
+          "id": 1615091,
+          "name": "Video_S2.m4v",
+          "size": 3872012,
+          "is_link_only": false,
+          "download_url": "https://ndownloader.figshare.com/files/1615091",
+          "supplied_md5": "b378baa5c2f427d76a5647a713057125",
+          "computed_md5": "b378baa5c2f427d76a5647a713057125",
+          "mimetype": "video/x-m4v"
+        },
+        {
+          "id": 1615092,
+          "name": "Video_S3.m4v",
+          "size": 9483036,
+          "is_link_only": false,
+          "download_url": "https://ndownloader.figshare.com/files/1615092",
+          "supplied_md5": "d209f6b751713d2bb915ac753b8bfd3b",
+          "computed_md5": "d209f6b751713d2bb915ac753b8bfd3b",
+          "mimetype": "video/x-m4v"
+        },
+        {
+          "id": 1615093,
+          "name": "Video_S4.m4v",
+          "size": 19760442,
+          "is_link_only": false,
+          "download_url": "https://ndownloader.figshare.com/files/1615093",
+          "supplied_md5": "5e2c01e4b53447f1ee849dcff5ec72ac",
+          "computed_md5": "5e2c01e4b53447f1ee849dcff5ec72ac",
+          "mimetype": "video/x-m4v"
+        },
+        {
+          "id": 1615094,
+          "name": "Video_S5.m4v",
+          "size": 10372415,
+          "is_link_only": false,
+          "download_url": "https://ndownloader.figshare.com/files/1615094",
+          "supplied_md5": "553b9c1a71776ac9ef44d0ae0b830826",
+          "computed_md5": "553b9c1a71776ac9ef44d0ae0b830826",
+          "mimetype": "video/x-m4v"
+        },
+        {
+          "id": 1615095,
+          "name": "Video_S6.m4v",
+          "size": 11030830,
+          "is_link_only": false,
+          "download_url": "https://ndownloader.figshare.com/files/1615095",
+          "supplied_md5": "a9e33c18198b99de1c6bb28c7bff9788",
+          "computed_md5": "a9e33c18198b99de1c6bb28c7bff9788",
+          "mimetype": "video/x-m4v"
+        }
+      ],
+      "folder_structure": {},
+      "authors": [
+        {
+          "id": 606376,
+          "full_name": "Livio Favaro",
+          "first_name": "Livio",
+          "last_name": "Favaro",
+          "is_active": false,
+          "url_name": "_",
+          "orcid_id": ""
+        },
+        {
+          "id": 606377,
+          "full_name": "Laura Ozella",
+          "first_name": "Laura",
+          "last_name": "Ozella",
+          "is_active": false,
+          "url_name": "_",
+          "orcid_id": ""
+        },
+        {
+          "id": 606378,
+          "full_name": "Daniela Pessani",
+          "first_name": "Daniela",
+          "last_name": "Pessani",
+          "is_active": false,
+          "url_name": "_",
+          "orcid_id": ""
+        }
+      ],
+      "custom_fields": [],
+      "figshare_url": "https://plos.figshare.com/articles/dataset/The_Vocal_Repertoire_of_the_African_Penguin_Spheniscus_demersus_Structure_and_Function_of_Calls/1122424",
+      "download_disabled": false,
+      "description": "<div><p>The African Penguin (<i>Spheniscus demersus</i>) is a highly social and vocal seabird. However, currently available descriptions of the vocal repertoire of African Penguin are mostly limited to basic descriptions of calls. Here we provide, for the first time, a detailed description of the vocal behaviour of this species by collecting audio and video recordings from a large captive colony. We combine visual examinations of spectrograms with spectral and temporal acoustic analyses to determine vocal categories. Moreover, we used a principal component analysis, followed by signal classification with a discriminant function analysis, for statistical validation of the vocalisation types. In addition, we identified the behavioural contexts in which calls were uttered. The results show that four basic vocalisations can be found in the vocal repertoire of adult African Penguin, namely a <i>contact call</i> emitted by isolated birds, an <i>agonistic call</i> used in aggressive interactions, an <i>ecstatic display song</i> uttered by single birds, and a <i>mutual display song</i> vocalised by pairs, at their nests. Moreover, we identified two distinct vocalisations interpreted as begging calls by nesting chicks (<i>begging peep</i>) and unweaned juveniles (<i>begging moan</i>). Finally, we discussed the importance of specific acoustic parameters in classifying calls and the possible use of the source-filter theory of vocal production to study penguin vocalisations.</p></div>",
+      "funding": null,
+      "funding_list": [],
+      "version": 1,
+      "status": "public",
+      "size": 58879788,
+      "created_date": "2014-07-30T03:04:21Z",
+      "modified_date": "2023-05-30T14:41:35Z",
+      "is_public": true,
+      "is_confidential": false,
+      "is_metadata_record": false,
+      "confidential_reason": "",
+      "metadata_reason": "",
+      "license": {
+        "value": 1,
+        "name": "CC BY 4.0",
+        "url": "https://creativecommons.org/licenses/by/4.0/"
+      },
+      "tags": [
+        "ecology",
+        "Behavioral ecology",
+        "Marine biology",
+        "Marine conservation",
+        "Zoology",
+        "Animal behavior",
+        "Avian biology",
+        "repertoire",
+        "african",
+        "penguin",
+        "calls"
+      ],
+      "keywords": [
+        "ecology",
+        "Behavioral ecology",
+        "Marine biology",
+        "Marine conservation",
+        "Zoology",
+        "Animal behavior",
+        "Avian biology",
+        "repertoire",
+        "african",
+        "penguin",
+        "calls"
+      ],
+      "categories": [
+        {
+          "id": 48,
+          "title": "Biological Sciences",
+          "parent_id": 0,
+          "path": "",
+          "source_id": "",
+          "taxonomy_id": 10
+        },
+        {
+          "id": 39,
+          "title": "Ecology",
+          "parent_id": 33,
+          "path": "",
+          "source_id": "",
+          "taxonomy_id": 10
+        }
+      ],
+      "references": [
+        "https://doi.org/10.1371/journal.pone.0103460"
+      ],
+      "has_linked_file": false,
+      "citation": "Favaro, Livio; Ozella, Laura; Pessani, Daniela (2016). The Vocal Repertoire of the African Penguin (Spheniscus demersus): Structure and Function of Calls. PLOS ONE. Dataset. https://doi.org/10.1371/journal.pone.0103460",
+      "related_materials": [
+        {
+          "id": 2357153,
+          "identifier": "10.1371/journal.pone.0103460",
+          "title": "The Vocal Repertoire of the African Penguin (Spheniscus demersus): Structure and Function of Calls",
+          "relation": "IsSupplementTo",
+          "identifier_type": "DOI",
+          "is_linkout": true,
+          "link": "https://doi.org/10.1371/journal.pone.0103460"
+        }
+      ],
+      "is_embargoed": false,
+      "embargo_date": null,
+      "embargo_type": null,
+      "embargo_title": "",
+      "embargo_reason": "",
+      "embargo_options": [],
+      "id": 1122424,
+      "title": "The Vocal Repertoire of the African Penguin (<i>Spheniscus demersus</i>): Structure and Function of Calls",
+      "doi": "10.1371/journal.pone.0103460",
+      "handle": "",
+      "url": "https://api.figshare.com/v2/articles/1122424",
+      "published_date": "2014-07-30T03:04:21Z",
+      "thumb": "https://s3-eu-west-1.amazonaws.com/ppreviews-plos-725668748/1615093/thumb.png",
+      "defined_type": 3,
+      "defined_type_name": "dataset",
+      "group_id": 107,
+      "url_private_api": "https://api.figshare.com/v2/account/articles/1122424",
+      "url_public_api": "https://api.figshare.com/v2/articles/1122424",
+      "url_private_html": "https://figshare.com/account/articles/1122424",
+      "url_public_html": "https://plos.figshare.com/articles/dataset/The_Vocal_Repertoire_of_the_African_Penguin_Spheniscus_demersus_Structure_and_Function_of_Calls/1122424",
+      "timeline": {
+        "posted": "2014-07-30T03:04:21",
+        "firstOnline": "2016-01-15"
+      },
+      "resource_title": "The Vocal Repertoire of the African Penguin (<i>Spheniscus demersus</i>): Structure and Function of Calls",
+      "resource_doi": "10.1371/journal.pone.0103460"
+    },
+    "species_as_source_names_it": "Spheniscus demersus",
+    "source_call_quote": "Ecstatic display song uttered by a male in front of its nest, during the breading season.",
+    "inspection": "African penguin bray (ecstatic display song) excerpt: short pulses, long harmonic syllable and alternating terminal syllables. Dominant harmonics in the inspected waveform/spectrogram; excerpt, not the entire display."
+  },
+  "https://static-content.springer.com/esm/art%3A10.1038%2Fsrep17255/MediaObjects/41598_2015_BFsrep17255_MOESM3_ESM.mov": {
+    "title": "Vocal individuality cues in the African penguin (Spheniscus demersus) — Supplementary Video S1",
+    "source_page": "https://www.nature.com/articles/srep17255",
+    "download_url": "https://static-content.springer.com/esm/art%3A10.1038%2Fsrep17255/MediaObjects/41598_2015_BFsrep17255_MOESM3_ESM.mov",
+    "author": "Livio Favaro, Marco Gamba, Chiara Alfieri, Daniela Pessani, Alan G. McElligott",
+    "licence": "CC BY 4.0",
+    "licence_url": "https://creativecommons.org/licenses/by/4.0/",
+    "cache_file": "round2-00a192434ee376ce3f86.mov",
+    "source_sha256": "be6a990485a68787b821d9afce522f38e19c719414eeb54cc35af7c7cce21ca0",
+    "verified_date": "2026-11-13",
+    "metadata": {
+      "publisher_record_cache": "round2-a58edcc0a1c2948cd306.html",
+      "publisher_record_sha256": "bd02b388d5d60ee07060c442b716902f5cb750161b389544623a499f4b99ffb6",
+      "species_as_source_names_it": "Spheniscus demersus",
+      "call_description": "Methods identifies Supplementary Video S1 as ecstatic display songs.",
+      "licence_statement": "This work is licensed under a Creative Commons Attribution 4.0 International License.",
+      "third_party_exclusion": "No separate credit or exclusion is attached to this author supplementary video."
+    },
+    "inspection": "Distinct African penguin ecstatic-display bray excerpt with three long harmonic syllables and alternating shorter ones; identified by the publisher, waveform/spectrogram inspected, no listening. Low-frequency background reduced with a 60 Hz high-pass."
   }
 }

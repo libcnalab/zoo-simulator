@@ -175,3 +175,170 @@ HTTP 429; subsequent acquisition used serialized requests, five-second spacing a
 **No C++ API changes are proposed.** The lead should handle the nine absent optional names
 and review the explicitly uncertain recordings before final soundscape integration. All work
 is left as uncommitted working-tree changes for the lead.
+
+## Round 2 — 2026-11-13
+
+Part 1 searched the required source families and retains all nine omissions.
+No source with uncertain species, call type or licence was promoted to an authentic
+recording. See [RESEARCH.md](RESEARCH.md) for exact queries, retrieved counts,
+per-candidate decisions, video audio-stream checks and explicit HTTP/access limits.
+Nobody listened to the files.
+
+| Name | Where searched / outcome |
+|---|---|
+| `elephant_trumpet` | iNaturalist's licensed Loxodonta africana file has no confirmed trumpet; Commons trumpet is Elephas maximus. Dryad's public dataset README explicitly identifies all 1,123 clips as manually identified rumbles (0.2 s buffers), so the 121 MB archive was not downloaded for a trumpet. Zenodo/Archive did not establish an eligible trumpet. |
+| `tiger_chuff` | GBIF recordings are NC/proprietary; Commons has growls and a BY 2.0 yowling video, not an eligible chuff. Dryad/Zenodo chuff/prusten searches and Archive found no verified chuff file. |
+| `wolf_growl` | iNaturalist/GBIF contain howls, mixed or unspecified calls and domestic dogs. PD Commons rallying has sustained overlapping harmonic calls, no confident isolated growl. Dryad/Zenodo/Archive do not establish an eligible growl. |
+| `polar_bear_growl` | GBIF media are NC-SA; Commons play-fight videos checked have no audio. Generic sound effect lacks authentic-recording provenance. No suitable dataset/Archive/federal item verified. |
+| `polar_bear_chuff` | Same searches as growl, including cub/nursing terms; nursing video has no audio. No source-identified chuff verified. Federal access limitations remain explicit. |
+| `meerkat_growl` | No eligible iNaturalist observations; GBIF is NC-SA. Zenodo recruitment/speaker tracks and Archive pup distress are not identified growls. Commons tussling audio cannot establish an isolated growl. |
+| `ostrich_grunt` | GBIF SA candidate is wing shaking; all 44 xeno-canto entries have NC/ND restrictions, including the explicit booms. One Commons courtship video is digitally silent; another is dominated by continuous noise. No eligible boom established in datasets/Archive. |
+| `ostrich_hiss` | Same searches, plus hiss queries. XC46725 identifies the foreground hiss as a python; no eligible ostrich hiss established. |
+| `kangaroo_grunt` | No eligible Osphranter rufus/Macropus rufus sound observations or GBIF sound media. Zenodo/Dryad cough/cluck/vocalization queries do not provide red-kangaroo calls. Both Commons red-kangaroo videos inspected have no audio stream (8.008 s original; 36.036 s small derivative of the larger original). |
+
+### Round 2 new takes
+
+- `elephant_rumble_2.ogg`: Loxodonta africana, natural bee-response rumble in PLOS Audio S1,
+  [original record](https://plos.figshare.com/articles/dataset/Bee_Threat_Elicits_Alarm_Call_in_African_Elephants/143732), CC BY 4.0; cut 0.13–4.39 s.
+- `elephant_rumble_3.ogg`: Loxodonta africana, original-speed oral rumble in PLOS Movie S3,
+  [original record](https://plos.figshare.com/articles/dataset/Visualizing_Sound_Emission_of_Elephant_Vocalizations_Evidence_for_Two_Rumble_Production_Types__/117289), CC BY 4.0; cut 0.30–2.62 s.
+- `penguin_bray.ogg` now contains a real Spheniscus demersus ecstatic-display bray excerpt,
+  [PLOS Video S3](https://plos.figshare.com/articles/dataset/The_Vocal_Repertoire_of_the_African_Penguin_Spheniscus_demersus_Structure_and_Function_of_Calls/1122424), CC BY 4.0; cut 6.00–11.85 s.
+- `penguin_bray_2.ogg` retains the old short contact call, explicitly labelled as such.
+- `penguin_bray_3.ogg`: a distinct ecstatic-display bray excerpt with three long syllables,
+  [Nature Supplementary Video S1](https://www.nature.com/articles/srep17255), CC BY 4.0; cut 3.40–9.40 s.
+
+Brown-bear growl, giraffe grunt, rhino grunt, zebra bark and zebra whinny remain single-take.
+Original recordings and alternative-source queries were tried; call uncertainty, absent audio,
+background noise and the zebra archive's size prevented additional accepted takes.
+The exact decisions are in RESEARCH.md. No ambiguous event was relabelled to meet a take count.
+
+### Round 2 measured audit and acceptance results
+
+[AUDIT.md](AUDIT.md) contains all requested metrics for all 52 Ogg files. Its first paragraph
+states that these are measurements and nobody listened. The initial audit found two files
+with excess silent margins; both were trimmed through sources.json:
+
+| File | Old cut s | New cut s | Final head / tail silence ms |
+|---|---|---|---|
+| `animals/elephant_rumble.ogg` | 0.95–5.55 | 1.1475–5.2672 | 19.95 / 31.00 |
+| `animals/penguin_bray_2.ogg` (old take 1) | 0.25–1.35 | 0.4804–1.1011 | 22.95 / 18.12 |
+
+Final audit: **52 rows, zero head/tail silence flags over 80 ms, eight quiet-floor review
+flags**. The latter are water, camel grunt take 1, elephant rumble take 1, flamingo call
+take 2, giraffe grunt and all three wolf howls. Eight prepared alternative passages were
+measured; none resolved the threshold without changing natural call coverage. The exact
+comparisons and retained-background decisions are in AUDIT.md. No noise reduction or new
+Part 3 frequency filter was applied. The quiet-window proxy includes sustained call energy;
+it must not be described as proof of audible hiss.
+
+Species spreads over 4 LU: brown bear **7.1 LU**, elephant **6.4 LU**, lion **11.4 LU**,
+penguin **4.1 LU**. [GAINS.md](GAINS.md) proposes one gain for each of the 16 delivered call
+names, with loud-call targets, growls/grunts 8 LU lower, and quieter penguin/meerkat targets.
+These gains are unapplied. Within-name take differences remain visible in that table.
+Loop seam deltas remain below 3 dB. Nobody listened to the files.
+
+The final library has **52 files, 2,453,628 bytes for the whole assets/audio directory**,
+well below 12,000,000 bytes. There are four additional Ogg paths, plus the replacement of
+penguin take 1. Of the original 48 paths, 46 retain identical decoded signed-16-bit PCM;
+only `elephant_rumble.ogg` (silence trim) and `penguin_bray.ogg` (requested true bray
+replacement) differ. The original penguin audio was first preserved byte-for-byte in decoded
+PCM at `_2`, then its silent margins were trimmed in Part 3. No other old audio changed.
+
+All 52 source hashes match the cached inputs and an attribution/licence-evidence record.
+The nine absent names remain absent from the manifest. Soundscape's name-to-files manifest
+contract is unchanged. No C++, data/species, other assets or sibling checkout was modified.
+The only verifier duration exception is the documented short contact-call variant (minimum
+0.5 s after trimming); all other bounds are unchanged. No C++ API change is recommended.
+The proposed per-name gain table is the handoff for later integration, not a runtime change.
+
+Research made **300 serialized requests**, with **137,679,189 response bytes recorded**,
+using the required User-Agent and five-second pauses. No 184.6 MB zebra archive was downloaded:
+it would exceed the remaining cumulative budget. HTTP access failures and bounded result
+pages are recorded as limits, never as proof that a source contains no recording.
+
+### Round 2 commands actually run
+
+No CMake, C++ build, CTest, git commit, branch operation, push or publishing command was run.
+Before each audio-build command group the environment was:
+
+```sh
+export CCACHE_DIR=/rv/cnaccache CCACHE_BASEDIR=/rv ASAN_OPTIONS=detect_leaks=0
+```
+
+Baseline and Part 1:
+
+```sh
+python3 tools/audio/check_rebuild.py --snapshot
+python3 tools/audio/build_audio.py > build-probe/audio-src/round2-part1-build.log
+python3 tools/audio/check_rebuild.py
+python3 tools/audio/verify_audio.py > build-probe/audio-src/round2-part1-verify.log
+```
+
+Result: exit 0; **48 decoded PCM hashes identical, zero differences; 48 files, 340 per-file
+assertions, zero failures**, plus manifest/species/inventory checks. The original reference
+was preserved as `round2-original-pcm.json` for the final old-file comparison.
+
+Part 2:
+
+```sh
+python3 tools/audio/build_audio.py > build-probe/audio-src/round2-part2-build.log
+python3 tools/audio/check_rebuild.py --snapshot
+python3 tools/audio/build_audio.py > build-probe/audio-src/round2-part2-rebuild.log
+python3 tools/audio/check_rebuild.py
+python3 tools/audio/verify_audio.py > build-probe/audio-src/round2-part2-verify.log
+```
+
+Result: exit 0; **52 decoded PCM hashes identical, zero differences; 52 files, 368 per-file
+assertions, zero failures**; directory then 2,457,190 bytes.
+
+Part 3 investigation and trim:
+
+```sh
+python3 tools/audio/test_audit_audio.py
+python3 tools/audio/audit_audio.py > build-probe/audio-src/round2-audit-initial.log
+python3 tools/audio/audit_passages.py
+python3 tools/audio/build_audio.py --only elephant_rumble,penguin_bray > build-probe/audio-src/round2-trim-build.log
+python3 tools/audio/audit_passages.py > build-probe/audio-src/round2-passage-comparisons.log
+python3 tools/audio/test_audit_audio.py
+```
+
+The first analytic suite passed **8 tests**. The first audit completed its measurements but
+failed strict JSON export on a legitimate negative-infinite quiet floor. The exporter was
+corrected to preserve non-finite dB values as strings; rerunning the same audit command
+succeeded (52 rows, 2 edge flags, 7 quiet-floor flags before trimming). Its JSON was copied
+to `round2-audit-before-trim.json`. The passage comparison was extended from seven to eight
+alternatives after trimming exposed the elephant flag. The final analytic suite passed
+**9 tests, zero failures**. Both passage-comparison runs and the group trim build exited 0.
+The trimmed files were also measured directly to check their edge silence before the final build.
+
+Final acceptance run:
+
+```sh
+python3 tools/audio/build_audio.py > build-probe/audio-src/round2-final-build.log
+python3 tools/audio/check_rebuild.py --snapshot
+python3 tools/audio/build_audio.py > build-probe/audio-src/round2-final-rebuild.log
+python3 tools/audio/check_rebuild.py
+python3 tools/audio/verify_audio.py > build-probe/audio-src/round2-final-verify.log
+python3 tools/audio/audit_audio.py > build-probe/audio-src/round2-final-audit.log
+```
+
+All exited 0: **52 decoded PCM hashes identical, zero differences; 52 files, 368 per-file
+assertions, zero failures; 52 audit rows, zero edge-silence flags, eight explicitly retained
+quiet-floor review flags**. Analytic audit tests: **9 passed**. All 15 Python files parse;
+all 52 source hashes and licence records match. `git diff --check` initially found a trailing
+blank line in the generated research ledger; the writer was corrected and the final check passed.
+
+### Round 2 files and limitations
+
+[FILE_INVENTORY.md](FILE_INVENTORY.md) lists every created/modified reviewable file and all
+present ignored cache artifacts. Only the audio row of assets/ATTRIBUTION.md was extended;
+its non-audio rows are unchanged. Work is left uncommitted for the lead.
+
+The nine missing names remain unfulfilled as recordings, which the brief explicitly allows
+after documented unsuccessful searches. Five requested single-take names remain single-take
+for the reasons above. The new penguin displays are honest excerpts, and the contact-call
+variant is explicitly identified. The audit uses already-installed NumPy; no dependency was
+installed. Shorter-than-400-ms footsteps use disclosed zero padding solely for EBU measurement,
+not asset editing. No subjective listening, speech-absence certification or final mix approval
+is claimed. Nobody listened to the files.

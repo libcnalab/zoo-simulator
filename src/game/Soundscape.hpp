@@ -69,6 +69,8 @@ private:
 
     // The recordings outlive the voices that play them: they are declared first.
     std::unordered_map<std::string, std::vector<std::unique_ptr<Sound>>> library_;
+    /// The mix (assets/audio/mix.json): how loud a take of a call plays, 1 = as recorded.
+    std::unordered_map<const Sound*, float> gains_;
     CnaEngine::Audio::SoundSystem system_{20};
     SoundFigures figures_;
     std::uint32_t seed_ = 0x9E3779B9u;

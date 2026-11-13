@@ -39,7 +39,9 @@ All files are Vorbis, 44100 Hz. Peaks are decoded sample peaks from FFmpeg `volu
 | ambience/water.ogg | 15.000000 | 1 | -6.5 | -23.24 | 2.640 dB (-22.56 joint / -24.54 rest) | Water lapping on lake Pukaki,South Island,New Zealand.mp3 | CC0 |
 | ambience/wind_trees.ogg | 20.000000 | 2 | -5.0 | -23.08 | 0.881 dB (-29.89 joint / -29.01 rest) | windinleaves.wav | CC0 |
 | animals/giraffe_grunt.ogg | 1.400000 | 1 | -3.1 | — | — | Nocturnal humming vocalizations: adding a piece to the puzzle of giraffe vocal communication — Additional file 2 (Grunt, Fig. 1a) | CC BY 4.0 |
-| animals/penguin_bray.ogg | 1.100000 | 1 | -3.0 | — | — | Vocal-individuality-cues-in-the-African-penguin-(Spheniscus-demersus)-a-source-filter-theory-srep17255-s2.oga | CC BY 4.0 |
+| animals/penguin_bray.ogg | 5.850000 | 1 | -3.1 | — | — | The Vocal Repertoire of the African Penguin — Video S3 (ecstatic display song) | CC BY 4.0 |
+| animals/penguin_bray_2.ogg | 0.623651 | 1 | -3.0 | — | — | Vocal-individuality-cues-in-the-African-penguin-(Spheniscus-demersus)-a-source-filter-theory-srep17255-s2.oga | CC BY 4.0 |
+| animals/penguin_bray_3.ogg | 6.000000 | 1 | -3.0 | — | — | Vocal individuality cues in the African penguin (Spheniscus demersus) — Supplementary Video S1 | CC BY 4.0 |
 | animals/meerkat_chirp.ogg | 2.300000 | 1 | -3.0 | — | — | Erdmaennchen.ogg | CC BY-SA 3.0 |
 | animals/meerkat_chirp_2.ogg | 2.310000 | 1 | -3.0 | — | — | Erdmaennchen.ogg | CC BY-SA 3.0 |
 | animals/meerkat_chirp_3.ogg | 2.300000 | 1 | -2.9 | — | — | Erdmaennchen.ogg | CC BY-SA 3.0 |
@@ -51,6 +53,9 @@ All files are Vorbis, 44100 Hz. Peaks are decoded sample peaks from FFmpeg `volu
 | animals/rhino_snort_2.ogg | 1.900000 | 1 | -3.1 | — | — | white Rhino   fighting | CC0 |
 | animals/camel_grunt.ogg | 2.560000 | 1 | -3.0 | — | — | Cri du chameau.wav | CC BY-SA 3.0 |
 | animals/camel_grunt_2.ogg | 2.650000 | 1 | -3.0 | — | — | Cri du chameau.wav | CC BY-SA 3.0 |
-| animals/elephant_rumble.ogg | 4.600000 | 1 | -2.9 | — | — | Bee Threat Elicits Alarm Call in African Elephants — Audio S3 (control rumbles) | CC BY 4.0 |
+| animals/elephant_rumble.ogg | 4.119705 | 1 | -3.0 | — | — | Bee Threat Elicits Alarm Call in African Elephants — Audio S3 (control rumbles) | CC BY 4.0 |
+| animals/elephant_rumble_2.ogg | 4.260000 | 1 | -2.9 | — | — | Bee Threat Elicits Alarm Call in African Elephants — Audio S1 (natural bee rumbles) | CC BY 4.0 |
+| animals/elephant_rumble_3.ogg | 2.320000 | 1 | -3.0 | — | — | Visualizing Sound Emission of Elephant Vocalizations — Movie S3 (oral rumble, 25 fps) | CC BY 4.0 |
+| animals/elephant_trumpet.ogg | 1.270000 | 1 | -3.0 | — | — | Elephant voice - trumpeting.ogg | CC0 |
 
-48 files; 340 per-file assertions passed; 0 failures. Manifest, species contracts and inventory checks passed. Total audio directory: 2,286,725 bytes.
+53 files; 375 per-file assertions passed; 0 failures. Manifest, species contracts and inventory checks passed. Total audio directory: 2,468,933 bytes.

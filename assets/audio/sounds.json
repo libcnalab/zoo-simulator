@@ -216,10 +216,14 @@
       "name": "penguin_bray",
       "kind": "call",
       "files": [
-        "animals/penguin_bray.ogg"
+        "animals/penguin_bray.ogg",
+        "animals/penguin_bray_2.ogg",
+        "animals/penguin_bray_3.ogg"
       ],
       "seconds": [
-        1.1
+        5.85,
+        0.623651,
+        6.0
       ],
       "species": "penguin"
     },
@@ -294,10 +298,25 @@
       "name": "elephant_rumble",
       "kind": "call",
       "files": [
-        "animals/elephant_rumble.ogg"
+        "animals/elephant_rumble.ogg",
+        "animals/elephant_rumble_2.ogg",
+        "animals/elephant_rumble_3.ogg"
       ],
       "seconds": [
-        4.6
+        4.119705,
+        4.26,
+        2.32
+      ],
+      "species": "elephant"
+    },
+    {
+      "name": "elephant_trumpet",
+      "kind": "call",
+      "files": [
+        "animals/elephant_trumpet.ogg"
+      ],
+      "seconds": [
+        1.27
       ],
       "species": "elephant"
     }

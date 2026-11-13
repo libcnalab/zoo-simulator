@@ -48,3 +48,33 @@ python3 tools/audio/check_rebuild.py
 The reference and comparison result stay in `build-probe/audio-src/`. The comparison includes
 the complete file inventory and SHA-256 of decoded signed 16-bit PCM, independent of Ogg
 container serial numbers.
+
+## Round 2 measurements and research
+
+The builder and verifier still use Python's standard library. The additional measured audit
+uses the already available NumPy (tested with 2.5.2); no package was downloaded or installed.
+Run after building:
+
+```sh
+python3 tools/audio/test_audit_audio.py
+python3 tools/audio/audit_audio.py
+```
+
+The audit writes `AUDIT.md`, `GAINS.md` and ignored `audit-measurements.json`. Its exact metric
+definitions, short-clip loudness padding and limits are stated in AUDIT.md. Digital silence
+has a `-inf` noise floor (represented as a string in the machine-readable JSON). The editable
+`audit-decisions.md` is included in the generated audit so measured tables can be regenerated
+without losing the documented passage checks and trimming decisions. Gain proposals are not
+applied to audio or the game.
+
+Round 2 research helpers preserve exact requests and evidence in `build-probe/audio-src/`.
+`round2_research.py` serializes requests with five-second pauses and the required User-Agent,
+counts response bytes against a decimal 300 MB cap, and reuses cached successes/failures unless
+explicitly retried. `round2_ledger.py` regenerates only its marked section in RESEARCH.md.
+`inspect_source.py SOURCE LABEL [--start SECONDS --end SECONDS]` writes a combined waveform
+and logarithmic spectrogram in that cache. These scripts do not play audio. Nobody listened.
+
+The nine missing call names remain omitted; no manifest entry points to a substitute species.
+Penguin take 1 is now a documented ecstatic-display bray excerpt, take 2 is the explicitly
+labelled old contact call, and take 3 is a separate display excerpt. Elephant rumble has three
+distinct natural recordings. See the Round 2 sections of REPORT.md and RESEARCH.md.

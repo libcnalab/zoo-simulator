@@ -729,6 +729,27 @@
       "heard": "Giraffa camelopardalis grunt, publisher supplementary audio Fig. 1a; original CC BY 4.0 recording"
     },
     {
+      "title": "The Vocal Repertoire of the African Penguin — Video S3 (ecstatic display song)",
+      "source_page": "https://plos.figshare.com/articles/dataset/The_Vocal_Repertoire_of_the_African_Penguin_Spheniscus_demersus_Structure_and_Function_of_Calls/1122424",
+      "download_url": "https://ndownloader.figshare.com/files/1615092",
+      "author": "Livio Favaro, Laura Ozella, Daniela Pessani",
+      "licence": "CC BY 4.0",
+      "licence_url": "https://creativecommons.org/licenses/by/4.0/",
+      "cache_file": "round2-a550589701bd3136637e.m4v",
+      "source_sha256": "e382d76eb98c27170201cbeb2e58ca10de3716062a83e16beba8223f42990d80",
+      "file": "animals/penguin_bray.ogg",
+      "name": "penguin_bray",
+      "kind": "call",
+      "species": "penguin",
+      "cut_start": 6.0,
+      "cut_end": 11.85,
+      "channels": 1,
+      "filters": [
+        "highpass=f=60"
+      ],
+      "heard": "African penguin bray (ecstatic display song) excerpt: short pulses, long harmonic syllable and alternating terminal syllables. Dominant harmonics in the inspected waveform/spectrogram; excerpt, not the entire display."
+    },
+    {
       "title": "Vocal-individuality-cues-in-the-African-penguin-(Spheniscus-demersus)-a-source-filter-theory-srep17255-s2.oga",
       "source_page": "https://commons.wikimedia.org/wiki/File:Vocal-individuality-cues-in-the-African-penguin-(Spheniscus-demersus)-a-source-filter-theory-srep17255-s2.oga",
       "download_url": "https://upload.wikimedia.org/wikipedia/commons/2/29/Vocal-individuality-cues-in-the-African-penguin-%28Spheniscus-demersus%29-a-source-filter-theory-srep17255-s2.oga",
@@ -737,17 +758,38 @@
       "licence_url": "https://creativecommons.org/licenses/by/4.0",
       "cache_file": "source-c94d53bae3a20c74.oga",
       "source_sha256": "73fcd7e120e3fd0949439f1d1bbd7ae8ee6d05fd26212f53d2540a4ce9efe077",
-      "file": "animals/penguin_bray.ogg",
+      "file": "animals/penguin_bray_2.ogg",
       "name": "penguin_bray",
       "kind": "call",
       "species": "penguin",
-      "cut_start": 0.25,
-      "cut_end": 1.35,
+      "cut_start": 0.4804,
+      "cut_end": 1.1011,
       "channels": 1,
       "filters": [
         "highpass=f=60"
       ],
-      "heard": "Short African-penguin call substituted for a full bray; exact subtype uncertain, not a complete ecstatic-display song"
+      "heard": "Retained A1 short African-penguin contact call as a distinct variant, not a bray; publisher identifies Supplementary Audio S1 as contact calls. No listening performed. Round 2 removes measured silent margins only."
+    },
+    {
+      "title": "Vocal individuality cues in the African penguin (Spheniscus demersus) — Supplementary Video S1",
+      "source_page": "https://www.nature.com/articles/srep17255",
+      "download_url": "https://static-content.springer.com/esm/art%3A10.1038%2Fsrep17255/MediaObjects/41598_2015_BFsrep17255_MOESM3_ESM.mov",
+      "author": "Livio Favaro, Marco Gamba, Chiara Alfieri, Daniela Pessani, Alan G. McElligott",
+      "licence": "CC BY 4.0",
+      "licence_url": "https://creativecommons.org/licenses/by/4.0/",
+      "cache_file": "round2-00a192434ee376ce3f86.mov",
+      "source_sha256": "be6a990485a68787b821d9afce522f38e19c719414eeb54cc35af7c7cce21ca0",
+      "file": "animals/penguin_bray_3.ogg",
+      "name": "penguin_bray",
+      "kind": "call",
+      "species": "penguin",
+      "cut_start": 3.4,
+      "cut_end": 9.4,
+      "channels": 1,
+      "filters": [
+        "highpass=f=60"
+      ],
+      "heard": "Distinct African penguin ecstatic-display bray excerpt with three long harmonic syllables and alternating shorter ones; identified by the publisher, waveform/spectrogram inspected, no listening. Low-frequency background reduced with a 60 Hz high-pass."
     },
     {
       "title": "Erdmaennchen.ogg",
@@ -998,11 +1040,70 @@
       "name": "elephant_rumble",
       "kind": "call",
       "species": "elephant",
-      "cut_start": 0.95,
-      "cut_end": 5.55,
+      "cut_start": 1.1475,
+      "cut_end": 5.2672,
       "channels": 1,
       "filters": [],
-      "heard": "African-elephant control rumble excerpt from publisher Audio S3; low frequencies preserved, no high-pass"
+      "heard": "African-elephant control rumble excerpt from publisher Audio S3; low frequencies preserved, no high-pass; Round 2 removes measured silent margins only"
+    },
+    {
+      "title": "Bee Threat Elicits Alarm Call in African Elephants — Audio S1 (natural bee rumbles)",
+      "source_page": "https://plos.figshare.com/articles/dataset/Bee_Threat_Elicits_Alarm_Call_in_African_Elephants/143732",
+      "download_url": "https://ndownloader.figshare.com/files/424062",
+      "author": "Lucy E. King, Joseph Soltis, Iain Douglas-Hamilton, Anne Savage, Fritz Vollrath",
+      "licence": "CC BY 4.0",
+      "licence_url": "https://creativecommons.org/licenses/by/4.0/",
+      "cache_file": "round2-b8170a78feb1ec805f56.wav",
+      "source_sha256": "021df33847f814ba0937725ecada79031dae692fb57e09440ddf1c26a5001824",
+      "file": "animals/elephant_rumble_2.ogg",
+      "name": "elephant_rumble",
+      "kind": "call",
+      "species": "elephant",
+      "cut_start": 0.13,
+      "cut_end": 4.39,
+      "channels": 1,
+      "filters": [],
+      "heard": "Natural bee-response rumble, Audio S1; continuous low-frequency call and higher formants dominate the inspected waveform/spectrogram. No pitch or formant alteration; no high-pass."
+    },
+    {
+      "title": "Visualizing Sound Emission of Elephant Vocalizations — Movie S3 (oral rumble, 25 fps)",
+      "source_page": "https://plos.figshare.com/articles/dataset/Visualizing_Sound_Emission_of_Elephant_Vocalizations_Evidence_for_Two_Rumble_Production_Types__/117289",
+      "download_url": "https://ndownloader.figshare.com/files/291227",
+      "author": "Angela S. Stoeger, Gunnar Heilmann, Matthias Zeppelzauer, André Ganswindt, Sean Hensman, Benjamin D. Charlton",
+      "licence": "CC BY 4.0",
+      "licence_url": "https://creativecommons.org/licenses/by/4.0/",
+      "cache_file": "round2-9021f9a0baacb8de46f6.avi",
+      "source_sha256": "85d9d7628a5f13976ae8c462818c0c36fe6ffd99cb27474f8cde391e427d7737",
+      "file": "animals/elephant_rumble_3.ogg",
+      "name": "elephant_rumble",
+      "kind": "call",
+      "species": "elephant",
+      "cut_start": 0.3,
+      "cut_end": 2.62,
+      "channels": 1,
+      "filters": [],
+      "heard": "Original-speed oral rumble from Movie S3; rising and falling low-frequency harmonic/formant band dominates the inspected waveform/spectrogram. Background remains; no high-pass or pitch alteration."
+    },
+    {
+      "title": "Elephant voice - trumpeting.ogg",
+      "source_page": "https://commons.wikimedia.org/wiki/File:Elephant_voice_-_trumpeting.ogg",
+      "download_url": "https://upload.wikimedia.org/wikipedia/commons/4/40/Elephant_voice_-_trumpeting.ogg",
+      "author": "தகவலுழவன் (Info-farmer)",
+      "licence": "CC0",
+      "licence_url": "http://creativecommons.org/publicdomain/zero/1.0/",
+      "cache_file": "source-elephant-trumpet-commons.ogg",
+      "source_sha256": "e5f3120e5eaca87cc080bbf57bd185c96d52fd0f63cc1dfe33228c8bfa29f3bc",
+      "file": "animals/elephant_trumpet.ogg",
+      "name": "elephant_trumpet",
+      "kind": "call",
+      "species": "elephant",
+      "cut_start": 0.13,
+      "cut_end": 1.4,
+      "channels": 1,
+      "filters": [
+        "highpass=f=60"
+      ],
+      "heard": "SPECIES SUBSTITUTE: a real elephant trumpet, but of an Asian elephant (Elephas maximus, the uploader's own recording, Commons category Elephas maximus), used for the zoo's African bush elephants because no identified, reusable Loxodonta africana trumpet was found (tools/audio/RESEARCH.md). Not an African-elephant recording. One burst of about 0.9 s by its waveform; no listening performed."
     }
   ]
 }

@@ -67,7 +67,9 @@ def main():
         assert stream['sample_rate'] == '44100', path
         assert stream['channels'] == entry['channels'], path
         assert measured_peak <= -1.0, (path, measured_peak)
-        minimum, maximum = (1, 10 if entry['name'] in ('wolf_howl', 'elephant_rumble') else 6)
+        # The authentic penguin contact-call variant is shorter after silent margins are removed.
+        minimum = 0.5 if entry['file'] == 'animals/penguin_bray_2.ogg' else 1
+        maximum = 10 if entry['name'] in ('wolf_howl', 'elephant_rumble') else 6
         if entry['kind'] == 'footstep':
             minimum, maximum = 0.15, 0.45
         if entry['kind'] == 'ambience':
