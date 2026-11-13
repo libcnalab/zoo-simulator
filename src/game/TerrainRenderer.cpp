@@ -261,6 +261,7 @@ void TerrainRenderer::BuildMesh(const zoo::World& world, Chunk& chunk) {
                 const float z = z0 + ((corner & 2) != 0 ? kTileSize : 0.0f);
                 water.positions.emplace_back(x, level, z);
                 water.normals.emplace_back(0.0f, 1.0f, 0.0f);
+                water.tangents.emplace_back(1.0f, 0.0f, 0.0f, 1.0f);  // for the ripples' normal map
                 water.texCoords0.emplace_back(x, z);
             }
             water.indices.insert(water.indices.end(), {base, base + 3, base + 2, base, base + 1, base + 3});
@@ -268,7 +269,7 @@ void TerrainRenderer::BuildMesh(const zoo::World& world, Chunk& chunk) {
     }
     chunk.hasWater = !water.indices.empty();
     chunk.water =
-        chunk.hasWater ? GpuMesh::Upload(device_, water, VertexLayout::PositionNormalTexture()) : GpuMesh();
+        chunk.hasWater ? GpuMesh::Upload(device_, water, VertexLayout::PositionNormalTangentTexture()) : GpuMesh();
 }
 
 void TerrainRenderer::BuildApron(const zoo::World& world) {

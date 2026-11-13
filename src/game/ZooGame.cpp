@@ -86,6 +86,7 @@ bool ZooGame::ParseArgument(std::span<const std::string_view> arguments, std::si
                      : what == "shadows"    ? &without_.shadows
                      : what == "simulation" ? &without_.simulation
                      : what == "flat"       ? &without_.flatPeople
+                     : what == "skylight"   ? &without_.skyLight
                                             : nullptr;
         if (part == nullptr)
             return false;
@@ -156,8 +157,8 @@ bool ZooGame::ParseArgument(std::span<const std::string_view> arguments, std::si
 
 void ZooGame::LoadGame() {
     auto& device = getGraphicsDeviceProperty();
-    Renderer().SetMaterialBinder(
-        std::make_shared<Enhanced::PbrMaterialBinder>(device, Renderer().StockBinder()));
+    binder_ = std::make_shared<Enhanced::PbrMaterialBinder>(device, Renderer().StockBinder());
+    Renderer().SetMaterialBinder(binder_);
     Renderer().Lighting().defaultLighting = false;
 
     const auto data = App::FindAssetDirectory("data");
@@ -202,6 +203,8 @@ void ZooGame::LoadGame() {
     sounds_ = std::make_unique<Soundscape>(*assets);
     sky_ = std::make_unique<Graphics::SkyDome>(device);
     sky_->AttachTo(Renderer());
+    if (!without_.skyLight)
+        skyLight_ = std::make_unique<SkyLight>(device);
     clock_.latitudeDegrees = 48.0;
     if (!without_.shadows)
         (void)Enhanced::EnableShadows(*this, {.size = 4096, .radius = 90.0f, .ahead = 0.7f});
@@ -486,6 +489,10 @@ void ZooGame::UpdateSky() {
     const auto colors = palette_.At(static_cast<float>(clock_.Sun().elevationDegrees));
     sky_->SetColors(colors, sun);
     Graphics::ApplySkyLighting(Renderer().Lighting(), colors, sun, 250.0f, 2600.0f);
+    if (skyLight_) {
+        skyLight_->Update(colors, sun);
+        binder_->Settings().environment = skyLight_->Light();
+    }
 }
 
 void ZooGame::UpdateFrame(double seconds) {
@@ -493,6 +500,7 @@ void ZooGame::UpdateFrame(double seconds) {
     bench_.Drawn(RenderedLastFrame().drawCalls, RenderedLastFrame().primitives);
     const double before = bench_.Timed();
     const auto began = Bench::Clock::now();
+    surfaces_->Animate(seconds);
     if (editor_)
         UpdateEditor(seconds);
     else

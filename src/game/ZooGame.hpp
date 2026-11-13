@@ -18,6 +18,7 @@
 #include "InputScript.hpp"
 #include "Play.hpp"
 #include "SceneryRenderer.hpp"
+#include "SkyLight.hpp"
 #include "Soundscape.hpp"
 #include "Surfaces.hpp"
 #include "TerrainRenderer.hpp"
@@ -27,6 +28,10 @@
 #include "VisitorRenderer.hpp"
 #include "Walker.hpp"
 #include "zoo/sim/Zoo.hpp"
+
+namespace CnaEngine::Enhanced {
+class PbrMaterialBinder;
+}
 
 namespace zoogame {
 
@@ -105,7 +110,7 @@ private:
     /// it was before the distant ones were drawn flat).
     struct Without {
         bool animals = false, people = false, scenery = false, terrain = false, shadows = false,
-             simulation = false, flatPeople = false;
+             simulation = false, flatPeople = false, skyLight = false;
     } without_;
     /// --people N: the most visitors a frame draws (0: the mode's own figure).
     std::size_t peopleBudget_ = 0;
@@ -149,6 +154,10 @@ private:
     std::unique_ptr<VisitorRenderer> visitors_;
     std::unique_ptr<Soundscape> sounds_;
     std::unique_ptr<CnaEngine::Graphics::SkyDome> sky_;
+    /// The sky's and the ground's light on everything lit (--without skylight: the flat
+    /// ambient colour it replaced).
+    std::unique_ptr<SkyLight> skyLight_;
+    std::shared_ptr<CnaEngine::Enhanced::PbrMaterialBinder> binder_;
     CnaEngine::Graphics::DayNightPalette palette_ = CnaEngine::Graphics::DayNightPalette::Default();
     CnaEngine::Graphics::TimeOfDay clock_;
 

@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <map>
 #include <memory>
+#include <vector>
 
 #include "CnaEngine/Graphics/Material.hpp"
 #include "Microsoft/Xna/Framework/Graphics/GraphicsDevice.hpp"
@@ -44,6 +45,10 @@ public:
         return marks_[static_cast<std::size_t>(mark)];
     }
 
+    /// Moves the water on by `seconds`: the ripples are a short loop of normal
+    /// maps, and the water's material shows the one that is due.
+    void Animate(double seconds);
+
     /// Edge length in metres that one repeat of a pattern covers.
     static float PatternMetres(Pattern pattern);
 
@@ -52,6 +57,8 @@ private:
 
     std::array<std::unique_ptr<Texture>, static_cast<std::size_t>(Pattern::Count)> patterns_;
     std::unique_ptr<Texture> wire_;
+    std::vector<std::unique_ptr<Texture>> ripples_;  ///< one loop of the water's surface
+    double rippleTime_ = 0.0;
     std::map<std::uint32_t, std::unique_ptr<CnaEngine::Graphics::Material>> opaque_;
     std::map<std::uint32_t, std::unique_ptr<CnaEngine::Graphics::Material>> meshes_;
     CnaEngine::Graphics::Material glass_;

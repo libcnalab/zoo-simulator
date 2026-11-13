@@ -2,6 +2,7 @@
 #include "Surfaces.hpp"
 
 #include <algorithm>
+#include <array>
 #include <cmath>
 
 #include "CnaEngine/Core/Noise.hpp"
@@ -153,6 +154,62 @@ float Roughness(Pattern pattern) {
     }
 }
 
+constexpr int kRippleFrames = 48;       ///< frames of the loop
+constexpr double kRippleSeconds = 4.0;  ///< length of the loop
+constexpr int kRippleSize = 128;        ///< texels along an edge
+constexpr float kRippleMetres = 4.0f;   ///< edge that one repeat covers
+
+/// One frame of a pond in a light breeze as a tangent-space normal map: a sum
+/// of small waves from all round, the short ones steeper and quicker. Every
+/// wave fits the tile a whole number of times and passes a whole number of
+/// times in the loop, so the picture repeats in space and in time without a seam.
+CnaEngine::Graphics::Image RippleFrame(int frame) {
+    struct Wave {
+        int kx, kz;       ///< crests along each edge of the tile
+        int passes;       ///< times it passes in the loop
+        float slope;      ///< steepest slope it gives the surface
+        float phase;
+    };
+    static const std::array<Wave, 14> waves = [] {
+        std::array<Wave, 14> made{};
+        // The breeze comes from one side: the waves run within a sixth of a turn of it, which
+        // draws the ripples out across it as on a real pond.
+        const int crests[14][2] = {{3, 1},  {4, -1}, {6, 2},   {7, -3},  {9, 1},  {10, -4}, {12, 5},
+                                   {13, -2}, {15, 3}, {17, -6}, {19, 7}, {21, -1}, {23, -8}, {26, 5}};
+        for (std::size_t i = 0; i < made.size(); ++i) {
+            const float k = std::sqrt(static_cast<float>(crests[i][0] * crests[i][0] + crests[i][1] * crests[i][1]));
+            made[i].kx = crests[i][0];
+            made[i].kz = crests[i][1];
+            made[i].passes = std::max(1, static_cast<int>(std::lround(0.9f * std::sqrt(k))));
+            made[i].slope = 0.018f + 0.0016f * k;
+            made[i].phase = 2.399963f * static_cast<float>(i * i + 1);
+        }
+        return made;
+    }();
+    constexpr float kTurn = 6.2831853f;
+    CnaEngine::Graphics::Image image(kRippleSize, kRippleSize);
+    const float time = static_cast<float>(frame) / static_cast<float>(kRippleFrames);
+    for (int y = 0; y < kRippleSize; ++y) {
+        for (int x = 0; x < kRippleSize; ++x) {
+            float slopeX = 0.0f;
+            float slopeZ = 0.0f;
+            for (const Wave& wave : waves) {
+                const float angle = kTurn * (static_cast<float>(wave.kx * x + wave.kz * y) / static_cast<float>(kRippleSize) -
+                                             static_cast<float>(wave.passes) * time) +
+                                    wave.phase;
+                const float k = std::sqrt(static_cast<float>(wave.kx * wave.kx + wave.kz * wave.kz));
+                const float c = std::cos(angle) * wave.slope / k;
+                slopeX += c * static_cast<float>(wave.kx);
+                slopeZ += c * static_cast<float>(wave.kz);
+            }
+            const float length = std::sqrt(slopeX * slopeX + slopeZ * slopeZ + 1.0f);
+            const auto byte = [](float v) { return static_cast<int>(std::clamp(v * 0.5f + 0.5f, 0.0f, 1.0f) * 255.0f + 0.5f); };
+            image.Set(x, y, Color(byte(-slopeX / length), byte(-slopeZ / length), byte(1.0f / length), 255));
+        }
+    }
+    return image;
+}
+
 std::uint32_t Key(const zoo::Color3& color, std::uint32_t extra) {
     return (static_cast<std::uint32_t>(SrgbByte(color[0])) << 24) |
            (static_cast<std::uint32_t>(SrgbByte(color[1])) << 16) |
@@ -239,8 +296,16 @@ Surfaces::Surfaces(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device) 
     water_.blend = CnaEngine::Graphics::BlendMode::AlphaBlend;
     water_.diffuseColor = Vector3(0.05f, 0.2f, 0.26f);
     water_.alpha = 0.78f;
-    water_.roughness = 0.12f;
+    water_.roughness = 0.1f;
     water_.baseTexture = patterns_[0].get();
+    // Ripples (only where the device takes the sky's reflection they are worth their memory:
+    // a flat sheet lit by a flat ambient colour shows nothing of them).
+    ripples_.reserve(kRippleFrames);
+    for (int frame = 0; frame < kRippleFrames; ++frame)
+        ripples_.push_back(CnaEngine::Graphics::UploadTexture(device, RippleFrame(frame), {}, true));
+    water_.normalTexture = ripples_.front().get();
+    water_.sampler = &SamplerState::AnisotropicWrap;
+    water_.uvScale = Vector2(1.0f / kRippleMetres, 1.0f / kRippleMetres);
 
     // Marks glow in their own colour, whatever the light.
     const Vector3 colors[] = {Vector3(0.15f, 0.9f, 0.3f), Vector3(1.0f, 0.12f, 0.08f),
@@ -255,6 +320,14 @@ Surfaces::Surfaces(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device) 
         mark.doubleSided = true;
         mark.baseTexture = patterns_[0].get();
     }
+}
+
+void Surfaces::Animate(double seconds) {
+    if (ripples_.empty())
+        return;
+    rippleTime_ = std::fmod(rippleTime_ + seconds, kRippleSeconds);
+    const auto frame = static_cast<std::size_t>(rippleTime_ / kRippleSeconds * static_cast<double>(kRippleFrames));
+    water_.normalTexture = ripples_[std::min(frame, ripples_.size() - 1)].get();
 }
 
 const Material& Surfaces::Get(const Finish& finish) {
