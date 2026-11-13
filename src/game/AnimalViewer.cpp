@@ -4,7 +4,10 @@
 // animal playing one clip. For checking models and animations on their own.
 #include "AnimalViewer.hpp"
 
+#include "AnimalTextures.hpp"
+
 #include "CnaEngine/Animation/Animator.hpp"
+#include "CnaEngine/App/AssetDirectory.hpp"
 #include "CnaEngine/App/EngineGame.hpp"
 #include "CnaEngine/Enhanced/ModelImport.hpp"
 #include "CnaEngine/Enhanced/PbrMaterialBinder.hpp"
@@ -16,11 +19,18 @@
 #include "Microsoft/Xna/Framework/Content/ContentManager.hpp"
 #include "Microsoft/Xna/Framework/Graphics/Model.hpp"
 
+#include <algorithm>
+#include <cmath>
 #include <cstdio>
+#include <exception>
+#include <fstream>
 #include <memory>
 #include <stdexcept>
 #include <string>
+#include <utility>
 #include <vector>
+
+#include <nlohmann/json.hpp>
 
 using namespace CnaEngine;
 using Microsoft::Xna::Framework::Matrix;
@@ -50,6 +60,17 @@ protected:
             clip_ = std::string(arguments[++index]);
             return true;
         }
+        // Where the camera stands: degrees round the animal (0 in front of it, 90 on its
+        // left), metres from it, metres above the ground; and the moment of the clip to hold.
+        for (const auto& [name, value] : {std::pair{"--angle", &angle_},
+                                          std::pair{"--distance", &distance_},
+                                          std::pair{"--eye", &eye_},
+                                          std::pair{"--at", &at_}}) {
+            if (arguments[index] == name && index + 1 < arguments.size()) {
+                *value = std::stof(std::string(arguments[++index]));
+                return true;
+            }
+        }
         return false;
     }
 
@@ -65,6 +86,8 @@ protected:
 
         model_ = std::make_unique<Xna::Model>(getContentProperty().Load<Xna::Model>("animals/" + animal_));
         view_ = std::make_unique<Graphics::ModelView>(*model_, Enhanced::PbrMaterialFromEffect);
+        textures_ = zoogame::GiveMipmaps(*view_);
+        std::printf("zoo: viewer: %zu texture(s) given mip levels\n", textures_.size());
         if (const auto* skin = Enhanced::FindSkinningData(*model_)) {
             skeleton_ = Enhanced::SkeletonFromSkinningData(*skin);
             clips_ = Enhanced::ClipsFromSkinningData(*skin);
@@ -74,6 +97,10 @@ protected:
                 std::printf("probe: clip %s %.2fs\n", clip.name.c_str(), static_cast<double>(clip.duration));
                 if (clip.name == clip_) {
                     animator_->Play(clip, {.fadeSeconds = 0.0f});
+                    if (at_ >= 0.0f) {
+                        animator_->SetTime(std::min(at_, clip.duration));
+                        animator_->Update(0.0f);
+                    }
                 }
             }
         } else {
@@ -89,12 +116,29 @@ protected:
         groundMaterial_.roughness = 0.9f;
         Enhanced::EnableShadows(*this, {.size = 2048, .radius = 12.0f});
 
-        MainCamera().SetPosition(Vector3(2.6f, 1.6f, 3.2f));
-        MainCamera().LookAt(Vector3(0.0f, 0.8f, 0.0f));
+        // The whole animal in the picture, from where a visitor's eyes are: the generator's
+        // sidecar says how big it is. The model looks along +z.
+        float tall = 1.2f;
+        float body = 0.0f;
+        if (const auto directory = App::FindAssetDirectory("assets")) {
+            try {
+                std::ifstream file(*directory / "animals" / (animal_ + ".json"));
+                const auto meta = nlohmann::json::parse(file).at("meta");
+                tall = meta.value("shoulder_height_m", tall);
+                body = meta.value("body_length_m", body);
+            } catch (const std::exception&) {
+                // no sidecar: the figures of a lion-sized animal
+            }
+        }
+        const float size = std::max(tall * 1.25f, body > 0.0f ? body : 2.1f * tall);
+        const float distance = distance_ > 0.0f ? distance_ : std::max(1.6f, 1.15f * size);
+        const float angle = angle_ * 3.14159265f / 180.0f;
+        MainCamera().SetPosition(Vector3(std::sin(angle) * distance, eye_, std::cos(angle) * distance));
+        MainCamera().LookAt(Vector3(0.0f, std::min(0.62f * tall, eye_ + 0.4f * distance), 0.0f));
     }
 
     void UpdateFrame(const double seconds) override {
-        if (animator_) {
+        if (animator_ && at_ < 0.0f) {
             animator_->Update(static_cast<float>(seconds));
         }
     }
@@ -107,8 +151,13 @@ protected:
 private:
     std::string animal_ = "lion";
     std::string clip_ = "walk";
+    float angle_ = 40.0f;
+    float distance_ = 0.0f;
+    float eye_ = 1.6f;
+    float at_ = -1.0f;
     std::unique_ptr<Xna::Model> model_;
     std::unique_ptr<Graphics::ModelView> view_;
+    std::vector<std::unique_ptr<Xna::Texture2D>> textures_;
     Animation::Skeleton skeleton_;
     std::vector<Animation::AnimationClip> clips_;
     std::unique_ptr<Animation::Animator> animator_;

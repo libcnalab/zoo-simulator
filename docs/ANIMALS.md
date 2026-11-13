@@ -48,3 +48,42 @@ Each has the same eight clips, which the game picks from what the animal is doin
 
 A species without a model would be left out of the Visitor Zoo by the game (its habitat built
 and standing empty).
+
+### What the game does with a model
+
+- **Females and young.** Beside `<id>.glb` the game looks for `<id>_female.glb` and
+  `<id>_juvenile.glb` (each with its `.json`). An adult female is drawn with the female model, an
+  animal younger than half its species' age of maturity with the juvenile one; a species without
+  them uses the one model for everybody. A model is scaled by height:
+  `species shoulder height x share of its sex x growth / meta.shoulder_height_m` of the model
+  drawn, so a variant states its own height. (No species has variants yet: the lioness and the
+  cub are being built, `docs/CODEX_TASKS.md`. Until then a lioness is a small maned lion.)
+- **Swimming.** Where the water is deeper than about 0.6 of the animal's standing height it
+  floats: the body rides with `meta.swim_depth_m` (default 0.72 of the model's shoulder height)
+  under the surface instead of walking on the pool bed under water, and plays the optional ninth
+  clip `swim`. No model has that clip yet, so swimmers paddle with their walk clip: a penguin
+  floats upright, which is wrong and is the next thing to fix for it.
+- **Textures.** CNA imports glTF images with one level (its warning GLTF-206), so the game
+  builds the mip chain itself when it loads a model (`src/game/AnimalTextures.cpp`). The renderer
+  also takes a normal map and an occlusion-roughness-metallic map when a model has them and its
+  mesh has tangents; the generator writes neither yet.
+
+### Looking at one animal
+
+```bash
+cd build
+./zoo-simulator --viewer --animal elephant --clip walk
+# a still for comparing with a photograph: seconds into the clip, the side seen, the distance
+SDL_VIDEODRIVER=offscreen ./zoo-simulator --viewer --animal elephant --clip walk --at 0.4 \
+    --angle 90 --distance 6 --eye 1.6 --frames 20 --screenshot elephant-walk.png
+```
+
+`--angle` is in degrees around the animal (0 in front of it, 90 its left side), `--eye` the
+height of the camera in metres (a visitor's eyes by default), `--distance` in metres (the whole
+animal by default).
+
+State of the six animals named first for realism, as the game draws them (2026-11-13,
+`docs/evidence/animals-2026-11-13-before.jpg`): lion and giraffe are recognisable but smooth and
+toy-like; the elephant is a flat dark grey with no skin relief; the rhino is nearly black, where
+a white rhino is a light dusty grey; the zebra is broken (the head hangs below the chest, stripes
+a hand wide); the penguin is acceptable from standing height.

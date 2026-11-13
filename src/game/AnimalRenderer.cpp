@@ -12,6 +12,8 @@
 #include "CnaEngine/App/AssetDirectory.hpp"
 #include "CnaEngine/Enhanced/ModelImport.hpp"
 
+#include "AnimalTextures.hpp"
+
 namespace zoogame {
 
 namespace {
@@ -22,7 +24,14 @@ namespace Xna = Microsoft::Xna::Framework::Graphics;
 constexpr float kPi = 3.14159265f;
 
 constexpr std::array<const char*, static_cast<std::size_t>(AnimalPose::Count)> kClipNames = {
-    "idle", "walk", "trot", "eat", "drink", "rest", "sleep", "vocalize"};
+    "idle", "walk", "trot", "eat", "drink", "rest", "sleep", "vocalize", "swim"};
+
+/// Up to this share of its growing time an animal is drawn with the model of the young.
+constexpr float kJuvenileShare = 0.5f;
+/// An animal floats where the water is deeper than this share of its standing height...
+constexpr float kFloatDepthShare = 0.62f;
+/// ...and then, without a figure from its model, this share of its height is under water.
+constexpr float kFloatSunkShare = 0.72f;
 
 /// The model that stands in for a species whose own does not exist yet: the
 /// nearest body plan there is, sized to the species' shoulder height.
@@ -73,6 +82,7 @@ const AnimalRenderer::Kind* AnimalRenderer::Load(const std::string& model) {
         return nullptr;
     }
     kind->view = std::make_unique<Graphics::ModelView>(*kind->model, Enhanced::PbrMaterialFromEffect);
+    kind->textures = GiveMipmaps(*kind->view);
     const auto* skin = Enhanced::FindSkinningData(*kind->model);
     if (skin == nullptr) {
         std::printf("zoo: animals: %s has no skeleton\n", model.c_str());
@@ -101,8 +111,13 @@ const AnimalRenderer::Kind* AnimalRenderer::Load(const std::string& model) {
                 kind->walkSpeed = speed;
             if (name == "trot" && speed > 0.0f)
                 kind->trotSpeed = speed;
+            if (name == "swim" && speed > 0.0f)
+                kind->swimSpeed = speed;
         }
-        kind->shoulderHeight = sidecar.at("meta").value("shoulder_height_m", 1.0f);
+        const auto& meta = sidecar.at("meta");
+        kind->shoulderHeight = std::max(0.01f, meta.value("shoulder_height_m", 1.0f));
+        kind->relativeHeight = std::clamp(meta.value("relative_height", 1.0f), 0.3f, 1.5f);
+        kind->swimDepth = meta.value("swim_depth_m", kFloatSunkShare * kind->shoulderHeight);
     } catch (const std::exception& error) {
         std::printf("zoo: animals: %s.json: %s\n", model.c_str(), error.what());
     }
@@ -110,16 +125,18 @@ const AnimalRenderer::Kind* AnimalRenderer::Load(const std::string& model) {
     return slot.get();
 }
 
-const AnimalRenderer::Kind* AnimalRenderer::KindOf(const zoo::SpeciesDef& def, int index) {
+const AnimalRenderer::Look& AnimalRenderer::LookOf(const zoo::SpeciesDef& def, int index) {
     Look& look = looks_[static_cast<std::size_t>(index)];
     if (!look.resolved) {
         look.resolved = true;
         look.kind = Load(def.model);
-        if (look.kind == nullptr) {
+        if (look.kind != nullptr) {
+            look.female = Load(def.model + "_female");
+            look.juvenile = Load(def.model + "_juvenile");
+        } else {
             const std::string standIn = StandInFor(def);
             look.kind = Load(standIn);
             if (look.kind != nullptr) {
-                look.scale = def.shoulderHeightM / look.kind->shoulderHeight;
                 standIns_.push_back(def.id);
                 std::printf("zoo: animals: %s has no model yet; a %s stands in\n", def.id.c_str(),
                             standIn.c_str());
@@ -128,11 +145,13 @@ const AnimalRenderer::Kind* AnimalRenderer::KindOf(const zoo::SpeciesDef& def, i
             }
         }
     }
-    return look.kind;
+    return look;
 }
 
 AnimalPose AnimalRenderer::Choose(const zoo::Animal& animal, const Actor& actor) const {
     using zoo::AnimalActivity;
+    if (actor.afloat > 0.5f)
+        return AnimalPose::Swim;
     if (animal.speed > 0.05f) {
         // Between the two gaits the one in use is kept: no flicker at the boundary.
         const float change = 0.5f * (actor.kind->walkSpeed + actor.kind->trotSpeed) * actor.scale;
@@ -173,11 +192,19 @@ void AnimalRenderer::Update(const zoo::Zoo& zoo, float seconds, float tickFracti
         if (animal.species < 0 || animal.species >= static_cast<int>(looks_.size()))
             continue;
         const zoo::SpeciesDef& def = species_.All()[static_cast<std::size_t>(animal.species)];
-        const Kind* kind = KindOf(def, animal.species);
-        if (kind == nullptr)
+        const Look& look = LookOf(def, animal.species);
+        if (look.kind == nullptr)
             continue;
+        const bool female = animal.sex == zoo::Sex::Female;
+        const float grown = zoo::AgeYears(animal, now) / std::max(0.001f, def.maturityYears);
+        const Kind* kind = look.kind;
+        if (look.juvenile != nullptr && grown < kJuvenileShare)
+            kind = look.juvenile;
+        else if (female && look.female != nullptr)
+            kind = look.female;
         auto& slot = actors_[animal.id];
-        const bool fresh = slot == nullptr;
+        // A young animal that has grown up gets its adult body: a new actor in the same place.
+        const bool fresh = slot == nullptr || slot->kind != kind;
         if (fresh)
             slot = std::make_unique<Actor>(*kind);
         Actor& actor = *slot;
@@ -188,8 +215,9 @@ void AnimalRenderer::Update(const zoo::Zoo& zoo, float seconds, float tickFracti
         if (!visible)
             continue;
         ++drawn_;
-        actor.scale =
-            looks_[static_cast<std::size_t>(animal.species)].scale * zoo::BodyScale(animal, def, now);
+        const float femaleShare = female && look.female != nullptr ? look.female->relativeHeight : 1.0f;
+        const float standing = def.shoulderHeightM * femaleShare * zoo::BodyScale(animal, def, now);
+        actor.scale = standing / kind->shoulderHeight;
 
         // Where it stands: between the last two places the simulation gave it.
         if (appeared) {
@@ -206,6 +234,15 @@ void AnimalRenderer::Update(const zoo::Zoo& zoo, float seconds, float tickFracti
             }
         }
         actor.shown = actor.from + (actor.to - actor.from) * alpha;
+
+        // In water deeper than it can stand in, it floats (and stops floating a little later
+        // than it started, so that a shore does not make it bob between the two).
+        const float depth = world.WaterDepthAt(actor.shown);
+        const bool floats = depth > (actor.afloat > 0.5f ? 0.8f : 1.0f) * kFloatDepthShare * standing;
+        if (appeared)
+            actor.afloat = floats ? 1.0f : 0.0f;
+        else
+            actor.afloat += ((floats ? 1.0f : 0.0f) - actor.afloat) * std::min(1.0f, 2.5f * seconds);
         const float turn = WrapAngle(animal.heading - actor.heading);
         const float most = (2.5f + 1.5f * animal.speed) * seconds;
         actor.heading = WrapAngle(actor.heading + std::clamp(turn, -most, most));
@@ -215,11 +252,17 @@ void AnimalRenderer::Update(const zoo::Zoo& zoo, float seconds, float tickFracti
             actor.called = false;
         const AnimalPose pose = Choose(animal, actor);
         const auto* clip = kind->pose[static_cast<std::size_t>(pose)];
+        const bool paddles = pose == AnimalPose::Swim && clip == nullptr;
+        if (paddles)
+            clip = kind->pose[static_cast<std::size_t>(AnimalPose::Walk)];  // legs working under water
         if (clip == nullptr)
             clip = kind->pose[static_cast<std::size_t>(AnimalPose::Idle)];
         Animation::PlayOptions options;
         options.loop = pose != AnimalPose::Vocalize;
-        if (pose == AnimalPose::Walk || pose == AnimalPose::Trot) {
+        if (pose == AnimalPose::Swim) {
+            const float gait = (paddles ? kind->walkSpeed : kind->swimSpeed) * actor.scale;
+            options.speed = std::clamp(animal.speed / std::max(gait, 0.05f), 0.5f, paddles ? 1.3f : 2.0f);
+        } else if (pose == AnimalPose::Walk || pose == AnimalPose::Trot) {
             const float gait = (pose == AnimalPose::Walk ? kind->walkSpeed : kind->trotSpeed) * actor.scale;
             options.speed = std::clamp(animal.speed / std::max(gait, 0.05f), 0.4f, 2.2f);
         }
@@ -245,9 +288,13 @@ void AnimalRenderer::Update(const zoo::Zoo& zoo, float seconds, float tickFracti
         const zoo::Vec2 along = zoo::HeadingVector(actor.heading) * reach;
         const float front = world.HeightAt(actor.shown + along);
         const float rear = world.HeightAt(actor.shown - along);
-        const float slope = LiesDown(pose) ? 0.0f : std::atan2(front - rear, 2.0f * reach);
+        const float slope =
+            LiesDown(pose) ? 0.0f : (1.0f - actor.afloat) * std::atan2(front - rear, 2.0f * reach);
         actor.pitch += (slope - actor.pitch) * std::min(1.0f, 6.0f * seconds);
-        const float ground = std::max(world.HeightAt(actor.shown), 0.5f * (front + rear));
+        const float bed = std::max(world.HeightAt(actor.shown), 0.5f * (front + rear));
+        const float surface = world.HeightAt(actor.shown) + depth;
+        const float floating = std::max(bed, surface - kind->swimDepth * actor.scale);
+        const float ground = bed + (floating - bed) * actor.afloat;
         actor.world = Matrix::CreateScale(actor.scale) * Matrix::CreateRotationX(-actor.pitch) *
                       Matrix::CreateRotationY(actor.heading) *
                       Matrix::CreateTranslation(actor.shown.x, ground, actor.shown.z);
