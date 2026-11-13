@@ -10,7 +10,7 @@
       "speed": 0.0
     },
     {
-      "duration": 1.1333,
+      "duration": 0.8,
       "events": [
         {
           "name": "step",
@@ -18,21 +18,21 @@
         },
         {
           "name": "step",
-          "time": 0.2833
+          "time": 0.2
         },
         {
           "name": "step",
-          "time": 0.5667
+          "time": 0.4
         },
         {
           "name": "step",
-          "time": 0.85
+          "time": 0.6
         }
       ],
-      "frames": 35,
+      "frames": 25,
       "loop": true,
       "name": "walk",
-      "speed": 1.5
+      "speed": 1.1923
     },
     {
       "duration": 0.6333,
@@ -57,7 +57,7 @@
       "frames": 20,
       "loop": true,
       "name": "trot",
-      "speed": 3.0
+      "speed": 2.4182
     },
     {
       "duration": 3.0,
@@ -106,28 +106,29 @@
     }
   ],
   "generator": "tools/animals (zoogen)",
-  "license": "MIT",
+  "license": "CC BY 4.0",
   "meta": {
-    "body_length_m": 2.3,
+    "asset_license": "CC BY 4.0",
     "common_name": "Plains zebra",
-    "roughness": 0.9,
     "scientific_name": "Equus quagga",
-    "shoulder_height_m": 1.35
+    "shoulder_height_m": 1.35,
+    "source": "Shikaki_Naito, Zebra Anatomy, CC BY 4.0",
+    "variant": "male"
   },
   "name": "zebra",
   "skeleton_bounds_animal_space": {
     "max": [
-      1.127,
-      0.162,
-      1.3905
+      1.2769,
+      0.242,
+      1.7004
     ],
     "min": [
-      -1.541,
-      -0.162,
+      -0.8377,
+      -0.242,
       0.0
     ]
   },
-  "texture": 1024,
-  "triangles": 18852,
-  "vertices": 9436
+  "texture": 2048,
+  "triangles": 28494,
+  "vertices": 14250
 }

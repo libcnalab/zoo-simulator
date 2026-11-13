@@ -40,7 +40,8 @@ python3 -m unittest discover -s tools/animals/tests
 |---|---|
 | `zoogen/sculpt.py`, `bigcat.py` on a prepared third-party sculpt (below) | lion, lion_female, lion_juvenile, tiger |
 | `zoogen/rigged.py`, `pachyderm.py`, `pachyderm_motion.py` on a prepared third-party rigged model (below) | rhino, rhino_juvenile, elephant, elephant_female, elephant_juvenile |
-| `zoogen/quadruped.py`, `wild_quadruped.py`, `anatomy.py` | wolf, brown bear, polar bear, zebra, giraffe, camel, meerkat |
+| `zoogen/scan.py` on a prepared third-party static sculpt, rigged by us (below) | zebra, zebra_female, zebra_juvenile |
+| `zoogen/quadruped.py`, `wild_quadruped.py`, `anatomy.py` | wolf, brown bear, polar bear, giraffe, camel, meerkat |
 | `zoogen/biped.py` | penguin, ostrich, flamingo, kangaroo |
 
 Each has the same eight clips, which the game picks from what the animal is doing: `idle`,
@@ -109,6 +110,38 @@ dark in the game's light (nearly black against the sand), the tusks are too long
 level, the ears are smooth where the body is wrinkled, and the source was an Asian elephant,
 so face and ears are a conversion and read as one from close by. The calf keeps adult skin.
 No calf lives in the Visitor Zoo yet, so both juveniles are only seen in the viewer.
+
+### Zebra from a static sculpt (2026-11-13)
+
+The zebra's source has no skeleton at all (Codex task S8): "Zebra Anatomy" by Shikaki_Naito,
+CC BY 4.0, an anatomy study of which one half is a cutaway. `tools/animals/prepare_scan.py`
+keeps the intact flank, mirrors it, welds the seam, varies the stripes of one side, decimates
+(head and hooves kept denser) and writes a 1.9 MB derivative (`tools/animals/sources/zebra/`:
+mesh and a 2048x1024 coat; the source has no normal map). `zoogen/scan.py` fits **our**
+quadruped skeleton to landmarks measured on the mesh (given in `species/zebra.py`), computes
+skin weights (bone heat, then corrected: four influences, limbs kept off the belly) and
+builds the three models. This is the path for every further species whose best source is a
+static sculpt or scan.
+
+| Model | Triangles | Bones | Withers | What it is |
+|---|---:|---:|---:|---|
+| `zebra` | 28,494 | 33 | 1.35 m | stallion |
+| `zebra_female` | 28,494 | 33 | 1.30 m | mare: slimmer neck, her own stripe variation |
+| `zebra_juvenile` | 19,500 | 33 | 0.90 m | foal: long legs, short body, brown stripes |
+
+Eight clips each, ours: a four-beat lateral walk with the head nodding, a diagonal trot with
+suspension, lying on the chest with the legs folded under. 53 pipeline tests passed in the
+task's tree, 74 in the main tree with the other species of the day.
+
+Seen in the game's viewer and in the savannah habitat (`evidence/zebra-scan-2026-11-13.jpg`:
+before, stallion, mare, foal, the habitat before and after). Honest state: the largest step
+of all species so far, because the old one was a striped barrel whose lying pose read as a
+blob; a lying zebra now reads as a lying zebra from the visitors' side. What is wrong: seen
+from the front the stripes are mirror-symmetric; face, ears and the built mane are angular
+close up; folded legs are chunky and stretch the stripes at shoulder and hip; the foal has no
+fluff, only colour; mare and stallion are visibly the same sculpt. The source's stripes were
+kept as they are (broad flank stripes, pale belly) without claiming a subspecies. No foal
+lives in the Visitor Zoo yet, so `zebra_juvenile` is only seen in the viewer.
 
 A species without a model would be left out of the Visitor Zoo by the game (its habitat built
 and standing empty).

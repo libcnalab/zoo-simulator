@@ -11,13 +11,15 @@ import numpy as np
 from . import build, preview
 
 
-def material(source_dir, name, normal_strength=1.0):
+def material(source_dir, name, normal_strength=1.0, optional_maps=False):
     mat = bpy.data.materials.new(name)
     mat.use_nodes = True
     shader = mat.node_tree.nodes['Principled BSDF']
     shader.inputs['Roughness'].default_value = .9
     shader.inputs['Metallic'].default_value = 0
     for filename, role in [('base.png', 'base'), ('normal.png', 'normal'), ('occlusion.png', 'occlusion')]:
+        if optional_maps and role != 'base' and not (Path(source_dir) / filename).is_file():
+            continue
         image = bpy.data.images.load(str(Path(source_dir) / filename), check_existing=False)
         image.colorspace_settings.name = 'sRGB' if role == 'base' else 'Non-Color'
         texture = mat.node_tree.nodes.new('ShaderNodeTexImage')
@@ -116,7 +118,8 @@ def build_rigged(spec):
         for i, group in enumerate(ob.vertex_groups):
             for vertex in np.flatnonzero(weights[:, i] > 0):
                 group.add([int(vertex)], float(weights[vertex, i]), 'REPLACE')
-    mat = material(Path(data['source_path']).parent, spec.name, data['shape']['normal_strength'])
+    mat = material(Path(data['source_path']).parent, spec.name, data['shape']['normal_strength'],
+                   optional_maps=data.get('optional_maps', False))
     scratch = Path.cwd() / 'build-probe'
     for node in mat.node_tree.nodes:
         if node.type != 'TEX_IMAGE':
@@ -145,6 +148,8 @@ def build_rigged(spec):
                 adjusted = np.where(face[..., None], corrected, adjusted)
                 adjusted = np.where(skin[..., None], adjusted, rgb)
             rgba[..., :3] = np.clip(adjusted, 0, 1)
+            if 'texture_transform' in data:
+                rgba = data['texture_transform'](rgba)
             image.pixels.foreach_set(rgba.ravel())
             image.filepath_raw = str(scratch / (spec.name + '_base.jpg'))
             image.file_format = 'JPEG'

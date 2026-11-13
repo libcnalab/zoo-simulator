@@ -20,7 +20,7 @@ from zoogen import geom, quadruped  # noqa: E402
 from zoogen.rig import Pose, Solver, quat_from_matrix, rot_x, rot_y, rot_z  # noqa: E402
 
 CATS = ["lion", "lion_female", "lion_juvenile", "tiger"]
-SPECIES = ["lion", "lion_female", "lion_juvenile", "tiger", "wolf", "brown_bear", "polar_bear", "zebra", "rhino", "camel",
+SPECIES = ["lion", "lion_female", "lion_juvenile", "tiger", "wolf", "brown_bear", "polar_bear", "zebra", "zebra_female", "zebra_juvenile", "rhino", "camel",
            "elephant", "giraffe", "meerkat", "penguin", "ostrich", "flamingo", "kangaroo"]
 
 

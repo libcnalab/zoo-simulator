@@ -1,0 +1,136 @@
+{
+  "bones": 33,
+  "clips": [
+    {
+      "duration": 6.0,
+      "events": [],
+      "frames": 181,
+      "loop": true,
+      "name": "idle",
+      "speed": 0.0
+    },
+    {
+      "duration": 0.8,
+      "events": [
+        {
+          "name": "step",
+          "time": 0.0
+        },
+        {
+          "name": "step",
+          "time": 0.2
+        },
+        {
+          "name": "step",
+          "time": 0.4
+        },
+        {
+          "name": "step",
+          "time": 0.6
+        }
+      ],
+      "frames": 25,
+      "loop": true,
+      "name": "walk",
+      "speed": 0.7949
+    },
+    {
+      "duration": 0.6333,
+      "events": [
+        {
+          "name": "step",
+          "time": 0.0
+        },
+        {
+          "name": "step",
+          "time": 0.0
+        },
+        {
+          "name": "step",
+          "time": 0.3167
+        },
+        {
+          "name": "step",
+          "time": 0.3167
+        }
+      ],
+      "frames": 20,
+      "loop": true,
+      "name": "trot",
+      "speed": 1.6121
+    },
+    {
+      "duration": 3.0,
+      "events": [],
+      "frames": 91,
+      "loop": true,
+      "name": "eat",
+      "speed": 0.0
+    },
+    {
+      "duration": 2.4,
+      "events": [],
+      "frames": 73,
+      "loop": true,
+      "name": "drink",
+      "speed": 0.0
+    },
+    {
+      "duration": 8.0,
+      "events": [],
+      "frames": 241,
+      "loop": true,
+      "name": "rest",
+      "speed": 0.0
+    },
+    {
+      "duration": 8.0,
+      "events": [],
+      "frames": 241,
+      "loop": true,
+      "name": "sleep",
+      "speed": 0.0
+    },
+    {
+      "duration": 2.6,
+      "events": [
+        {
+          "name": "call",
+          "time": 0.572
+        }
+      ],
+      "frames": 79,
+      "loop": false,
+      "name": "vocalize",
+      "speed": 0.0
+    }
+  ],
+  "generator": "tools/animals (zoogen)",
+  "license": "CC BY 4.0",
+  "meta": {
+    "asset_license": "CC BY 4.0",
+    "common_name": "Plains zebra",
+    "relative_height": 0.6666666666666666,
+    "scientific_name": "Equus quagga",
+    "shoulder_height_m": 0.9,
+    "source": "Shikaki_Naito, Zebra Anatomy, CC BY 4.0",
+    "variant": "juvenile",
+    "variant_of": "zebra"
+  },
+  "name": "zebra_juvenile",
+  "skeleton_bounds_animal_space": {
+    "max": [
+      0.6413,
+      0.1448,
+      1.0823
+    ],
+    "min": [
+      -0.5489,
+      -0.1448,
+      0.0
+    ]
+  },
+  "texture": 2048,
+  "triangles": 19500,
+  "vertices": 9753
+}

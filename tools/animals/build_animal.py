@@ -57,6 +57,11 @@ def main():
           f"{len(info['bones'])} bones, {len(clips)} clips, {os.path.getsize(glb)} bytes, "
           f"{time.time() - t0:.1f}s")
 
+    if args.preview and spec.sculpt is not None and spec.sculpt.get("kind") == "scan":
+        from zoogen.scan import model_previews
+        model_previews(scene, arm_ob, spec, clips, args)
+        return
+
     if args.preview and spec.sculpt is not None and spec.sculpt.get("rigged", False):
         from zoogen.rigged import model_previews
         model_previews(scene, arm_ob, spec, clips, args)
