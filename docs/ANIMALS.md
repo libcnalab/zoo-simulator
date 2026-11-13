@@ -51,7 +51,10 @@ Each has the same eight clips, which the game picks from what the animal is doin
 
 Procedural geometry did not reach a believable cat, so the lion, the lioness, the cub and
 the tiger are built on a professional sculpt under a licence that allows it: "Free strong
-lioness - 4k" by Pedro B. Goulart (Pebegou), CC BY 4.0 (`assets/ATTRIBUTION.md`).
+lioness - 4k" by Pedro B. Goulart (Pebegou), CC BY 4.0 (`assets/ATTRIBUTION.md`). The licence was
+read on 2026-11-13 from Sketchfab's public record of the model
+(`api.sketchfab.com/v3/models/84d56e6cfcf247cb8fe468312f371677`: "CC Attribution",
+`creativecommons.org/licenses/by/4.0`, downloadable).
 `tools/animals/prepare_bigcat.py` turns the download into a small derivative
 (`tools/animals/sources/bigcat/`, 1.9 MB: decimated mesh with its skin weights under our
 bone names, a detail map and an occlusion map); the species files re-proportion it per
