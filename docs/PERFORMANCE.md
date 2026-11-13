@@ -86,7 +86,35 @@ sitting down, and a person changing from flat to avatar changes its lighting sli
 is lit from one studio direction and tinted, the avatar is lit by the scene). At 16 m and more
 this was not noticeable in the screenshots; it has not been judged in motion by a person.
 
+## What was changed: the start of a visit
+
+The 6,000 steps that fill the zoo before the player walks in took 6.8-7.5 s of an 11.5-12.2 s
+start. Nearly all of it was one mistake: the animals looked their feeders, shelters and toys
+up through `env.objects.FindProp(id)`, and `Env` holds a mutable reference, so this was the
+mutable overload, which marks the spatial index of all 1,915 props as stale; the next
+`PropsNear` rebuilt it. Read-only lookups now go through `std::as_const` (Codex task T1,
+`docs/VISIT_START.md`); the lookups that do change a feeder or a bin still invalidate.
+
+Measured on the game (offscreen, Radeon 780M, `--frames 5`, wall time of the whole process):
+
+| | before | after |
+|---|---|---|
+| filling the zoo, 6,000 steps | 6.84 s, 7.49 s | 1.19 s, 1.18 s, 1.18 s |
+| whole start to the fifth frame | 11.46 s, 12.15 s | 5.52 s, 5.46 s, 5.52 s |
+
+The state after the fill is the same bit for bit: the hashes of three seeds after 600 and after
+6,000 steps, and after 500 steps more, were recorded before the change and are tests
+(`VisitStart.FillHashesShort`; the 6,000-step one is disabled for the routine run and passed
+when run by hand, 5.5 s). The sequence itself moved from the game into the core
+(`zoo::FillForVisit`), so that the tests fill the zoo the way the game does; the loading bar
+moves while it runs.
+
+What the 5.5 s are now: GL and data 0.3 s, building the zoo 0.6 s, filling 1.2 s, sound 0.2 s,
+sky/shadows/avatars and the ground painting about 2.5 s (painting 2.2 s), the animal models
+0.7 s.
+
 ## What remains
+
 
 - **Scenery** is now the largest cost at the entrance: 1,063,415 triangles in 1,114 draw calls
   for the whole zoo, 6 ms of a 13 ms frame at the plaza (138.9 fps without it). The cells are
@@ -94,6 +122,6 @@ this was not noticeable in the screenshots; it has not been judged in motion by 
 - **Shadows**: about 1.8 ms at the entrance (262 draw calls, 520,000 triangles).
 - **Animals** are submitted wherever they are: 1.19 million triangles a frame at the entrance
   for animals nobody can see from there. Cheap on this GPU (under 1 ms) but free to remove.
-- **Loading**: the warm-up steps (see `docs/VISITOR_ZOO.md` once the visit start is moved into
-  the core).
+- **Loading**: 5.5 s now (see below); the ground painting (about 2.2 s on the worker threads)
+  is the largest part left.
 - **Memory**: about 1.05 GB resident; the avatar cast is about 180 MB of it.

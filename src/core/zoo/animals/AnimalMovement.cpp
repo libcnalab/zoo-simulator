@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <cmath>
 #include <limits>
+#include <utility>
 
 #include "zoo/animals/AnimalTuning.hpp"
 
@@ -77,7 +78,7 @@ void AdvanceMovement(Animal& animal, const SpeciesDef& species, const Env& env, 
         animal.onDetour = false;
         animal.detours = 0;
         if (animal.targetProp) {
-            const Prop* prop = env.objects.FindProp(animal.targetProp);
+            const Prop* prop = std::as_const(env.objects).FindProp(animal.targetProp);
             if (prop != nullptr) {
                 animal.heading = TurnTowards(animal.heading, HeadingOf(prop->position - animal.position),
                                              tuning::kTurnRadiansPerSecond * tuning::kMotionSecondsPerTick);
@@ -209,7 +210,8 @@ void AdvanceMovement(Animal& animal, const SpeciesDef& species, const Env& env, 
         if (propId == animal.targetProp) {
             return nullptr;
         }
-        const Prop* prop = env.objects.FindProp(propId);
+        // The mutable lookup invalidates the spatial index even when the pointer is only read.
+        const Prop* prop = std::as_const(env.objects).FindProp(propId);
         if (prop == nullptr || prop->def < 0 ||
             static_cast<std::size_t>(prop->def) >= env.catalog.props.size()) {
             return nullptr;

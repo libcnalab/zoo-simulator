@@ -18,6 +18,7 @@
 
 #include "Saves.hpp"
 #include "zoo/sim/Scenario.hpp"
+#include "zoo/sim/VisitStart.hpp"
 #include "zoo/sim/VisitorZoo.hpp"
 #include "zoo/sim/ZooSave.hpp"
 
@@ -91,30 +92,29 @@ void ZooGame::PrepareVisit(zoo::Zoo& zoo, bool fill) {
     zoo.Guests().SetPace(kVisitPeople);
     const float hour = startHour_ ? static_cast<float>(*startHour_) : kVisitHour;
     const float now = zoo.Time().Hour();
+    const std::int64_t day = fill ? kVisitDay : zoo.Time().Day();
     if (fill || now < kEarliestHour || now >= kLatestHour) {
-        zoo.SetCalendar(fill ? kVisitDay : zoo.Time().Day(), hour);
+        zoo.SetCalendar(day, hour);
         fill = true;
     }
     if (fill) {
         const auto began = std::chrono::steady_clock::now();
-        const std::int64_t ticks = warmUpTicks_ > 0 ? warmUpTicks_ : kFillTicks;
-        zoo.SetDayPace(0);
         // The people who came in first are set down all over the zoo, as if it had been
-        // open since nine; the rest of the time they and the later ones settle.
-        const std::int64_t before = ticks * 3 / 5;
-        zoo::VisitorPace filling = kVisitPeople;
-        filling.arrivals = kFillArrivals;
-        zoo.Guests().SetPace(filling);
-        for (std::int64_t i = 0; i < before; ++i)
-            zoo.Step();
-        const int spread = zoo.SpreadVisitors();
-        zoo.Guests().SetPace(kVisitPeople);
-        for (std::int64_t i = before; i < ticks; ++i)
-            zoo.Step();
+        // open since nine; the rest of the time they and the later ones settle
+        // (zoo::FillForVisit, docs/VISIT_START.md).
+        const zoo::VisitStartOptions options{.day = day,
+                                             .hour = hour,
+                                             .fillTicks = warmUpTicks_ > 0 ? warmUpTicks_ : kFillTicks,
+                                             .pace = kVisitPeople,
+                                             .fillArrivals = kFillArrivals};
+        const zoo::VisitStartReport filled = zoo::FillForVisit(zoo, options, [this](float share) {
+            ShowLoading("The gates opened at nine: the morning's visitors are coming in",
+                        0.3f + 0.4f * share);
+        });
         const double took = std::chrono::duration<double>(std::chrono::steady_clock::now() - began).count();
         std::printf(
             "zoo: visit: %d visitors (%d set down about the zoo) after %lld steps at %.2f h (%.2f s)\n",
-            zoo.Guests().Count(), spread, static_cast<long long>(ticks),
+            filled.visitors, filled.spread, static_cast<long long>(filled.ticks),
             static_cast<double>(zoo.Time().Hour()), took);
         // Where the people are: how many do what, and how many stand at each habitat.
         std::map<std::uint32_t, int> watchers;

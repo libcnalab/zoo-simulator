@@ -5,6 +5,7 @@
 #include <bit>
 #include <cmath>
 #include <limits>
+#include <utility>
 
 #include "zoo/visitors/VisitorInternal.hpp"
 
@@ -599,7 +600,7 @@ bool Stepper::TryBin(Group g) {
         if (distance >= bestDistance) {
             continue;
         }
-        const Prop* prop = env.objects.FindProp(bin.id);
+        const Prop* prop = std::as_const(env.objects).FindProp(bin.id);
         if (prop == nullptr || prop->amount + static_cast<float>(lead.litter) > bin.capacity) {
             continue;  // full to the brim
         }

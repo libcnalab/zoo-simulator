@@ -7,6 +7,7 @@
 #include <iterator>
 #include <limits>
 #include <span>
+#include <utility>
 
 #include "zoo/animals/AnimalInternal.hpp"
 #include "zoo/animals/AnimalTuning.hpp"
@@ -440,7 +441,7 @@ WelfareReport Animals::WelfareWithGroup(const Env& env, const Animal& animal, co
     bool hasOpenWater = false;
     if (current != nullptr) {
         for (PropId propId : current->feeders) {
-            const Prop* prop = env.objects.FindProp(propId);
+            const Prop* prop = std::as_const(env.objects).FindProp(propId);
             if (prop == nullptr || prop->def < 0 ||
                 static_cast<std::size_t>(prop->def) >= env.catalog.props.size())
                 continue;
@@ -868,7 +869,7 @@ void Animals::StepAnimals(Env& env, const std::vector<Enclosure>& enclosures, in
             animal_internal::TryEscape(animal, species, env, rng_);
         }
         const bool completed = animal.activityLeft <= 0 && !animal.moving;
-        if (animal.targetProp && env.objects.FindProp(animal.targetProp) == nullptr) {
+        if (animal.targetProp && std::as_const(env.objects).FindProp(animal.targetProp) == nullptr) {
             animal.targetProp = {};
             animal.activity = AnimalActivity::Idle;
             animal.activityLeft = 0;
@@ -906,7 +907,7 @@ void Animals::StepAnimals(Env& env, const std::vector<Enclosure>& enclosures, in
         if ((animal.activity == AnimalActivity::Eat || animal.activity == AnimalActivity::Drink ||
              animal.activity == AnimalActivity::Play) &&
             animal.targetProp) {
-            const Prop* targetProp = env.objects.FindProp(animal.targetProp);
+            const Prop* targetProp = std::as_const(env.objects).FindProp(animal.targetProp);
             if (targetProp == nullptr) {
                 animal.activity = AnimalActivity::Idle;
                 animal.targetProp = {};

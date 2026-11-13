@@ -5,6 +5,7 @@
 #include <array>
 #include <cmath>
 #include <limits>
+#include <utility>
 
 #include "zoo/animals/AnimalTuning.hpp"
 
@@ -111,7 +112,7 @@ bool DestinationClear(Vec2 point, float bodyRadius, const EnclosureId enclosureI
     }
     env.objects.PropsNear(point, bodyRadius + tuning::kDestinationProbeM, propIds);
     for (PropId propId : propIds) {
-        const Prop* prop = env.objects.FindProp(propId);
+        const Prop* prop = std::as_const(env.objects).FindProp(propId);
         if (prop == nullptr || prop->def < 0 ||
             static_cast<std::size_t>(prop->def) >= env.catalog.props.size()) {
             continue;
@@ -399,7 +400,7 @@ void DecideActivity(Animal& animal, const SpeciesDef& species, Env& env, std::sp
         float nearest = std::numeric_limits<float>::max();
         PropId chosen{};
         for (PropId id : enclosure->troughs) {
-            const Prop* prop = env.objects.FindProp(id);
+            const Prop* prop = std::as_const(env.objects).FindProp(id);
             if (prop == nullptr || prop->amount <= 0.0f || !PropHasRoom(id, animals, neighbors)) {
                 continue;
             }
@@ -410,7 +411,7 @@ void DecideActivity(Animal& animal, const SpeciesDef& species, Env& env, std::sp
             }
         }
         if (chosen) {
-            const Prop* prop = env.objects.FindProp(chosen);
+            const Prop* prop = std::as_const(env.objects).FindProp(chosen);
             if (prop != nullptr) {
                 Start(animal, AnimalActivity::Drink,
                       PropApproach(species, env, *prop,
@@ -457,7 +458,7 @@ void DecideActivity(Animal& animal, const SpeciesDef& species, Env& env, std::sp
         float nearest = std::numeric_limits<float>::max();
         PropId chosen{};
         for (PropId id : enclosure->feeders) {
-            const Prop* prop = env.objects.FindProp(id);
+            const Prop* prop = std::as_const(env.objects).FindProp(id);
             if (prop == nullptr || !PropHasRoom(id, animals, neighbors) ||
                 Animals::EdibleKg(env, *prop) <= 0.0f || prop->food < 0 ||
                 static_cast<std::size_t>(prop->food) >= env.catalog.foods.size()) {
@@ -474,7 +475,7 @@ void DecideActivity(Animal& animal, const SpeciesDef& species, Env& env, std::sp
             }
         }
         if (chosen) {
-            const Prop* prop = env.objects.FindProp(chosen);
+            const Prop* prop = std::as_const(env.objects).FindProp(chosen);
             if (prop != nullptr) {
                 Start(animal, AnimalActivity::Eat,
                       PropApproach(species, env, *prop,
@@ -642,7 +643,7 @@ void DecideActivity(Animal& animal, const SpeciesDef& species, Env& env, std::sp
 
     const AnimalActivity next = ChooseRoutineActivity(animal, species, hour, rng);
     if (next == AnimalActivity::Play && !enclosure->enrichments.empty()) {
-        const Prop* toy = env.objects.FindProp(enclosure->enrichments.front());
+        const Prop* toy = std::as_const(env.objects).FindProp(enclosure->enrichments.front());
         if (toy != nullptr) {
             const PropId propId = enclosure->enrichments.front();
             Start(animal, next,
