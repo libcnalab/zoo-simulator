@@ -45,6 +45,8 @@ constexpr float kFarthest = 260.0f;
 /// and a picture of 96 lines is as sharp as the avatar.
 constexpr float kCloseNear = 16.0f;
 constexpr float kCloseFar = 20.0f;
+/// How many people a frame draws as avatars at most (the nearest), when it can draw pictures.
+constexpr std::size_t kAvatars = 18;
 /// The patch of shade under a person is not drawn farther away than this.
 constexpr float kShadeFarthest = 90.0f;
 /// A member's sheet of pictures: one column a pose (standing, sitting, the moments of a
@@ -91,9 +93,10 @@ VisitorRenderer::~VisitorRenderer() {
     if (std::getenv("ZOO_AVATAR_DEBUG") != nullptr && frames_ > 0) {
         const double frames = static_cast<double>(frames_);
         std::printf(
-            "zoo: visitors: %d of the cast ready; a frame drew %.1f people, posing %.3f ms, drawing avatars "
-            "%.3f ms, flat people %.3f ms\n",
-            ready_, static_cast<double>(drawnInAll_) / frames, poseSeconds_ * 1000.0 / frames,
+            "zoo: visitors: %d of the cast ready; a frame drew %.1f people, %.1f of them as avatars; posing "
+            "%.3f ms, drawing avatars %.3f ms, flat people %.3f ms\n",
+            ready_, static_cast<double>(drawnInAll_) / frames, static_cast<double>(closeInAll_) / frames,
+            poseSeconds_ * 1000.0 / frames,
             drawSeconds_ * 1000.0 / frames, flatSeconds_ * 1000.0 / frames);
     }
 }
@@ -522,6 +525,7 @@ void VisitorRenderer::Draw(GraphicsDevice& device, const CnaEngine::Graphics::Ca
     shades_.clear();
     for (auto& [id, actor] : actors_) {
         const bool wasClose = actor.close;
+        actor.wasAvatar = wasClose;
         actor.close = false;
         const Member* member = actor.hidden ? nullptr : Playing(actor);
         if (member == nullptr)
@@ -544,16 +548,24 @@ void VisitorRenderer::Draw(GraphicsDevice& device, const CnaEngine::Graphics::Ca
         else
             inView_.emplace_back(distance, &actor);
     }
-    if (inView_.size() > budget_) {
-        std::nth_element(inView_.begin(), inView_.begin() + static_cast<std::ptrdiff_t>(budget_), inView_.end(),
-                         [](const auto& a, const auto& b) { return a.first < b.first; });
+    // An avatar is some forty draws of its own (0.45 ms on the machine this was measured on,
+    // docs/PERFORMANCE.md): a crowd at a fence is drawn as avatars only in its nearest rows,
+    // the rows behind as pictures. Who was an avatar on the last frame counts as a little
+    // nearer, so that two people at the same distance do not swap every frame.
+    const std::size_t avatars = flat_ ? std::min(budget_, kAvatars) : budget_;
+    if (inView_.size() > avatars) {
+        const auto rank = [](const std::pair<float, Actor*>& one) {
+            return one.second->wasAvatar ? one.first * 0.8f : one.first;
+        };
+        std::nth_element(inView_.begin(), inView_.begin() + static_cast<std::ptrdiff_t>(avatars), inView_.end(),
+                         [&](const auto& a, const auto& b) { return rank(a) < rank(b); });
         if (flat_) {
-            for (std::size_t i = budget_; i < inView_.size(); ++i) {
+            for (std::size_t i = avatars; i < inView_.size(); ++i) {
                 const Actor& actor = *inView_[i].second;
                 far_.push_back(Far{Playing(actor), &actor, standing(actor)});
             }
         }
-        inView_.resize(budget_);
+        inView_.resize(avatars);
     }
     // Whose pictures are not drawn yet is not seen for the frames that takes.
     std::erase_if(far_, [](const Far& one) { return one.member->sheet == nullptr; });
@@ -591,6 +603,7 @@ void VisitorRenderer::Draw(GraphicsDevice& device, const CnaEngine::Graphics::Ca
     const auto before = std::chrono::steady_clock::now();
     DrawFlat(device, camera, lighting);
     flatSeconds_ += std::chrono::duration<double>(std::chrono::steady_clock::now() - before).count();
+    closeInAll_ += drawn_;
     drawnFlat_ = far_.size();
     drawn_ += drawnFlat_;
     ++frames_;

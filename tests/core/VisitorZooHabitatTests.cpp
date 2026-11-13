@@ -238,6 +238,7 @@ void CheckVisiting(Zoo& zoo, std::int64_t ticks) {
     ExpectContained(zoo);
     std::map<std::uint32_t, int> streak;
     std::map<std::uint32_t, int> longest;
+    std::map<std::string, float> deepest;
     for (int step = 0; step <= 2000; ++step) {
         for (const Enclosure& home : zoo.Habitats().All()) {
             bool visible = false;
@@ -251,9 +252,26 @@ void CheckVisiting(Zoo& zoo, std::int64_t ticks) {
             consecutive = visible ? 0 : consecutive + 1;
             longest[home.id.value] = std::max(longest[home.id.value], consecutive);
         }
+        // Nobody that cannot swim stands in water over its wading depth (a meerkat was seen
+        // strolling across its pool, 2026-11-13).
+        for (const Animal& animal : zoo.Fauna().All()) {
+            if (!animal.InWorld() || animal.shelter || animal.species < 0) {
+                continue;
+            }
+            const SpeciesDef& def = zoo.SpeciesList().All()[static_cast<std::size_t>(animal.species)];
+            if (def.canSwim) {
+                continue;
+            }
+            const float depth = zoo.Map().WaterDepthAt(animal.position);
+            float& worst = deepest[def.id];
+            worst = std::max(worst, depth - 0.6f * def.shoulderHeightM);
+        }
         if (step < 2000) {
             zoo.Step();
         }
+    }
+    for (const auto& [species, over] : deepest) {
+        EXPECT_LE(over, 0.05f) << species << " stood " << over << " m deeper than it wades";
     }
     for (const Enclosure& home : zoo.Habitats().All()) {
         std::cout << "seed=" << zoo.Config().seed << " fill=" << ticks << ' ' << home.name

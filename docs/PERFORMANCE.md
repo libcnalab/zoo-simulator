@@ -54,7 +54,8 @@ painting the ground texture 1.4-2.3 s.
 
 ## What was changed: people near and far
 
-The nearest people (within 16 m, at most 40) are full CNA avatars, as before. Everybody else in
+The nearest people (within 16 m, at most 40; since the same day at most 18, see below) are full
+CNA avatars, as before. Everybody else in
 view is drawn as a flat, upright picture of the same person: for each member of the cast the game
 renders, once, a sheet of that avatar in ten poses (standing, sitting, eight phases of the walk)
 from eight directions, and far people are quads with the matching cell of that sheet, lit by the
@@ -85,6 +86,35 @@ What the flat people are not: they do not turn their heads, do not show the fine
 sitting down, and a person changing from flat to avatar changes its lighting slightly (the sheet
 is lit from one studio direction and tinted, the avatar is lit by the scene). At 16 m and more
 this was not noticeable in the screenshots; it has not been judged in motion by a person.
+
+## What was changed: at most 18 full avatars a frame
+
+Measured 2026-11-13 with `ZOO_AVATAR_DEBUG=1` (the game then prints, when it closes, how many
+people a frame drew, how many of them as avatars, and the time spent posing them, drawing the
+avatars and drawing the flat people). The machine was under load from other work the whole time
+(load average 4.5-5.6), so these are not best-case figures.
+
+| Place | avatars a frame | drawing avatars ms | per avatar ms |
+|---|---|---|---|
+| kangaroos | 5.9 | 3.2 | 0.54 |
+| entrance plaza | 12 | 5.1-5.5 | 0.44 |
+| meerkats (59 people watching) | 35.9 | 14.6 | 0.41 |
+
+A CNA avatar costs about **0.45 ms to draw**, and the cost is linear in their number. Sixty
+samples of the main thread's stack at the meerkats (gdb, one a second) put 33 inside
+`AvatarRenderer::DrawAvatar`: for each of an avatar's about 15 parts it applies a `SkinnedEffect`
+and issues one indexed draw. That is CNA's code, not this game's, and CNA is read-only for this
+project; what the game controls is how many avatars it asks for.
+
+So the game now draws at most the **18 nearest** people in view as avatars (it was 40) and the
+others as their pictures, with the same reluctance to switch back (somebody who was an avatar in
+the last frame counts as 20 % nearer). At the meerkats the people pass went from 15.5 ms to
+8.0 ms (frame mean 15.5 ms, 64.5 fps under the same load); at the entrance, where 12 were drawn
+before, nothing changes. A person 5 m away drawn as a picture is recognisably flatter than an
+avatar when one walks around them; in the screenshot of the meerkat glass
+(`build-probe/shots/avatars18standhabitatmeerkat.png`, not kept in the repository) the eighteen
+nearest are the row at the glass beside the player, and the people across the habitat are
+pictures, as they were before. It has not been judged in motion by a person.
 
 ## What was changed: the start of a visit
 

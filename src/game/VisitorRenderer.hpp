@@ -131,6 +131,8 @@ private:
         /// Drawn as an avatar on the last frame (kept a little beyond the distance at which
         /// one becomes one, so that nobody flickers between the two at the boundary).
         bool close = false;
+        /// Whether it was one when this frame began (the rank of the nearest uses it).
+        bool wasAvatar = false;
         bool hidden = false;
         bool seen = false;
         // Weights of the things a body can be doing, eased towards 0 or 1.
@@ -199,6 +201,7 @@ private:
     // What it costs (reported at the end of a run with ZOO_AVATAR_DEBUG set).
     std::uint64_t frames_ = 0;
     std::uint64_t drawnInAll_ = 0;
+    std::size_t closeInAll_ = 0;
     double poseSeconds_ = 0.0;
     double drawSeconds_ = 0.0;
     double flatSeconds_ = 0.0;
