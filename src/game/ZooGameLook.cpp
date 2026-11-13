@@ -325,11 +325,12 @@ std::optional<ZooGame::Pose> ZooGame::StandPose(std::string_view what) const {
                      zoo_->SpeciesList().All()[static_cast<std::size_t>(animal.species)].id != only))
                     continue;
                 for (const zoo::ViewingSpot& spot : enclosure.viewing) {
-                    // Up at the fence, in front of whoever else is watching from that tile.
+                    // Where somebody stands to look: a short step back from the fence (0.8 m),
+                    // not with the nose between its bars.
                     const zoo::TileCoord toward = zoo::Step(spot.side);
                     const zoo::Vec2 middle = centre(spot.tile);
-                    const zoo::Vec2 at{middle.x + 0.5f * static_cast<float>(toward.x),
-                                       middle.z + 0.5f * static_cast<float>(toward.z)};
+                    const zoo::Vec2 at{middle.x + 0.2f * static_cast<float>(toward.x),
+                                       middle.z + 0.2f * static_cast<float>(toward.z)};
                     const float dx = animal.position.x - at.x;
                     const float dz = animal.position.z - at.z;
                     const float sight = std::max(spot.visibility, 0.2f);
