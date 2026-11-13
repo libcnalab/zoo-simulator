@@ -23,7 +23,7 @@
 namespace zoogame {
 
 /// What an animal's body shows: one clip of its model each.
-enum class AnimalPose : std::uint8_t { Idle, Walk, Trot, Eat, Drink, Rest, Sleep, Vocalize, Swim, Count };
+enum class AnimalPose : std::uint8_t { Idle, Walk, Trot, Eat, Drink, Rest, Sleep, Vocalize, Swim, Float, Count };
 
 /// Draws the zoo's animals: one skinned model per species (assets/animals,
 /// loaded when the first animal of the species appears), one animator per
@@ -70,8 +70,10 @@ private:
         float shoulderHeight = 1.0f;
         /// A female model's adult height as a fraction of the species' (the male's).
         float relativeHeight = 1.0f;
-        /// How far under the surface the feet of the floating body are, in model metres.
+        /// How far under the surface the feet of the floating body are, in model metres: under
+        /// way (`swim`), and lying still on the water (`float`, for a model that has the clip).
         float swimDepth = 0.0f;
+        float floatDepth = 0.0f;
     };
     struct Actor {
         explicit Actor(const Kind& k) : kind(&k), animator(k.skeleton) {}
@@ -85,6 +87,7 @@ private:
         float pitch = 0.0f;
         float scale = 1.0f;
         float afloat = 0.0f;  ///< 0 standing on the ground .. 1 floating at the surface
+        float sunk = 0.0f;    ///< how deep it lies in the water now, model metres (Kind::swimDepth)
         Matrix world;
         bool visible = false;
         bool seen = false;

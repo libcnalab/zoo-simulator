@@ -24,7 +24,7 @@ namespace Xna = Microsoft::Xna::Framework::Graphics;
 constexpr float kPi = 3.14159265f;
 
 constexpr std::array<const char*, static_cast<std::size_t>(AnimalPose::Count)> kClipNames = {
-    "idle", "walk", "trot", "eat", "drink", "rest", "sleep", "vocalize", "swim"};
+    "idle", "walk", "trot", "eat", "drink", "rest", "sleep", "vocalize", "swim", "float"};
 
 /// Up to this share of its growing time an animal is drawn with the model of the young.
 constexpr float kJuvenileShare = 0.5f;
@@ -118,6 +118,12 @@ const AnimalRenderer::Kind* AnimalRenderer::Load(const std::string& model) {
         kind->shoulderHeight = std::max(0.01f, meta.value("shoulder_height_m", 1.0f));
         kind->relativeHeight = std::clamp(meta.value("relative_height", 1.0f), 0.3f, 1.5f);
         kind->swimDepth = meta.value("swim_depth_m", kFloatSunkShare * kind->shoulderHeight);
+        // The birds' sidecars give a depth for each of their two water clips.
+        if (const auto swim = meta.find("swim"); swim != meta.end() && swim->is_object())
+            kind->swimDepth = swim->value("depth_m", kind->swimDepth);
+        kind->floatDepth = kind->swimDepth;
+        if (const auto still = meta.find("float"); still != meta.end() && still->is_object())
+            kind->floatDepth = still->value("depth_m", kind->floatDepth);
     } catch (const std::exception& error) {
         std::printf("zoo: animals: %s.json: %s\n", model.c_str(), error.what());
     }
@@ -150,8 +156,13 @@ const AnimalRenderer::Look& AnimalRenderer::LookOf(const zoo::SpeciesDef& def, i
 
 AnimalPose AnimalRenderer::Choose(const zoo::Animal& animal, const Actor& actor) const {
     using zoo::AnimalActivity;
-    if (actor.afloat > 0.5f)
-        return AnimalPose::Swim;
+    if (actor.afloat > 0.5f) {
+        // Under way it swims; lying still on the water it floats, if its model has the clip
+        // (and keeps floating until it really moves: no flicker at the boundary).
+        const bool still = animal.speed < (actor.pose == AnimalPose::Float ? 0.12f : 0.05f);
+        const bool canFloat = actor.kind->pose[static_cast<std::size_t>(AnimalPose::Float)] != nullptr;
+        return still && canFloat ? AnimalPose::Float : AnimalPose::Swim;
+    }
     if (animal.speed > 0.05f) {
         // Between the two gaits the one in use is kept: no flicker at the boundary.
         const float change = 0.5f * (actor.kind->walkSpeed + actor.kind->trotSpeed) * actor.scale;
@@ -293,7 +304,9 @@ void AnimalRenderer::Update(const zoo::Zoo& zoo, float seconds, float tickFracti
         actor.pitch += (slope - actor.pitch) * std::min(1.0f, 6.0f * seconds);
         const float bed = std::max(world.HeightAt(actor.shown), 0.5f * (front + rear));
         const float surface = world.HeightAt(actor.shown) + depth;
-        const float floating = std::max(bed, surface - kind->swimDepth * actor.scale);
+        const float sinks = pose == AnimalPose::Float ? kind->floatDepth : kind->swimDepth;
+        actor.sunk = appeared ? sinks : actor.sunk + (sinks - actor.sunk) * std::min(1.0f, 1.5f * seconds);
+        const float floating = std::max(bed, surface - actor.sunk * actor.scale);
         const float ground = bed + (floating - bed) * actor.afloat;
         actor.world = Matrix::CreateScale(actor.scale) * Matrix::CreateRotationX(-actor.pitch) *
                       Matrix::CreateRotationY(actor.heading) *

@@ -26,6 +26,7 @@ loudspeaker stays muted and nobody has listened to any of it.
 | Rhinoceros and elephant on rigged models (CC BY 4.0 as published; authorship unconfirmed, `assets/ATTRIBUTION.md`) | photographic skin with normal maps, real proportions, bull, cow and calves; the rhino is good, the elephant too dark with tusks too long | `docs/ANIMALS.md`, `evidence/rhino-elephant-rigged-2026-11-13.jpg` |
 | Zebra stallion, mare and foal from a static sculpt (CC BY 4.0), rigged by us | a real horse's body and stripes instead of a striped barrel; lying reads as lying; mirror-symmetric stripes from the front | `docs/ANIMALS.md`, `evidence/zebra-scan-2026-11-13.jpg` |
 | Penguin (adult and juvenile) from a museum scan and flamingo from a sculpt (both CC BY 4.0), rigged by us | real birds' shapes instead of bowling pins; penguins have `swim` and `float` clips; the adult African plumage is painted on a Magellanic specimen's shape and labelled so | `docs/ANIMALS.md`, `assets/ATTRIBUTION.md`, `evidence/penguin-flamingo-scan-2026-11-13.jpg` |
+| Penguins on the water | a resting penguin floats, one under way swims, each with its own clip and depth from the model's manifest (they walked upright through the pool before) | `src/game/AnimalRenderer.cpp`, `evidence/penguin-floating-2026-11-13.jpg` |
 | Animals stand in the sun, not in their own shadow | every skinned model was drawn shadowed by itself (an engine defect, `docs/UPSTREAM.md` ZOO-UP-001); lit and shaded now, and normal maps on animals show for the first time | `src/game/SunShadows.cpp`, `evidence/animal-self-shadow-2026-11-13.jpg` |
 | Habitat fronts a zoo would build | elephants and rhinos behind a 4 m planted stand-off with a leaning rail, hoofstock behind 2 m; heavy dark mesh instead of bars at bears and cats; chain-link one looks through; nobody walks on the planting | `docs/VISITOR_ZOO.md`, `evidence/habitat-fronts-2026-11-13.jpg` |
 | People at every habitat | 192 to 260 of 800 stand watching (was 110 to 215) and no habitat is left without watchers (several were, most of the time) | `docs/VISITOR_ZOO.md` "Who watches where" |
@@ -63,7 +64,8 @@ Picture: `evidence/sky-light-water-2026-11-13.jpg` (left before, right after: me
 penguins, elephant).
 
 Not done about water: the bank is still a straight tile edge, nothing splashes or rings
-where an animal wades, and there are no swimming clips yet.
+where an animal wades. Penguins swim and float with their own clips now; a polar bear still
+paddles with its walk clip.
 
 ## Open (in the order they hurt)
 
@@ -78,5 +80,6 @@ where an animal wades, and there are no swimming clips yet.
    alpha-to-coverage), cut-out leaves cast no shadow (the engine's shadow pass skips
    alpha-tested items; the crown's core casts it), and palms, ferns and hedge fences are
    still the old solid shapes. The pines of Bear Ridge stand in an odd dense clump.
-5. Keepers are not seen. No swimming clips. Bear growl is quiet in the mix.
+5. Keepers are not seen. Only penguin, rhinoceros and elephant have swimming clips. Bear growl
+   is quiet in the mix.
 6. Loading 5.5 s, 2.4 s of it painting the ground.

@@ -100,8 +100,8 @@ Nine clips each (the usual eight and `swim`). The walks are ours, not the source
 authored walk loops slid their feet by more than our 2 % tolerance when measured
 (stance speeds of 0.52 to 1.59 m/s within one rhino stride), so the game's clips are
 contact-constrained replacements at 1.2 m/s (rhino) and 1.3 m/s (elephant); the elephant
-moves lateral pairs without an aerial phase, the rhino trots on diagonals. `swim` is built
-and described in the manifest but the game does not play it yet.
+moves lateral pairs without an aerial phase, the rhino trots on diagonals. The game plays
+`swim` where the water is deep enough for the animal to float (below).
 
 Seen in Blender previews, in the game's viewer and in both habitats
 (`evidence/rhino-elephant-rigged-2026-11-13.jpg`: before, after and calf of each). Honest
@@ -188,13 +188,17 @@ and standing empty).
   animal younger than half its species' age of maturity with the juvenile one; a species without
   them uses the one model for everybody. A model is scaled by height:
   `species shoulder height x share of its sex x growth / meta.shoulder_height_m` of the model
-  drawn, so a variant states its own height. (No species has variants yet: the lioness and the
-  cub are being built, `docs/CODEX_TASKS.md`. Until then a lioness is a small maned lion.)
+  drawn, so a variant states its own height. (Lion, elephant, zebra, rhinoceros and penguin have variants so far.)
 - **Swimming.** Where the water is deeper than about 0.6 of the animal's standing height it
   floats: the body rides with `meta.swim_depth_m` (default 0.72 of the model's shoulder height)
-  under the surface instead of walking on the pool bed under water, and plays the optional ninth
-  clip `swim`. No model has that clip yet, so swimmers paddle with their walk clip: a penguin
-  floats upright, which is wrong and is the next thing to fix for it.
+  under the surface instead of walking on the pool bed under water, and plays the optional
+  clip `swim`. A model may also have `float` for lying still on the water, with its own depth
+  (`meta.swim.depth_m` and `meta.float.depth_m`; the penguins have both): under way the animal
+  swims, at rest it floats, and the body moves between the two depths smoothly. Rhinoceros,
+  elephant and penguin have `swim`; the other species still paddle with their walk clip (a
+  polar bear swims as if it walked). Seen at Penguin Cove:
+  `evidence/penguin-floating-2026-11-13.jpg` (a resting penguin on the pool: the head above
+  the water, the body under it; a real one floats a little higher).
 - **Textures.** CNA imports glTF images with one level (its warning GLTF-206), so the game
   builds the mip chain itself when it loads a model (`src/game/AnimalTextures.cpp`). The renderer
   also takes a normal map and an occlusion-roughness-metallic map when a model has them and its
