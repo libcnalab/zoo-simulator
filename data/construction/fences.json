@@ -42,8 +42,8 @@
       "gateCost": 70,
       "upkeepPerDay": 3,
       "wearPerDay": 0.0015,
-      "color": "#515c57",
-      "postColor": "#303936"
+      "color": "#3b4440",
+      "postColor": "#2a312e"
     },
     {
       "id": "steel_bars",
@@ -149,6 +149,36 @@
       "wearPerDay": 0.0015,
       "color": "#b7d9dc",
       "postColor": "#78898a"
+    },
+    {
+      "id": "heavy_mesh",
+      "name": "Heavy welded mesh",
+      "kind": 11,
+      "style": "mesh",
+      "heightM": 4.5,
+      "strength": 4,
+      "visibility": 0.8,
+      "cost": 230,
+      "gateCost": 90,
+      "upkeepPerDay": 4,
+      "wearPerDay": 0.0015,
+      "color": "#2a2e2d",
+      "postColor": "#222625"
+    },
+    {
+      "id": "stand_off_rail",
+      "name": "Stand-off rail",
+      "kind": 12,
+      "style": "rail",
+      "heightM": 1.1,
+      "strength": 1,
+      "visibility": 1.0,
+      "cost": 50,
+      "gateCost": 30,
+      "upkeepPerDay": 1,
+      "wearPerDay": 0.0015,
+      "color": "#966338",
+      "postColor": "#51371f"
     }
   ]
 }

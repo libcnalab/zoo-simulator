@@ -19,6 +19,7 @@ enum class Region : std::uint8_t {
     Outside,    ///< beyond the boundary wall (the approach road, the surrounding land)
     Public,     ///< property ground visitors could reach from the entrance if it were paved
     Enclosure,  ///< property ground closed off by fences
+    StandOff,   ///< explicitly reserved planting, excluded from public ground and habitats
 };
 
 /// Depth of water (at a tile's centre) from which a pool counts as deep enough to swim in.
@@ -57,10 +58,9 @@ struct EnclosureStats {
     float minFenceCondition = 1.0f;
 
     // -- how visitors see in --
-    /// Public path tiles that touch the boundary through a fence with visibility > 0.
+    /// Public path tiles with direct or straight-across-stand-off views of positive visibility.
     int viewingTiles = 0;
-    /// Mean FenceDef::visibility over the boundary edges that have such a path tile
-    /// on their public side; 0 without any.
+    /// Mean ViewingSpot::visibility; 0 without any viewing spots.
     float visibility = 0.0f;
 
     bool operator==(const EnclosureStats&) const = default;
@@ -70,7 +70,8 @@ struct EnclosureStats {
 struct ViewingSpot {
     TileCoord tile;           ///< the public path tile
     Dir side = Dir::North;    ///< the side of `tile` the enclosure is on
-    float visibility = 0.0f;  ///< of the fence between
+    float visibility = 0.0f;  ///< containment visibility times outer rail visibility across a strip
+    float standOffM = 0.0f;   ///< path tile edge to containment barrier; 0 for a direct view
 
     bool operator==(const ViewingSpot&) const = default;
 };
@@ -108,6 +109,8 @@ struct Enclosure {
 /// Regions are the connected components of the tile grid where two edge-adjacent
 /// tiles are connected when the edge between them carries no fence at all (a gate
 /// is a fence: it separates). Building footprints and water do not separate.
+/// Explicit stand-off tiles form separate components classified as StandOff, regardless
+/// of fences. They neither connect other regions nor receive enclosure identities.
 ///  - Every component containing a tile outside the property is Outside.
 ///  - The component of World::EntranceTile() is Public (unless it is Outside: a
 ///    map whose entrance is not closed by the boundary wall's gate has no public area).
@@ -168,6 +171,7 @@ private:
 
     static constexpr std::int64_t kOutsideCode = -2;
     static constexpr std::int64_t kPublicCode = -1;
+    static constexpr std::int64_t kStandOffCode = -3;
 };
 
 }  // namespace zoo

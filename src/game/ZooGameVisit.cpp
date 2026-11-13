@@ -36,10 +36,11 @@ constexpr float kVisitHour = 10.5f;
 /// The calendar creeps: one game hour takes six real minutes (the management
 /// game's takes thirty seconds), while everything alive moves at its own speed.
 constexpr int kVisitPace = 12;
-/// The visitors' pace for a visit on foot: a minute at a fence, twenty minutes in the zoo,
-/// and as many arrivals as keep the crowd of mid-morning. While the zoo is filled before the
-/// player walks in, people come kFillArrivals times as fast as that.
-constexpr zoo::VisitorPace kVisitPeople{.linger = 6.0f, .stay = 6.0f, .arrivals = 0.25f};
+/// The visitors' pace for a visit on foot (the one zoo::FillForVisit is tested with): a
+/// minute or two at a fence, forty minutes in the zoo, and as many arrivals as keep the crowd
+/// of mid-morning. While the zoo is filled before the player walks in, people come
+/// kFillArrivals times as fast as that.
+constexpr zoo::VisitorPace kVisitPeople = zoo::VisitStartOptions{}.pace;
 constexpr float kFillArrivals = 1.7f;
 /// The day stops before the afternoon thins the crowd out: a visit has no closing time.
 constexpr float kLatestHour = 15.5f;
@@ -87,8 +88,8 @@ std::unique_ptr<zoo::Zoo> ZooGame::MakeVisitorZoo() {
 }
 
 void ZooGame::PrepareVisit(zoo::Zoo& zoo, bool fill) {
-    // People take their time here: a minute at a fence, not the few seconds of a day that
-    // passes in a quarter of an hour.
+    // People take their time here: a minute or two at a fence, not the few seconds of a day
+    // that passes in a quarter of an hour.
     zoo.Guests().SetPace(kVisitPeople);
     const float hour = startHour_ ? static_cast<float>(*startHour_) : kVisitHour;
     const float now = zoo.Time().Hour();

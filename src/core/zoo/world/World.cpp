@@ -107,6 +107,15 @@ void World::SetBuilding(TileCoord t, BuildingId building) {
     ++revision_;
 }
 
+void World::SetStandOff(TileCoord t, bool marked) {
+    if (!InBounds(t) || At(t).standOff == marked) {
+        return;
+    }
+    tiles_[Index(t)].standOff = marked;
+    TouchTile(t);
+    ++navRevision_;
+}
+
 void World::SetWater(TileCoord t, float level, float depth) {
     if (!InBounds(t))
         return;
@@ -467,7 +476,7 @@ bool World::operator==(const World& other) const {
         const Tile& a = tiles_[i];
         const Tile& b = other.tiles_[i];
         if (a.terrain != b.terrain || a.path != b.path || a.building != b.building ||
-            a.waterLevel != b.waterLevel)
+            a.waterLevel != b.waterLevel || a.standOff != b.standOff)
             return false;
     }
     return true;

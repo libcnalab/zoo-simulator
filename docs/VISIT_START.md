@@ -4,7 +4,9 @@
 It sets visitor pace, day/hour, stops the calendar, uses accelerated arrivals for the first
 three fifths of the requested steps, spreads visitors, restores the visit pace, and finishes
 the steps. The caller still owns the final `SetDayPace(12)`. Defaults are day 14, 10:30,
-6,000 steps, linger/stay 6, arrival pace 0.25, fill arrival pace 1.7.
+6,000 steps, linger 9, stay 12, arrival pace 0.25, fill arrival pace 1.7 (linger and stay
+were 6 until the habitat fronts of 2026-11-13: see "Who watches where" in
+`docs/VISITOR_ZOO.md`; the timings below were taken at the old pace).
 
 The report gives actual steps, visitors, and visitors moved by spreading. Progress callbacks
 run after each 250 steps and once at completion, including a zero-step fill. Negative step

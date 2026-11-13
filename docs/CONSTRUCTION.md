@@ -16,6 +16,12 @@ Costs are purchase prices in dollars. Fence prices are per two metre edge; path 
 | hedge | Clipped hedge | 1.0 m | 1 | 0.25 | $65 |
 | high_cable_barrier | High cable barrier | 5.0 m | 5 | 0.80 | $760 |
 | high_glass_wall | High glass wall | 4.5 m | 4 | 1.00 | $940 |
+| heavy_mesh | Heavy welded mesh | 4.5 m | 4 | 0.80 | $230 |
+| stand_off_rail | Stand-off rail | 1.1 m | 1 | 1.00 | $50 |
+
+Fence kinds 1–10 are unchanged; `heavy_mesh` is 11 and `stand_off_rail` is 12.
+The existing wooden rail remains unchanged (visibility 0.75). The new public rail
+has visibility 1.0 so it does not unnecessarily obscure an already screened view.
 
 ## Paths and terrain
 

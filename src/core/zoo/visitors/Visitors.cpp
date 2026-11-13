@@ -7,6 +7,8 @@
 #include <array>
 #include <bit>
 #include <cmath>
+#include <limits>
+#include <span>
 
 #include "zoo/visitors/VisitorInternal.hpp"
 
@@ -16,6 +18,38 @@ using namespace visitor_tuning;
 using namespace visitors_detail;
 
 namespace {
+
+const ViewingSpot& SpreadFront(const ViewSite& site) {
+    const ViewingSpot* chosen = &site.spots.front();
+    float best = std::numeric_limits<float>::max();
+    for (const ViewingSpot& spot : site.spots) {
+        const float score = DistanceSquared(World::TileCenter(spot.tile), site.centre) +
+                            (spot.side == Dir::North ? 0.0f : 100000.0f);
+        if (score < best) {
+            best = score;
+            chosen = &spot;
+        }
+    }
+    return *chosen;
+}
+
+void SpreadWatchers(std::span<Visitor> group, const ViewSite& site, std::int64_t now, float linger,
+                    Rng& rng) {
+    const ViewingSpot& spot = SpreadFront(site);
+    for (std::size_t member = 0; member < group.size(); ++member) {
+        Visitor& visitor = group[member];
+        visitor.slot = static_cast<std::uint8_t>(member);
+        visitor.position = ViewingPosition(spot, static_cast<int>(member));
+        visitor.target = visitor.position;
+        visitor.heading = HeadingOf(ToVec(Step(spot.side)));
+        visitor.activity = VisitorActivity::Watching;
+        visitor.goal = VisitorGoal::Watch;
+        visitor.targetEnclosure = site.enclosure;
+    }
+    group.front().activityUntil =
+        now + Ticks(linger * (kWatchSeconds + kWatchSpreadSeconds * rng.NextFloat()));
+    group.front().seenEnclosures.push_back(site.enclosure.value);
+}
 
 constexpr std::array<std::string_view, static_cast<std::size_t>(VisitorActivity::Count)> kActivityNames = {
     "idle",    "arriving", "walking", "watching", "queueing", "eating",
@@ -262,6 +296,7 @@ int Visitors::Spread(const Env& env) {
         return 0;
     }
     int moved = 0;
+    std::size_t nextView = 0;
     for (std::size_t first = 0; first < visitors_.size();) {
         std::size_t end = first + 1;
         while (end < visitors_.size() && visitors_[end].group == visitors_[first].group) {
@@ -315,6 +350,14 @@ int Visitors::Spread(const Env& env) {
                 if (rng_.Chance(0.4f * far)) {
                     lead.seenEnclosures.push_back(site.enclosure.value);
                 }
+            }
+            // Guarantee a representative group at each reachable habitat before
+            // scattering the rest over the walks. Short visit fills need this too:
+            // random distant paths cannot reach every front in the remaining ticks.
+            if (nextView < sites.views.size()) {
+                SpreadWatchers(std::span<Visitor>(visitors_).subspan(first, end - first),
+                               sites.views[nextView], env.time.tick, pace_.linger, rng_);
+                ++nextView;
             }
         }
         first = end;
@@ -430,6 +473,16 @@ void Stepper::Run() {
     const bool known = sites.valid;
     const std::uint32_t nav = sites.nav;
     sites.Refresh(env);
+    if (!known || nav != sites.nav) {
+        // A removed path may leave wrappers behind before its ground is reserved.
+        // Reservations exclude old litter as well as new drops from viewing rails.
+        const auto removed = std::erase_if(all.litter_, [this](const Litter& litter) {
+            return env.enclosures.RegionAt(World::TileAt(litter.position)) == Region::StandOff;
+        });
+        if (removed > 0) {
+            ++scr.litterEdits;
+        }
+    }
     if (known && nav != sites.nav) {
         // Paths, fences or buildings changed: the routes may lead through a wall now.
         for (Visitor& v : all.visitors_) {

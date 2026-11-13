@@ -14,7 +14,11 @@ struct VisitStartOptions {
     std::int64_t day = 14;
     float hour = 10.5f;
     std::int64_t fillTicks = 6000;  ///< steps with the calendar stopped; negative means zero
-    VisitorPace pace{.linger = 6.0f, .stay = 6.0f, .arrivals = 0.25f};
+    /// A minute or two at a fence (72 to 126 s), forty minutes in the zoo. Measured over
+    /// 6,000 steps after the fill with 800 people (2026-11-13): 210 to 260 of them stand
+    /// watching and every habitat keeps watchers; at linger 6, stay 6 it was 110 to 170, with
+    /// one in three on the way to a stall, a restroom or a bin.
+    VisitorPace pace{.linger = 9.0f, .stay = 12.0f, .arrivals = 0.25f};
     float fillArrivals = 1.7f;  ///< arrivals while filling
 };
 

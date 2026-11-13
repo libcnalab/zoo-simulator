@@ -261,9 +261,11 @@ void ZooGame::LoadGame() {
         Pose pose = startView_ ? Pose{startView_->x, startView_->z, startView_->yaw, startView_->pitch}
                                : EntrancePose();
         if (!standAt_.empty()) {
-            if (const auto stand = StandPose(standAt_))
+            if (const auto stand = StandPose(standAt_)) {
                 pose = *stand;
-            else
+                std::fprintf(stderr, "zoo: --stand %s: at %.1f, %.1f looking %.0f deg\n", standAt_.c_str(),
+                             pose.x, pose.z, pose.yaw * 57.29578f);
+            } else
                 std::fprintf(stderr, "zoo: --stand %s: there is no such place\n", standAt_.c_str());
             // Who could be stood in front of: an animal indoors is not to be seen.
             for (const zoo::Enclosure& enclosure : zoo_->Habitats().All()) {

@@ -9,6 +9,7 @@
 #include <cstdio>
 #include <map>
 #include <memory>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -270,17 +271,28 @@ TEST(VisitorDayTests, SpreadSetsTheGroupsDownAllOverThePathsAndTheyCarryOn) {
     ASSERT_GT(zoo->Guests().Count(), 20);
     const int moved = zoo->SpreadVisitors();
     EXPECT_GT(moved, zoo->Guests().Count() / 3);
-    int idle = 0;
+    int settled = 0;
+    std::set<std::uint32_t> seededViews;
     for (const Visitor& v : zoo->Guests().All()) {
-        if (v.activity != VisitorActivity::Idle || v.goal != VisitorGoal::None) {
+        const bool idle = v.activity == VisitorActivity::Idle && v.goal == VisitorGoal::None;
+        const bool viewing = v.activity == VisitorActivity::Watching && v.goal == VisitorGoal::Watch;
+        if (!idle && !viewing) {
             continue;
         }
-        ++idle;
-        const TileCoord tile = World::TileAt(zoo->Guests().LeaderOf(v.id)->position);
+        ++settled;
+        const TileCoord tile = World::TileAt(v.position);
         EXPECT_NE(zoo->Map().At(tile).path, PathKind::None) << "a group is set down on a path";
         EXPECT_EQ(zoo->Habitats().RegionAt(tile), Region::Public);
+        if (viewing) {
+            const Enclosure* home = zoo->Habitats().Find(v.targetEnclosure);
+            ASSERT_NE(home, nullptr);
+            EXPECT_TRUE(std::any_of(home->viewing.begin(), home->viewing.end(),
+                                    [tile](const ViewingSpot& spot) { return spot.tile == tile; }));
+            seededViews.insert(home->id.value);
+        }
     }
-    EXPECT_GE(idle, moved);
+    EXPECT_GE(settled, moved);
+    EXPECT_EQ(seededViews.size(), zoo->Habitats().All().size());
 
     // The same zoo spreads the same way.
     const std::unique_ptr<Zoo> twin = filled();

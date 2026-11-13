@@ -102,6 +102,11 @@ float RectMeanHeight(const World& world, TileCoord min, TileCoord max) {
     return total / static_cast<float>(count);
 }
 
+bool StandOffScenery(const PropDef& def) {
+    return def.role == PropRole::Tree || def.role == PropRole::Bush || def.role == PropRole::Rock ||
+           def.role == PropRole::Decoration;
+}
+
 BuildError PlacementError(Placement placement, Region region) {
     if (placement == Placement::Enclosure && region != Region::Enclosure) {
         return BuildError::NeedsEnclosure;
@@ -401,6 +406,9 @@ BuildError Builder::CheckPath(TileCoord tile, PathKind kind) const {
         return BuildError::None;
     }
     const Tile& data = world_.At(tile);
+    if (data.standOff) {
+        return BuildError::Blocked;
+    }
     if (data.building) {
         return BuildError::Occupied;
     }
@@ -462,6 +470,82 @@ BuildPlan Builder::DoPath(std::span<const TileCoord> tiles, PathKind kind, bool 
     return plan;
 }
 
+BuildError Builder::CheckStandOff(TileCoord tile, bool marked) const {
+    if (!world_.InBounds(tile)) {
+        return BuildError::OutOfBounds;
+    }
+    if (!world_.IsProperty(tile)) {
+        return BuildError::NotProperty;
+    }
+    const Tile& data = world_.At(tile);
+    if (data.standOff == marked) {
+        return BuildError::NothingToDo;
+    }
+    if (!marked) {
+        return BuildError::None;
+    }
+    if (data.building) {
+        return BuildError::Occupied;
+    }
+    if (data.path != PathKind::None) {
+        return BuildError::PathInTheWay;
+    }
+    if (world_.HasWater(tile)) {
+        return BuildError::Water;
+    }
+    if (tile == world_.EntranceTile() || enclosures_.RegionAt(tile) != Region::Public) {
+        return BuildError::NeedsPublicGround;
+    }
+    std::vector<PropId> props;
+    objects_.PropsInTiles(tile, tile, props);
+    for (const PropId id : props) {
+        const Prop* prop = objects_.FindProp(id);
+        if (prop != nullptr && !StandOffScenery(catalog_.props[static_cast<std::size_t>(prop->def)])) {
+            return BuildError::Blocked;
+        }
+    }
+    return BuildError::None;
+}
+
+BuildPlan Builder::PlanStandOff(std::span<const TileCoord> tiles, bool marked) const {
+    return const_cast<Builder*>(this)->DoStandOff(tiles, marked, false);
+}
+
+BuildPlan Builder::PlaceStandOff(std::span<const TileCoord> tiles, bool marked) {
+    return DoStandOff(tiles, marked, true);
+}
+
+BuildPlan Builder::DoStandOff(std::span<const TileCoord> tiles, bool marked, bool apply) {
+    BuildPlan plan;
+    std::vector<TileCoord> accepted;
+    for (const TileCoord tile : tiles) {
+        if (std::find(accepted.begin(), accepted.end(), tile) != accepted.end()) {
+            continue;
+        }
+        const BuildError error = CheckStandOff(tile, marked);
+        if (error != BuildError::None) {
+            RecordSkipped(plan, error);
+            continue;
+        }
+        accepted.push_back(tile);
+        ++plan.count;
+        if (marked) {
+            plan.cost += kStandOffPerTile;
+        }
+    }
+    if (!FinishPlan(plan, finance_)) {
+        return plan;
+    }
+    if (apply) {
+        Book(finance_, plan.cost, Account::Landscaping);
+        for (const TileCoord tile : accepted) {
+            world_.SetStandOff(tile, marked);
+        }
+        enclosures_.Rebuild(world_, objects_, catalog_);
+    }
+    return plan;
+}
+
 BuildPlan Builder::PlanTerrain(std::span<const TileCoord> tiles, Terrain terrain) const {
     return const_cast<Builder*>(this)->DoTerrain(tiles, terrain, false);
 }
@@ -514,6 +598,9 @@ BuildError Builder::CheckWater(TileCoord tile) const {
     const Tile& data = world_.At(tile);
     if (data.waterLevel != kNoWater) {
         return BuildError::NothingToDo;
+    }
+    if (data.standOff) {
+        return BuildError::Blocked;
     }
     if (data.building) {
         return BuildError::Occupied;
@@ -758,6 +845,9 @@ BuildError Builder::CheckBuilding(int defIndex, TileCoord origin, Dir facing) co
     std::vector<TileCoord> footprint = TilesInRect(origin, max);
     footprint.push_back(front);
     for (const TileCoord tile : footprint) {
+        if (world_.At(tile).standOff) {
+            return BuildError::Blocked;
+        }
         if (world_.At(tile).building) {
             return BuildError::Occupied;
         }
@@ -912,6 +1002,9 @@ BuildError Builder::CheckProp(int defIndex, Vec2 position) const {
     if (!world_.IsProperty(tile)) {
         return BuildError::NotProperty;
     }
+    if (world_.At(tile).standOff && !StandOffScenery(def)) {
+        return BuildError::Blocked;
+    }
     if (world_.At(tile).building) {
         return BuildError::Occupied;
     }
@@ -947,6 +1040,9 @@ BuildError Builder::CheckProp(int defIndex, Vec2 position) const {
         if (DistanceSquared(position, prop->position) < minimum * minimum) {
             return BuildError::Blocked;
         }
+    }
+    if (world_.At(tile).standOff) {
+        return BuildError::None;  // Decorative scenery is also allowed off public ground.
     }
     return PlacementError(def.placement, enclosures_.RegionAt(tile));
 }

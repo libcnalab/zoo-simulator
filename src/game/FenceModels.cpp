@@ -83,6 +83,8 @@ bool LookOf(const zoo::Catalog& catalog, zoo::Fence fence, FenceLook& out) {
     out.color = def->color;
     out.postColor = def->postColor;
     out.perimeter = false;
+    out.heavy = def->style == zoo::FenceStyle::Mesh && def->strength >= 4;
+    out.handrail = def->id == "stand_off_rail";
     return true;
 }
 
@@ -95,11 +97,18 @@ void BuildFencePost(ModelBuilder& model, const FenceLook& look, const Vector3& b
         case zoo::FenceStyle::Rail: {
             MeshWriter& w = model.Use(look.postColor, Pattern::Wood);
             const float s = 0.13f * stout;
-            w.BoxAt(base.X, base.Z, base.Y - sink, s, h + 0.1f + sink, s);
+            // A handrail's posts end under its top board.
+            w.BoxAt(base.X, base.Z, base.Y - sink, s, h + (look.handrail ? -0.02f : 0.1f) + sink, s);
             break;
         }
         case zoo::FenceStyle::Mesh: {
             MeshWriter& w = model.Use(look.postColor, Pattern::Metal);
+            if (look.heavy) {
+                const float s = 0.14f * stout;
+                w.BoxAt(base.X, base.Z, base.Y - sink, s, h + 0.08f + sink, s);
+                w.BoxAt(base.X, base.Z, base.Y + h + 0.08f, s + 0.05f, 0.03f, s + 0.05f);
+                break;
+            }
             w.Tube(foot, base + Up(h + 0.05f), 0.04f * stout, 0.04f * stout, 6);
             break;
         }
@@ -158,6 +167,13 @@ void BuildFencePanel(ModelBuilder& model, const FenceLook& look, const Vector3& 
                 }
                 break;
             }
+            if (look.handrail) {
+                // A broad board to lean on, a rail under it and one at a child's height.
+                w.Beam(Along(a, b, 0.0f, h), Along(a, b, 1.0f, h), 0.17f, 0.045f);
+                w.Beam(Along(a, b, 0.0f, h * 0.72f), Along(a, b, 1.0f, h * 0.72f), 0.045f, 0.09f);
+                w.Beam(Along(a, b, 0.0f, h * 0.4f), Along(a, b, 1.0f, h * 0.4f), 0.045f, 0.09f);
+                break;
+            }
             const int rails = h > 1.6f ? 4 : 3;
             for (int i = 0; i < rails; ++i) {
                 const float y = h * (0.3f + 0.62f * static_cast<float>(i) / static_cast<float>(rails - 1));
@@ -172,7 +188,16 @@ void BuildFencePanel(ModelBuilder& model, const FenceLook& look, const Vector3& 
             const float lo = gate ? 0.14f : 0.03f;
             wire.Quad(Along(a, b, t0, lo), Along(a, b, t1, lo), Along(a, b, t1, h - 0.06f),
                       Along(a, b, t0, h - 0.06f));
-            if (!gate) {
+            if (!gate && look.heavy) {
+                // A welded frame: flat bars top and bottom and one every metre and a half.
+                MeshWriter& frame = model.Use(look.postColor, Pattern::Metal);
+                const int bays = std::max(2, static_cast<int>(std::lround(h / 1.5f)));
+                for (int i = 0; i <= bays; ++i) {
+                    const float y = 0.05f + (h - 0.05f) * static_cast<float>(i) / static_cast<float>(bays);
+                    frame.Beam(a + Up(y), b + Up(y), 0.05f, 0.06f);
+                }
+                frame.Beam(Along(a, b, 0.5f, 0.05f), Along(a, b, 0.5f, h), 0.04f, 0.04f);
+            } else if (!gate) {
                 MeshWriter& rail = model.Use(look.postColor, Pattern::Metal);
                 Rod(rail, a + Up(h), b + Up(h), 0.025f);
                 Rod(rail, a + Up(0.05f), b + Up(0.05f), 0.02f);

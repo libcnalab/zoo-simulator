@@ -278,6 +278,10 @@ std::optional<ZooGame::Pose> ZooGame::StandPose(std::string_view what) const {
                     const zoo::PropDef& def = zoo_->Definitions().props[static_cast<std::size_t>(prop.def)];
                     if (def.heightM * prop.scale < 1.0f)
                         continue;
+                    // The planting of a stand-off is kept below the eye: one looks over it.
+                    if (def.heightM * prop.scale < 1.5f &&
+                        zoo_->Map().At(zoo::World::TileAt(prop.position)).standOff)
+                        continue;
                     const float along = std::clamp(
                         ((prop.position.x - from.x) * sx + (prop.position.z - from.z) * sz) / length2, 0.0f,
                         0.92f);
@@ -306,7 +310,11 @@ std::optional<ZooGame::Pose> ZooGame::StandPose(std::string_view what) const {
                         const zoo::TileCoord way = zoo::Step(side);
                         const bool moved = (way.x != 0 && next.x - tile.x == way.x) ||
                                            (way.z != 0 && next.z - tile.z == way.z);
-                        if (moved && zoo_->Map().InBounds(tile) && zoo_->Map().FenceOn(tile, side).Exists())
+                        // The rail before a planted stand-off is leant on, not looked through.
+                        const bool rail = zoo_->Map().InBounds(tile) && zoo_->Map().InBounds(next) &&
+                                          !zoo_->Map().At(tile).standOff && zoo_->Map().At(next).standOff;
+                        if (moved && !rail && zoo_->Map().InBounds(tile) &&
+                            zoo_->Map().FenceOn(tile, side).Exists())
                             ++crossed;
                     }
                     tile = next;
@@ -329,8 +337,10 @@ std::optional<ZooGame::Pose> ZooGame::StandPose(std::string_view what) const {
                     // not with the nose between its bars.
                     const zoo::TileCoord toward = zoo::Step(spot.side);
                     const zoo::Vec2 middle = centre(spot.tile);
-                    const zoo::Vec2 at{middle.x + 0.2f * static_cast<float>(toward.x),
-                                       middle.z + 0.2f * static_cast<float>(toward.z)};
+                    // At a rail before a stand-off one comes right up to it.
+                    const float forward = spot.standOffM > 0.0f ? 0.5f : 0.2f;
+                    const zoo::Vec2 at{middle.x + forward * static_cast<float>(toward.x),
+                                       middle.z + forward * static_cast<float>(toward.z)};
                     const float dx = animal.position.x - at.x;
                     const float dz = animal.position.z - at.z;
                     const float sight = std::max(spot.visibility, 0.2f);

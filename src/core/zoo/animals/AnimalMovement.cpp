@@ -206,10 +206,6 @@ void AdvanceMovement(Animal& animal, const SpeciesDef& species, const Env& env, 
                after < DistanceSquared(animal.position, obstacle) - tuning::kIntrusionToleranceM2;
     };
     const auto blocker = [&](PropId propId, float& clearance) -> const Prop* {
-        // What the animal is walking up to (its feeder, its trough) is not in its way.
-        if (propId == animal.targetProp) {
-            return nullptr;
-        }
         // The mutable lookup invalidates the spatial index even when the pointer is only read.
         const Prop* prop = std::as_const(env.objects).FindProp(propId);
         if (prop == nullptr || prop->def < 0 ||
@@ -220,7 +216,12 @@ void AdvanceMovement(Animal& animal, const SpeciesDef& species, const Env& env, 
         if (!definition.blocksWalking) {
             return nullptr;
         }
-        clearance = definition.radiusM + girth + tuning::kObstacleClearanceM;
+        // What the animal is walking up to (its feeder, its trough) it may come right up to,
+        // but not through: a kangaroo bound for the far side of its trough walked across it
+        // (seen 0.9 m from the centre of a trough of 1 m, 2026-11-13).
+        clearance = propId == animal.targetProp
+                        ? definition.radiusM
+                        : definition.radiusM + girth + tuning::kObstacleClearanceM;
         return prop;
     };
     env.objects.PropsNear(animal.position,
@@ -265,8 +266,14 @@ void AdvanceMovement(Animal& animal, const SpeciesDef& species, const Env& env, 
             break;
         }
     }
+    // A short step can round exactly onto a fence edge. The navigator checks
+    // interior crossings, but that endpoint can already belong to the other tile
+    // (including planted stand-off ground). Ordinary movement must stay in its
+    // enclosure; deliberate breakouts retain their existing crossing behaviour.
+    const EnclosureId currentHome = env.enclosures.At(animal.position);
+    const bool leavesHome = currentHome && env.enclosures.At(animal.position + step) != currentHome;
     if (animal.activity != AnimalActivity::BreakOut && step != Vec2{} &&
-        !env.nav.Walkable(animal.position, animal.position + step, profile)) {
+        (leavesHome || !env.nav.Walkable(animal.position, animal.position + step, profile))) {
         if (step == planned) {
             // The route itself is shut (a fence went up): think again.
             animal.speed = 0.0f;

@@ -54,6 +54,38 @@ struct ZooAccess {
 
 namespace {
 
+// Keep the optional reservation layer in the zoo envelope: older world documents
+// remain readable, and absent reservations mean the pre-stand-off layout.
+Json StandOffToJson(const World& world) {
+    Json tiles = Json::array();
+    for (int z = 0; z < world.Depth(); ++z) {
+        for (int x = 0; x < world.Width(); ++x) {
+            if (world.At({x, z}).standOff) {
+                tiles.push_back(Json::array({x, z}));
+            }
+        }
+    }
+    return tiles;
+}
+
+void ReadStandOff(const Json& tiles, World& world) {
+    if (!tiles.is_array() || tiles.size() > static_cast<std::size_t>(world.Width() * world.Depth())) {
+        throw std::runtime_error("stand_off must be an array of tile coordinates");
+    }
+    for (const Json& coordinate : tiles) {
+        if (!coordinate.is_array() || coordinate.size() != 2 || !coordinate[0].is_number_integer() ||
+            !coordinate[1].is_number_integer()) {
+            throw std::runtime_error("invalid stand_off tile coordinate");
+        }
+        const TileCoord tile{coordinate[0].get<int>(), coordinate[1].get<int>()};
+        if (!world.IsProperty(tile) || tile == world.EntranceTile() || world.At(tile).building ||
+            world.At(tile).path != PathKind::None || world.HasWater(tile) || world.At(tile).standOff) {
+            throw std::runtime_error("invalid or duplicate stand_off tile");
+        }
+        world.SetStandOff(tile, true);
+    }
+}
+
 Json ClimateToJson(const Climate& c) {
     return Json{{"mean_c", c.meanC},
                 {"seasonal_swing_c", c.seasonalSwingC},
@@ -253,6 +285,7 @@ Json ZooToJson(const Zoo& zoo) {
               {"calendar_shift", zoo.Time().shift},
               {"weather", WeatherToJson(zoo.Sky().State())},
               {"world", ToJson(zoo.Map())},
+              {"stand_off", StandOffToJson(zoo.Map())},
               {"objects", ToJson(zoo.Objects(), zoo.Definitions())},
               {"enclosures", ToJson(zoo.Habitats())},
               {"finance", ToJson(zoo.Accounts())},
@@ -318,6 +351,12 @@ std::unique_ptr<Zoo> ZooFromJson(const Json& json, const Catalog& catalog, const
         std::optional<World> world = WorldFromJson(body.at("world"), &part);
         if (!world) {
             throw std::runtime_error("map: " + part);
+        }
+        if (version >= 2 && !body.contains("stand_off")) {
+            throw std::runtime_error("missing stand_off reservation layer");
+        }
+        if (body.contains("stand_off")) {
+            ReadStandOff(body.at("stand_off"), *world);
         }
         std::optional<ZooObjects> objects = ObjectsFromJson(body.at("objects"), catalog, &part);
         if (!objects) {

@@ -62,6 +62,32 @@ std::vector<TileCoord> RegionTiles(const Script& script, const HabitatPlan& plan
     return tiles;
 }
 
+int StandOffDepth(std::string_view species) {
+    if (species == "elephant" || species == "rhino") {
+        return 2;
+    }
+    if (species == "giraffe" || species == "ostrich" || species == "camel" || species == "kangaroo") {
+        return 1;
+    }
+    return 0;
+}
+
+std::vector<TileCoord> StripCorners(const Script& script, const HabitatPlan& plan) {
+    if (plan.species == "ostrich") {
+        // Close three one-tile diagonal gaps against Flamingo Lagoon deliberately,
+        // before they could become fenced, unnamed pockets in the region model.
+        return {script.Tile(20, 28), script.Tile(21, 29), script.Tile(22, 30)};
+    }
+    return {};
+}
+
+std::vector<TileCoord> PublicOutline(const Script& script, const HabitatPlan& plan) {
+    auto tiles = Script::Expanded(RegionTiles(script, plan), StandOffDepth(plan.species));
+    const auto corners = StripCorners(script, plan);
+    tiles.insert(tiles.end(), corners.begin(), corners.end());
+    return tiles;
+}
+
 void Walks(Zoo& zoo, Script& script) {
     // The plaza leaves a small planting island for its fountain; the two arms meet beyond it.
     script.Path(-10, 0, -3, 13, PathKind::Cobblestone);
@@ -84,16 +110,17 @@ void Walks(Zoo& zoo, Script& script) {
     script.PathAlong({{-37, 85}, {-29, 86}}, 2, PathKind::Boardwalk);
     script.PathAlong(Script::Arc(0, 7, 13.0f, 8.0f, 0.0f, kPi), 2, PathKind::Cobblestone);
 
-    // Widened viewing walks follow the raster boundary itself, so every bay touches its fence.
+    // Walks follow the public rail. Reserve the full band first so nearby circuits
+    // and later habitat walks cannot pave over another habitat's clearance.
     std::set<std::pair<int, int>> reserved;
     for (const HabitatPlan& plan : kHabitats) {
-        for (const TileCoord tile : RegionTiles(script, plan)) {
+        for (const TileCoord tile : PublicOutline(script, plan)) {
             reserved.emplace(tile.z, tile.x);
         }
     }
     for (const HabitatPlan& plan : kHabitats) {
         std::vector<TileCoord> bay;
-        for (const TileCoord tile : RegionTiles(script, plan)) {
+        for (const TileCoord tile : PublicOutline(script, plan)) {
             for (int dz = -2; dz <= 2; ++dz) {
                 for (int dx = -2; dx <= 2; ++dx) {
                     const TileCoord other{tile.x + dx, tile.z + dz};
@@ -187,7 +214,7 @@ HabitatStyle Style(std::string_view species) {
     }
     if (species == "lion") {
         return {Terrain::Savanna,
-                "steel_bars",
+                "heavy_mesh",
                 "glass_wall",
                 "medium_shelter",
                 "meat_platform",
@@ -200,7 +227,7 @@ HabitatStyle Style(std::string_view species) {
     }
     if (species == "tiger") {
         return {Terrain::ForestFloor,
-                "steel_bars",
+                "heavy_mesh",
                 "high_glass_wall",
                 "medium_shelter",
                 "meat_platform",
@@ -226,7 +253,7 @@ HabitatStyle Style(std::string_view species) {
     }
     if (species == "brown_bear") {
         return {Terrain::ForestFloor,
-                "steel_bars",
+                "heavy_mesh",
                 "high_glass_wall",
                 "medium_shelter",
                 "meat_platform",
@@ -239,7 +266,7 @@ HabitatStyle Style(std::string_view species) {
     }
     if (species == "polar_bear") {
         return {Terrain::Snow,
-                "steel_bars",
+                "heavy_mesh",
                 "high_glass_wall",
                 "cooled_den",
                 "fish_bucket_stand",
@@ -448,7 +475,14 @@ void Habitat(Zoo& zoo, Script& script, const HabitatPlan& plan, const VisitorZoo
     if (!id) {
         return;
     }
-    script.ViewingFront(tiles, style.front, {Dir::South, plan.east < 0 ? Dir::East : Dir::West});
+    const int stripDepth = StandOffDepth(plan.species);
+    if (stripDepth > 0) {
+        // Visitors also use the back circuit: the same clearance protects that walk.
+        // Keep every habitat tile and all its provisions, moving the public edge out.
+        script.StandOffFront(tiles, stripDepth, StripCorners(script, plan));
+    } else {
+        script.ViewingFront(tiles, style.front, {Dir::South, plan.east < 0 ? Dir::East : Dir::West});
+    }
     script.KeeperGate(tiles, style.fence);
     Shelter(zoo, script, plan, tiles, id, style.shelter);
     HabitatPool(zoo, script, plan, tiles, id, species);
@@ -503,6 +537,34 @@ void Habitat(Zoo& zoo, Script& script, const HabitatPlan& plan, const VisitorZoo
     }
 }
 
+void StripPlants(Zoo& zoo, Script& script) {
+    // Plant after the animal groups so decorating the public edge consumes none of
+    // the script random sequence used for residents or habitat vegetation.
+    for (const HabitatPlan& plan : kHabitats) {
+        const int depth = StandOffDepth(plan.species);
+        if (depth == 0) {
+            continue;
+        }
+        const HabitatStyle style = Style(plan.species);
+        for (const TileCoord tile : PublicOutline(script, plan)) {
+            if (!zoo.Map().At(tile).standOff) {
+                continue;
+            }
+            const Vec2 offset{script.Random().Range(-0.2f, 0.2f), script.Random().Range(-0.2f, 0.2f)};
+            // The catalog's minimum bush scale is 0.7: 1.26 m crowns, below an
+            // adult visitor's sightline. Sparse small rock accents stand 1.05 m high.
+            const bool rock = (tile.x + 3 * tile.z) % 11 == 0;
+            const std::string_view kind = rock ? style.rock : style.bush;
+            const Vec2 point = World::TileCenter(tile) + (rock ? Vec2{} : offset);
+            if (zoo.FreeBuilder().CheckProp(zoo.Definitions().PropIndex(kind), point) == BuildError::None) {
+                script.Prop(kind, point, script.Random().Range(0.0f, kTwoPi), 0.7f);
+            } else {
+                script.Prop(style.bush, point, script.Random().Range(0.0f, kTwoPi), 0.7f);
+            }
+        }
+    }
+}
+
 void Service(Zoo& zoo, Script& script, std::string_view kind, int east, int north, Dir facing) {
     Builder builder = zoo.FreeBuilder();
     const int index = zoo.Definitions().BuildingIndex(kind);
@@ -547,7 +609,8 @@ void Service(Zoo& zoo, Script& script, std::string_view kind, int east, int nort
         }
         return;
     }
-    script.Problem("no public site for " + std::string(kind));
+    script.Problem("no public site for " + std::string(kind) + " at " + std::to_string(east) + "," +
+                   std::to_string(north));
 }
 
 void PublicProp(Zoo& zoo, Script& script, std::string_view kind, Vec2 position, float heading = 0.0f) {
@@ -615,7 +678,9 @@ void Facilities(Zoo& zoo, Script& script) {
     Service(zoo, script, "drinks_stall", -25, 74, Dir::South);
     Service(zoo, script, "ice_cream_stand", -25, 99, Dir::South);
     Service(zoo, script, "drinks_stall", 31, 35, Dir::South);
-    Service(zoo, script, "ice_cream_stand", -24, 45, Dir::East);
+    // The new planting occupies the old narrow kiosk gap beside Elephant Valley.
+    // Put its refreshments at the southern Kangaroo/Ostrich approach instead.
+    Service(zoo, script, "ice_cream_stand", -5, 18, Dir::North);
     Service(zoo, script, "drinks_stall", 31, 94, Dir::East);
     Service(zoo, script, "ice_cream_stand", 32, 139, Dir::South);
     Service(zoo, script, "drinks_stall", -4, 56, Dir::South);
@@ -806,6 +871,7 @@ ScenarioReport BuildVisitorZoo(Zoo& zoo, const VisitorZooOptions& options) {
     }
     // What follows stands outside the habitats and asks about none of their figures.
     script.Hold();
+    StripPlants(zoo, script);
     Facilities(zoo, script);
     GroundDetail(zoo, script);
     Parkland(zoo, script);

@@ -73,7 +73,9 @@ bool Navigator::Passable(TileCoord tile, const NavProfile& profile) const {
         return false;
     }
     const Tile& value = world_->At(tile);
-    if (static_cast<bool>(value.building) || (profile.pathsOnly && value.path == PathKind::None)) {
+    // Stand-off planting between a habitat's barrier and the public rail is nobody's ground.
+    if (static_cast<bool>(value.building) || value.standOff ||
+        (profile.pathsOnly && value.path == PathKind::None)) {
         return false;
     }
     if (!world_->IsProperty(tile) && (!profile.leaveProperty || value.path == PathKind::None)) {

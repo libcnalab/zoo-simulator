@@ -19,7 +19,7 @@ namespace zoo {
 namespace {
 
 void AddSquareFence(World& world, const Catalog& catalog, int low, int high) {
-    const int fence = catalog.fences.back().kind;
+    const int fence = catalog.FindFence("high_glass_wall")->kind;
     for (int x = low; x <= high; ++x) {
         world.SetFence({x, low, true}, {static_cast<std::uint8_t>(fence), false, 1.0f});
         world.SetFence({x, high + 1, true}, {static_cast<std::uint8_t>(fence), false, 1.0f});

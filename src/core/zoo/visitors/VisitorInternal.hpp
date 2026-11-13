@@ -157,6 +157,16 @@ constexpr Vec2 ToVec(TileCoord step) {
     return {static_cast<float>(step.x), static_cast<float>(step.z)};
 }
 
+/// Standing slots are measured from the public path edge, including across strips.
+inline Vec2 ViewingPosition(const ViewingSpot& spot, int slot) {
+    constexpr std::array<int, 4> columns{1, 2, 0, 3};
+    const Vec2 toward = ToVec(Step(spot.side));
+    const Vec2 lateral{toward.z, -toward.x};
+    const int column = columns[static_cast<std::size_t>(slot % 4)];
+    return World::TileCenter(spot.tile) + lateral * ((static_cast<float>(column) - 1.5f) * 0.46f) +
+           toward * (0.66f - 0.5f * static_cast<float>(slot / 4));
+}
+
 /// One tick of the visitor simulation: the Visitors, what they step in, and the
 /// tick's working data. The methods are spread over the .cpp files by subject.
 struct Stepper {

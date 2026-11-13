@@ -235,7 +235,10 @@ public:
     /// (walking, standing or at a fence; not seated, served, queueing or in a house)
     /// is set down somewhere on the public paths the gate leads to, the farther in the
     /// more it has seen, the longer it has been here and the hungrier and wearier it
-    /// is, and makes up its mind from there. For a zoo one walks into in mid-morning; Step() never does this.
+    /// is. First assign one eligible group per reachable habitat to viewing slots at
+    /// its front (as many as the available groups allow); scatter the others over
+    /// paths to make up their minds there. For a zoo one walks into in mid-morning;
+    /// Step() never does this.
     /// Returns the number of people moved.
     int Spread(const Env& env);
     /// Starts the day's counters afresh.

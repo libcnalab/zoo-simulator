@@ -6,6 +6,7 @@
 
 #include "zoo/animals/AnimalTuning.hpp"
 #include "zoo/animals/Animals.hpp"
+#include "zoo/build/Builder.hpp"
 
 namespace zoo {
 namespace {
@@ -15,7 +16,7 @@ TEST(AnimalMovementTests, WanderMovesWithinItsEnclosureWithoutSnappingHeading) {
     ZooObjects objects;
     Catalog catalog = Catalog::LoadDirectory(std::string(ZOO_SOURCE_DIR) + "/data/construction");
     SpeciesCatalog species = SpeciesCatalog::LoadDirectory(std::string(ZOO_SOURCE_DIR) + "/data/species");
-    const int fence = catalog.fences.back().kind;
+    const int fence = catalog.FindFence("high_glass_wall")->kind;
     for (int x = 8; x <= 30; ++x) {
         world.SetFence({x, 8, true}, {static_cast<std::uint8_t>(fence), false, 1.0f});
         world.SetFence({x, 31, true}, {static_cast<std::uint8_t>(fence), false, 1.0f});
@@ -70,6 +71,51 @@ TEST(AnimalMovementTests, WanderMovesWithinItsEnclosureWithoutSnappingHeading) {
     EXPECT_TRUE(moved);
 }
 
+TEST(AnimalMovementTests, RoundedFenceEndpointCannotBecomeOrdinaryWalkingGround) {
+    const Catalog catalog = Catalog::LoadDirectory(std::string(ZOO_SOURCE_DIR) + "/data/construction");
+    const SpeciesCatalog species =
+        SpeciesCatalog::LoadDirectory(std::string(ZOO_SOURCE_DIR) + "/data/species");
+    for (const bool strip : {false, true}) {
+        SCOPED_TRACE(strip);
+        World world(20, 20);
+        ZooObjects objects;
+        for (const EdgeRef edge : EdgesAround({5, 5}, {7, 7})) {
+            world.SetFence(edge, {5, false, 1.0f});
+        }
+        world.SetStandOff({6, 8}, strip);
+        Enclosures homes;
+        homes.Rebuild(world, objects, catalog);
+        Navigator nav(world);
+        Env env{world, objects, homes, catalog, species, nav, nullptr, nullptr, {}, {}};
+        Animals animals(2);
+        const auto id = animals.Add(env, species.IndexOf("flamingo"), Sex::Female, 5.0f, {13.25f, 15.999f});
+        ASSERT_TRUE(id);
+        Animal* animal = animals.Find(id);
+        const EnclosureId home = homes.At(animal->position);
+        ASSERT_TRUE(home);
+        animal->activity = AnimalActivity::Wander;
+        animal->activityLeft = 1000;
+        animal->hunger = 0.0f;
+        animal->thirst = 0.0f;
+        animal->moving = true;
+        animal->speed = 1.0f;
+        // A rounded route endpoint lies exactly on the south fence, whose tile
+        // ownership is already outside. Navigation must not grant an escape.
+        animal->target = {13.25f, 16.0f};
+        animal->route = {animal->target};
+        animal->routeIndex = 0;
+        const Animal before = *animal;
+        animals.Step(env);
+        EXPECT_EQ(homes.At(animals.Find(id)->position), home);
+        EXPECT_FALSE(animals.Find(id)->loose);
+        // The reservation must not alter the existing intentional escape behaviour.
+        *animals.Find(id) = before;
+        animals.Find(id)->activity = AnimalActivity::BreakOut;
+        animals.Step(env);
+        EXPECT_FALSE(homes.At(animals.Find(id)->position));
+    }
+}
+
 TEST(AnimalMovementTests, WeakFenceEscapeCanBeRecaptured) {
     World world(40, 40);
     ZooObjects objects;
@@ -115,7 +161,7 @@ TEST(AnimalMovementTests, AdequateFencePreventsHourlyEscapeAttemptsForTenDays) {
     ZooObjects objects;
     Catalog catalog = Catalog::LoadDirectory(std::string(ZOO_SOURCE_DIR) + "/data/construction");
     SpeciesCatalog species = SpeciesCatalog::LoadDirectory(std::string(ZOO_SOURCE_DIR) + "/data/species");
-    const int fence = catalog.fences.back().kind;
+    const int fence = catalog.FindFence("high_glass_wall")->kind;
     for (int x = 8; x <= 30; ++x) {
         world.SetFence({x, 8, true}, {static_cast<std::uint8_t>(fence), false, 1.0f});
         world.SetFence({x, 31, true}, {static_cast<std::uint8_t>(fence), false, 1.0f});
@@ -188,7 +234,7 @@ TEST(AnimalMovementTests, ALooseAnimalStopsBeingLooseAfterItIsFencedInAgain) {
     const int maxX = std::min(world.Width() - 1, occupied.x + 1);
     const int minZ = std::max(0, occupied.z - 1);
     const int maxZ = std::min(world.Depth() - 1, occupied.z + 1);
-    const int strongFence = catalog.fences.back().kind;
+    const int strongFence = catalog.FindFence("high_glass_wall")->kind;
     for (int x = minX; x <= maxX; ++x) {
         world.SetFence({x, minZ, true}, {static_cast<std::uint8_t>(strongFence), false, 1.0f});
         world.SetFence({x, maxZ + 1, true}, {static_cast<std::uint8_t>(strongFence), false, 1.0f});

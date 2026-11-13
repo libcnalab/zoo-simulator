@@ -16,6 +16,10 @@ struct FenceLook {
     zoo::Color3 color{0.5f, 0.5f, 0.5f};
     zoo::Color3 postColor{0.3f, 0.3f, 0.3f};
     bool perimeter = false;
+    /// Welded mesh for bears and big cats: square posts, a framed panel.
+    bool heavy = false;
+    /// The low rail the public leans on before a planted stand-off: a broad top board.
+    bool handrail = false;
 };
 
 /// The look of a fence of the world; false when there is no such fence kind.

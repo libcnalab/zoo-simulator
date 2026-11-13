@@ -20,7 +20,7 @@ Json Entry(std::string_view plural, Json value) {
 TEST(CatalogTests, ShippedDataLoadsAndHasCompleteEnumsAndLookups) {
     const Catalog c = Shipped();
     ASSERT_TRUE(c.errors.empty()) << (c.errors.empty() ? "" : c.errors.front());
-    EXPECT_EQ(c.fences.size(), 10U);
+    EXPECT_EQ(c.fences.size(), 12U);
     EXPECT_EQ(c.foods.size(), 8U);
     EXPECT_GE(c.buildings.size(), 13U);
     EXPECT_GE(c.props.size(), 35U);
@@ -34,6 +34,31 @@ TEST(CatalogTests, ShippedDataLoadsAndHasCompleteEnumsAndLookups) {
     EXPECT_EQ(c.BuildingIndex("burger_stall"), 5);
     EXPECT_GE(c.PropIndex("oak"), 0);
 }
+TEST(CatalogTests, HabitatBarrierKindsRemainStable) {
+    const Catalog catalog = Shipped();
+    int kind = 1;
+    for (const auto id : {"wooden_rail", "wire_mesh", "tall_mesh", "steel_bars", "glass_wall",
+                          "concrete_wall", "cable_barrier", "hedge", "high_cable_barrier", "high_glass_wall",
+                          "heavy_mesh", "stand_off_rail"}) {
+        const FenceDef* fence = catalog.FindFence(id);
+        ASSERT_NE(fence, nullptr);
+        EXPECT_EQ(fence->kind, kind);
+        ++kind;
+    }
+    const auto& mesh = *catalog.FindFence("heavy_mesh");
+    EXPECT_EQ(mesh.style, FenceStyle::Mesh);
+    EXPECT_FLOAT_EQ(mesh.heightM, 4.5f);
+    EXPECT_EQ(mesh.strength, 4);
+    EXPECT_FLOAT_EQ(mesh.visibility, 0.8f);
+    EXPECT_GT(mesh.cost, catalog.FindFence("tall_mesh")->cost);
+    EXPECT_LT(mesh.cost, catalog.FindFence("steel_bars")->cost);
+    const auto& rail = *catalog.FindFence("stand_off_rail");
+    EXPECT_EQ(rail.style, FenceStyle::Rail);
+    EXPECT_FLOAT_EQ(rail.heightM, 1.1f);
+    EXPECT_EQ(rail.strength, 1);
+    EXPECT_FLOAT_EQ(rail.visibility, 1.0f);
+}
+
 TEST(CatalogTests, EverySpeciesFoodAndContainmentRequirementIsCovered) {
     const auto c = Shipped();
     const auto species = Species();

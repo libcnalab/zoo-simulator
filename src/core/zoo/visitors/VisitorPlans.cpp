@@ -17,7 +17,6 @@ namespace {
 
 constexpr float kAnywhere = 1.0e9f;
 /// Columns of a viewing tile in the order they fill: the middle first.
-constexpr std::array<int, 4> kColumnOrder = {1, 2, 0, 3};
 
 VisitorActivity ActivityOnTheWay(VisitorGoal goal) {
     switch (goal) {
@@ -279,13 +278,40 @@ bool Stepper::TryWatch(Group g) {
         if (scr.appeal[i] <= 0.0f || looks >= kLooksPerEnclosure) {
             continue;
         }
-        // The better the animals and the nearer, the likelier; never quite the same order
-        // twice. A second look from somewhere else is worth less than something new.
-        const float score = (0.2f + scr.appeal[i]) / (30.0f + Distance(lead.position, site.centre)) *
-                            all.rng_.Range(0.75f, 1.25f) * (looks == 0 ? 1.0f : kSecondLookWeight);
-        scr.ranked.emplace_back(-score, static_cast<int>(i));
+        // The better the animals and the nearer, the likelier. A second look from somewhere
+        // else is worth less than something new, and a front where people already stand
+        // shoulder to shoulder draws fewer than a free one.
+        int bound = 0;
+        for (const ViewingSpot& spot : site.spots) {
+            bound += scr.watchers[sites.TileIndex(spot.tile)];
+        }
+        const float density =
+            static_cast<float>(bound) / static_cast<float>(std::max<std::size_t>(site.spots.size(), 1));
+        const float star = 0.2f + scr.appeal[i];
+        const float near = kWatchNearM / (kWatchNearM + Distance(lead.position, site.centre));
+        const float score = star * star * near * near * (looks == 0 ? 1.0f : kSecondLookWeight) /
+                            (1.0f + density / kWatchersPerTileAtEase);
+        scr.ranked.emplace_back(score, static_cast<int>(i));
     }
-    std::sort(scr.ranked.begin(), scr.ranked.end());
+    // Three of them drawn by lot, each with the chance of its weight: were it always the
+    // best, the habitats beside the busiest paths would take everybody and a habitat that is
+    // a little less of a star, or a little further, would stand unwatched all day.
+    for (std::size_t first = 0; first < std::min<std::size_t>(scr.ranked.size(), 3); ++first) {
+        float total = 0.0f;
+        for (std::size_t k = first; k < scr.ranked.size(); ++k) {
+            total += scr.ranked[k].first;
+        }
+        float lot = all.rng_.NextFloat() * total;
+        std::size_t drawn = scr.ranked.size() - 1;
+        for (std::size_t k = first; k < scr.ranked.size(); ++k) {
+            lot -= scr.ranked[k].first;
+            if (lot <= 0.0f) {
+                drawn = k;
+                break;
+            }
+        }
+        std::swap(scr.ranked[first], scr.ranked[drawn]);
+    }
     if (scr.ranked.size() > 3) {
         scr.ranked.resize(3);
     }
@@ -336,20 +362,15 @@ bool Stepper::TryWatch(Group g) {
         Plan plan;
         plan.goal = VisitorGoal::Watch;
         plan.enclosure = site.enclosure;
-        const Vec2 centre = World::TileCenter(best->tile);
         const Vec2 toward = ToVec(Step(best->side));
-        const Vec2 lateral{toward.z, -toward.x};
         int slot = 0;
         for (int k = 0; k < size; ++k) {
             while (slot < kSlotsPerViewingTile - 1 && (taken & (1u << slot)) != 0) {
                 ++slot;
             }
             taken |= 1u << slot;
-            const int row = slot / 4;
-            const int column = kColumnOrder[static_cast<std::size_t>(slot % 4)];
             const std::size_t m = static_cast<std::size_t>(k);
-            plan.place[m] = centre + lateral * ((static_cast<float>(column) - 1.5f) * 0.46f) +
-                            toward * (0.66f - 0.5f * static_cast<float>(row));
+            plan.place[m] = ViewingPosition(*best, slot);
             plan.face[m] = HeadingOf(toward);
             plan.slot[m] = static_cast<std::uint8_t>(slot);
         }
@@ -535,6 +556,16 @@ bool Stepper::PlanSeats(Group g, Vec2 around, float maxDistance, Plan& plan) {
                     ? bench.position + forward * out + right * along
                     : bench.position + right * (side * (1.35f + 0.5f * static_cast<float>(standing / 2)));
             ++standing;
+            // Where one can walk to from the bench's path tile, never across a fence or onto
+            // planting behind a rail: otherwise nearer to that tile, at worst on it.
+            NavProfile ground = kWalker;
+            ground.pathsOnly = false;
+            for (int pull = 0; pull < 3 && !env.nav.Walkable(bench.access, plan.place[m], ground); ++pull) {
+                plan.place[m] = bench.access + (plan.place[m] - bench.access) * 0.6f;
+            }
+            if (!env.nav.Walkable(bench.access, plan.place[m], ground)) {
+                plan.place[m] = bench.access;
+            }
             plan.face[m] = HeadingOf(bench.position - plan.place[m]);
             plan.slot[m] = 0;
             plan.seated[m] = false;

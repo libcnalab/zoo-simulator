@@ -109,6 +109,7 @@ public:
     /// lower), or per square metre and unit of strength (flatten, smooth).
     static constexpr Money kTerraformPerM3 = 150;
     static constexpr Money kLevelPerM2 = 60;
+    static constexpr Money kStandOffPerTile = Dollars(10);
     // ---- limits ---------------------------------------------------------------------
     static constexpr float kMaxPathRelief = 1.2f;  ///< World::TileRelief of a path tile
     /// Height range of the vertices under a new building; within it the footprint
@@ -158,7 +159,7 @@ public:
     // ---- paths ----------------------------------------------------------------------
     /// What stops a path of `kind` on a tile: OutOfBounds, NotProperty, Occupied
     /// (building), Water, TooSteep (relief above kMaxPathRelief), Blocked (the circle
-    /// of a prop with blocksWalking overlaps the tile), NothingToDo when the tile
+    /// of a prop with blocksWalking overlaps the tile, or a stand-off reservation), NothingToDo when the tile
     /// already has this kind. For PathKind::None (removal) only OutOfBounds,
     /// NotProperty and NothingToDo apply.
     BuildError CheckPath(TileCoord tile, PathKind kind) const;
@@ -167,6 +168,14 @@ public:
     /// nothing back.
     BuildPlan PlanPath(std::span<const TileCoord> tiles, PathKind kind) const;
     BuildPlan PlacePath(std::span<const TileCoord> tiles, PathKind kind);
+
+    /// Reserves dry public ground for planting. Rejects paths, buildings, the entrance,
+    /// any enclosure (so no animal can lose its ground), and functional props. Scenery
+    /// is allowed. Removal clears only the reservation, freely, as path removal does;
+    /// fences and scenery are separate operations. Duplicate tiles count once.
+    BuildError CheckStandOff(TileCoord tile, bool marked = true) const;
+    BuildPlan PlanStandOff(std::span<const TileCoord> tiles, bool marked = true) const;
+    BuildPlan PlaceStandOff(std::span<const TileCoord> tiles, bool marked = true);
 
     // ---- ground cover ---------------------------------------------------------------
     /// Repaints the tiles (OutOfBounds, NotProperty; tiles that already have this
@@ -177,7 +186,7 @@ public:
     // ---- water ----------------------------------------------------------------------
     /// What stops water on a tile: OutOfBounds, NotProperty, Occupied, PathInTheWay,
     /// Blocked (a prop's centre lies on the tile, or a blocking prop's circle
-    /// overlaps it), NothingToDo when it already has water.
+    /// overlaps it, or a stand-off reservation), NothingToDo when it already has water.
     BuildError CheckWater(TileCoord tile) const;
     /// Floods the tiles that pass. The surface level is that of the lowest water
     /// already on one of the tiles or on a tile edge-adjacent to one of them, so a
@@ -214,11 +223,10 @@ public:
     /// UnknownItem; OutOfBounds / NotProperty (footprint and front tile); Occupied
     /// (a footprint tile or the front tile belongs to a building); Water (the same
     /// tiles); Blocked (a prop's centre inside the footprint, or a blocking prop's
-    /// circle overlapping it); FenceInTheWay (a fence on an edge between two
-    /// footprint tiles, or between the door tile and the front tile); TooSteep
-    /// (range of the footprint's vertex heights above kMaxBuildingRelief);
-    /// NeedsEnclosure / NeedsPublicGround by BuildingDef::placement against the
-    /// region of the front tile.
+    /// circle overlapping it, or a stand-off tile in the footprint/front); FenceInTheWay (a fence on an edge
+    /// between two footprint tiles, or between the door tile and the front tile); TooSteep (range of the
+    /// footprint's vertex heights above kMaxBuildingRelief); NeedsEnclosure / NeedsPublicGround by
+    /// BuildingDef::placement against the region of the front tile.
     BuildError CheckBuilding(int def, TileCoord origin, Dir facing) const;
     /// Places it: levels the footprint to the mean of its vertex heights, removes
     /// paths under it, marks the tiles (World::SetBuilding) and stores a Building
@@ -235,7 +243,9 @@ public:
     /// PathInTheWay (a prop with blocksWalking whose circle overlaps a path tile);
     /// Blocked (closer to another prop than the sum of the radii when both block
     /// walking, otherwise closer than 0.3 m); NeedsEnclosure / NeedsPublicGround by
-    /// PropDef::placement against the region of the tile under the centre.
+    /// PropDef::placement against the region of the tile under the centre. Stand-off
+    /// tiles allow only trees, bushes, rocks and Decoration props, regardless of
+    /// their placement tag; functional props are Blocked.
     BuildError CheckProp(int def, Vec2 position) const;
     /// Places it with `scale` clamped to kMinPropScale..kMaxPropScale and the
     /// heading wrapped; feeders, troughs and bins start empty. Cost PropDef::cost.
@@ -256,6 +266,7 @@ private:
     BuildPlan DoFence(std::span<const EdgeRef> edges, int kind, bool gate, bool apply);
     BuildPlan DoRemoveFence(std::span<const EdgeRef> edges, bool apply);
     BuildPlan DoPath(std::span<const TileCoord> tiles, PathKind kind, bool apply);
+    BuildPlan DoStandOff(std::span<const TileCoord> tiles, bool marked, bool apply);
     BuildPlan DoTerrain(std::span<const TileCoord> tiles, Terrain terrain, bool apply);
     BuildPlan DoWater(std::span<const TileCoord> tiles, float depth, bool apply);
     BuildPlan DoRemoveWater(std::span<const TileCoord> tiles, bool apply);

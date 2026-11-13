@@ -51,16 +51,18 @@ TEST(VisitStart, MatchesGameSequence) {
 // Baselines were first recorded before any optimisation, at
 // e1472bd0f07b252142d4efd1698525c9cbd1dd0d (plus the equivalent FillForVisit extraction), and
 // are recorded again whenever the visitors' behaviour or the zoo itself is changed on purpose
-// (2026-11-13: a group takes a bench only if at least half of it can sit).
+// (2026-11-13: a group takes a bench only if at least half of it can sit; then the habitat
+// fronts: planted stand-off strips, heavy mesh, visitors spread along the fronts; those who
+// stand by a bench stay on ground they can walk to; habitats chosen by lot, a slower visit).
 void CheckFillHashes(std::int64_t ticks) {
     constexpr std::array<std::array<std::uint64_t, 2>, 3> shortHashes{
-        {{10585673709319444768ULL, 1150456661651813046ULL},
-         {16124086752817394378ULL, 9721056350698151094ULL},
-         {6323465657457867998ULL, 5958466912674032922ULL}}};
+        {{12676548309338727911ULL, 14305267464217349487ULL},
+         {4764539636684855074ULL, 17808361364757628471ULL},
+         {2183154795688651474ULL, 15444126313023628041ULL}}};
     constexpr std::array<std::array<std::uint64_t, 2>, 3> fullHashes{
-        {{6547945043187809662ULL, 414761657330436921ULL},
-         {5889046566886739913ULL, 6792484715067585471ULL},
-         {15636465410431582157ULL, 318132477342644673ULL}}};
+        {{8682622646171662552ULL, 201761079383349328ULL},
+         {5224440828190228211ULL, 8469665339212815928ULL},
+         {3556204177507088751ULL, 6975273730303028647ULL}}};
     for (const std::uint64_t seed : {1ULL, 2ULL, 3ULL}) {
         Zoo zoo(testdata::GameCatalog(), testdata::GameSpecies(), VisitorZooConfig(seed));
         BuildVisitorZoo(zoo);

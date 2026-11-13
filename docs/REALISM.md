@@ -24,6 +24,8 @@ loudspeaker stays muted and nobody has listened to any of it.
 | Water with ripples | below | `src/game/Surfaces.cpp` |
 | Lion, lioness, cub and tiger on a professional sculpt (CC BY 4.0) | real cat anatomy; the lioness has no mane any more | `docs/ANIMALS.md`, `evidence/big-cats-sculpt-2026-11-13.jpg` |
 | Animals stand in the sun, not in their own shadow | every skinned model was drawn shadowed by itself (an engine defect, `docs/UPSTREAM.md` ZOO-UP-001); lit and shaded now, and normal maps on animals show for the first time | `src/game/SunShadows.cpp`, `evidence/animal-self-shadow-2026-11-13.jpg` |
+| Habitat fronts a zoo would build | elephants and rhinos behind a 4 m planted stand-off with a leaning rail, hoofstock behind 2 m; heavy dark mesh instead of bars at bears and cats; chain-link one looks through; nobody walks on the planting | `docs/VISITOR_ZOO.md`, `evidence/habitat-fronts-2026-11-13.jpg` |
+| People at every habitat | 192 to 260 of 800 stand watching (was 110 to 215) and no habitat is left without watchers (several were, most of the time) | `docs/VISITOR_ZOO.md` "Who watches where" |
 
 ### Light from the sky and the ground (2026-11-13)
 
@@ -64,9 +66,9 @@ where an animal wades, and there are no swimming clips yet.
 1. Animals: thirteen of fifteen species are still the stylised first generation
    (`docs/ANIMALS.md`). Of the sculpt-based cats only the lioness is good: the male needs a
    real head and mane, the tiger a face. No young animal lives in the zoo yet.
-2. Habitat fronts: elephants and rhinos at arm's length, bars at the big cats (task E1).
-3. Meerkat Lookout draws 59 of 177 watchers at 10:30; its pool is too large and props stand
-   in it.
+2. Habitat fronts: hoofstock is still seen through chain-link behind its strip; shrubs in
+   the strips are coarse blobs.
+3. Meerkat Lookout's pool is too large and props stand in it.
 4. Trees: 760,000 of 1,063,415 scenery triangles, no distance form, canopies read as blobs.
 5. Keepers are not seen. No swimming clips. Bear growl is quiet in the mix.
 6. Loading 5.5 s, 2.4 s of it painting the ground.

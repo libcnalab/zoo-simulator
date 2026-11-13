@@ -183,3 +183,13 @@ with vertex colours for each pattern would need the engine's PBR binder to take 
 - **Loading**: 5.5 s now (see below); the ground painting (about 2.2 s on the worker threads)
   is the largest part left.
 - **Memory**: about 1.05 GB resident; the avatar cast is about 180 MB of it.
+
+## After the habitat fronts (2026-11-13)
+
+The strips added 1,015 planted props (scenery 1,063,415 -> 1,347,525 triangles, still 108
+draw calls for the whole zoo's scenery). One run of `--bench --frames 300` at the entrance,
+load average 1.6: **109.6 fps**, frame 9.1 ms mean, 12.2 ms p95, 15.0 ms max; people pass
+1.83 ms, engine and driver 5.55 ms; 417 draw calls and 3.82 million triangles a frame
+through the engine's passes; 1,333 MB resident (about 1,050 MB before the sculpted cats and
+the strips; not broken down yet). The planting did not cost a visible frame rate here; the
+memory growth is open.

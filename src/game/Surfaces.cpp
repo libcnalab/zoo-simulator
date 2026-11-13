@@ -239,7 +239,7 @@ float Surfaces::PatternMetres(Pattern pattern) {
         case Pattern::Concrete:
             return 3.0f;
         case Pattern::WireMesh:
-            return 0.6f;
+            return 0.72f;
         default:
             return 1.0f;
     }
@@ -263,19 +263,28 @@ Surfaces::Surfaces(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device) 
         patterns_[p] = CnaEngine::Graphics::UploadTexture(device, image, {.srgb = true});
     }
 
-    // Chain-link: two families of diagonal wires, see-through between them.
+    // Chain-link: two families of diagonal wires, see-through between them. Cells of some
+    // six centimetres and wire a tenth of that across, as fencing is: from a few steps away
+    // the eye looks through it (the first texture had cells of 15 cm and wire as thick as a
+    // thumb, and a habitat seen through it was a cage).
     {
-        const int size = 64;
+        const int size = 128;
+        const int period = 16;
         Image image(size, size,
                     Color(std::uint8_t{255}, std::uint8_t{255}, std::uint8_t{255}, std::uint8_t{0}));
+        const auto wire = [period](int along) {
+            // Distance in texels from the wire's axis, which runs through the cell boundary.
+            const int wrapped = ((along % period) + period) % period;
+            const float off = std::min(static_cast<float>(wrapped), static_cast<float>(period - wrapped));
+            return std::clamp(1.15f - off, 0.0f, 1.0f);
+        };
         for (int y = 0; y < size; ++y) {
             for (int x = 0; x < size; ++x) {
-                const int a = (x + y) % 16;
-                const int b = ((x - y) % 16 + 16) % 16;
-                if (a < 2 || b < 2) {
-                    image.Set(
-                        x, y,
-                        Color(std::uint8_t{255}, std::uint8_t{255}, std::uint8_t{255}, std::uint8_t{255}));
+                const float cover = std::max(wire(x + y), wire(x - y));
+                if (cover > 0.0f) {
+                    image.Set(x, y,
+                              Color(std::uint8_t{255}, std::uint8_t{255}, std::uint8_t{255},
+                                    static_cast<std::uint8_t>(std::lround(cover * 255.0f))));
                 }
             }
         }
@@ -365,7 +374,7 @@ const Material& Surfaces::WireMesh(const zoo::Color3& color) {
         slot->doubleSided = true;
         slot->baseTexture = wire_.get();
         slot->sampler = &SamplerState::AnisotropicWrap;
-        const float scale = 1.0f / PatternMetres(Pattern::WireMesh);  // four wire cells per repeat
+        const float scale = 1.0f / PatternMetres(Pattern::WireMesh);  // eight wire cells per repeat
         slot->uvScale = Vector2(scale, scale);
     }
     return *slot;

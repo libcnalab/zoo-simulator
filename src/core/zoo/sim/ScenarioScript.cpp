@@ -165,6 +165,56 @@ void Script::ViewingFront(const std::vector<TileCoord>& tiles, std::string_view 
     }
 }
 
+std::vector<TileCoord> Script::Expanded(const std::vector<TileCoord>& tiles, int depth) {
+    std::set<std::pair<int, int>> coordinates;
+    for (const TileCoord tile : tiles) {
+        for (int dz = -depth; dz <= depth; ++dz) {
+            for (int dx = -depth; dx <= depth; ++dx) {
+                coordinates.emplace(tile.z + dz, tile.x + dx);
+            }
+        }
+    }
+    std::vector<TileCoord> expanded;
+    for (const auto& [z, x] : coordinates) {
+        expanded.push_back({x, z});
+    }
+    return expanded;
+}
+
+std::vector<TileCoord> Script::StandOffFront(const std::vector<TileCoord>& tiles, int depth,
+                                             const std::vector<TileCoord>& extra) {
+    auto expanded = Expanded(tiles, depth);
+    expanded.insert(expanded.end(), extra.begin(), extra.end());
+    std::set<std::pair<int, int>> inside;
+    for (const TileCoord tile : tiles) {
+        inside.emplace(tile.z, tile.x);
+    }
+    std::vector<TileCoord> strip;
+    for (const TileCoord tile : expanded) {
+        if (!inside.contains({tile.z, tile.x})) {
+            strip.push_back(tile);
+        }
+    }
+    const auto mark = build_.PlaceStandOff(strip);
+    if (!mark.Ok() || mark.skipped > 0) {
+        Problem("stand-off: " + std::string(Describe(mark.Ok() ? mark.skippedBecause : mark.error)));
+        return {};
+    }
+    std::vector<EdgeRef> publicEdges;
+    for (const EdgeRef edge : Outline(expanded)) {
+        // A neighbouring habitat already has its own containment; never replace it
+        // with a public rail where the two planting boundaries meet.
+        if (!zoo_.Map().FenceAt(edge).Exists()) {
+            publicEdges.push_back(edge);
+        }
+    }
+    const auto rail = build_.PlaceFence(publicEdges, FenceKind("stand_off_rail"));
+    if (!rail.Ok() || rail.skipped > 0) {
+        Problem("stand-off rail: " + std::string(Describe(rail.Ok() ? rail.skippedBecause : rail.error)));
+    }
+    return strip;
+}
+
 void Script::KeeperGate(const std::vector<TileCoord>& tiles, std::string_view fence) {
     const std::vector<EdgeRef> outline = Outline(tiles);
     if (!outline.empty()) {

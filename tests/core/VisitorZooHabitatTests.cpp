@@ -167,6 +167,181 @@ bool ReadableFromPath(const Zoo& zoo, const Prop& board) {
     return false;
 }
 
+int StripDepth(const Enclosure& home) {
+    if (home.name == "Elephant Valley" || home.name == "Rhino Hollow") {
+        return 2;
+    }
+    if (home.name == "Acacia Plain" || home.name == "Ostrich Rise" || home.name == "Red Dune" ||
+        home.name == "Kangaroo Grove") {
+        return 1;
+    }
+    return 0;
+}
+
+void ExpectFronts(const Zoo& zoo) {
+    for (const Enclosure& home : zoo.Habitats().All()) {
+        SCOPED_TRACE(home.name);
+        const int depth = StripDepth(home);
+        const Dir inwardView = home.min.x < zoo.Map().EntranceTile().x ? Dir::West : Dir::East;
+        for (const Dir side : {Dir::North, inwardView}) {
+            bool found = false;
+            for (const ViewingSpot& spot : home.viewing) {
+                if (spot.side == side && spot.standOffM == static_cast<float>(depth) * kTileSize) {
+                    found = true;
+                }
+            }
+            EXPECT_TRUE(found) << static_cast<int>(side);
+        }
+        for (const ViewingSpot& spot : home.viewing) {
+            EXPECT_EQ(zoo.Habitats().RegionAt(spot.tile), Region::Public);
+            EXPECT_GE(spot.standOffM, static_cast<float>(depth) * kTileSize);
+            EXPECT_TRUE(zoo.Routes().Reachable(zoo.Map().EntranceTile(), spot.tile, NavProfile::Visitor()));
+            if (depth == 0) {
+                continue;
+            }
+            const auto* rail = zoo.Definitions().FenceByKind(zoo.Map().FenceOn(spot.tile, spot.side).kind);
+            ASSERT_NE(rail, nullptr);
+            EXPECT_EQ(rail->id, "stand_off_rail");
+            TileCoord next = spot.tile + Step(spot.side);
+            int crossed = 0;
+            while (zoo.Map().InBounds(next) && zoo.Map().At(next).standOff) {
+                EXPECT_EQ(zoo.Habitats().RegionAt(next), Region::StandOff);
+                EXPECT_FALSE(zoo.Habitats().At(next));
+                EXPECT_FALSE(zoo.Routes().Passable(next, NavProfile::Visitor()));
+                ++crossed;
+                next = next + Step(spot.side);
+            }
+            EXPECT_EQ(zoo.Habitats().At(next), home.id);
+            EXPECT_FLOAT_EQ(spot.standOffM, static_cast<float>(crossed) * kTileSize);
+            const auto* barrier =
+                zoo.Definitions().FenceByKind(zoo.Map().FenceOn(next, Opposite(spot.side)).kind);
+            ASSERT_NE(barrier, nullptr);
+            EXPECT_EQ(barrier->id, depth == 2 ? "cable_barrier" : "tall_mesh");
+            EXPECT_FLOAT_EQ(spot.visibility, rail->visibility * barrier->visibility);
+        }
+        if (home.name == "Lion Rock" || home.name == "Tiger Forest" || home.name == "Bear Falls" ||
+            home.name == "Polar Sound" || home.name == "Wolf Wood") {
+            for (const TileCoord tile : TilesInRect(home.min, home.max)) {
+                if (zoo.Habitats().At(tile) != home.id) {
+                    continue;
+                }
+                for (const Dir side : {Dir::North, Dir::East, Dir::South, Dir::West}) {
+                    const auto fence = zoo.Map().FenceOn(tile, side);
+                    if (!fence.Exists()) {
+                        continue;
+                    }
+                    const auto* def = zoo.Definitions().FenceByKind(fence.kind);
+                    ASSERT_NE(def, nullptr);
+                    EXPECT_NE(def->id, "steel_bars");
+                    EXPECT_TRUE(def->style == FenceStyle::Glass || def->id == "heavy_mesh" ||
+                                (home.name == "Wolf Wood" && def->id == "tall_mesh"));
+                }
+            }
+        }
+    }
+    int marked = 0;
+    int planted = 0;
+    for (int z = 0; z < zoo.Map().Depth(); ++z) {
+        for (int x = 0; x < zoo.Map().Width(); ++x) {
+            if (zoo.Map().At({x, z}).standOff) {
+                ++marked;
+            }
+        }
+    }
+    for (const Prop& prop : zoo.Objects().Props()) {
+        if (zoo.Habitats().RegionAt(World::TileAt(prop.position)) == Region::StandOff) {
+            ++planted;
+            const auto& def = zoo.Definitions().props[static_cast<std::size_t>(prop.def)];
+            EXPECT_TRUE(def.role == PropRole::Bush || def.role == PropRole::Rock);
+            EXPECT_LE(def.heightM * prop.scale, 1.27f);
+        }
+    }
+    EXPECT_GT(marked, 0);
+    EXPECT_EQ(planted, marked);
+    std::cout << "STRIPS seed=" << zoo.Config().seed << " tiles=" << marked << " props=" << planted << '\n';
+}
+
+// Recorded on the unmodified layout for both seeds; retain the same space margin,
+// habitat welfare, and mean smoothed animal welfare after the 600-step fill.
+struct HabitatBaseline {
+    float area;
+    float habitat;
+    float filled;
+};
+const std::map<std::string, HabitatBaseline> kBefore{
+    {"giraffe", {4284.0f, 0.964078784f, 0.949947774f}},
+    {"zebra", {4284.0f, 0.978447199f, 0.945476532f}},
+    {"ostrich", {1016.0f, 0.970645428f, 0.970760703f}},
+    {"lion", {2236.0f, 0.970187545f, 0.938474238f}},
+    {"tiger", {1788.0f, 0.976001620f, 0.902444363f}},
+    {"wolf", {1788.0f, 0.978674769f, 0.927070796f}},
+    {"brown_bear", {2236.0f, 0.969099939f, 0.976925611f}},
+    {"polar_bear", {2812.0f, 0.962766051f, 0.976536632f}},
+    {"elephant", {5436.0f, 0.952969968f, 0.937010646f}},
+    {"rhino", {1692.0f, 0.976396203f, 0.969400227f}},
+    {"camel", {1616.0f, 0.985593915f, 0.975913942f}},
+    {"kangaroo", {1136.0f, 0.991231322f, 0.978923440f}},
+};
+
+void ExpectWelfare(Zoo& zoo, bool filled) {
+    std::map<std::string, std::pair<float, int>> totals;
+    for (const Animal& animal : zoo.Fauna().All()) {
+        const auto& species = zoo.SpeciesList().All()[static_cast<std::size_t>(animal.species)];
+        if (!kBefore.contains(species.id)) {
+            continue;
+        }
+        const auto& before = kBefore.at(species.id);
+        const auto& home = *zoo.Habitats().Find(animal.home);
+        const auto welfare = EvaluateHabitat(species, home.stats, zoo.Fauna().GroupOf(zoo.MakeEnv(), animal));
+        EXPECT_FLOAT_EQ(home.stats.areaM2, before.area) << species.id;
+        EXPECT_GE(welfare.overall + 0.000001f, before.habitat) << species.id;
+        EXPECT_FLOAT_EQ(welfare.space, 1.0f);
+        EXPECT_GE(Containment(species, home.stats), 0.99999f);
+        auto& total = totals[species.id];
+        total.first += animal.welfare;
+        ++total.second;
+    }
+    if (filled) {
+        for (const auto& [species, total] : totals) {
+            const float mean = total.first / static_cast<float>(total.second);
+            EXPECT_GE(mean + 0.000001f, kBefore.at(species).filled) << species;
+            std::cout << "WELFARE " << zoo.Config().seed << ' ' << species << ' ' << mean << '\n';
+        }
+    }
+}
+
+void ExpectSeparation(const Zoo& zoo) {
+    for (const Animal& animal : zoo.Fauna().All()) {
+        const auto* home = zoo.Habitats().Find(animal.home);
+        ASSERT_NE(home, nullptr);
+        const int depth = StripDepth(*home);
+        if (depth == 0) {
+            continue;
+        }
+        const TileCoord at = World::TileAt(animal.position);
+        for (int z = at.z - depth - 1; z <= at.z + depth + 1; ++z) {
+            for (int x = at.x - depth - 1; x <= at.x + depth + 1; ++x) {
+                const TileCoord path{x, z};
+                if (zoo.Map().InBounds(path) && zoo.Map().At(path).path != PathKind::None &&
+                    zoo.Habitats().RegionAt(path) == Region::Public) {
+                    EXPECT_GE(DistanceToTiles(animal.position, path, path),
+                              static_cast<float>(depth) * kTileSize)
+                        << home->name;
+                }
+            }
+        }
+    }
+    for (const Visitor& guest : zoo.Guests().All()) {
+        EXPECT_NE(zoo.Habitats().RegionAt(World::TileAt(guest.position)), Region::StandOff)
+            << "visitor " << guest.id.value << " at " << guest.position.x << ',' << guest.position.z
+            << " activity " << static_cast<int>(guest.activity) << " goal " << static_cast<int>(guest.goal)
+            << " tick " << zoo.Time().tick;
+    }
+    for (const Litter& litter : zoo.Guests().LitterOnGround()) {
+        EXPECT_NE(zoo.Habitats().RegionAt(World::TileAt(litter.position)), Region::StandOff);
+    }
+}
+
 class VisitorZooHabitat : public testing::TestWithParam<std::uint64_t> {};
 
 TEST_P(VisitorZooHabitat, ResidentsAndOmittedPenguins) {
@@ -189,6 +364,8 @@ TEST_P(VisitorZooHabitat, ResidentsAndOmittedPenguins) {
 TEST_P(VisitorZooHabitat, EveryHabitatHasItsOwnReadableBoard) {
     Zoo zoo(testdata::GameCatalog(), testdata::GameSpecies(), VisitorZooConfig(GetParam()));
     BuildVisitorZoo(zoo);
+    ExpectFronts(zoo);
+    ExpectWelfare(zoo, false);
     std::map<std::uint32_t, std::set<std::uint32_t>> boards;
     for (const Prop& board : zoo.Objects().Props()) {
         if (zoo.Definitions().props[static_cast<std::size_t>(board.def)].role != PropRole::InfoBoard) {
@@ -234,12 +411,51 @@ TEST_P(VisitorZooHabitat, EveryHabitatHasItsOwnReadableBoard) {
 
 void CheckVisiting(Zoo& zoo, std::int64_t ticks) {
     FillForVisit(zoo, {.fillTicks = ticks});
+    if (ticks == 600) {
+        ExpectWelfare(zoo, true);
+    }
+    for (const Enclosure& home : zoo.Habitats().All()) {
+        EXPECT_GT(zoo.Guests().Watching(home.id), 0) << home.name;
+        bool watchingFront = false;
+        for (const Visitor& guest : zoo.Guests().All()) {
+            if (guest.activity != VisitorActivity::Watching || guest.targetEnclosure != home.id) {
+                continue;
+            }
+            for (const ViewingSpot& spot : home.viewing) {
+                watchingFront =
+                    watchingFront || (spot.side == Dir::North && World::TileAt(guest.position) == spot.tile);
+            }
+        }
+        // Straight after the short fill a group still stands at each front (SpreadVisitors
+        // set it there); later it is a matter of minutes, checked over the steps below.
+        if (ticks == 600) {
+            EXPECT_TRUE(watchingFront) << home.name;
+        }
+        std::cout << "WATCHERS " << zoo.Config().seed << ' ' << home.name << ' '
+                  << zoo.Guests().Watching(home.id) << '\n';
+    }
     ExpectResidents(zoo);
     ExpectContained(zoo);
     std::map<std::uint32_t, int> streak;
     std::map<std::uint32_t, int> longest;
     std::map<std::string, float> deepest;
+    std::set<std::uint32_t> frontWatched;
     for (int step = 0; step <= 2000; ++step) {
+        ExpectSeparation(zoo);
+        if (step % 50 == 0) {
+            for (const Visitor& guest : zoo.Guests().All()) {
+                if (guest.activity != VisitorActivity::Watching || frontWatched.contains(guest.targetEnclosure.value)) {
+                    continue;
+                }
+                const Enclosure* home = zoo.Habitats().Find(guest.targetEnclosure);
+                for (const ViewingSpot& spot : home != nullptr ? home->viewing : std::vector<ViewingSpot>{}) {
+                    if (spot.side == Dir::North && World::TileAt(guest.position) == spot.tile) {
+                        frontWatched.insert(home->id.value);
+                        break;
+                    }
+                }
+            }
+        }
         for (const Enclosure& home : zoo.Habitats().All()) {
             bool visible = false;
             for (const Animal& animal : zoo.Fauna().All()) {
@@ -268,7 +484,14 @@ void CheckVisiting(Zoo& zoo, std::int64_t ticks) {
         }
         if (step < 2000) {
             zoo.Step();
+            for (const Animal& animal : zoo.Fauna().All()) {
+                ASSERT_EQ(zoo.Habitats().At(animal.position), animal.home)
+                    << animal.name << " left containment at visit step " << step;
+            }
         }
+    }
+    for (const Enclosure& home : zoo.Habitats().All()) {
+        EXPECT_TRUE(frontWatched.contains(home.id.value)) << home.name << ": nobody at its front in 2,000 steps";
     }
     for (const auto& [species, over] : deepest) {
         EXPECT_LE(over, 0.05f) << species << " stood " << over << " m deeper than it wades";
@@ -295,6 +518,56 @@ TEST_P(VisitorZooHabitat, DISABLED_VisibleAndContainedFull) {
     CheckVisiting(zoo, 6000);
 }
 
+// A diagnostic, not a check: who watches where over an hour of a visit.
+TEST_P(VisitorZooHabitat, DISABLED_PrintWatchersOverTime) {
+    Zoo zoo(testdata::GameCatalog(), testdata::GameSpecies(), VisitorZooConfig(GetParam()));
+    BuildVisitorZoo(zoo);
+    FillForVisit(zoo, {.fillTicks = 6000});
+    for (const Enclosure& home : zoo.Habitats().All()) {
+        std::cout << home.name.substr(0, 7) << '\t';
+    }
+    std::cout << "people\n";
+    for (int round = 0; round <= 12; ++round) {
+        for (const Enclosure& home : zoo.Habitats().All()) {
+            std::cout << zoo.Guests().Watching(home.id) << '\t';
+        }
+        std::cout << zoo.Guests().All().size() << '\n';
+        if (round == 0 || round == 12) {
+            for (const Enclosure& home : zoo.Habitats().All()) {
+                int seen = 0;
+                int all = 0;
+                for (const Animal& animal : zoo.Fauna().All()) {
+                    if (animal.home == home.id) {
+                        ++all;
+                        seen += animal.Visible() ? 1 : 0;
+                    }
+                }
+                std::cout << home.viewing.size() << ':' << seen << '/' << all << '\t';
+            }
+            std::cout << "spots:visible/animals\n";
+            std::array<int, static_cast<std::size_t>(VisitorActivity::Count)> doing{};
+            std::array<int, static_cast<std::size_t>(VisitorGoal::Count)> walkingTo{};
+            for (const Visitor& v : zoo.Guests().All()) {
+                ++doing[static_cast<std::size_t>(v.activity)];
+                if (v.activity == VisitorActivity::Walking) {
+                    ++walkingTo[static_cast<std::size_t>(v.goal)];
+                }
+            }
+            for (std::size_t k = 0; k < doing.size(); ++k) {
+                std::cout << ToString(static_cast<VisitorActivity>(k)) << ' ' << doing[k] << "  ";
+            }
+            std::cout << "\nwalking to: ";
+            for (std::size_t k = 0; k < walkingTo.size(); ++k) {
+                std::cout << ToString(static_cast<VisitorGoal>(k)) << ' ' << walkingTo[k] << "  ";
+            }
+            std::cout << '\n';
+        }
+        for (int step = 0; step < 500; ++step) {
+            zoo.Step();
+        }
+    }
+}
+
 void ExpectHashes(const Zoo& original, const Zoo& loaded) {
     EXPECT_EQ(original.Fauna().StateHash(), loaded.Fauna().StateHash()) << "animals";
     EXPECT_EQ(original.Guests().StateHash(), loaded.Guests().StateHash()) << "visitors";
@@ -313,7 +586,7 @@ TEST_P(VisitorZooHabitat, SaveLoadAtVisitingTime) {
     Zoo zoo(testdata::GameCatalog(), testdata::GameSpecies(), VisitorZooConfig(GetParam()));
     BuildVisitorZoo(zoo);
     FillForVisit(zoo, {.fillTicks = 600});
-    const std::filesystem::path directory = std::string(ZOO_SOURCE_DIR) + "/build-probe/tests";
+    const std::filesystem::path directory = std::string(ZOO_SOURCE_DIR) + "/build-asan/tests";
     std::filesystem::create_directories(directory);
     const auto file = directory / ("visit-start-" + std::to_string(GetParam()) + ".json");
     std::string error;

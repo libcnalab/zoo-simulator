@@ -28,6 +28,8 @@ struct Tile {
     BuildingId building;
     /// Height (world y) of the water surface on this tile, or kNoWater.
     float waterLevel = kNoWater;
+    /// Reserved planting between containment and the public rail; never a habitat or path.
+    bool standOff = false;
 };
 
 /// A fence segment on one tile edge. `kind` 0 means "no fence"; other values index
@@ -129,6 +131,8 @@ public:
     const Tile& At(TileCoord t) const { return tiles_[Index(t)]; }
     void SetTerrain(TileCoord t, Terrain terrain);
     void SetPath(TileCoord t, PathKind path);
+    /// Construction validates the site; changing the mark invalidates geometry and navigation caches.
+    void SetStandOff(TileCoord t, bool marked);
     void SetBuilding(TileCoord t, BuildingId building);
     /// Puts water on a tile with its surface at `level` and digs the tile's four
     /// corner vertices down to at least `depth` metres below the surface.

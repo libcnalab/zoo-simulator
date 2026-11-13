@@ -12,7 +12,7 @@ TEST(AnimalBehaviourTests, DecisionsChooseActivitiesAndKeepNeedPriority) {
     ZooObjects objects;
     Catalog catalog = Catalog::LoadDirectory(std::string(ZOO_SOURCE_DIR) + "/data/construction");
     SpeciesCatalog species = SpeciesCatalog::LoadDirectory(std::string(ZOO_SOURCE_DIR) + "/data/species");
-    const int fence = catalog.fences.back().kind;
+    const int fence = catalog.FindFence("high_glass_wall")->kind;
     for (int x = 8; x <= 30; ++x) {
         world.SetFence({x, 8, true}, {static_cast<std::uint8_t>(fence), false, 1.0f});
         world.SetFence({x, 31, true}, {static_cast<std::uint8_t>(fence), false, 1.0f});
@@ -59,7 +59,7 @@ TEST(AnimalBehaviourTests, RainMovesAnAnimalIntoAnOpenShelter) {
     ZooObjects objects;
     Catalog catalog = Catalog::LoadDirectory(std::string(ZOO_SOURCE_DIR) + "/data/construction");
     SpeciesCatalog species = SpeciesCatalog::LoadDirectory(std::string(ZOO_SOURCE_DIR) + "/data/species");
-    const int fence = catalog.fences.back().kind;
+    const int fence = catalog.FindFence("high_glass_wall")->kind;
     for (int x = 8; x <= 30; ++x) {
         world.SetFence({x, 8, true}, {static_cast<std::uint8_t>(fence), false, 1.0f});
         world.SetFence({x, 31, true}, {static_cast<std::uint8_t>(fence), false, 1.0f});
@@ -122,7 +122,7 @@ TEST(AnimalBehaviourTests, ExtremeHeatUsesShadeBesideATreeWhenThereIsNoCooledShe
     ZooObjects objects;
     Catalog catalog = Catalog::LoadDirectory(std::string(ZOO_SOURCE_DIR) + "/data/construction");
     SpeciesCatalog species = SpeciesCatalog::LoadDirectory(std::string(ZOO_SOURCE_DIR) + "/data/species");
-    const int fence = catalog.fences.back().kind;
+    const int fence = catalog.FindFence("high_glass_wall")->kind;
     for (int x = 8; x <= 30; ++x) {
         world.SetFence({x, 8, true}, {static_cast<std::uint8_t>(fence), false, 1.0f});
         world.SetFence({x, 31, true}, {static_cast<std::uint8_t>(fence), false, 1.0f});
@@ -165,7 +165,7 @@ TEST(AnimalBehaviourTests, HighStressStartsAPaceLoopWithAPathBackToItsStart) {
     ZooObjects objects;
     Catalog catalog = Catalog::LoadDirectory(std::string(ZOO_SOURCE_DIR) + "/data/construction");
     SpeciesCatalog species = SpeciesCatalog::LoadDirectory(std::string(ZOO_SOURCE_DIR) + "/data/species");
-    const int fence = catalog.fences.back().kind;
+    const int fence = catalog.FindFence("high_glass_wall")->kind;
     for (int x = 8; x <= 30; ++x) {
         world.SetFence({x, 8, true}, {static_cast<std::uint8_t>(fence), false, 1.0f});
         world.SetFence({x, 31, true}, {static_cast<std::uint8_t>(fence), false, 1.0f});
@@ -205,7 +205,7 @@ TEST(AnimalBehaviourTests, DiurnalAnimalSleepsMostlyAtNightForItsDailySleepNeed)
     ZooObjects objects;
     Catalog catalog = Catalog::LoadDirectory(std::string(ZOO_SOURCE_DIR) + "/data/construction");
     SpeciesCatalog species = SpeciesCatalog::LoadDirectory(std::string(ZOO_SOURCE_DIR) + "/data/species");
-    const int fence = catalog.fences.back().kind;
+    const int fence = catalog.FindFence("high_glass_wall")->kind;
     for (int x = 8; x <= 30; ++x) {
         world.SetFence({x, 8, true}, {static_cast<std::uint8_t>(fence), false, 1.0f});
         world.SetFence({x, 31, true}, {static_cast<std::uint8_t>(fence), false, 1.0f});
@@ -259,7 +259,7 @@ TEST(AnimalBehaviourTests, AnAnimalThatFallsAsleepInWaterLiesDownOnDryGround) {
     ZooObjects objects;
     Catalog catalog = Catalog::LoadDirectory(std::string(ZOO_SOURCE_DIR) + "/data/construction");
     SpeciesCatalog species = SpeciesCatalog::LoadDirectory(std::string(ZOO_SOURCE_DIR) + "/data/species");
-    const int fence = catalog.fences.back().kind;
+    const int fence = catalog.FindFence("high_glass_wall")->kind;
     for (int x = 8; x <= 30; ++x) {
         world.SetFence({x, 8, true}, {static_cast<std::uint8_t>(fence), false, 1.0f});
         world.SetFence({x, 31, true}, {static_cast<std::uint8_t>(fence), false, 1.0f});

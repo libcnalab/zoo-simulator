@@ -14,7 +14,8 @@ namespace zoo {
 /// read the file; a newer file than the program knows is refused with a clear
 /// message, older ones are migrated on load (see ZooFromJson).
 inline constexpr const char* kSaveFormat = "zoo-simulator-save";
-inline constexpr int kSaveVersion = 1;
+// Version 2 reserves stand-off ground; old readers must not reinterpret it as habitats.
+inline constexpr int kSaveVersion = 2;
 
 /// What a load menu shows about a saved game without loading it.
 struct SaveSummary {

@@ -74,6 +74,12 @@ public:
     /// Swap only boundary edges with a public path immediately outside them.
     void ViewingFront(const std::vector<TileCoord>& tiles, std::string_view fence,
                       std::initializer_list<Dir> sides = {Dir::North, Dir::East, Dir::South, Dir::West});
+    /// Square dilation preserves the minimum clearance even at raster corners.
+    static std::vector<TileCoord> Expanded(const std::vector<TileCoord>& tiles, int depth);
+    /// Reserves the band outside an existing habitat and encloses it in a public rail.
+    /// Returns the marked tiles for deterministic planting after animals have been placed.
+    std::vector<TileCoord> StandOffFront(const std::vector<TileCoord>& tiles, int depth,
+                                         const std::vector<TileCoord>& extra = {});
     void KeeperGate(const std::vector<TileCoord>& tiles, std::string_view fence);
 
     void Paint(int east0, int north0, int east1, int north1, Terrain terrain) {

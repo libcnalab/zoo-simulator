@@ -63,6 +63,11 @@ inline constexpr float kWatchSeconds = 8.0f;  ///< plus up to kWatchSpreadSecond
 inline constexpr float kWatchSpreadSeconds = 6.0f;
 /// A group looks at an enclosure this many times, each time from a place at least
 /// kSecondLookM from where it stands; later looks draw it kSecondLookWeight as much.
+/// Metres added to the way to a habitat when visitors weigh it: the larger, the less the
+/// nearest habitat wins over a better one further off.
+inline constexpr float kWatchNearM = 60.0f;
+/// People at or bound for a viewing tile (2 m of front) at which a habitat is half as inviting.
+inline constexpr float kWatchersPerTileAtEase = 1.0f;
 inline constexpr int kLooksPerEnclosure = 2;
 inline constexpr float kSecondLookM = 10.0f;
 inline constexpr float kSecondLookWeight = 0.6f;

@@ -14,6 +14,7 @@ constexpr std::size_t kMaxNameLength = 40;
 struct Component {
     TileCoord anchor;
     bool outside = false;
+    bool standOff = false;
     std::int64_t code = 0;  // filled in by the classification
     int enclosure = -1;     // index into the new enclosure list
 };
@@ -79,6 +80,7 @@ void Enclosures::Rebuild(const World& world, const ZooObjects& objects, const Ca
             }
             const auto label = static_cast<std::int32_t>(components.size());
             Component component;
+            component.standOff = world.At({x, z}).standOff;
             component.anchor = {x, z};  // row-major scan: the first tile met is the anchor
             labels_[indexOf({x, z})] = label;
             stack_.clear();
@@ -93,7 +95,7 @@ void Enclosures::Rebuild(const World& world, const ZooObjects& objects, const Ca
                 for (const Dir side : kSides) {
                     const TileCoord next = tile + Step(side);
                     if (!world.InBounds(next) || labels_[indexOf(next)] >= 0 ||
-                        world.FenceOn(tile, side).Exists()) {
+                        world.FenceOn(tile, side).Exists() || world.At(next).standOff != component.standOff) {
                         continue;
                     }
                     labels_[indexOf(next)] = label;
@@ -107,11 +109,11 @@ void Enclosures::Rebuild(const World& world, const ZooObjects& objects, const Ca
     // ---- classification and identity ------------------------------------------------
     constexpr std::int64_t kUnclaimed = 0;
     for (Component& component : components) {
-        component.code = component.outside ? kOutsideCode : kUnclaimed;
+        component.code = component.standOff ? kStandOffCode : (component.outside ? kOutsideCode : kUnclaimed);
     }
     if (world.InBounds(world.EntranceTile())) {
         Component& entrance = components[static_cast<std::size_t>(labels_[indexOf(world.EntranceTile())])];
-        if (!entrance.outside) {
+        if (!entrance.outside && !entrance.standOff) {
             entrance.code = kPublicCode;
         }
     }
@@ -229,11 +231,29 @@ void Enclosures::Rebuild(const World& world, const ZooObjects& objects, const Ca
                 if (barrier.visibility <= 0.0f || !world.InBounds(other)) {
                     continue;
                 }
-                const Tile& beyond = world.At(other);
-                if (codes_[indexOf(other)] == kPublicCode && beyond.path != PathKind::None &&
-                    !beyond.building) {
-                    enclosure.viewing.push_back({other, Opposite(side), barrier.visibility});
-                    tally.visibilitySum += barrier.visibility;
+                TileCoord path = other;
+                float visibility = barrier.visibility;
+                float standOffM = 0.0f;
+                bool clear = fence.Exists();
+                while (world.InBounds(path) && world.At(path).standOff) {
+                    standOffM += kTileSize;
+                    const Fence outer = world.FenceOn(path, side);
+                    const TileCoord nextTile = path + Step(side);
+                    if (world.InBounds(nextTile) && world.At(nextTile).standOff) {
+                        // Only the two end barriers belong to a viewing corridor.
+                        clear = clear && !outer.Exists();
+                    } else {
+                        const FenceDef* rail = catalog.FenceByKind(outer.kind);
+                        clear = clear && rail != nullptr && rail->style == FenceStyle::Rail;
+                        visibility *= BarrierOf(outer, catalog).visibility;
+                    }
+                    path = nextTile;
+                }
+                if (clear && visibility > 0.0f && world.InBounds(path) &&
+                    codes_[indexOf(path)] == kPublicCode && world.At(path).path != PathKind::None &&
+                    !world.At(path).building) {
+                    enclosure.viewing.push_back({path, Opposite(side), visibility, standOffM});
+                    tally.visibilitySum += visibility;
                 }
             }
         }
@@ -328,6 +348,9 @@ Region Enclosures::RegionAt(TileCoord t) const {
                                      static_cast<std::size_t>(t.x)];
     if (code == kOutsideCode) {
         return Region::Outside;
+    }
+    if (code == kStandOffCode) {
+        return Region::StandOff;
     }
     return code == kPublicCode ? Region::Public : Region::Enclosure;
 }

@@ -35,7 +35,7 @@ TEST(AnimalDeterminismTests, IdenticalRunsAndSavedContinuationHaveIdenticalHashe
     SpeciesCatalog speciesB = SpeciesCatalog::LoadDirectory(std::string(ZOO_SOURCE_DIR) + "/data/species");
     Enclosures enclosuresA;
     Enclosures enclosuresB;
-    const int fence = catalogA.fences.back().kind;
+    const int fence = catalogA.FindFence("high_glass_wall")->kind;
     AddFenceRectangle(worldA, fence, 2, 2, 12, 12);
     AddFenceRectangle(worldA, fence, 15, 2, 25, 12);
     AddFenceRectangle(worldA, fence, 28, 2, 38, 12);
@@ -125,7 +125,7 @@ TEST(AnimalDeterminismTests, DISABLED_StepPerformance) {
     ZooObjects objects;
     Catalog catalog = Catalog::LoadDirectory(std::string(ZOO_SOURCE_DIR) + "/data/construction");
     SpeciesCatalog species = SpeciesCatalog::LoadDirectory(std::string(ZOO_SOURCE_DIR) + "/data/species");
-    const int fence = catalog.fences.back().kind;
+    const int fence = catalog.FindFence("high_glass_wall")->kind;
     for (int row = 0; row < 4; ++row) {
         for (int column = 0; column < 5; ++column) {
             const int minX = 1 + column * 7;

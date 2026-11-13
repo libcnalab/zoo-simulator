@@ -270,6 +270,14 @@ zoo::Color3 GroundColor(const zoo::World& world, const TilePaintInfo& info, floa
                     path == PathKind::Boardwalk ? Color3{0.2f, 0.14f, 0.08f} : Color3{0.3f, 0.3f, 0.29f};
                 color = Mix(kerb, color, Noise::SmoothStep(0.09f, 0.13f, edge));
             }
+        } else if (here.standOff || (world.InBounds(wandered) && world.At(wandered).standOff)) {
+            // A planted stand-off: dark bark mulch with paler chips, ragged where it meets grass.
+            const float chips = Value(x * 13.0f, z * 13.0f, 71);
+            const float patch = Value(x * 1.7f, z * 1.7f, 72);
+            Color3 mulch = Multiply(Color3{0.21f, 0.145f, 0.095f}, 0.78f + 0.3f * patch);
+            mulch = Mix(mulch, Color3{0.36f, 0.27f, 0.19f}, Noise::SmoothStep(0.72f, 0.9f, chips) * 0.7f);
+            mulch = Mix(mulch, Color3{0.1f, 0.075f, 0.055f}, (1.0f - Noise::SmoothStep(0.1f, 0.3f, chips)) * 0.5f);
+            color = Mix(color, mulch, here.standOff ? 0.93f : 0.75f);
         } else {
             // Bare rock and earth where the ground is too steep for anything to grow.
             const float h00 = world.VertexHeight(tile.x, tile.z);
@@ -314,7 +322,7 @@ std::uint32_t PaintSignature(const zoo::World& world, zoo::TileCoord tile) {
             const zoo::Tile& data = world.At(t);
             hash = zoo::HashU32(hash, static_cast<std::uint32_t>(data.terrain) |
                                           static_cast<std::uint32_t>(data.path) << 8u |
-                                          (data.building ? 1u << 16u : 0u));
+                                          (data.building ? 1u << 16u : 0u) | (data.standOff ? 1u << 17u : 0u));
             hash = zoo::HashU32(hash, std::bit_cast<std::uint32_t>(data.waterLevel));
         }
     }

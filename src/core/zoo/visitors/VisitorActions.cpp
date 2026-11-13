@@ -65,7 +65,8 @@ void Stepper::Cheer(Group g, float amount) {
 }
 
 void Stepper::DropLitter(Vec2 position) {
-    if (all.litter_.size() >= Visitors::kMaxLitter) {
+    if (env.enclosures.RegionAt(World::TileAt(position)) == Region::StandOff ||
+        all.litter_.size() >= Visitors::kMaxLitter) {
         return;
     }
     all.litter_.push_back({position, now});
