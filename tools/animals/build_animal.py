@@ -28,6 +28,8 @@ def main():
     ap.add_argument("--out", required=True)
     ap.add_argument("--preview")
     ap.add_argument("--no-anim", action="store_true")
+    ap.add_argument("--preview-clips-only", action="store_true",
+                    help="for sculpt pose revisions, render only the requested clip sheets")
     ap.add_argument("--clips", help="comma separated clip names to preview (default: all)")
     args = ap.parse_args(argv)
 
@@ -60,9 +62,15 @@ def main():
         center = build.to_blender((lo + hi) * 0.5)
         radius = float(np.linalg.norm(hi - lo)) * 0.5
         cam, _ = preview.setup_stage(scene, radius)
+        if spec.sculpt is not None:
+            preview.sculpt_lighting(scene)
         if anim is not None:
             anim.clear_pose(arm_ob)
-        preview.render_views(scene, cam, center, radius, os.path.join(args.preview, spec.name))
+        if not (spec.sculpt is not None and args.preview_clips_only):
+            preview.render_views(scene, cam, center, radius, os.path.join(args.preview, spec.name))
+            if spec.sculpt is not None:
+                preview.render_eye_level(scene, cam, spec.meta["shoulder_height_m"],
+                                         os.path.join(args.preview, spec.name))
         if anim is not None:
             want = args.clips.split(",") if args.clips else [c["name"] for c in clips]
             for c in clips:

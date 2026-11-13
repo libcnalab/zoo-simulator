@@ -1,0 +1,149 @@
+{
+  "bones": 33,
+  "clips": [
+    {
+      "duration": 6.0,
+      "events": [],
+      "frames": 181,
+      "loop": true,
+      "name": "idle",
+      "speed": 0.0
+    },
+    {
+      "duration": 0.8,
+      "events": [
+        {
+          "name": "step",
+          "time": 0.0
+        },
+        {
+          "name": "step",
+          "time": 0.2
+        },
+        {
+          "name": "step",
+          "time": 0.4
+        },
+        {
+          "name": "step",
+          "time": 0.6
+        }
+      ],
+      "frames": 25,
+      "loop": true,
+      "name": "walk",
+      "speed": 1.1
+    },
+    {
+      "duration": 0.5,
+      "events": [
+        {
+          "name": "step",
+          "time": 0.0
+        },
+        {
+          "name": "step",
+          "time": 0.0
+        },
+        {
+          "name": "step",
+          "time": 0.25
+        },
+        {
+          "name": "step",
+          "time": 0.25
+        }
+      ],
+      "frames": 16,
+      "loop": true,
+      "name": "trot",
+      "speed": 2.4
+    },
+    {
+      "duration": 3.0,
+      "events": [],
+      "frames": 91,
+      "loop": true,
+      "name": "eat",
+      "speed": 0.0
+    },
+    {
+      "duration": 2.4,
+      "events": [],
+      "frames": 73,
+      "loop": true,
+      "name": "drink",
+      "speed": 0.0
+    },
+    {
+      "duration": 8.0,
+      "events": [],
+      "frames": 241,
+      "loop": true,
+      "name": "rest",
+      "speed": 0.0
+    },
+    {
+      "duration": 8.0,
+      "events": [],
+      "frames": 241,
+      "loop": true,
+      "name": "sleep",
+      "speed": 0.0
+    },
+    {
+      "duration": 2.6,
+      "events": [
+        {
+          "name": "call",
+          "time": 0.572
+        }
+      ],
+      "frames": 79,
+      "loop": false,
+      "name": "vocalize",
+      "speed": 0.0
+    }
+  ],
+  "generator": "tools/animals (zoogen)",
+  "license": "CC-BY-4.0",
+  "meta": {
+    "asset_license": "CC-BY-4.0",
+    "common_name": "African lion",
+    "proportion_edits": {
+      "neck1": {
+        "scale": [
+          1,
+          0.96,
+          1
+        ]
+      }
+    },
+    "relative_height": 0.91,
+    "roughness": 0.86,
+    "scientific_name": "Panthera leo",
+    "sex": "female",
+    "shoulder_height_m": 1.05,
+    "source_author": "Pedro B. Goulart (Pebegou)",
+    "source_title": "Free strong lioness - 4k",
+    "source_url": "https://sketchfab.com/3d-models/free-strong-lioness-4k-84d56e6cfcf247cb8fe468312f371677",
+    "variant": "female",
+    "variant_of": "lion"
+  },
+  "name": "lion_female",
+  "skeleton_bounds_animal_space": {
+    "max": [
+      1.1919,
+      0.1389,
+      1.1546
+    ],
+    "min": [
+      -1.0911,
+      -0.1389,
+      0.0
+    ]
+  },
+  "texture": 2048,
+  "triangles": 26556,
+  "vertices": 13524
+}

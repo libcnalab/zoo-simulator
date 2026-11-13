@@ -95,3 +95,31 @@ def render_views(scene, cam, center_b, radius, out_prefix, views=("side", "front
     """Render each view and stitch them into one contact sheet PNG."""
     tiles = [render_tile(scene, cam, center_b, radius, v, res, f"{out_prefix}_{v}.png") for v in views]
     return save_sheet(tiles, 2 if len(tiles) > 1 else 1, res, out_prefix + ".png")
+
+
+def sculpt_lighting(scene):
+    """Opt-in daylight for sculpt review; the legacy species' stage stays unchanged."""
+    scene.render.threads = 2
+    scene.cycles.samples = 12
+    scene.view_settings.view_transform = 'AgX'
+    scene.world.node_tree.nodes['Background'].inputs[1].default_value = .45
+    bpy.data.lights['sun'].energy = 2.4
+    bpy.data.lights['sun'].angle = math.radians(8)
+
+
+def render_eye_level(scene, cam, height, prefix):
+    """Visitor camera: four metres away, 1.6 m high; plus a close anatomical side view."""
+    cam.data.type = 'PERSP'
+    cam.data.lens = 48
+    scene.render.resolution_x = 1600
+    scene.render.resolution_y = 1000
+    scene.render.image_settings.file_format = 'PNG'
+    cam.location = (2.6, -math.sqrt(16 - 2.6 ** 2), 1.6)
+    _look_at(cam, (0, -.15, .60 * height))
+    scene.render.filepath = prefix + '_eye.png'
+    bpy.ops.render.render(write_still=True)
+    cam.location = (4, -.05, height * .72)
+    _look_at(cam, (0, -.05, height * .60))
+    scene.render.filepath = prefix + '_side.png'
+    bpy.ops.render.render(write_still=True)
+    cam.data.lens = 70

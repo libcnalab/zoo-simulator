@@ -229,6 +229,9 @@ def _dilate(rgb, filled, iters=8):
 
 def build_mesh(spec):
     """Create the skinned mesh object (without armature). Returns (object, info)."""
+    if spec.sculpt is not None:
+        from .sculpt import build_sculpt
+        return build_sculpt(spec)
     bones = geom.expand_bones(spec.bones)
     bone_names = [b.name for b in bones]
     bidx = {n: i for i, n in enumerate(bone_names)}
@@ -387,7 +390,7 @@ def write_manifest(path, spec, info, clips):
     data = {
         "name": spec.name,
         "generator": "tools/animals (zoogen)",
-        "license": "MIT",
+        "license": spec.meta.get("asset_license", "MIT"),
         "triangles": info["triangles"],
         "vertices": info["vertices"],
         "bones": len(bones),

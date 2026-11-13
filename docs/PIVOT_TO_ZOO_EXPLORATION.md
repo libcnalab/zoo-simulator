@@ -187,7 +187,7 @@ which says nothing); the sound by ear; a long play session by a person.
 - No species has a swimming clip: a penguin or a polar bear in its pool is drawn with its
   walking and standing clips.
 - Ostrich, kangaroo and polar bear have no call recorded; they are silent.
-- One model per species: a lioness carries the male's mane, young animals are scaled adults.
+- One model per species except the lion (male, female, cub); other young animals are scaled adults.
 - The resting poses of the zebra and the elephant (forequarters down, head up) look stiff.
 - The ground texture is soft when one looks straight down; distant trees are simple.
 - No third-person view (the brief called it optional).

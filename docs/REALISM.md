@@ -22,6 +22,7 @@ loudspeaker stays muted and nobody has listened to any of it.
 | Regression tests | empty habitats, information boards, save/load of a visit, wading depth | `tests/core/` |
 | Light from the sky and the ground | below | `src/game/SkyLight.*` |
 | Water with ripples | below | `src/game/Surfaces.cpp` |
+| Lion, lioness, cub and tiger on a professional sculpt (CC BY 4.0) | real cat anatomy; the lioness has no mane any more | `docs/ANIMALS.md`, `evidence/big-cats-sculpt-2026-11-13.jpg` |
 
 ### Light from the sky and the ground (2026-11-13)
 
@@ -59,8 +60,9 @@ where an animal wades, and there are no swimming clips yet.
 
 ## Open (in the order they hurt)
 
-1. Animals: twelve of fifteen species are still the stylised first generation
-   (`docs/ANIMALS.md`); sculpt-based lion, lioness, cub and tiger are under review.
+1. Animals: thirteen of fifteen species are still the stylised first generation
+   (`docs/ANIMALS.md`). Of the sculpt-based cats only the lioness is good: the male needs a
+   real head and mane, the tiger a face. No young animal lives in the zoo yet.
 2. Habitat fronts: elephants and rhinos at arm's length, bars at the big cats (task E1).
 3. Meerkat Lookout draws 59 of 177 watchers at 10:30; its pool is too large and props stand
    in it.

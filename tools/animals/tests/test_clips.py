@@ -19,7 +19,8 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from zoogen import geom, quadruped  # noqa: E402
 from zoogen.rig import Pose, Solver, quat_from_matrix, rot_x, rot_y, rot_z  # noqa: E402
 
-SPECIES = ["lion", "tiger", "wolf", "brown_bear", "polar_bear", "zebra", "rhino", "camel",
+CATS = ["lion", "lion_female", "lion_juvenile", "tiger"]
+SPECIES = ["lion", "lion_female", "lion_juvenile", "tiger", "wolf", "brown_bear", "polar_bear", "zebra", "rhino", "camel",
            "elephant", "giraffe", "meerkat", "penguin", "ostrich", "flamingo", "kangaroo"]
 
 
@@ -410,7 +411,7 @@ class BipedTests(unittest.TestCase):
 
     def test_exported_body_positions_match_procedural_postures(self):
         root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
-        for species in BIPEDS:
+        for species in BIPEDS + CATS:
             with open(os.path.join(root, "assets", "animals", species + ".glb"), "rb") as source:
                 magic, version, _ = struct.unpack("<III", source.read(12))
                 self.assertEqual(magic, 0x46546C67)
@@ -425,7 +426,7 @@ class BipedTests(unittest.TestCase):
             texture_view = document["bufferViews"][texture["bufferView"]]
             texture_offset = texture_view.get("byteOffset", 0)
             self.assertEqual(binary[texture_offset:texture_offset + 8], b"\x89PNG\r\n\x1a\n")
-            self.assertEqual(struct.unpack_from(">II", binary, texture_offset + 16), (1024, 1024))
+            self.assertEqual(struct.unpack_from(">II", binary, texture_offset + 16), (2048, 2048) if species in CATS else (1024, 1024))
             with open(os.path.join(root, "assets", "animals", species + ".json")) as source:
                 manifest = json.load(source)
             triangles = sum(document["accessors"][primitive["indices"]]["count"] // 3
@@ -462,6 +463,131 @@ class BipedTests(unittest.TestCase):
         world = solver.solve(clips["rest"].pose(0))
         self.assertLess(world["forearm.R"][2, 3], .06)
         self.assertGreater(world[spec.rig.head][2, 3], .35)
+
+
+
+class SculptCatTests(unittest.TestCase):
+    def test_prepared_weights_and_bind_contract(self):
+        from zoogen.bigcat import SOURCE
+        with np.load(SOURCE, allow_pickle=False) as data:
+            weights = data["weights"]
+            self.assertTrue(np.isfinite(weights).all())
+            self.assertTrue((weights >= 0).all())
+            self.assertTrue(((weights > 0).sum(axis=1) <= 4).all())
+            self.assertTrue(np.allclose(weights.sum(axis=1), 1, atol=1e-6))
+            self.assertEqual(len(data["vertices"]), len(weights))
+            self.assertEqual(data["uv"].shape, (len(data["triangles"]), 3, 2))
+            self.assertGreaterEqual(data["triangles"].min(), 0)
+            self.assertLess(data["triangles"].max(), len(weights))
+            self.assertAlmostEqual(data["vertices"][:, 2].min(), 0, places=6)
+            names = data["bone_names"].tolist()
+            for index, name in enumerate(names):
+                if name.endswith(".L"):
+                    other = names.index(name[:-1] + "R")
+                    self.assertTrue(np.allclose(data["heads"][index] * [1, -1, 1],
+                                                data["heads"][other], atol=1e-6))
+        self.assertLess(sum(path.stat().st_size for path in SOURCE.parent.iterdir() if path.is_file()),
+                        8_000_000)
+
+    def test_all_four_rest_paws_are_grounded(self):
+        for species in CATS:
+            spec, _ = make_solver(species)
+            data = spec.sculpt
+            names = data["bone_names"].tolist()
+            for side in (".L", ".R"):
+                for chain in (("hand", "fingers"), ("foot", "toes")):
+                    mask = data["weights"][:, [names.index(name + side) for name in chain]].sum(axis=1) > .8
+                    sole = data["vertices"][mask, 2].min()
+                    self.assertGreaterEqual(sole, -1e-5)
+                    self.assertLess(sole, .005, f"{species}/{chain}/{side}: floating paw")
+
+    def test_recumbent_bones_clear_ground_and_chest_lies_down(self):
+        for species in CATS:
+            spec, solver = make_solver(species)
+            bones = geom.expand_bones(spec.bones)
+            for clip in spec.clips(solver):
+                if clip.name not in ("rest", "sleep"):
+                    continue
+                for index in range(24):
+                    world = solver.solve(clip.pose(index / 24))
+                    self.assertLess(world[spec.rig.chest][2, 3], .45 * spec.meta["shoulder_height_m"],
+                                    f"{species}/{clip.name}/chest")
+                    for bone in bones:
+                        if not bone.deform:
+                            continue
+                        for point in (bone.head, bone.tail):
+                            self.assertGreaterEqual(solver.point(world, bone.name, point)[2], -.02,
+                                                    f"{species}/{clip.name}/{bone.name}")
+
+    def test_recumbent_skin_clears_ground(self):
+        for species in CATS:
+            spec, solver = make_solver(species)
+            data = spec.sculpt
+            vertices = data["vertices"]
+            for clip in spec.clips(solver):
+                if clip.name not in ("rest", "sleep"):
+                    continue
+                for phase in (0, .125, .25, .375, .5, .625, .75, .875):
+                    world = solver.solve(clip.pose(phase))
+                    posed = np.zeros_like(vertices)
+                    for index, name in enumerate(data["bone_names"].tolist()):
+                        matrix = world[name]
+                        posed += data["weights"][:, index, None] * (
+                            (vertices - solver.head[name]) @ matrix[:3, :3].T + matrix[:3, 3])
+                    self.assertGreaterEqual(posed[:, 2].min(), -.002, f"{species}/{clip.name}/{phase}")
+
+    def test_lateral_walk_footfalls(self):
+        for species in CATS:
+            spec, solver = make_solver(species)
+            walk = next(clip for clip in spec.clips(solver) if clip.name == "walk")
+            contacts = []
+            previous = None
+            for index in range(-1, 121):
+                world = solver.solve(walk.pose((index / 120) % 1))
+                current = {key: abs(world[leg.toes][2, 3] - solver.toe_base(key)[2]) < 1e-8
+                           for key, leg in spec.rig.legs.items()}
+                if previous is not None and index < 120:
+                    contacts.extend(key for key in current if current[key] and not previous[key])
+                previous = current
+            self.assertEqual(contacts, ["HL", "FL", "HR", "FR"], species)
+
+    def test_cat_manifests_and_export_budgets(self):
+        root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+        for species in CATS:
+            with open(os.path.join(root, "assets", "animals", species + ".json")) as source:
+                manifest = json.load(source)
+            self.assertLessEqual(manifest["triangles"], 24000 if species == "lion_juvenile" else 34000)
+            self.assertLessEqual(manifest["bones"], 60)
+            self.assertEqual(manifest["texture"], 2048)
+            self.assertEqual(manifest["license"], "CC-BY-4.0")
+            clips = {clip["name"]: clip for clip in manifest["clips"]}
+            self.assertEqual(set(clips), {"idle", "walk", "trot", "eat", "drink", "rest", "sleep", "vocalize"})
+            expected_height = dict(lion=1.15, lion_female=1.05, lion_juvenile=.45, tiger=1.0)[species]
+            self.assertAlmostEqual(manifest["meta"]["shoulder_height_m"], expected_height)
+            if species.startswith("lion_"):
+                self.assertEqual(manifest["meta"]["variant_of"], "lion")
+                self.assertEqual(manifest["meta"]["variant"], species[5:])
+            if species == "lion_female":
+                self.assertAlmostEqual(manifest["meta"]["relative_height"], .91)
+            if species == "lion_juvenile":
+                self.assertAlmostEqual(clips["walk"]["speed"], .6, delta=.02)
+                self.assertAlmostEqual(clips["trot"]["speed"], 1.5, delta=.02)
+            with open(os.path.join(root, "assets", "animals", species + ".glb"), "rb") as source:
+                header = source.read(12)
+                self.assertEqual(header[:4], b"glTF")
+                length, _ = struct.unpack("<II", source.read(8))
+                document = json.loads(source.read(length))
+                length, _ = struct.unpack("<II", source.read(8))
+                binary = source.read(length)
+            self.assertEqual(len(document["images"]), 1)
+            image = document["images"][0]
+            view = document["bufferViews"][image["bufferView"]]
+            offset = view.get("byteOffset", 0)
+            self.assertEqual(struct.unpack_from(">II", binary, offset + 16), (2048, 2048))
+            triangles = sum(document["accessors"][primitive["indices"]]["count"] // 3
+                            for mesh in document["meshes"] for primitive in mesh["primitives"])
+            self.assertEqual(triangles, manifest["triangles"])
+            self.assertEqual({animation["name"] for animation in document["animations"]}, set(clips))
 
 
 if __name__ == "__main__":

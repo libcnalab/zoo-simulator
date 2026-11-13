@@ -38,13 +38,40 @@ python3 -m unittest discover -s tools/animals/tests
 
 | Generator | Species |
 |---|---|
-| `zoogen/quadruped.py`, `wild_quadruped.py`, `anatomy.py` | lion, tiger, wolf, brown bear, polar bear, zebra, giraffe, elephant, rhino, camel, meerkat |
+| `zoogen/sculpt.py`, `bigcat.py` on a prepared third-party sculpt (below) | lion, lion_female, lion_juvenile, tiger |
+| `zoogen/quadruped.py`, `wild_quadruped.py`, `anatomy.py` | wolf, brown bear, polar bear, zebra, giraffe, elephant, rhino, camel, meerkat |
 | `zoogen/biped.py` | penguin, ostrich, flamingo, kangaroo |
 
 Each has the same eight clips, which the game picks from what the animal is doing: `idle`,
 `walk`, `trot` (the fast gait, a hop for the kangaroo), `eat`, `drink`, `rest`, `sleep`,
-`vocalize`. 9,000 to 21,000 triangles, 18 to 41 bones, a coat painted by the species file. The models are stylised, not photorealistic; what each is weak at is listed in
+`vocalize`. 9,000 to 34,000 triangles, 18 to 41 bones, a coat painted by the species file. The models are stylised, not photorealistic; what each is weak at is listed in
 [`PIVOT_TO_ZOO_EXPLORATION.md`](PIVOT_TO_ZOO_EXPLORATION.md).
+
+### Big cats from a sculpt (2026-11-13)
+
+Procedural geometry did not reach a believable cat, so the lion, the lioness, the cub and
+the tiger are built on a professional sculpt under a licence that allows it: "Free strong
+lioness - 4k" by Pedro B. Goulart (Pebegou), CC BY 4.0 (`assets/ATTRIBUTION.md`).
+`tools/animals/prepare_bigcat.py` turns the download into a small derivative
+(`tools/animals/sources/bigcat/`, 1.9 MB: decimated mesh with its skin weights under our
+bone names, a detail map and an occlusion map); the species files re-proportion it per
+bone (heavier male, short-legged cub with larger head, ears and paws, longer tiger), paint
+the coat anew and add mane, tail tuft and cheek ruff. The original has no animation: the
+eight clips are ours, as for every other species.
+
+| Model | Triangles | Shoulder | What it is |
+|---|---:|---:|---|
+| `lion` | 33,744 | 1.15 m | male with a mane of separate locks |
+| `lion_female` | 26,556 | 1.05 m | the game draws it for every female lion |
+| `lion_juvenile` | 23,491 | 0.45 m | drawn below half of the age of maturity |
+| `tiger` | 26,780 | 1.00 m | longer body, broad paws, striped coat |
+
+Seen in Blender previews, in the game's viewer and in the lion habitat
+(`evidence/big-cats-sculpt-2026-11-13.jpg`). Honest state: the lioness is the good one.
+The male still has the lioness's head inside a dark collar (a real mane starts on the
+forehead and the cheeks and the skull is broader); the tiger's face markings and chest are
+visibly painted by rule and its body is a lioness's; the cub keeps adult shoulder muscles.
+No cub lives in the Visitor Zoo yet, so `lion_juvenile` is only seen in the viewer.
 
 A species without a model would be left out of the Visitor Zoo by the game (its habitat built
 and standing empty).

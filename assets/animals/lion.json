@@ -10,7 +10,7 @@
       "speed": 0.0
     },
     {
-      "duration": 1.1333,
+      "duration": 0.8,
       "events": [
         {
           "name": "step",
@@ -18,24 +18,24 @@
         },
         {
           "name": "step",
-          "time": 0.2833
+          "time": 0.2
         },
         {
           "name": "step",
-          "time": 0.5667
+          "time": 0.4
         },
         {
           "name": "step",
-          "time": 0.85
+          "time": 0.6
         }
       ],
-      "frames": 35,
+      "frames": 25,
       "loop": true,
       "name": "walk",
-      "speed": 1.0214
+      "speed": 1.1
     },
     {
-      "duration": 0.6333,
+      "duration": 0.5,
       "events": [
         {
           "name": "step",
@@ -47,17 +47,17 @@
         },
         {
           "name": "step",
-          "time": 0.3167
+          "time": 0.25
         },
         {
           "name": "step",
-          "time": 0.3167
+          "time": 0.25
         }
       ],
-      "frames": 20,
+      "frames": 16,
       "loop": true,
       "name": "trot",
-      "speed": 2.381
+      "speed": 2.4
     },
     {
       "duration": 3.0,
@@ -106,28 +106,69 @@
     }
   ],
   "generator": "tools/animals (zoogen)",
-  "license": "MIT",
+  "license": "CC-BY-4.0",
   "meta": {
+    "asset_license": "CC-BY-4.0",
     "common_name": "African lion",
-    "roughness": 0.9,
+    "proportion_edits": {
+      "chest": {
+        "scale": [
+          1.02,
+          1.12,
+          1.04
+        ]
+      },
+      "head": {
+        "scale": [
+          1.06,
+          1.12,
+          1.06
+        ]
+      },
+      "hips": {
+        "scale": [
+          1.08,
+          1,
+          1
+        ]
+      },
+      "neck1": {
+        "scale": [
+          1,
+          1.1,
+          1.04
+        ]
+      },
+      "scapula": {
+        "scale": [
+          1,
+          1,
+          0.9615384615384615
+        ]
+      }
+    },
+    "roughness": 0.86,
     "scientific_name": "Panthera leo",
     "sex": "male",
-    "shoulder_height_m": 1.2
+    "shoulder_height_m": 1.15,
+    "source_author": "Pedro B. Goulart (Pebegou)",
+    "source_title": "Free strong lioness - 4k",
+    "source_url": "https://sketchfab.com/3d-models/free-strong-lioness-4k-84d56e6cfcf247cb8fe468312f371677"
   },
   "name": "lion",
   "skeleton_bounds_animal_space": {
     "max": [
-      1.22,
-      0.17,
-      1.5
+      1.4861,
+      0.2038,
+      1.3004
     ],
     "min": [
-      -1.42,
-      -0.17,
+      -1.2663,
+      -0.2038,
       0.0
     ]
   },
-  "texture": 1024,
-  "triangles": 18624,
-  "vertices": 9320
+  "texture": 2048,
+  "triangles": 33744,
+  "vertices": 17664
 }

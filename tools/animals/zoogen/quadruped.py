@@ -200,6 +200,8 @@ class Lie:
     front_out: float = 0.0
     tail_curl: float = 22.0         # the tail is laid on the ground, curled by this much per bone (deg)
     tail_floor: float = 0.04        # height of the tail's centre line when it lies (m)
+    foot_lift: float = 0.0          # optional clearance for the thickness of a folded paw
+    front_elbow_out: float = 0.0    # optional outward elbow pole for broad-chested cats
 
 
 @dataclass
@@ -226,6 +228,8 @@ class Params:
     call_head: float = -14.0
     call_open: float = 28.0
     call_duration: float = 2.6
+    rest_bob: float = 0.004         # metres; scale explicitly for small animals
+    sleep_bob: float = 0.005
 
 
 def stand(solver, pose, front_splay=0.0):
@@ -359,7 +363,7 @@ def lie_pose(solver, L):
         foot_len = float(np.hypot(fd[0], fd[2]))
         l1 = np.linalg.norm(solver.head[leg.lower] - solver.head[leg.upper])
         l2 = np.linalg.norm(ankle_rest - solver.head[leg.lower])
-        ground = toe_rest[2]
+        ground = toe_rest[2] + L.foot_lift
         if _is_hind(key):
             ankle_x = joint[0] - L.hind_tuck
             y = toe_rest[1] + side * L.hind_out
@@ -370,7 +374,7 @@ def lie_pose(solver, L):
             back = math.sqrt(max(l1 * l1 - dz * dz, 0.0)) if dz < l1 else 0.0
             ankle_x = joint[0] - back + (l2 if dz < l1 else 0.75 * l2)
             y = toe_rest[1] + side * L.front_out
-            pole = (-1.0, 0.0, -0.4)
+            pole = (-1.0, side * L.front_elbow_out if L.front_elbow_out else 0.0, -0.4)
         pose.plant(key, (ankle_x + foot_len, y, ground), foot_pitch=flat, pole=pole)
     # A hanging tail would end up under the ground: lay it down, bone by bone.
     for bone in rig.tail:
@@ -400,7 +404,7 @@ def rest_clip(solver, P):
         a = 2.0 * math.pi * u
         breath = math.sin(2.0 * a)
         pose = lie_pose(solver, P.lie)
-        pose.move(rig.body, dz=0.004 * breath)
+        pose.move(rig.body, dz=P.rest_bob * breath)
         pose.r(rig.chest, ry=-0.6 * breath)
         yaw = 1.4 * P.look_yaw * (0.8 * math.sin(a) + 0.2 * math.sin(3.0 * a + 0.6))
         for bone in rig.neck:
@@ -419,7 +423,7 @@ def sleep_clip(solver, P):
 
     def head_pose(k, breath=0.0):
         pose = lie_pose(solver, P.lie)
-        pose.move(rig.body, dz=0.005 * breath)
+        pose.move(rig.body, dz=P.sleep_bob * breath)
         pose.r(rig.chest, ry=-0.7 * breath)
         for bone, ang in zip(rig.neck, P.sleep_neck):
             pose.r(bone, ry=ang * k, rz=P.sleep_yaw * k / len(rig.neck))

@@ -10,7 +10,7 @@
       "speed": 0.0
     },
     {
-      "duration": 1.1333,
+      "duration": 0.8,
       "events": [
         {
           "name": "step",
@@ -18,24 +18,24 @@
         },
         {
           "name": "step",
-          "time": 0.2833
+          "time": 0.2
         },
         {
           "name": "step",
-          "time": 0.5667
+          "time": 0.4
         },
         {
           "name": "step",
-          "time": 0.85
+          "time": 0.6
         }
       ],
-      "frames": 35,
+      "frames": 25,
       "loop": true,
       "name": "walk",
       "speed": 1.0
     },
     {
-      "duration": 0.6333,
+      "duration": 0.5,
       "events": [
         {
           "name": "step",
@@ -47,14 +47,14 @@
         },
         {
           "name": "step",
-          "time": 0.3167
+          "time": 0.25
         },
         {
           "name": "step",
-          "time": 0.3167
+          "time": 0.25
         }
       ],
-      "frames": 20,
+      "frames": 16,
       "loop": true,
       "name": "trot",
       "speed": 2.5
@@ -106,28 +106,89 @@
     }
   ],
   "generator": "tools/animals (zoogen)",
-  "license": "MIT",
+  "license": "CC-BY-4.0",
   "meta": {
-    "body_length_m": 2.7,
+    "asset_license": "CC-BY-4.0",
     "common_name": "Bengal tiger",
-    "roughness": 0.9,
+    "proportion_edits": {
+      "chest": {
+        "scale": [
+          1,
+          1.08,
+          1.03
+        ]
+      },
+      "ear": {
+        "scale": [
+          1,
+          1,
+          0.8
+        ]
+      },
+      "fingers": {
+        "scale": [
+          1.12,
+          1.16,
+          1
+        ]
+      },
+      "head": {
+        "scale": [
+          0.82,
+          1.24,
+          1.25
+        ]
+      },
+      "hips": {
+        "scale": [
+          1.26,
+          1.1,
+          1
+        ]
+      },
+      "neck1": {
+        "scale": [
+          0.75,
+          1.12,
+          1
+        ]
+      },
+      "scapula": {
+        "scale": [
+          1,
+          1,
+          0.970873786407767
+        ]
+      },
+      "spine1": {
+        "offset": [
+          0.1,
+          0,
+          0
+        ]
+      }
+    },
+    "roughness": 0.86,
     "scientific_name": "Panthera tigris tigris",
-    "shoulder_height_m": 1.0
+    "shoulder_height_m": 1.0,
+    "source_author": "Pedro B. Goulart (Pebegou)",
+    "source_title": "Free strong lioness - 4k",
+    "source_url": "https://sketchfab.com/3d-models/free-strong-lioness-4k-84d56e6cfcf247cb8fe468312f371677"
   },
   "name": "tiger",
   "skeleton_bounds_animal_space": {
     "max": [
-      1.323,
-      0.12,
-      1.03
+      1.4312,
+      0.2135,
+      1.1347
     ],
     "min": [
-      -1.809,
-      -0.12,
+      -1.2379,
+      -0.2135,
       0.0
     ]
   },
-  "texture": 1024,
-  "triangles": 19368,
-  "vertices": 9696
+  "texture": 2048,
+  "triangles": 26780,
+  "vertices": 13642
 }
