@@ -486,7 +486,9 @@ bool Stepper::PlanSeats(Group g, Vec2 around, float maxDistance, Plan& plan) {
         const std::uint32_t mask = (1u << bench.seats) - 1u;
         const std::uint32_t taken = TakenSeats(bench.id) & mask;
         const int free = bench.seats - std::popcount(taken);
-        if (free <= 0) {
+        // A bench is for sitting down together: a family does not walk up to a stranger's
+        // bench so that one of them sits and four stand before it. At least half must sit.
+        if (free <= 0 || 2 * free < size) {
             continue;
         }
         if (chosen >= 0 && distance > chosenDistance + 15.0f) {
@@ -519,14 +521,18 @@ bool Stepper::PlanSeats(Group g, Vec2 around, float maxDistance, Plan& plan) {
             plan.slot[m] = static_cast<std::uint8_t>(seat);
             plan.seated[m] = true;
         } else {
-            // No seat left: stands by the others, in front of a bench or at the end of a table.
+            // No seat left: stands by the others, in a loose arc before a bench (not in a
+            // rank at arm's length from those who sit) or at the end of a table.
             const Vec2 forward = HeadingVector(bench.heading);
             const Vec2 right{forward.z, -forward.x};
             const float side = standing % 2 == 0 ? 1.0f : -1.0f;
             const float step = static_cast<float>((standing + 1) / 2);
+            const Visitor& member = List()[g.first + m];
+            const float out = 1.25f + 0.45f * Hash01(member.look, 41);
+            const float along = side * (0.35f + 0.8f * (step - 1.0f) + 0.5f * Hash01(member.look, 42));
             plan.place[m] =
                 bench.seats <= 3
-                    ? bench.position + forward * 1.0f + right * (side * step * 0.6f)
+                    ? bench.position + forward * out + right * along
                     : bench.position + right * (side * (1.35f + 0.5f * static_cast<float>(standing / 2)));
             ++standing;
             plan.face[m] = HeadingOf(bench.position - plan.place[m]);
