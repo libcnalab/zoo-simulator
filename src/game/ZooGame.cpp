@@ -231,6 +231,8 @@ void ZooGame::LoadGame() {
     std::printf("zoo: ground painted in %.2f s\n", terrain_->LastPaintSeconds());
     std::printf("zoo: scenery: %zu triangles in %zu draw calls\n", scenery_->Triangles(),
                 scenery_->DrawCalls());
+    if (bench_.on)
+        std::printf("zoo: scenery: triangles by kind (count x each)\n%s", scenery_->Tally(zoo_->Objects()).c_str());
     if (listAnimals_) {
         for (const zoo::Animal& animal : zoo_->Fauna().All()) {
             std::printf(
@@ -335,7 +337,11 @@ void ZooGame::Adopt(std::unique_ptr<zoo::Zoo> zoo) {
 
     terrain_ = std::make_unique<TerrainRenderer>(device, *surfaces_);
     terrain_->Build(zoo_->Map());
-    scenery_ = std::make_unique<SceneryRenderer>(device, *surfaces_, *catalog_);
+    // Nothing is built during a visit: the whole zoo is one cell there (a quarter of the draw
+    // calls of the editor's small cells, which an edit rebuilds quickly).
+    scenery_ = std::make_unique<SceneryRenderer>(
+        device, *surfaces_, *catalog_,
+        editor_ ? SceneryRenderer::kEditCellTiles : std::max(zoo_->Map().Width(), zoo_->Map().Depth()));
     scenery_->Update(zoo_->Map(), zoo_->Objects(), -1);
     animals_ = std::make_unique<AnimalRenderer>(getContentProperty(), *species_);
     animals_->Update(*zoo_, 0.0f, 0.0f);

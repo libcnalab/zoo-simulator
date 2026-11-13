@@ -61,8 +61,8 @@ struct SceneryRenderer::Cell {
 };
 
 SceneryRenderer::SceneryRenderer(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
-                                 Surfaces& surfaces, const zoo::Catalog& catalog)
-    : device_(device), surfaces_(surfaces), catalog_(catalog) {}
+                                 Surfaces& surfaces, const zoo::Catalog& catalog, int cellTiles)
+    : device_(device), surfaces_(surfaces), catalog_(catalog), cellTiles_(std::max(cellTiles, 8)) {}
 
 SceneryRenderer::~SceneryRenderer() = default;
 
@@ -70,13 +70,13 @@ void SceneryRenderer::Layout(const zoo::World& world) {
     cells_.clear();
     width_ = world.Width();
     depth_ = world.Depth();
-    for (int z = 0; z < depth_; z += kCellTiles) {
-        for (int x = 0; x < width_; x += kCellTiles) {
+    for (int z = 0; z < depth_; z += cellTiles_) {
+        for (int x = 0; x < width_; x += cellTiles_) {
             auto cell = std::make_unique<Cell>();
             cell->x0 = x;
             cell->z0 = z;
-            cell->x1 = std::min(x + kCellTiles, width_);
-            cell->z1 = std::min(z + kCellTiles, depth_);
+            cell->x1 = std::min(x + cellTiles_, width_);
+            cell->z1 = std::min(z + cellTiles_, depth_);
             cell->lastX = cell->x1 == width_;
             cell->lastZ = cell->z1 == depth_;
             cells_.push_back(std::move(cell));
@@ -332,6 +332,70 @@ std::size_t SceneryRenderer::Triangles() const {
         total += cell->fences.Triangles() + cell->objects.Triangles();
     }
     return total;
+}
+
+std::string SceneryRenderer::Tally(const zoo::ZooObjects& objects) const {
+    struct Line {
+        std::string name;
+        std::size_t each = 0;
+        std::size_t count = 0;
+    };
+    const auto triangles = [](const ModelBuilder& model) {
+        std::size_t total = 0;
+        for (const ModelPart& part : model.Parts()) {
+            total += part.writer.mesh.TriangleCount();
+        }
+        return total;
+    };
+    std::vector<Line> lines;
+    Line fences{"(all fences)", 0, 1};
+    for (const auto& cell : cells_) {
+        fences.each += cell->fences.Triangles();
+    }
+    lines.push_back(fences);
+    std::vector<std::size_t> props(catalog_.props.size(), 0);
+    for (const zoo::Prop& prop : objects.Props()) {
+        if (prop.def >= 0 && static_cast<std::size_t>(prop.def) < props.size()) {
+            ++props[static_cast<std::size_t>(prop.def)];
+        }
+    }
+    for (std::size_t i = 0; i < props.size(); ++i) {
+        if (props[i] == 0) {
+            continue;
+        }
+        // One of them stands for all: the seed changes a tree's shape, hardly its size.
+        ModelBuilder model;
+        BuildProp(model, catalog_.props[i], 1u);
+        lines.push_back({catalog_.props[i].id, triangles(model), props[i]});
+    }
+    std::vector<std::size_t> buildings(catalog_.buildings.size(), 0);
+    for (const zoo::Building& building : objects.Buildings()) {
+        if (building.def >= 0 && static_cast<std::size_t>(building.def) < buildings.size()) {
+            ++buildings[static_cast<std::size_t>(building.def)];
+        }
+    }
+    for (std::size_t i = 0; i < buildings.size(); ++i) {
+        if (buildings[i] == 0) {
+            continue;
+        }
+        ModelBuilder model;
+        BuildBuilding(model, catalog_.buildings[i]);
+        lines.push_back({catalog_.buildings[i].id, triangles(model), buildings[i]});
+    }
+    std::sort(lines.begin(), lines.end(),
+              [](const Line& a, const Line& b) { return a.each * a.count > b.each * b.count; });
+    std::string text = "  draw calls a cell (fences+objects):";
+    for (const auto& cell : cells_) {
+        text += " " + std::to_string(cell->fences.Pieces()) + "+" + std::to_string(cell->objects.Pieces());
+    }
+    text += "\n";
+    for (const Line& line : lines) {
+        char row[160];
+        std::snprintf(row, sizeof row, "  %-24s %5zu x %6zu = %8zu\n", line.name.c_str(), line.count,
+                      line.each, line.each * line.count);
+        text += row;
+    }
+    return text;
 }
 
 std::size_t SceneryRenderer::DrawCalls() const {

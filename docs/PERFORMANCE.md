@@ -113,12 +113,40 @@ What the 5.5 s are now: GL and data 0.3 s, building the zoo 0.6 s, filling 1.2 s
 sky/shadows/avatars and the ground painting about 2.5 s (painting 2.2 s), the animal models
 0.7 s.
 
+## What was changed: the scenery is one cell during a visit
+
+The scenery was merged in cells of 32 x 32 tiles, one mesh per finish in each: 1,114 draw calls
+for the zoo, of which the entrance sees nearly all, and again in the shadow pass. Three builds
+with different cell sizes, the same view from the entrance, minutes apart on a busy machine
+(load average 6.5-7.5, so every figure is slower than on a quiet one; the comparison holds, the
+absolute values do not):
+
+| cell | draw calls a frame | triangles a frame | engine and driver ms |
+|---|---|---|---|
+| 32 tiles (25 cells) | 1,365 | 2.36 million | 11.70 |
+| 80 tiles (4 cells) | 648 | 2.86 million | 8.46 |
+| 160 tiles (1 cell) | 419 | 3.32 million | 5.63, 5.72 |
+
+A million triangles more and half the time: a draw call costs about 6 microseconds on this
+machine whatever it draws (CNA, EasyGL, Mesa), a million triangles about one millisecond.
+So culling by cells loses where the view takes most of them in anyway. A visit now builds the
+whole zoo as one cell (108 draw calls in all); the editor keeps the small cells, because an
+edit rebuilds its cell. Where culling did help, at a habitat in a corner with the back to the
+zoo, the model says the one cell costs up to 0.7 ms more (the penguins: 253 draw calls and
+2.3 million triangles instead of 301 and 1.3 million); those views have the most headroom.
+Not re-measured on a quiet machine yet.
+
+The lever that is left is the number of finishes (a mesh per colour and pattern): one mesh
+with vertex colours for each pattern would need the engine's PBR binder to take vertex colours
+(it hands such materials to the stock effect), which is cna-engine's to change, not ours.
+
 ## What remains
 
 
-- **Scenery** is now the largest cost at the entrance: 1,063,415 triangles in 1,114 draw calls
-  for the whole zoo, 6 ms of a 13 ms frame at the plaza (138.9 fps without it). The cells are
-  culled by the view only, not by distance, and every finish of a cell is its own draw call.
+- **Scenery**: see "the scenery is one cell" below; what is left of it is about 190 draw calls
+  and two million triangles a frame at the entrance (both passes). Trees are 760,000 of the
+  zoo's 1,063,415 scenery triangles (`--bench` prints the tally by kind); they have no simpler
+  form for the distance yet.
 - **Shadows**: about 1.8 ms at the entrance (262 draw calls, 520,000 triangles).
 - **Animals** are submitted wherever they are: 1.19 million triangles a frame at the entrance
   for animals nobody can see from there. Cheap on this GPU (under 1 ms) but free to remove.
