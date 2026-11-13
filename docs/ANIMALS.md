@@ -39,12 +39,13 @@ python3 -m unittest discover -s tools/animals/tests
 | Generator | Species |
 |---|---|
 | `zoogen/sculpt.py`, `bigcat.py` on a prepared third-party sculpt (below) | lion, lion_female, lion_juvenile, tiger |
-| `zoogen/quadruped.py`, `wild_quadruped.py`, `anatomy.py` | wolf, brown bear, polar bear, zebra, giraffe, elephant, rhino, camel, meerkat |
+| `zoogen/rigged.py`, `pachyderm.py`, `pachyderm_motion.py` on a prepared third-party rigged model (below) | rhino, rhino_juvenile, elephant, elephant_female, elephant_juvenile |
+| `zoogen/quadruped.py`, `wild_quadruped.py`, `anatomy.py` | wolf, brown bear, polar bear, zebra, giraffe, camel, meerkat |
 | `zoogen/biped.py` | penguin, ostrich, flamingo, kangaroo |
 
 Each has the same eight clips, which the game picks from what the animal is doing: `idle`,
 `walk`, `trot` (the fast gait, a hop for the kangaroo), `eat`, `drink`, `rest`, `sleep`,
-`vocalize`. 9,000 to 34,000 triangles, 18 to 41 bones, a coat painted by the species file. The models are stylised, not photorealistic; what each is weak at is listed in
+`vocalize`. 9,000 to 34,000 triangles, 18 to 46 bones, a coat painted by the species file. The first-generation models (the last two rows) are stylised, not photorealistic; what each is weak at is listed in
 [`PIVOT_TO_ZOO_EXPLORATION.md`](PIVOT_TO_ZOO_EXPLORATION.md).
 
 ### Big cats from a sculpt (2026-11-13)
@@ -75,6 +76,39 @@ The male still has the lioness's head inside a dark collar (a real mane starts o
 forehead and the cheeks and the skull is broader); the tiger's face markings and chest are
 visibly painted by rule and its body is a lioness's; the cub keeps adult shoulder muscles.
 No cub lives in the Visitor Zoo yet, so `lion_juvenile` is only seen in the viewer.
+
+### Rhinoceros and elephant on rigged models (2026-11-13)
+
+The same step for the two pachyderms (Codex task S6): `tools/animals/prepare_rigged.py` turns
+a downloaded rigged model into a small derivative (`tools/animals/sources/rhino/` 5.1 MB,
+`sources/elephant/` 7.7 MB: mesh, skin weights under our bone names, colour, normal and
+occlusion maps, the source's walk loop resampled), and `zoogen/rigged.py` with
+`pachyderm.py` builds the game's models from it. Sources and licence: `assets/ATTRIBUTION.md`,
+including the note that we could not confirm who modelled either animal.
+
+| Model | Triangles | Bones | What it is |
+|---|---:|---:|---|
+| `rhino` | 32,418 | 37 | white rhinoceros with photographic skin and a normal map |
+| `rhino_juvenile` | 21,000 | 37 | calf: shorter body and head, larger ears, a horn stub |
+| `elephant` | 16,801 | 46 | bull: ten-joint trunk, two-joint ears, long tusks |
+| `elephant_female` | 16,801 | 46 | cow: smaller frame, shorter and thinner tusks |
+| `elephant_juvenile` | 15,585 | 46 | calf without tusks |
+
+Nine clips each (the usual eight and `swim`). The walks are ours, not the sources': the
+authored walk loops slid their feet by more than our 2 % tolerance when measured
+(stance speeds of 0.52 to 1.59 m/s within one rhino stride), so the game's clips are
+contact-constrained replacements at 1.2 m/s (rhino) and 1.3 m/s (elephant); the elephant
+moves lateral pairs without an aerial phase, the rhino trots on diagonals. `swim` is built
+and described in the manifest but the game does not play it yet.
+
+Seen in Blender previews, in the game's viewer and in both habitats
+(`evidence/rhino-elephant-rigged-2026-11-13.jpg`: before, after and calf of each). Honest
+state: the rhinoceros is good, adult and calf, though the calf's barrel and skin folds are
+an adult's. The elephant is a real elephant's body now but not yet right: it is far too
+dark in the game's light (nearly black against the sand), the tusks are too long and too
+level, the ears are smooth where the body is wrinkled, and the source was an Asian elephant,
+so face and ears are a conversion and read as one from close by. The calf keeps adult skin.
+No calf lives in the Visitor Zoo yet, so both juveniles are only seen in the viewer.
 
 A species without a model would be left out of the Visitor Zoo by the game (its habitat built
 and standing empty).

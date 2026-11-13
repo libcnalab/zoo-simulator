@@ -1,16 +1,16 @@
 {
-  "bones": 33,
+  "bones": 37,
   "clips": [
     {
-      "duration": 6.0,
+      "duration": 12.0,
       "events": [],
-      "frames": 181,
+      "frames": 361,
       "loop": true,
       "name": "idle",
       "speed": 0.0
     },
     {
-      "duration": 1.3333,
+      "duration": 0.7333,
       "events": [
         {
           "name": "step",
@@ -18,24 +18,24 @@
         },
         {
           "name": "step",
-          "time": 0.3333
+          "time": 0.1833
         },
         {
           "name": "step",
-          "time": 0.6667
+          "time": 0.3667
         },
         {
           "name": "step",
-          "time": 1.0
+          "time": 0.55
         }
       ],
-      "frames": 41,
+      "frames": 23,
       "loop": true,
       "name": "walk",
-      "speed": 1.0893
+      "speed": 1.2
     },
     {
-      "duration": 1.3333,
+      "duration": 0.5,
       "events": [
         {
           "name": "step",
@@ -47,17 +47,42 @@
         },
         {
           "name": "step",
-          "time": 0.6667
+          "time": 0.25
         },
         {
           "name": "step",
-          "time": 0.6667
+          "time": 0.25
         }
       ],
-      "frames": 41,
+      "frames": 16,
       "loop": true,
       "name": "trot",
-      "speed": 2.2222
+      "speed": 3.0
+    },
+    {
+      "duration": 1.2,
+      "events": [
+        {
+          "name": "step",
+          "time": 0.0
+        },
+        {
+          "name": "step",
+          "time": 0.3
+        },
+        {
+          "name": "step",
+          "time": 0.6
+        },
+        {
+          "name": "step",
+          "time": 0.9
+        }
+      ],
+      "frames": 37,
+      "loop": true,
+      "name": "swim",
+      "speed": 0.72
     },
     {
       "duration": 3.0,
@@ -84,49 +109,60 @@
       "speed": 0.0
     },
     {
-      "duration": 8.0,
+      "duration": 12.0,
       "events": [],
-      "frames": 241,
+      "frames": 361,
       "loop": true,
       "name": "sleep",
       "speed": 0.0
     },
     {
-      "duration": 2.6,
+      "duration": 3.0,
       "events": [
         {
           "name": "call",
-          "time": 0.572
+          "time": 0.9
         }
       ],
-      "frames": 79,
+      "frames": 91,
       "loop": false,
       "name": "vocalize",
       "speed": 0.0
     }
   ],
   "generator": "tools/animals (zoogen)",
-  "license": "MIT",
+  "license": "CC-BY-4.0",
   "meta": {
+    "asset_license": "CC-BY-4.0",
+    "authored_stance_speed_medians": [
+      1.1470825672149658,
+      1.1784135103225708,
+      1.1368316411972046,
+      1.1702584028244019
+    ],
     "common_name": "Southern white rhinoceros",
-    "roughness": 0.93,
+    "motion_source": "procedural replacement; authored source samples retained in derivative",
+    "occlusion_source": "source texture",
+    "roughness": 0.9,
     "scientific_name": "Ceratotherium simum simum",
-    "shoulder_height_m": 1.8
+    "shoulder_height_m": 1.8,
+    "source_author": "LasquetiSpice",
+    "swim_depth_m": 1.476
   },
   "name": "rhino",
   "skeleton_bounds_animal_space": {
     "max": [
-      2.08,
-      0.36,
-      1.53
+      1.6833,
+      0.3814,
+      1.8883
     ],
     "min": [
-      -1.94,
-      -0.36,
+      -1.7209,
+      -0.3814,
       0.0
     ]
   },
   "texture": 1024,
-  "triangles": 18848,
-  "vertices": 9430
+  "triangles": 32418,
+  "vertices": 17356
 }

@@ -48,11 +48,19 @@ def main():
         clips = anim_mod.bake_clips(spec, arm_ob, info["bones"])
     os.makedirs(args.out, exist_ok=True)
     glb = os.path.join(args.out, spec.name + ".glb")
-    build.export_glb(glb, mesh_ob, arm_ob)
+    if spec.sculpt is not None and spec.sculpt.get("rigged", False):
+        build.export_glb(glb, mesh_ob, arm_ob, tangents=True, all_bones=True)
+    else:
+        build.export_glb(glb, mesh_ob, arm_ob)
     build.write_manifest(os.path.join(args.out, spec.name + ".json"), spec, info, clips)
     print(f"ZOOGEN {spec.name}: {info['triangles']} tris, {info['vertices']} verts, "
           f"{len(info['bones'])} bones, {len(clips)} clips, {os.path.getsize(glb)} bytes, "
           f"{time.time() - t0:.1f}s")
+
+    if args.preview and spec.sculpt is not None and spec.sculpt.get("rigged", False):
+        from zoogen.rigged import model_previews
+        model_previews(scene, arm_ob, spec, clips, args)
+        return
 
     if args.preview:
         os.makedirs(args.preview, exist_ok=True)

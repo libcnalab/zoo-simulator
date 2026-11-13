@@ -229,6 +229,9 @@ def _dilate(rgb, filled, iters=8):
 
 def build_mesh(spec):
     """Create the skinned mesh object (without armature). Returns (object, info)."""
+    if spec.sculpt is not None and spec.sculpt.get("rigged", False):
+        from .rigged import build_rigged
+        return build_rigged(spec)
     if spec.sculpt is not None:
         from .sculpt import build_sculpt
         return build_sculpt(spec)
@@ -365,7 +368,7 @@ def bind(mesh_ob, arm_ob):
     m.object = arm_ob
 
 
-def export_glb(path, mesh_ob, arm_ob):
+def export_glb(path, mesh_ob, arm_ob, tangents=False, all_bones=False):
     os.makedirs(os.path.dirname(path), exist_ok=True)
     bpy.ops.object.select_all(action='DESELECT')
     mesh_ob.select_set(True)
@@ -376,9 +379,9 @@ def export_glb(path, mesh_ob, arm_ob):
         export_apply=False, export_skins=True, export_animations=True,
         export_animation_mode='NLA_TRACKS', export_force_sampling=True,
         export_frame_range=False, export_anim_slide_to_zero=True,
-        export_optimize_animation_size=True, export_def_bones=True,
+        export_optimize_animation_size=True, export_def_bones=not all_bones,
         export_all_influences=False, export_image_format='AUTO',
-        export_materials='EXPORT', export_tangents=False, export_normals=True,
+        export_materials='EXPORT', export_tangents=tangents, export_normals=True,
         export_texcoords=True, export_morph=False, export_cameras=False,
         export_lights=False, export_extras=False)
 

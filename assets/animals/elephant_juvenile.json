@@ -1,0 +1,170 @@
+{
+  "bones": 46,
+  "clips": [
+    {
+      "duration": 12.0,
+      "events": [],
+      "frames": 361,
+      "loop": true,
+      "name": "idle",
+      "speed": 0.0
+    },
+    {
+      "duration": 0.8,
+      "events": [
+        {
+          "name": "step",
+          "time": 0.0
+        },
+        {
+          "name": "step",
+          "time": 0.2
+        },
+        {
+          "name": "step",
+          "time": 0.4
+        },
+        {
+          "name": "step",
+          "time": 0.6
+        }
+      ],
+      "frames": 25,
+      "loop": true,
+      "name": "walk",
+      "speed": 0.9
+    },
+    {
+      "duration": 0.5,
+      "events": [
+        {
+          "name": "step",
+          "time": 0.0
+        },
+        {
+          "name": "step",
+          "time": 0.125
+        },
+        {
+          "name": "step",
+          "time": 0.25
+        },
+        {
+          "name": "step",
+          "time": 0.375
+        }
+      ],
+      "frames": 16,
+      "loop": true,
+      "name": "trot",
+      "speed": 2.2
+    },
+    {
+      "duration": 1.2333,
+      "events": [
+        {
+          "name": "step",
+          "time": 0.0
+        },
+        {
+          "name": "step",
+          "time": 0.3083
+        },
+        {
+          "name": "step",
+          "time": 0.6167
+        },
+        {
+          "name": "step",
+          "time": 0.925
+        }
+      ],
+      "frames": 38,
+      "loop": true,
+      "name": "swim",
+      "speed": 0.54
+    },
+    {
+      "duration": 6.0,
+      "events": [],
+      "frames": 181,
+      "loop": true,
+      "name": "eat",
+      "speed": 0.0
+    },
+    {
+      "duration": 8.0,
+      "events": [],
+      "frames": 241,
+      "loop": true,
+      "name": "drink",
+      "speed": 0.0
+    },
+    {
+      "duration": 12.0,
+      "events": [],
+      "frames": 361,
+      "loop": true,
+      "name": "rest",
+      "speed": 0.0
+    },
+    {
+      "duration": 12.0,
+      "events": [],
+      "frames": 361,
+      "loop": true,
+      "name": "sleep",
+      "speed": 0.0
+    },
+    {
+      "duration": 3.0,
+      "events": [
+        {
+          "name": "call",
+          "time": 0.9
+        }
+      ],
+      "frames": 91,
+      "loop": false,
+      "name": "vocalize",
+      "speed": 0.0
+    }
+  ],
+  "generator": "tools/animals (zoogen)",
+  "license": "CC-BY-4.0",
+  "meta": {
+    "asset_license": "CC-BY-4.0",
+    "authored_stance_speed_medians": [
+      0.3018542230129242,
+      0.3131161332130432,
+      0.5726504921913147,
+      0.503798246383667
+    ],
+    "common_name": "African bush elephant calf",
+    "motion_source": "procedural replacement; authored source samples retained in derivative",
+    "occlusion_source": "Cycles bake of neutral source geometry (source has no AO image)",
+    "roughness": 0.9,
+    "scientific_name": "Loxodonta africana",
+    "shoulder_height_m": 1.2,
+    "source_author": "exegetpro",
+    "swim_depth_m": 0.9839999999999999,
+    "variant": "juvenile",
+    "variant_of": "elephant"
+  },
+  "name": "elephant_juvenile",
+  "skeleton_bounds_animal_space": {
+    "max": [
+      0.7828,
+      0.4215,
+      1.2036
+    ],
+    "min": [
+      -0.5369,
+      -0.4215,
+      -0.0556
+    ]
+  },
+  "texture": 2048,
+  "triangles": 15585,
+  "vertices": 8644
+}

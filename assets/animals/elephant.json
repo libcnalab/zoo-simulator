@@ -1,16 +1,16 @@
 {
-  "bones": 41,
+  "bones": 46,
   "clips": [
     {
-      "duration": 6.0,
+      "duration": 12.0,
       "events": [],
-      "frames": 181,
+      "frames": 361,
       "loop": true,
       "name": "idle",
       "speed": 0.0
     },
     {
-      "duration": 1.1333,
+      "duration": 1.5,
       "events": [
         {
           "name": "step",
@@ -18,7 +18,53 @@
         },
         {
           "name": "step",
-          "time": 0.2833
+          "time": 0.375
+        },
+        {
+          "name": "step",
+          "time": 0.75
+        },
+        {
+          "name": "step",
+          "time": 1.125
+        }
+      ],
+      "frames": 46,
+      "loop": true,
+      "name": "walk",
+      "speed": 1.3
+    },
+    {
+      "duration": 0.6667,
+      "events": [
+        {
+          "name": "step",
+          "time": 0.0
+        },
+        {
+          "name": "step",
+          "time": 0.1667
+        },
+        {
+          "name": "step",
+          "time": 0.3333
+        },
+        {
+          "name": "step",
+          "time": 0.5
+        }
+      ],
+      "frames": 21,
+      "loop": true,
+      "name": "trot",
+      "speed": 2.8
+    },
+    {
+      "duration": 2.2667,
+      "events": [
+        {
+          "name": "step",
+          "time": 0.0
         },
         {
           "name": "step",
@@ -26,108 +72,97 @@
         },
         {
           "name": "step",
-          "time": 0.85
+          "time": 1.1333
+        },
+        {
+          "name": "step",
+          "time": 1.7
         }
       ],
-      "frames": 35,
+      "frames": 69,
       "loop": true,
-      "name": "walk",
-      "speed": 1.3
+      "name": "swim",
+      "speed": 0.78
     },
     {
-      "duration": 0.7333,
-      "events": [
-        {
-          "name": "step",
-          "time": 0.0
-        },
-        {
-          "name": "step",
-          "time": 0.1833
-        },
-        {
-          "name": "step",
-          "time": 0.3667
-        },
-        {
-          "name": "step",
-          "time": 0.55
-        }
-      ],
-      "frames": 23,
-      "loop": true,
-      "name": "trot",
-      "speed": 2.8
-    },
-    {
-      "duration": 3.0,
+      "duration": 6.0,
       "events": [],
-      "frames": 91,
+      "frames": 181,
       "loop": true,
       "name": "eat",
       "speed": 0.0
     },
     {
-      "duration": 2.4,
+      "duration": 8.0,
       "events": [],
-      "frames": 73,
+      "frames": 241,
       "loop": true,
       "name": "drink",
       "speed": 0.0
     },
     {
-      "duration": 8.0,
+      "duration": 12.0,
       "events": [],
-      "frames": 241,
+      "frames": 361,
       "loop": true,
       "name": "rest",
       "speed": 0.0
     },
     {
-      "duration": 8.0,
+      "duration": 12.0,
       "events": [],
-      "frames": 241,
+      "frames": 361,
       "loop": true,
       "name": "sleep",
       "speed": 0.0
     },
     {
-      "duration": 2.6,
+      "duration": 3.0,
       "events": [
         {
           "name": "call",
-          "time": 0.572
+          "time": 0.9
         }
       ],
-      "frames": 79,
+      "frames": 91,
       "loop": false,
       "name": "vocalize",
       "speed": 0.0
     }
   ],
   "generator": "tools/animals (zoogen)",
-  "license": "MIT",
+  "license": "CC-BY-4.0",
   "meta": {
-    "body_length_m": 6.0,
+    "asset_license": "CC-BY-4.0",
+    "authored_stance_speed_medians": [
+      0.3018542230129242,
+      0.3131161332130432,
+      0.5726504921913147,
+      0.503798246383667
+    ],
     "common_name": "African bush elephant",
-    "roughness": 0.94,
+    "motion_source": "procedural replacement; authored source samples retained in derivative",
+    "occlusion_source": "Cycles bake of neutral source geometry (source has no AO image)",
+    "roughness": 0.9,
     "scientific_name": "Loxodonta africana",
-    "shoulder_height_m": 3.2
+    "shoulder_height_m": 3.2,
+    "source_author": "exegetpro",
+    "swim_depth_m": 2.624
   },
   "name": "elephant",
   "skeleton_bounds_animal_space": {
     "max": [
-      3.08,
-      0.92,
-      3.296
+      2.5066,
+      0.9887,
+      3.2177
     ],
     "min": [
-      -2.61,
-      -0.92,
-      0.0
+      -1.4975,
+      -0.9887,
+      -0.1457
     ]
   },
-  "texture": 1024,
-  "triangles": 22334,
-  "vertices": 11205
+  "texture": 2048,
+  "triangles": 16801,
+  "vertices": 9256
 }
