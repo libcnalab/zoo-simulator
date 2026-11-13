@@ -1,5 +1,5 @@
 {
-  "bones": 18,
+  "bones": 21,
   "clips": [
     {
       "duration": 0.4,
@@ -82,31 +82,65 @@
       "loop": true,
       "name": "vocalize",
       "speed": 0.0
+    },
+    {
+      "duration": 0.5,
+      "events": [],
+      "frames": 16,
+      "loop": true,
+      "name": "swim",
+      "speed": 1.5
+    },
+    {
+      "duration": 3.0,
+      "events": [],
+      "frames": 91,
+      "loop": true,
+      "name": "float",
+      "speed": 0.12
     }
   ],
   "generator": "tools/animals (zoogen)",
-  "license": "MIT",
+  "license": "CC-BY-4.0",
   "meta": {
+    "asset_license": "CC-BY-4.0",
     "body_length_m": 0.65,
     "common_name": "African penguin",
+    "float": {
+      "clip": "float",
+      "depth_m": 0.25,
+      "speed": 0.12
+    },
+    "plumage": "African adult painted on Magellanic specimen shape",
     "roughness": 0.88,
     "scientific_name": "Spheniscus demersus",
-    "shoulder_height_m": 0.65
+    "shoulder_height_m": 0.65,
+    "source_author": "RISD Nature Lab",
+    "source_species": "Spheniscus magellanicus",
+    "source_title": "Juvenile Magellanic Penguin",
+    "source_url": "https://sketchfab.com/3d-models/juvenile-magellanic-penguin-bf69c563457a4bb184fb8af2bf2d2811",
+    "spot_layout": "adult_01",
+    "swim": {
+      "clip": "swim",
+      "depth_m": 0.45,
+      "speed": 1.5
+    },
+    "water_origin_convention": "Set asset origin to water surface minus depth_m; clip speed is metres/second"
   },
   "name": "penguin",
   "skeleton_bounds_animal_space": {
     "max": [
-      0.145,
-      0.2,
-      0.57
+      0.195,
+      0.153,
+      0.604
     ],
     "min": [
-      -0.19,
-      -0.2,
+      -0.115,
+      -0.153,
       0.0
     ]
   },
   "texture": 1024,
-  "triangles": 9888,
-  "vertices": 4958
+  "triangles": 11899,
+  "vertices": 4884
 }

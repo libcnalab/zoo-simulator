@@ -62,6 +62,11 @@ def main():
         model_previews(scene, arm_ob, spec, clips, args)
         return
 
+    if args.preview and spec.sculpt is not None and spec.sculpt.get("birdscan", False):
+        from zoogen.birdscan import model_previews
+        model_previews(scene, arm_ob, spec, clips, args)
+        return
+
     if args.preview and spec.sculpt is not None and spec.sculpt.get("rigged", False):
         from zoogen.rigged import model_previews
         model_previews(scene, arm_ob, spec, clips, args)

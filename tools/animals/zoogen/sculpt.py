@@ -57,9 +57,11 @@ def prepare_instance(path, edits, height):
                 source_path=str(path), scale=scale)
 
 
-def _map_pixels(path):
+def _map_pixels(path, non_color=False):
     import bpy
     image = bpy.data.images.load(str(path), check_existing=False)
+    if non_color:
+        image.colorspace_settings.name = 'Non-Color'
     width, height = image.size
     rgba = np.empty(width * height * 4, dtype=np.float32)
     image.pixels.foreach_get(rgba)
@@ -173,19 +175,22 @@ def build_sculpt(spec):
     tri_id, bary = build._rasterize(uvs, size)
     rgb = np.zeros((size, size, 3), dtype=np.float32)
     source_dir = Path(data['source_path']).parent
-    detail = _map_pixels(source_dir / 'detail.png')
+    detail = _map_pixels(source_dir / 'detail.png', non_color=data.get('detail_non_color', False))
     occlusion = _map_pixels(source_dir / 'occlusion.png')
     # Paint in rows to keep the 2048 atlas well below a gigabyte of working arrays.
     for start in range(0, size, 64):
         end = min(start + 64, size)
         context = build.PaintContext(size, tri_id[start:end], bary[start:end], triangles, animal,
                                      normals, tag_values, tags, weights, names)
+        if data.get('photo_texture', False):
+            from .birdscan import photo_context
+            photo_context(context, data, start, end, size, atlas)
         color = spec.paint(context)
         xx = np.arange(size)[None, :] / size / atlas
         yy = np.arange(start, end)[:, None] / size
         ix = np.minimum((xx * detail.shape[1]).astype(int), detail.shape[1] - 1)
         iy = np.minimum((yy * detail.shape[0]).astype(int), detail.shape[0] - 1)
-        factor = (1 + .34 * (detail[iy, ix] - .5)) * (.87 + .13 * occlusion[iy, ix])
+        factor = (1 + data.get('detail_strength', .34) * (detail[iy, ix] - .5)) * (.87 + .13 * occlusion[iy, ix])
         factor = np.where(xx < 1, factor, 1)
         rgb[start:end] = np.clip(color * factor[..., None], 0, 1)
     rgb = build._dilate(rgb, tri_id >= 0, iters=12)

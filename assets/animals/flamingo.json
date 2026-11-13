@@ -1,5 +1,5 @@
 {
-  "bones": 26,
+  "bones": 29,
   "clips": [
     {
       "duration": 0.6,
@@ -85,28 +85,34 @@
     }
   ],
   "generator": "tools/animals (zoogen)",
-  "license": "MIT",
+  "license": "CC-BY-4.0",
   "meta": {
+    "asset_license": "CC-BY-4.0",
     "body_length_m": 1.2,
     "common_name": "Greater flamingo",
+    "neck_centerline_m": 0.7663266732442713,
     "roughness": 0.89,
     "scientific_name": "Phoenicopterus roseus",
-    "shoulder_height_m": 1.4
+    "shoulder_height_m": 1.4,
+    "source_author": "muppe5",
+    "source_pose": "Upright S-neck with one lifted foot",
+    "source_title": "Flamingo (descriptive; no title exposed by importer)",
+    "source_url": "https://sketchfab.com/3d-models/b363f8f4f7394ddb9d5b3a337f2f7fc7"
   },
   "name": "flamingo",
   "skeleton_bounds_animal_space": {
     "max": [
-      0.39,
-      0.13,
-      1.35
+      0.365,
+      0.095,
+      1.345
     ],
     "min": [
-      -0.43,
-      -0.13,
+      -0.45,
+      -0.095,
       0.0
     ]
   },
   "texture": 1024,
-  "triangles": 12718,
-  "vertices": 6381
+  "triangles": 12354,
+  "vertices": 6240
 }

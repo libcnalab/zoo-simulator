@@ -1,0 +1,149 @@
+{
+  "bones": 21,
+  "clips": [
+    {
+      "duration": 0.4,
+      "events": [
+        {
+          "name": "step",
+          "time": 0.0
+        },
+        {
+          "name": "step",
+          "time": 0.2
+        }
+      ],
+      "frames": 13,
+      "loop": true,
+      "name": "walk",
+      "speed": 0.41
+    },
+    {
+      "duration": 0.3,
+      "events": [
+        {
+          "name": "step",
+          "time": 0.0
+        },
+        {
+          "name": "step",
+          "time": 0.15
+        }
+      ],
+      "frames": 10,
+      "loop": true,
+      "name": "trot",
+      "speed": 0.861
+    },
+    {
+      "duration": 4.0,
+      "events": [],
+      "frames": 121,
+      "loop": true,
+      "name": "idle",
+      "speed": 0.0
+    },
+    {
+      "duration": 4.0,
+      "events": [],
+      "frames": 121,
+      "loop": true,
+      "name": "eat",
+      "speed": 0.0
+    },
+    {
+      "duration": 4.0,
+      "events": [],
+      "frames": 121,
+      "loop": true,
+      "name": "drink",
+      "speed": 0.0
+    },
+    {
+      "duration": 4.0,
+      "events": [],
+      "frames": 121,
+      "loop": true,
+      "name": "rest",
+      "speed": 0.0
+    },
+    {
+      "duration": 4.0,
+      "events": [],
+      "frames": 121,
+      "loop": true,
+      "name": "sleep",
+      "speed": 0.0
+    },
+    {
+      "duration": 4.0,
+      "events": [],
+      "frames": 121,
+      "loop": true,
+      "name": "vocalize",
+      "speed": 0.0
+    },
+    {
+      "duration": 0.5,
+      "events": [],
+      "frames": 16,
+      "loop": true,
+      "name": "swim",
+      "speed": 1.23
+    },
+    {
+      "duration": 3.0,
+      "events": [],
+      "frames": 91,
+      "loop": true,
+      "name": "float",
+      "speed": 0.0984
+    }
+  ],
+  "generator": "tools/animals (zoogen)",
+  "license": "CC-BY-4.0",
+  "meta": {
+    "asset_license": "CC-BY-4.0",
+    "body_length_m": 0.533,
+    "common_name": "African penguin",
+    "float": {
+      "clip": "float",
+      "depth_m": 0.205,
+      "speed": 0.09839999999999999
+    },
+    "plumage": "Source juvenile photo colour",
+    "relative_height": 0.82,
+    "roughness": 0.88,
+    "scientific_name": "Spheniscus demersus",
+    "shoulder_height_m": 0.533,
+    "source_author": "RISD Nature Lab",
+    "source_species": "Spheniscus magellanicus",
+    "source_title": "Juvenile Magellanic Penguin",
+    "source_url": "https://sketchfab.com/3d-models/juvenile-magellanic-penguin-bf69c563457a4bb184fb8af2bf2d2811",
+    "spot_layout": "juvenile_unspotted",
+    "swim": {
+      "clip": "swim",
+      "depth_m": 0.369,
+      "speed": 1.23
+    },
+    "variant": "juvenile",
+    "variant_of": "penguin",
+    "water_origin_convention": "Set asset origin to water surface minus depth_m; clip speed is metres/second"
+  },
+  "name": "penguin_juvenile",
+  "skeleton_bounds_animal_space": {
+    "max": [
+      0.1599,
+      0.1255,
+      0.4953
+    ],
+    "min": [
+      -0.0943,
+      -0.1255,
+      0.0
+    ]
+  },
+  "texture": 1024,
+  "triangles": 9799,
+  "vertices": 3833
+}

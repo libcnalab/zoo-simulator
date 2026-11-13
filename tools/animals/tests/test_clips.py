@@ -20,8 +20,9 @@ from zoogen import geom, quadruped  # noqa: E402
 from zoogen.rig import Pose, Solver, quat_from_matrix, rot_x, rot_y, rot_z  # noqa: E402
 
 CATS = ["lion", "lion_female", "lion_juvenile", "tiger"]
-SPECIES = ["lion", "lion_female", "lion_juvenile", "tiger", "wolf", "brown_bear", "polar_bear", "zebra", "zebra_female", "zebra_juvenile", "rhino", "camel",
-           "elephant", "giraffe", "meerkat", "penguin", "ostrich", "flamingo", "kangaroo"]
+SPECIES = ["lion", "lion_female", "lion_juvenile", "tiger", "wolf", "brown_bear", "polar_bear",
+           "zebra", "zebra_female", "zebra_juvenile", "rhino", "camel", "elephant", "giraffe", "meerkat",
+           "penguin", "penguin_juvenile", "ostrich", "flamingo", "kangaroo"]
 
 
 def make_solver(species):
@@ -268,7 +269,8 @@ class BipedTests(unittest.TestCase):
             with open(os.path.join(root, "data", "species", species + ".json")) as source:
                 data = json.load(source)
             self.assertEqual(spec.meta["shoulder_height_m"], data["shoulderHeightM"])
-            vertices = np.concatenate([geom.loft(part)[0] for part in geom.expand_parts(spec.parts)])
+            vertices = (spec.sculpt['vertices'] if spec.sculpt is not None else
+                        np.concatenate([geom.loft(part)[0] for part in geom.expand_parts(spec.parts)]))
             self.assertAlmostEqual(float(vertices[:, 2].max()), data["shoulderHeightM"],
                                    delta=.03 * data["shoulderHeightM"], msg=species)
             self.assertLessEqual(len(geom.expand_bones(spec.bones)), 60)
@@ -287,7 +289,8 @@ class BipedTests(unittest.TestCase):
             self.assertEqual(manifest["texture"], 1024)
             clips = {clip["name"]: clip for clip in manifest["clips"]}
             self.assertEqual(set(clips),
-                             {"idle", "walk", "trot", "eat", "drink", "rest", "sleep", "vocalize"})
+                             {"idle", "walk", "trot", "eat", "drink", "rest", "sleep", "vocalize"}
+                             | ({"swim", "float"} if species == "penguin" else set()))
             self.assertAlmostEqual(clips["walk"]["speed"], data["walkSpeed"],
                                    delta=.1 * data["walkSpeed"])
             self.assertGreaterEqual(clips["trot"]["speed"], 2 * clips["walk"]["speed"])
@@ -340,7 +343,8 @@ class BipedTests(unittest.TestCase):
                 self.assertGreaterEqual(len(spec.rig.neck), 5 if species == "flamingo" else 4)
             if species == "penguin":
                 for side in ("L", "R"):
-                    self.assertEqual(len(spec.rig.extra["wings"][side]), 2)
+                    expected = 3 if spec.sculpt is not None and spec.sculpt.get('birdscan') else 2
+                    self.assertEqual(len(spec.rig.extra["wings"][side]), expected)
             if species == "kangaroo":
                 self.assertGreaterEqual(len(spec.rig.tail), 5)
                 self.assertEqual(len(spec.rig.ears), 2)

@@ -42,7 +42,8 @@ python3 -m unittest discover -s tools/animals/tests
 | `zoogen/rigged.py`, `pachyderm.py`, `pachyderm_motion.py` on a prepared third-party rigged model (below) | rhino, rhino_juvenile, elephant, elephant_female, elephant_juvenile |
 | `zoogen/scan.py` on a prepared third-party static sculpt, rigged by us (below) | zebra, zebra_female, zebra_juvenile |
 | `zoogen/quadruped.py`, `wild_quadruped.py`, `anatomy.py` | wolf, brown bear, polar bear, giraffe, camel, meerkat |
-| `zoogen/biped.py` | penguin, ostrich, flamingo, kangaroo |
+| `zoogen/birdscan.py` on a prepared third-party scan or sculpt, rigged by us (below) | penguin, penguin_juvenile, flamingo |
+| `zoogen/biped.py` | ostrich, kangaroo |
 
 Each has the same eight clips, which the game picks from what the animal is doing: `idle`,
 `walk`, `trot` (the fast gait, a hop for the kangaroo), `eat`, `drink`, `rest`, `sleep`,
@@ -142,6 +143,40 @@ close up; folded legs are chunky and stretch the stripes at shoulder and hip; th
 fluff, only colour; mare and stallion are visibly the same sculpt. The source's stripes were
 kept as they are (broad flank stripes, pale belly) without claiming a subspecies. No foal
 lives in the Visitor Zoo yet, so `zebra_juvenile` is only seen in the viewer.
+
+### Penguin and flamingo from a scan and a sculpt (2026-11-13)
+
+The same step for two birds (Codex task S9; `tools/animals/prepare_bird.py`,
+`zoogen/birdscan.py`, derivatives of 3.5 MB and 1.5 MB under `tools/animals/sources/`):
+
+- **Penguin**: a photogrammetry scan of a mounted museum specimen, "Juvenile Magellanic
+  Penguin" by the RISD Nature Lab, CC BY 4.0. The zoo keeps African penguins (*Spheniscus
+  demersus*); the specimen is the closely related Magellanic penguin. The shape is the
+  specimen's. `penguin_juvenile` keeps the scan's own grey-brown colours (the young of both
+  species look alike); the adult's African plumage (one breast band, pink above the eye,
+  breast spots) **is painted by us** and is not a photograph of an African penguin.
+- **Flamingo**: a sculpt by muppe5, CC BY 4.0: body, S-neck, bill and feather forms kept, the
+  lifted leg replaced so that the bird stands on two, repainted.
+
+| Model | Triangles | Bones | Height | What it is |
+|---|---:|---:|---:|---|
+| `penguin` | 11,899 | 21 | 0.65 m | adult, three-joint flippers |
+| `penguin_juvenile` | 9,799 | 21 | 0.53 m | grey-brown young without the band |
+| `flamingo` | 12,354 | 29 | 1.40 m | rests and sleeps on one leg, feeds with the bill inverted |
+
+The penguins have ten clips: the usual eight, `swim` (flying under water with the flippers,
+0.45 m of the bird under the surface, 1.5 m/s) and `float` (resting on the surface, 0.25 m
+under, 0.12 m/s); the manifest says how deep the bird lies in each (`meta.swim`,
+`meta.float`). 11 new tests; the two older tests that measured the lofted penguin were
+adapted by the lead (the height is measured on the scan mesh, three flipper joints expected).
+
+Seen in the game's viewer and at Penguin Cove (`evidence/penguin-flamingo-scan-2026-11-13.jpg`).
+Honest state: both are real birds' shapes now where the old ones were bowling pins; the
+penguin is slimmer than the old one and stands like a penguin. What is wrong: belly and feet
+keep the roughness and the asymmetry of a mounted specimen; the bill does not really open;
+all adults share one spot layout; the flamingo's feather ridges and deep neck bends are
+coarse, its tucked head and folded leg do not bear a close look; neither has a normal map;
+there is no flamingo chick.
 
 A species without a model would be left out of the Visitor Zoo by the game (its habitat built
 and standing empty).
