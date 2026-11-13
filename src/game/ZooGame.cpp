@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <charconv>
+#include <chrono>
 #include <cmath>
 #include <cstdio>
 #include <filesystem>
@@ -49,6 +50,7 @@ ZooGame::ZooGame() : EngineGame(MakeOptions()) {}
 ZooGame::~ZooGame() {
     if (!editor_ && zoo_ && visitors_ && (Automation().Options().Automated() || script_))
         PrintVisitFigures("at the end");
+    bench_.Print(standAt_.empty() ? "entrance" : standAt_.c_str());
 }
 
 bool ZooGame::ParseArgument(std::span<const std::string_view> arguments, std::size_t& index) {
@@ -69,6 +71,24 @@ bool ZooGame::ParseArgument(std::span<const std::string_view> arguments, std::si
         return Parse(arguments[++index], play_.speed);
     if (name == "--stand" && hasValue) {
         standAt_ = arguments[++index];
+        return true;
+    }
+    if (name == "--bench") {
+        bench_.on = true;
+        return true;
+    }
+    if (name == "--without" && hasValue) {
+        const std::string_view what = arguments[++index];
+        bool* part = what == "animals"      ? &without_.animals
+                     : what == "people"     ? &without_.people
+                     : what == "scenery"    ? &without_.scenery
+                     : what == "terrain"    ? &without_.terrain
+                     : what == "shadows"    ? &without_.shadows
+                     : what == "simulation" ? &without_.simulation
+                                            : nullptr;
+        if (part == nullptr)
+            return false;
+        *part = true;
         return true;
     }
     if (name == "--people" && hasValue)
@@ -182,7 +202,8 @@ void ZooGame::LoadGame() {
     sky_ = std::make_unique<Graphics::SkyDome>(device);
     sky_->AttachTo(Renderer());
     clock_.latitudeDegrees = 48.0;
-    (void)Enhanced::EnableShadows(*this, {.size = 4096, .radius = 90.0f, .ahead = 0.7f});
+    if (!without_.shadows)
+        (void)Enhanced::EnableShadows(*this, {.size = 4096, .radius = 90.0f, .ahead = 0.7f});
 
     // Visitors are CNA avatars, which belong to its gamer services. Avatars
     // draw themselves, so they get a pass of their own after the opaque scene.
@@ -194,6 +215,9 @@ void ZooGame::LoadGame() {
     visitors_->SetBudget(peopleBudget_ > 0 ? peopleBudget_ : editor_ ? 400 : 120);
     Renderer().AddPass(Graphics::PassPoint::AfterOpaque, "visitors",
                        [this](auto&, const Graphics::Camera& camera, Graphics::RenderStatistics&) {
+                           if (without_.people)
+                               return;
+                           const Bench::Scope timed(bench_, Bench::PeoplePass);
                            visitors_->Draw(camera, Renderer().Lighting());
                        });
 
@@ -455,10 +479,17 @@ void ZooGame::UpdateSky() {
 }
 
 void ZooGame::UpdateFrame(double seconds) {
+    bench_.Frame();
+    bench_.Drawn(RenderedLastFrame().drawCalls, RenderedLastFrame().primitives);
+    const double before = bench_.Timed();
+    const auto began = Bench::Clock::now();
     if (editor_)
         UpdateEditor(seconds);
     else
         UpdateVisit(seconds);
+    // What the update took beyond its timed parts.
+    const double took = std::chrono::duration<double>(Bench::Clock::now() - began).count();
+    bench_.Add(Bench::Rest, took - (bench_.Timed() - before));
 }
 
 void ZooGame::UpdateEditor(double seconds) {
@@ -530,9 +561,13 @@ void ZooGame::UpdateEditor(double seconds) {
 }
 
 void ZooGame::Submit(App::Frame& frame) {
-    terrain_->Submit(frame);
-    scenery_->Submit(frame);
-    animals_->Submit(frame);
+    const Bench::Scope timed(bench_, Bench::Submit);
+    if (!without_.terrain)
+        terrain_->Submit(frame);
+    if (!without_.scenery)
+        scenery_->Submit(frame);
+    if (!without_.animals)
+        animals_->Submit(frame);
     if (editor_ && !play_.mainMenu)
         tools_->Submit(frame);
 }

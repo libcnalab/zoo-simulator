@@ -427,8 +427,10 @@ void ZooGame::UpdateVisit(double seconds) {
     } else if (visit_.screen == VisitScreen::Title) {
         titleTime_ += dt;
     }
-    if (play_.speed > 0)
+    if (play_.speed > 0 && !without_.simulation) {
+        const Bench::Scope timed(bench_, Bench::Simulation);
         StepSimulation(seconds);
+    }
     if (zoo_->Config().dayPace != 0 && zoo_->Time().Hour() >= kLatestHour)
         zoo_->SetDayPace(0);
 
@@ -444,11 +446,18 @@ void ZooGame::UpdateVisit(double seconds) {
     terrain_->Update(zoo_->Map());
     scenery_->Update(zoo_->Map(), zoo_->Objects());
     const float lived = dt * static_cast<float>(play_.speed);
-    animals_->Update(*zoo_, lived, static_cast<float>(tickDebt_));
-    visitors_->Update(*zoo_, lived, static_cast<float>(tickDebt_));
+    {
+        const Bench::Scope timed(bench_, Bench::Animals);
+        animals_->Update(*zoo_, lived, static_cast<float>(tickDebt_));
+    }
+    {
+        const Bench::Scope timed(bench_, Bench::People);
+        visitors_->Update(*zoo_, lived, static_cast<float>(tickDebt_));
+    }
     UpdateSky();
 
     const bool afoot = visit_.screen == VisitScreen::Walking;
+    const Bench::Scope timed(bench_, Bench::Sound);
     sounds_->Update(*zoo_, CnaEngine::Audio::ListenerFrom(MainCamera()),
                     {.feet = walker_.Position(),
                      .stepped = afoot && walker_.Stepped(),

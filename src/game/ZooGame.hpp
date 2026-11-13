@@ -11,6 +11,7 @@
 #include "CnaEngine/Graphics/Sky.hpp"
 
 #include "AnimalRenderer.hpp"
+#include "Bench.hpp"
 #include "CameraRig.hpp"
 #include "Controls.hpp"
 #include "Hud.hpp"
@@ -97,6 +98,14 @@ private:
     bool editor_ = false;
     /// --saves was given: an automated run may write there.
     bool ownSaves_ = false;
+    /// --bench: frame times, the cost of the game's parts and memory, printed at the end.
+    Bench bench_;
+    /// --without animals|people|scenery|terrain|shadows|simulation: a part left out, to
+    /// measure what it costs by the difference.
+    struct Without {
+        bool animals = false, people = false, scenery = false, terrain = false, shadows = false,
+             simulation = false;
+    } without_;
     /// --people N: the most visitors a frame draws (0: the mode's own figure).
     std::size_t peopleBudget_ = 0;
     std::string standAt_;
