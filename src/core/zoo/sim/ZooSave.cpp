@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 #include "zoo/sim/ZooSaveJson.hpp"
 
+#include <algorithm>
 #include <cstdio>
 #include <filesystem>
 #include <fstream>
@@ -31,7 +32,8 @@ struct ZooAccess {
                                          Animals animals, Visitors visitors, Staff staff,
                                          const WeatherState& weather, GameTime time, const Json& enclosures,
                                          std::deque<Notification> notifications,
-                                         std::uint32_t nextNotification, std::string* error) {
+                                         std::uint32_t nextNotification, bool viewersSaved,
+                                         std::string* error) {
         WeatherSystem sky(config.seed, config.climate);
         // The sky as its last step left it: that was one tick of the calendar ago.
         GameTime before = time;
@@ -48,6 +50,10 @@ struct ZooAccess {
             return nullptr;
         }
         zoo->enclosures_.Rebuild(zoo->world_, zoo->objects_, catalog);
+        if (!viewersSaved) {
+            // A save from before the viewer counts were saved: as near as can be told now.
+            zoo->TellViewers();
+        }
         zoo->notifications_ = std::move(notifications);
         zoo->nextNotification_ = nextNotification;
         return zoo;
@@ -55,6 +61,13 @@ struct ZooAccess {
 };
 
 namespace {
+
+/// Does the animals' part hold the viewer counts (saves since 2026-11-14 do)?
+bool ViewersSaved(const Json& animals) {
+    const Json& care = animals.at("care");
+    return std::ranges::all_of(care,
+                               [](const Json& item) { return item.is_object() && item.contains("viewers"); });
+}
 
 // Keep the optional reservation layer in the zoo envelope: older world documents
 // remain readable, and absent reservations mean the pre-stand-off layout.
@@ -395,7 +408,8 @@ std::unique_ptr<Zoo> ZooFromJson(const Json& json, const Catalog& catalog, const
         std::unique_ptr<Zoo> zoo = ZooAccess::Assemble(
             catalog, species, std::move(config), std::move(*world), std::move(*objects), std::move(*finance),
             std::move(*animals), std::move(*visitors), std::move(*staff), weather, time,
-            body.at("enclosures"), std::move(notifications), nextNotification, &part);
+            body.at("enclosures"), std::move(notifications), nextNotification,
+            ViewersSaved(body.at("animals")), &part);
         if (!zoo) {
             throw std::runtime_error("enclosures: " + part);
         }
@@ -444,7 +458,14 @@ bool ReadJsonFile(const std::string& path, Json& out, std::string* error) {
         SetError(error, "Cannot open " + path + ".");
         return false;
     }
-    out = Json::parse(in, nullptr, false);
+    try {
+        out = Json::parse(in, nullptr, false);
+    } catch (const std::exception& e) {
+        // The parser reads the stream's buffer itself, and a failed read (a directory under this
+        // name, a failing disk) leaves the buffer as an exception no stream is there to catch.
+        SetError(error, "Cannot read " + path + ": " + e.what());
+        return false;
+    }
     if (out.is_discarded()) {
         SetError(error, path + " is not a valid save (it is not JSON).");
         return false;

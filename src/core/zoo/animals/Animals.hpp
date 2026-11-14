@@ -328,7 +328,7 @@ public:
     /// Hash over the whole saved state (FNV-1a over the fields in a fixed order,
     /// floats by bit pattern): equal for equal states, used by determinism tests.
     std::uint64_t StateHash() const;
-    /// Compares the saved state (everything but viewer counts and caches).
+    /// Compares the saved state (everything but caches).
     bool operator==(const Animals& other) const;
 
 private:
@@ -337,7 +337,9 @@ private:
     struct EnclosureCare {
         EnclosureId id;
         float dirt = 0.0f;
-        int viewers = 0;  // input, not saved
+        /// How many people watched at the last whole second (Zoo::Step tells it): an input,
+        /// but saved, as it steers the animals' glances until the next second.
+        int viewers = 0;
     };
     struct HabitatCache {
         EnclosureId enclosure;

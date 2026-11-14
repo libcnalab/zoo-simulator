@@ -238,8 +238,15 @@ bool ZooGame::LoadVisit(const std::string& path) {
         const zoo::World& map = zoo_->Map();
         if (std::isfinite(read.x) && std::isfinite(read.z) && std::isfinite(read.yaw) &&
             std::isfinite(read.pitch) && read.x > 0.0f && read.z > 0.0f && read.x < map.SizeX() &&
-            read.z < map.SizeZ())
-            pose = read;
+            read.z < map.SizeZ()) {
+            // The sidecar may belong to another zoo. Use the entrance if it puts the
+            // visitor behind a barrier, inside a building or in deep water.
+            const zoo::Vec2 at{read.x, read.z};
+            const zoo::TileCoord tile = zoo::World::TileAt(at);
+            if (zoo_->Habitats().RegionAt(tile) == zoo::Region::Public && !map.At(tile).building &&
+                map.WaterDepthAt(at) < 0.35f)
+                pose = read;
+        }
     }
     BeginWalk(pose);
     return true;

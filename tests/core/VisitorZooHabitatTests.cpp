@@ -14,6 +14,7 @@
 #include "zoo/sim/VisitStart.hpp"
 #include "zoo/sim/VisitorZoo.hpp"
 #include "zoo/sim/ZooSave.hpp"
+#include "zoo/sim/ZooSaveJson.hpp"
 
 namespace zoo {
 namespace {
@@ -113,7 +114,8 @@ std::map<int, int> Living(const Zoo& zoo, EnclosureId home) {
 
 const Enclosure* BoardHome(const Zoo& zoo, const Prop& board) {
     const Enclosure* home = nullptr;
-    float nearest = 30.0f;
+    // As ZooGame::OpenBoard: beyond a habitat front, boards give general visitor guidance.
+    float nearest = 8.0f;
     for (const Enclosure& enclosure : zoo.Habitats().All()) {
         const float distance = DistanceToTiles(board.position, enclosure.min, enclosure.max);
         if (distance < nearest && !Living(zoo, enclosure.id).empty()) {
@@ -613,6 +615,286 @@ TEST_P(VisitorZooHabitat, SaveLoadAtVisitingTime) {
     }
     ExpectHashes(zoo, *loaded);
     std::filesystem::remove(file);
+}
+
+// Saved in the middle of things, four times along the visit: each time the loaded zoo is the
+// saved one (the map with its reserved strips included), lives on step for step beside it, and
+// saves to the same document. The test first makes sure that there is something in the middle
+// of which to be: animals on a route and in several activities, visitors of most kinds with
+// routes half walked.
+TEST_P(VisitorZooHabitat, SaveLoadInTheMiddleOfTheVisit) {
+    Zoo zoo(testdata::GameCatalog(), testdata::GameSpecies(), VisitorZooConfig(GetParam()));
+    BuildVisitorZoo(zoo);
+    FillForVisit(zoo, {.fillTicks = 600});
+    zoo.SetDayPace(12);
+    int strips = 0;
+    for (int z = 0; z < zoo.Map().Depth(); ++z) {
+        for (int x = 0; x < zoo.Map().Width(); ++x) {
+            strips += zoo.Map().At({x, z}).standOff ? 1 : 0;
+        }
+    }
+    ASSERT_GT(strips, 0);
+    for (int checkpoint = 0; checkpoint < 4; ++checkpoint) {
+        SCOPED_TRACE("checkpoint " + std::to_string(checkpoint));
+        for (int i = 0; i < 300; ++i) {
+            zoo.Step();
+        }
+        std::set<AnimalActivity> animalsDoing;
+        int animalsOnRoute = 0;
+        for (const Animal& animal : zoo.Fauna().All()) {
+            animalsDoing.insert(animal.activity);
+            // On the way (most animals' routes are a single leg in open ground, so not "half walked").
+            animalsOnRoute += animal.moving && animal.routeIndex < animal.route.size() ? 1 : 0;
+        }
+        std::set<VisitorActivity> visitorsDoing;
+        int visitorsOnRoute = 0;
+        for (const Visitor& guest : zoo.Guests().All()) {
+            visitorsDoing.insert(guest.activity);
+            visitorsOnRoute += guest.routeIndex > 0 && guest.routeIndex < guest.route.size() ? 1 : 0;
+        }
+        EXPECT_GE(animalsDoing.size(), 4U);
+        EXPECT_GT(animalsOnRoute, 0);
+        EXPECT_GE(visitorsDoing.size(), 3U);
+        EXPECT_GT(visitorsOnRoute, 20);
+
+        const nlohmann::json saved = ZooToJson(zoo);
+        std::string error;
+        const std::unique_ptr<Zoo> loaded = ZooFromJson(saved, zoo.Definitions(), zoo.SpeciesList(), &error);
+        ASSERT_NE(loaded, nullptr) << error;
+        ExpectHashes(zoo, *loaded);
+        EXPECT_EQ(zoo.Map(), loaded->Map()) << "the map, stand-off strips included";
+        EXPECT_EQ(zoo.Config(), loaded->Config());
+        EXPECT_EQ(saved, ZooToJson(*loaded));
+        // The pace is the visit's setting, not the zoo's state (see SaveLoadAtVisitingTime).
+        loaded->Guests().SetPace(zoo.Guests().Pace());
+        Zoo& original = zoo;
+        for (int i = 1; i <= 300; ++i) {
+            original.Step();
+            loaded->Step();
+            if (i % 100 == 0) {
+                ASSERT_EQ(original.StateHash(), loaded->StateHash()) << i << " steps after the load";
+            }
+        }
+        ExpectHashes(original, *loaded);
+        EXPECT_EQ(ZooToJson(original), ZooToJson(*loaded));
+        std::cout << "MIDVISIT seed=" << zoo.Config().seed << " checkpoint=" << checkpoint
+                  << " animals doing " << animalsDoing.size() << " things, " << animalsOnRoute
+                  << " on a route; visitors doing " << visitorsDoing.size() << " things, " << visitorsOnRoute
+                  << " on a route; sky " << static_cast<int>(zoo.Sky().State().sky) << '\n';
+    }
+}
+
+// Nobody is missing and nobody is one too many: every promised species lives in its habitat,
+// in a group its species holds, with ground and shelter for all of them.
+//
+// `grown` is the zoo after young were born: the group still is one its species holds, but the
+// habitats are laid out for the animals they were given, and what a grown group lacks in
+// shelter and ground is counted and printed, not refused (docs/RELIABILITY.md, "Occupancy").
+void ExpectOccupancy(Zoo& zoo, const std::string& when, bool grown = false) {
+    SCOPED_TRACE(when);
+    std::map<std::string, std::string> shortOf;
+    ExpectResidents(zoo);
+    const Env env = zoo.MakeEnv();
+    std::map<std::uint32_t, int> heads;
+    for (const Animal& animal : zoo.Fauna().All()) {
+        ASSERT_GE(animal.species, 0);
+        const SpeciesDef& def = zoo.SpeciesList().All()[static_cast<std::size_t>(animal.species)];
+        EXPECT_FALSE(animal.loose) << animal.name;
+        EXPECT_TRUE(animal.InWorld()) << animal.name;
+        const Enclosure* home = zoo.Habitats().Find(animal.home);
+        ASSERT_NE(home, nullptr) << def.id << ' ' << animal.name << " has no habitat";
+        EXPECT_EQ(zoo.Habitats().At(animal.position), animal.home) << animal.name << " of " << home->name;
+        ASSERT_TRUE(kResidents.contains(home->name)) << home->name;
+        const auto& promised = kResidents.at(home->name);
+        EXPECT_NE(std::find(promised.begin(), promised.end(), def.id), promised.end())
+            << def.id << " lives in " << home->name;
+        const GroupInfo group = zoo.Fauna().GroupOf(env, animal);
+        EXPECT_LE(group.sameSpecies, def.groupMax) << home->name << " holds too many " << def.id;
+        const float space = EvaluateHabitat(def, home->stats, group).space;
+        if (grown) {
+            if (home->stats.shelterCapacity < group.allAnimals || space < 0.99f) {
+                shortOf[home->name] = std::to_string(group.allAnimals) + " animals, shelter for " +
+                                      std::to_string(home->stats.shelterCapacity) + ", space " +
+                                      std::to_string(space);
+            }
+        } else {
+            EXPECT_GE(home->stats.shelterCapacity, group.allAnimals) << home->name;
+            EXPECT_GE(space, 0.99f) << home->name << " is crowded";
+        }
+        ++heads[home->id.value];
+    }
+    std::cout << "OCCUPANCY seed=" << zoo.Config().seed << ' ' << when << " day=" << zoo.Time().Day()
+              << " animals=" << zoo.Fauna().All().size() << " births=" << zoo.Fauna().Births()
+              << " deaths=" << zoo.Fauna().Deaths() << " escapes=" << zoo.Fauna().Escapes() << " |";
+    for (const Enclosure& home : zoo.Habitats().All()) {
+        EXPECT_GT(heads[home.id.value], 0) << home.name << " is empty";
+        std::cout << ' ' << heads[home.id.value];
+    }
+    std::cout << '\n';
+    for (const auto& [name, what] : shortOf) {
+        std::cout << "OCCUPANCY seed=" << zoo.Config().seed << ' ' << when << ": " << name << " has grown to "
+                  << what << '\n';
+    }
+}
+
+// A day and a week of the zoo's own life (the pace of the management game: a day in 14,400
+// steps), every animal looked after by auto-care as the Visitor Zoo is set up.
+TEST_P(VisitorZooHabitat, NoHabitatEmptyOrOverFullAtTheStartAfterADayAndAfterAWeek) {
+    Zoo zoo(testdata::GameCatalog(), testdata::GameSpecies(), VisitorZooConfig(GetParam()));
+    BuildVisitorZoo(zoo);
+    ExpectOccupancy(zoo, "at the start");
+    const int atStart = static_cast<int>(zoo.Fauna().All().size());
+    // The whole week is walked by seed 1; seed 2 lives one day.
+    const int days = GetParam() == 1 ? 7 : 1;
+    for (int day = 1; day <= days; ++day) {
+        for (int tick = 0; tick < kTicksPerDay; ++tick) {
+            zoo.Step();
+        }
+        if (day == 1 || day == days) {
+            ExpectOccupancy(zoo, "after day " + std::to_string(day), zoo.Fauna().Births() > 0);
+        }
+    }
+    EXPECT_EQ(zoo.Fauna().Escapes(), 0);
+    // Nobody dies in the first week of a zoo that cares for its animals.
+    EXPECT_EQ(zoo.Fauna().Deaths(), 0);
+    EXPECT_GE(static_cast<int>(zoo.Fauna().All().size()), atStart);
+}
+
+// The same on the visit itself, as the game runs it: the morning filled, then the calendar at
+// the visit's pace (twelve steps to a tick). Two game hours of walking about.
+void CheckVisitOccupancy(Zoo& zoo, std::int64_t fill, std::int64_t steps) {
+    FillForVisit(zoo, {.fillTicks = fill});
+    zoo.SetDayPace(12);
+    ExpectOccupancy(zoo, "as the visit begins");
+    // The animals live by the steps, not by the visit's slowed calendar: a long visit sees young.
+    std::int64_t firstBirth = -1;
+    for (std::int64_t step = 0; step < steps; ++step) {
+        zoo.Step();
+        if (firstBirth < 0 && zoo.Fauna().Births() > 0) {
+            firstBirth = step + 1;
+        }
+    }
+    if (firstBirth >= 0) {
+        std::cout << "OCCUPANCY seed=" << zoo.Config().seed << " the first birth of the visit after " << firstBirth
+                  << " steps (" << firstBirth / (kTicksPerSecond * 60) << " minutes of play)\n";
+    }
+    ExpectOccupancy(zoo, "after " + std::to_string(steps) + " steps of the visit", zoo.Fauna().Births() > 0);
+    EXPECT_EQ(zoo.Fauna().Escapes(), 0);
+    EXPECT_EQ(zoo.Fauna().Deaths(), 0);
+}
+
+TEST_P(VisitorZooHabitat, NoHabitatEmptyOrOverFullDuringTheVisit) {
+    Zoo zoo(testdata::GameCatalog(), testdata::GameSpecies(), VisitorZooConfig(GetParam()));
+    BuildVisitorZoo(zoo);
+    CheckVisitOccupancy(zoo, 600, 6000);
+}
+
+// Twelve days of the animals' life at the visit's pace (172,800 steps: two hours and
+// twenty-four minutes of play; the game itself stops the calendar at half past three, the
+// animals live on). Minutes in Release, not for every run.
+TEST_P(VisitorZooHabitat, DISABLED_NoHabitatEmptyOrOverFullOverAVisitingDay) {
+    Zoo zoo(testdata::GameCatalog(), testdata::GameSpecies(), VisitorZooConfig(GetParam()));
+    BuildVisitorZoo(zoo);
+    CheckVisitOccupancy(zoo, 6000, static_cast<std::int64_t>(kTicksPerDay) * 12);
+}
+
+// Where the reading desk of a board looks: props are modelled looking along +z and turned by
+// their heading (zoogame::Placement; PropModels.cpp makes the board's desk slope towards +z).
+Vec2 Front(const Prop& prop) {
+    return {std::sin(prop.heading), std::cos(prop.heading)};
+}
+
+// Every information board of the zoo: outside the barriers, never blank, with a place on the
+// paving in front of its desk that the entrance leads to, and telling of the animals that live
+// behind it. What the game's board window shows (ZooGame::OpenBoard) is BoardHome's choice and
+// these fields of the species' own data, nothing of its own.
+TEST_P(VisitorZooHabitat, EveryBoardFacesThePathAndTellsOfTheAnimalsBehindIt) {
+    Zoo zoo(testdata::GameCatalog(), testdata::GameSpecies(), VisitorZooConfig(GetParam()));
+    BuildVisitorZoo(zoo);
+    const TileCoord entrance = zoo.Map().EntranceTile();
+    std::map<std::uint32_t, int> own;
+    int boards = 0;
+    int elsewhere = 0;
+    for (const Prop& board : zoo.Objects().Props()) {
+        if (zoo.Definitions().props[static_cast<std::size_t>(board.def)].role != PropRole::InfoBoard) {
+            continue;
+        }
+        ++boards;
+        SCOPED_TRACE("board " + std::to_string(board.id.value) + " at " + std::to_string(board.position.x) + ", " +
+                     std::to_string(board.position.z));
+        const TileCoord tile = World::TileAt(board.position);
+        // Outside the barrier: neither in a habitat nor on the reserved ground before one.
+        EXPECT_FALSE(zoo.Habitats().At(tile));
+        EXPECT_EQ(zoo.Habitats().RegionAt(tile), Region::Public);
+        EXPECT_FALSE(zoo.Map().At(tile).building);
+
+        // A remote board gives visitor guidance instead of unrelated species information.
+        const Enclosure* home = BoardHome(zoo, board);
+        EXPECT_TRUE(ReadableFromPath(zoo, board));
+
+        // It faces the path: in front of the desk, within reach, lies paving the entrance leads to.
+        const Vec2 front = Front(board);
+        bool faced = false;
+        for (int z = tile.z - 2; z <= tile.z + 2; ++z) {
+            for (int x = tile.x - 2; x <= tile.x + 2; ++x) {
+                const TileCoord stand{x, z};
+                if (!zoo.Map().InBounds(stand) || zoo.Map().At(stand).path == PathKind::None ||
+                    !zoo.Routes().Reachable(entrance, stand, NavProfile::Visitor())) {
+                    continue;
+                }
+                const Vec2 to = World::TileCenter(stand) - board.position;
+                const float distance = Length(to);
+                // Within the reach of UpdateEncounters, and within 60 degrees of straight ahead.
+                faced = faced || (distance > 0.3f && distance <= 2.8f &&
+                                  (to.x * front.x + to.z * front.z) / distance >= 0.5f);
+            }
+        }
+        EXPECT_TRUE(faced) << "no paving in front of the desk (heading " << board.heading << ")";
+        // And not a fence: a step in front of it is still the visitors' ground.
+        EXPECT_EQ(zoo.Habitats().RegionAt(World::TileAt(board.position + front * 1.2f)), Region::Public);
+
+        // Behind it, the animals it tells of: the first habitat met walking back from the desk.
+        const Enclosure* behind = nullptr;
+        for (float back = 0.5f; back <= 8.0f && behind == nullptr; back += 0.5f) {
+            behind = zoo.Habitats().Find(zoo.Habitats().At(board.position - front * back));
+        }
+        if (behind == nullptr) {
+            EXPECT_EQ(home, nullptr) << "a remote board is associated with unrelated animals";
+            ++elsewhere;
+            continue;
+        }
+        ASSERT_NE(home, nullptr) << "a habitat board shows general guidance instead of its animals";
+        EXPECT_EQ(behind->id, home->id) << "stands before " << behind->name << " and tells of " << home->name;
+        ++own[behind->id.value];
+        const auto living = Living(zoo, home->id);
+        ASSERT_FALSE(living.empty());
+        int chosen = living.begin()->first;
+        for (const auto& [species, count] : living) {
+            if (count > living.at(chosen)) {
+                chosen = species;
+            }
+        }
+        const SpeciesDef& def = zoo.SpeciesList().All()[static_cast<std::size_t>(chosen)];
+        const auto& promised = kResidents.at(home->name);
+        EXPECT_NE(std::find(promised.begin(), promised.end(), def.id), promised.end())
+            << home->name << "'s board is about " << def.id;
+        // The rows of the board window.
+        EXPECT_FALSE(def.commonName.empty()) << def.id;
+        EXPECT_FALSE(def.scientificName.empty()) << def.id;
+        EXPECT_FALSE(def.nativeRange.empty()) << def.id;
+        EXPECT_FALSE(def.biome.empty()) << def.id;
+        EXPECT_GT(def.adultMassKg, 0.0f) << def.id;
+        EXPECT_GT(def.shoulderHeightM, 0.0f) << def.id;
+        EXPECT_GT(def.lifespanYears, 0.0f) << def.id;
+        EXPECT_FALSE(DisplayName(def.status).empty()) << def.id;
+        EXPECT_FALSE(def.facts.empty()) << def.id;
+    }
+    for (const Enclosure& home : zoo.Habitats().All()) {
+        EXPECT_GE(own[home.id.value], 1) << home.name << " has no board of its own in front of it";
+    }
+    std::cout << "BOARDS seed=" << zoo.Config().seed << " all=" << boards << " away from habitats=" << elsewhere
+              << '\n';
+    EXPECT_EQ(boards, static_cast<int>(zoo.Habitats().All().size()) + elsewhere);
 }
 
 INSTANTIATE_TEST_SUITE_P(Seeds, VisitorZooHabitat, testing::Values(1ULL, 2ULL));

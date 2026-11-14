@@ -1103,7 +1103,8 @@ bool Animals::operator==(const Animals& other) const {
         births_ != other.births_ || deaths_ != other.deaths_ || escapes_ != other.escapes_)
         return false;
     for (std::size_t i = 0; i < care_.size(); ++i) {
-        if (care_[i].id != other.care_[i].id || care_[i].dirt != other.care_[i].dirt)
+        if (care_[i].id != other.care_[i].id || care_[i].dirt != other.care_[i].dirt ||
+            care_[i].viewers != other.care_[i].viewers)
             return false;
     }
     return true;

@@ -218,7 +218,7 @@ Json ToJson(const Animals& animals, const SpeciesCatalog& species) {
         list.push_back(Encode(animal, species));
     Json care = Json::array();
     for (const auto& item : AnimalsAccess::Care(animals))
-        care.push_back(Json{{"id", item.id.value}, {"dirt", item.dirt}});
+        care.push_back(Json{{"id", item.id.value}, {"dirt", item.dirt}, {"viewers", item.viewers}});
     return Json{{"next_id", AnimalsAccess::NextId(animals)},
                 {"rng", Json::array({AnimalsAccess::RngState(animals), AnimalsAccess::RngStream(animals)})},
                 {"births", AnimalsAccess::Births(animals)},
@@ -249,8 +249,12 @@ std::optional<Animals> AnimalsFromJson(const Json& json, const SpeciesCatalog& s
         for (const Json& value : json.at("care")) {
             if (!value.is_object())
                 throw std::runtime_error("care entry must be object");
+            // Saves from before 2026-11-14 have no viewers: the zoo tells them again on loading.
+            const int viewers = value.contains("viewers") ? ReadInt(value.at("viewers"), "viewers") : 0;
+            if (viewers < 0)
+                throw std::runtime_error("viewers must not be negative");
             care.push_back(
-                {ReadId<EnclosureId>(value.at("id"), "care id"), ReadFloat(value.at("dirt"), "dirt"), 0});
+                {ReadId<EnclosureId>(value.at("id"), "care id"), ReadFloat(value.at("dirt"), "dirt"), viewers});
         }
         const int births = ReadInt(json.at("births"), "births");
         const int deaths = ReadInt(json.at("deaths"), "deaths");

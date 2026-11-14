@@ -226,6 +226,9 @@ private:
     void ReportEvents(std::size_t first);
     std::string AnimalLabel(AnimalId id) const;
     void RefreshRoster();
+    /// Tells the animals how many people watch each habitat (Animals::SetViewers): an input of
+    /// theirs, not saved, so it is told again when a zoo is loaded.
+    void TellViewers();
     Notification& Push(Severity severity, std::string text);
 
     const Catalog& catalog_;

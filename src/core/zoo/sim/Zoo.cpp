@@ -156,10 +156,7 @@ void Zoo::Step() {
     visitors_.Step(env, animals_);
     staff_.Step(env, animals_, visitors_);
     if (time_.tick % kTicksPerSecond == 0) {
-        // The animals know how many people are looking at them.
-        for (const Enclosure& enclosure : enclosures_.All()) {
-            animals_.SetViewers(enclosure.id, visitors_.Watching(enclosure.id));
-        }
+        TellViewers();
     }
 
     if (config_.autoCare) {
@@ -186,6 +183,13 @@ void Zoo::Step() {
 void Zoo::DrainEvents(std::vector<Event>& out) {
     out.insert(out.end(), events_.begin(), events_.end());
     events_.clear();
+}
+
+void Zoo::TellViewers() {
+    // The animals know how many people are looking at them.
+    for (const Enclosure& enclosure : enclosures_.All()) {
+        animals_.SetViewers(enclosure.id, visitors_.Watching(enclosure.id));
+    }
 }
 
 void Zoo::AutoCare(Env& env) {

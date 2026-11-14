@@ -205,7 +205,7 @@ void ZooGame::LookAtAnimals(float seconds) {
 void ZooGame::OpenBoard(const zoo::Prop& board) {
     // The board speaks of the enclosure it stands at: the nearest one that is lived in.
     const zoo::Enclosure* home = nullptr;
-    float nearest = 30.0f;
+    float nearest = 8.0f;
     for (const zoo::Enclosure& enclosure : zoo_->Habitats().All()) {
         const float distance = DistanceToTiles(board.position, enclosure.min, enclosure.max);
         if (distance >= nearest)
@@ -218,7 +218,15 @@ void ZooGame::OpenBoard(const zoo::Prop& board) {
         }
     }
     if (home == nullptr) {
-        visit_.Flash("This board is still blank", 2.5f);
+        BoardText text;
+        text.title = zoo_->Config().name;
+        text.latin = "Welcome to the zoo";
+        text.facts = {"Follow the paths to the animal habitats.",
+                      "Press M to see the visitor map.",
+                      "Press E beside a habitat board to learn about its animals."};
+        visit_.board = std::move(text);
+        visit_.window = VisitWindow::Board;
+        boardRead_ = board.position;
         return;
     }
     // Who lives there, by species; the board is about the most numerous one.

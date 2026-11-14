@@ -9,17 +9,21 @@
 #   tools/bench/bench.sh [frames]        from the repository's root; build/ must be built
 #
 # Each line of the result is one run of ./zoo-simulator --bench.
-set -u
-frames="${1:-600}"
+set -euo pipefail
+frames="${1:-300}"
+[[ "$frames" =~ ^[1-9][0-9]*$ ]] || { echo "frames must be positive" >&2; exit 2; }
 cd "$(dirname "$0")/../../build" || exit 1
+mkdir -p ../build-probe/bench-saves
 run() {
     local label="$1"
     shift
-    SDL_AUDIODRIVER=dummy SDL_VIDEODRIVER=offscreen ./zoo-simulator --bench --frames "$frames" "$@" 2>&1 |
+    while [ "$(free -g | awk 'NR==2{print $7}')" -lt 6 ]; do sleep 60; done
+    SDL_AUDIODRIVER=dummy SDL_VIDEODRIVER=offscreen timeout 900 ./zoo-simulator \
+        --saves ../build-probe/bench-saves --bench --frames "$frames" "$@" 2>&1 |
         grep -E "^zoo: bench|^zoo: visit: 800|^zoo: visitor zoo|^zoo: ground|^zoo: scenery" |
         sed "s|^zoo: |[$label] |"
 }
-echo "== places, as the game is played (the nearest 40 people avatars, the rest drawn flat)"
+echo "== places, as the game is played (the nearest 18 people avatars, the rest drawn flat)"
 run entrance
 for place in lion penguin elephant giraffe meerkat flamingo; do
     run "$place" --stand "habitat:$place"

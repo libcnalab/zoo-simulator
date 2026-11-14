@@ -67,7 +67,11 @@ void Animals::AdvanceLife(Env& env) {
     }
     animals_.reserve(animals_.size() + young);
 
-    for (Animal& animal : animals_) {
+    // push_back invalidates the old end iterator even after reserve; visit only the
+    // original residents, by index, while newborns are appended.
+    const std::size_t residents = animals_.size();
+    for (std::size_t index = 0; index < residents; ++index) {
+        Animal& animal = animals_[index];
         if (!animal.InWorld()) {
             continue;
         }
@@ -151,7 +155,22 @@ void Animals::AdvanceLife(Env& env) {
 
         if (animal.Pregnant() && env.time.tick >= animal.dueTick && animal.InWorld() &&
             animal.health > 0.0f) {
-            const int litterSize = rng_.RangeInt(species.litterMin, species.litterMax);
+            // Conception reserves a minimum litter for every pregnant mother. Keep those
+            // reservations when choosing this litter, including births due in later hours.
+            int group = 0;
+            for (const Animal& other : animals_) {
+                if (other.species == animal.species && other.home == animal.home) {
+                    ++group;
+                    if (other.id != animal.id && other.Pregnant())
+                        group += species.litterMin;
+                }
+            }
+            // A moved-in animal can consume the reserved room. As with a crated mother,
+            // wait until birth is possible instead of exceeding groupMax or losing the young.
+            if (species.groupMax - group < species.litterMin)
+                continue;
+            const int litterSize = std::min(rng_.RangeInt(species.litterMin, species.litterMax),
+                                             species.groupMax - group);
             const bool lost = rng_.Chance(tuning::kStillbirthBaseChance +
                                           (1.0f - animal.welfare) * tuning::kStillbirthPoorWelfareChance);
             animal.dueTick = 0;
