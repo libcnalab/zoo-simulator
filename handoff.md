@@ -32,9 +32,9 @@ uncommitted in `wt-life`.
   `wt-sound`, brief `brief-G7b-sound-finish.md`.
 - **Committed:** `6ce4b9a` S6b elephant second pass + S11/S11b giraffe (59 pipeline tests
   pass); `5dd19c4` S10 bears.
-- **Next:** G3 (bench done, `wt-built/build-probe/g3lead/`: before 24.8/27.4/28.0 ms mean frame,
-  after 35.1/24.2/26.7 ms, load 12-17: no measurable cost within the noise; the binaries
-  `wt-built/build/zoo-simulator-g3{before,after}` are there), then G4 (needs a full ctest and
+- **G3 buildings and barriers: taken** (commit after S7), with `FenceLook::inward` wired in
+  `SceneryRenderer.cpp`. Its leftovers are in `docs/CODEX_TASKS.md`.
+- **Next:** G4 (needs a full ctest and
   the 800-people bench), then G5. The stopped Codex work (G8c in `wt-life`, G2b, G6b, G1b) is
   now the lead's to finish by hand or to leave; G8 first, it is the most valuable.
 

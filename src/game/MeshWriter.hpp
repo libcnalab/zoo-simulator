@@ -28,6 +28,11 @@ enum class Pattern : std::uint8_t {
     Concrete,
     WireMesh,  ///< see-through chain-link (drawn blended, both sides)
     Glass,     ///< clear glass (drawn blended, both sides; the colour is ignored)
+    Pane,         ///< a glazed viewing panel: clear with streaks and a dusty foot (MeshWriter::Picture, 0..1)
+    WeldMesh,     ///< see-through welded mesh of square cells (drawn blended, both sides)
+    Signs,        ///< the sheet of printed signs (SignTextures; MeshWriter::Picture with a sign's corner)
+    Sheeting,     ///< corrugated roofing sheet: ribs along v
+    Rock,         ///< bedded rock: strata across v, lichen
     LeafSpray,    ///< a twig's worth of leaves, cut out (MeshWriter::Card; texture coordinates 0..1)
     NeedleSpray,  ///< a conifer bough, cut out (the same)
     Count
@@ -98,6 +103,11 @@ public:
                    bool ridgeAlongX);
     /// A four-sided pyramid (hip) roof.
     void HipRoof(float minX, float maxX, float minZ, float maxZ, float eavesY, float topY);
+    /// A flat quad that shows a piece of a picture, seen from one side: a and b are the lower
+    /// corners, c and d the upper ones (counter-clockwise from outside); (u0, v0) is the picture's
+    /// corner at d and (u1, v1) the one at b, as they are (no scale in metres).
+    void Picture(const Vector3& a, const Vector3& b, const Vector3& c, const Vector3& d, float u0, float v0,
+                 float u1, float v1);
 
     bool Empty() const { return mesh.indices.empty(); }
 

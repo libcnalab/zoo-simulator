@@ -6,6 +6,8 @@
 #include <numbers>
 #include <string_view>
 
+#include "RockModels.hpp"
+#include "SignTextures.hpp"
 #include "zoo/base/Rng.hpp"
 
 namespace zoogame {
@@ -491,35 +493,78 @@ void Fern(Maker& k) {
 }
 
 void Rocks(Maker& k, Pattern pattern, float squash, float lumpiness, int extra) {
-    MeshWriter& stone = k.m.Use(k.def.color, pattern);
+    // Stone is cut in beds and facets, the beds of all the pieces of one outcrop dipping the
+    // same way; only ice keeps its own finish.
+    MeshWriter& stone = k.m.Use(k.def.color, pattern == Pattern::Stone ? Pattern::Rock : pattern);
     const float r = k.def.radiusM;
     const float H = k.H * squash;
-    stone.Blob(Vector3(0.0f, H * 0.3f, 0.0f), Vector3(r * k.R(0.85f, 1.0f), H * 0.7f, r * k.R(0.7f, 0.95f)),
-               k.Seed(), lumpiness, 9, 6, 0.45f);
+    const float dip = k.R(-0.16f, 0.16f);
+    const float rx = r * k.R(0.85f, 1.0f);
+    const float rz = r * k.R(0.7f, 0.95f);
+    const float taper = k.R(0.4f, 0.6f);
+    Crag(stone, Vector3(0.0f, 0.0f, 0.0f), Vector3(rx, H, rz), k.Seed(),
+         {.sides = 9, .tiers = 3, .rugged = lumpiness, .dip = dip, .taper = taper, .sink = 0.3f});
     for (int i = 0; i < extra; ++i) {
         const float angle = k.R(0.0f, 2.0f * kPi);
         const float size = r * k.R(0.35f, 0.55f);
-        stone.Blob(Polar(angle, r * k.R(0.6f, 0.85f), size * 0.25f),
-                   Vector3(size, size * k.R(0.6f, 0.9f) * squash, size), k.Seed(), lumpiness, 7, 5, 0.4f);
+        const float away = r * k.R(0.7f, 0.95f);
+        const float tall = size * k.R(0.7f, 1.1f) * squash;
+        Crag(stone, Polar(angle, away), Vector3(size, tall, size * 0.85f), k.Seed(),
+             {.sides = 6, .tiers = 2, .rugged = lumpiness, .dip = dip, .taper = 0.5f, .sink = 0.2f});
+    }
+    // What has broken off lies round its foot.
+    for (int i = 0; i < 4; ++i) {
+        const float angle = k.R(0.0f, 2.0f * kPi);
+        const float size = r * k.R(0.09f, 0.17f);
+        const float away = r * k.R(1.0f, 1.3f);
+        Crag(stone, Polar(angle, away), Vector3(size, size * 0.8f, size), k.Seed(),
+             {.sides = 5, .tiers = 1, .rugged = 0.25f, .dip = 0.0f, .taper = 0.55f, .sink = 0.05f});
     }
 }
 
 /// A lying log with cut ends.
 void Log(Maker& k, const Vector3& from, const Vector3& to, float radius) {
     MeshWriter& bark = k.Bark();
-    bark.Tube(from, to, radius, radius * 0.9f, 8, false, false);
+    bark.Tube(from, to, radius, radius * 0.9f, 10, true, true);
+    // The sawn faces stand a little inside the bark, which shows round them as a ring.
     MeshWriter& cut = k.m.Use(kCutWood, Pattern::Wood);
     const Vector3 axis = Vector3::Normalize(to - from);
-    cut.Tube(to - axis * 0.01f, to, radius * 0.9f, radius * 0.9f, 8, false, true);
-    cut.Tube(from + axis * 0.01f, from, radius, radius, 8, false, true);
+    cut.Tube(to, to + axis * 0.006f, radius * 0.78f, radius * 0.78f, 10, false, true);
+    cut.Tube(from, from - axis * 0.006f, radius * 0.87f, radius * 0.87f, 10, false, true);
 }
 
 void FallenLog(Maker& k) {
-    const float r = 0.32f;
-    Log(k, Vector3(-1.4f, r * 0.85f, 0.0f), Vector3(1.4f, r * 0.8f, 0.1f), r);
+    const float r = k.R(0.26f, 0.36f);
+    const float half = k.R(1.15f, 1.5f);
+    const float skew = k.R(-0.15f, 0.15f);
+    const bool uprooted = k.R(0.0f, 1.0f) < 0.5f;
+    const Vector3 butt(-half, r * 0.85f, -skew);
+    Log(k, butt, Vector3(half, r * 0.78f, skew), r);
+    // Where the boughs were sawn off there are stubs, each with its own pale face; one
+    // bough was left on.
     MeshWriter& bark = k.Bark();
-    Limb(bark, Vector3(0.5f, r, 0.0f), Vector3(0.9f, r + 0.6f, -0.45f), 0.09f, 0.05f, 5);
-    Limb(bark, Vector3(-0.6f, r, 0.0f), Vector3(-0.8f, r + 0.35f, 0.5f), 0.08f, 0.05f, 5);
+    MeshWriter& cut = k.m.Use(kCutWood, Pattern::Wood);
+    for (int i = 0; i < 3; ++i) {
+        const float x = half * (-0.55f + 0.55f * static_cast<float>(i) + k.R(-0.12f, 0.12f));
+        const float lean = k.R(-1.2f, 1.2f);
+        const float reach = i == 1 ? k.R(0.55f, 0.85f) : k.R(0.12f, 0.28f);
+        const float thick = k.R(0.06f, 0.1f);
+        const Vector3 out(k.R(-0.25f, 0.25f), std::cos(lean), std::sin(lean));
+        const Vector3 root(x, r * 0.8f + out.Y * r * 0.7f, skew * x / half + out.Z * r * 0.7f);
+        const Vector3 tip = root + out * reach;
+        bark.Tube(root, tip, thick, thick * 0.8f, 6, false, false);
+        cut.Tube(tip, tip + Vector3::Normalize(out) * 0.005f, thick * 0.8f, thick * 0.8f, 6, false, true);
+    }
+    if (uprooted) {
+        // It fell with its roots: they stand up in a plate at the butt.
+        for (int i = 0; i < 6; ++i) {
+            const float angle = 2.0f * kPi * static_cast<float>(i) / 6.0f + k.R(-0.3f, 0.3f);
+            const float reach = r * k.R(1.7f, 2.5f);
+            Vector3 tip = butt + Vector3(-k.R(0.1f, 0.4f), std::cos(angle) * reach, std::sin(angle) * reach);
+            tip.Y = std::max(tip.Y, 0.03f);
+            Limb(bark, butt + Vector3(0.12f, 0.0f, 0.0f), tip, r * 0.42f, 0.03f, 5);
+        }
+    }
 }
 
 void LogPile(Maker& k) {
@@ -585,6 +630,10 @@ void HayRack(Maker& k) {
     // A little roof keeps the hay dry.
     MeshWriter& roof = k.m.Use({0.3f, 0.2f, 0.14f}, Pattern::Planks);
     roof.GableRoof(-0.95f, 0.95f, -0.7f, 0.7f, 2.0f, 2.4f, true, 0.05f);
+    // What the animals pulled out lies under it, and a salt lick sits in a holder on one leg.
+    hay.Blob(Vector3(0.1f, -0.03f, 0.35f), Vector3(0.75f, 0.14f, 0.5f), k.Seed(), 0.3f, 8, 4, 0.2f);
+    k.Steel().BoxAt(0.83f, -0.45f, 0.86f, 0.16f, 0.03f, 0.16f);
+    k.m.Use({0.8f, 0.76f, 0.66f}, Pattern::Plain).BoxAt(0.83f, -0.45f, 0.89f, 0.11f, 0.15f, 0.11f);
 }
 
 void Trough(Maker& k) {
@@ -694,6 +743,19 @@ void ClimbingFrame(Maker& k) {
     MeshWriter& rope = k.m.Use(kRope, Pattern::Thatch);
     Limb(rope, Vector3(0.4f, 2.1f, -0.1f), Vector3(0.45f, 0.5f, -0.05f), 0.03f, 0.03f, 5);
     rope.Blob(Vector3(0.45f, 0.45f, -0.05f), Vector3(0.08f, 0.1f, 0.08f), 4, 0.0f, 5, 3);
+    // Braces keep it square, a pole to sit on juts from a corner, and a net of rope goes
+    // from the lower deck to the upper one.
+    timber.Beam(corner[0] + Vector3(0.0f, 0.15f, 0.0f), corner[1] + Vector3(0.0f, 2.0f, 0.0f), 0.07f, 0.07f);
+    timber.Beam(corner[2] + Vector3(0.0f, 0.1f, 0.0f), corner[1] + Vector3(0.0f, 1.05f, 0.0f), 0.07f, 0.07f);
+    timber.Tube(corner[1] + Vector3(-0.2f, 1.65f, 0.1f), Vector3(w + 1.25f, 1.55f, -w + 0.45f), 0.085f, 0.07f,
+                7, true, true);
+    const Vector3 low0(-0.95f, 1.2f, 0.75f), low1(-0.1f, 1.2f, 0.75f);
+    const Vector3 high0(-0.95f, 2.12f, 0.15f), high1(-0.1f, 2.12f, 0.15f);
+    for (int i = 0; i < 5; ++i) {
+        const float t = static_cast<float>(i) / 4.0f;
+        Limb(rope, Vector3::Lerp(low0, low1, t), Vector3::Lerp(high0, high1, t), 0.014f, 0.014f, 4);
+        Limb(rope, Vector3::Lerp(low0, high0, t), Vector3::Lerp(low1, high1, t), 0.014f, 0.014f, 4);
+    }
 }
 
 void TyreSwing(Maker& k) {
@@ -719,10 +781,19 @@ void TyreSwing(Maker& k) {
 }
 
 void TermiteMound(Maker& k) {
+    // Spires of baked earth, fluted and leaning on one another: not a heap.
     MeshWriter& earth = k.m.Use(k.def.color, Pattern::Plaster);
-    earth.Blob(Vector3(0.0f, 0.5f, 0.0f), Vector3(0.6f, 1.5f, 0.6f), k.Seed(), 0.3f, 9, 7, 0.35f);
-    earth.Blob(Vector3(0.35f, 0.3f, 0.2f), Vector3(0.32f, 0.9f, 0.32f), k.Seed(), 0.3f, 7, 5, 0.35f);
-    earth.Blob(Vector3(-0.3f, 0.25f, -0.25f), Vector3(0.28f, 0.7f, 0.28f), k.Seed(), 0.3f, 7, 5, 0.35f);
+    const float H = std::max(1.7f, k.H) * k.R(0.9f, 1.15f);
+    const float turn = k.R(0.0f, 2.0f * kPi);
+    Crag(earth, Vector3(0.0f, 0.0f, 0.0f), Vector3(0.6f, H, 0.52f), k.Seed(),
+         {.sides = 7, .tiers = 4, .rugged = 0.2f, .dip = 0.0f, .taper = 0.2f, .sink = 0.2f});
+    const float tall[3] = {0.62f, 0.45f, 0.28f};
+    for (int i = 0; i < 3; ++i) {
+        const float angle = turn + 2.1f * static_cast<float>(i) + k.R(-0.3f, 0.3f);
+        const float girth = 0.36f - 0.05f * static_cast<float>(i);
+        Crag(earth, Polar(angle, 0.42f), Vector3(girth, H * tall[i], girth), k.Seed(),
+             {.sides = 6, .tiers = 3, .rugged = 0.24f, .dip = 0.0f, .taper = 0.22f, .sink = 0.2f});
+    }
 }
 
 void IceBlock(Maker& k) {
@@ -738,43 +809,70 @@ void IceBlock(Maker& k) {
 
 void Bench(Maker& k) {
     MeshWriter& slats = k.m.Use(k.def.color, Pattern::Wood);
-    for (int i = 0; i < 4; ++i) {
-        slats.BoxAt(0.0f, -0.16f + 0.11f * static_cast<float>(i), 0.43f, 1.5f, 0.035f, 0.09f);
+    // The seat is 0.45 m off the ground: five slats with gaps for the rain.
+    for (int i = 0; i < 5; ++i) {
+        slats.BoxAt(0.0f, -0.17f + 0.092f * static_cast<float>(i), 0.415f, 1.6f, 0.035f, 0.075f);
     }
+    // The back leans away from the sitter.
     for (int i = 0; i < 3; ++i) {
-        const float y = 0.6f + 0.13f * static_cast<float>(i);
-        slats.Beam(Vector3(-0.75f, y, -0.22f - 0.03f * static_cast<float>(i)),
-                   Vector3(0.75f, y, -0.22f - 0.03f * static_cast<float>(i)), 0.03f, 0.1f);
+        const float y = 0.6f + 0.125f * static_cast<float>(i);
+        const float z = -0.25f - 0.035f * static_cast<float>(i);
+        slats.Beam(Vector3(-0.8f, y, z), Vector3(0.8f, y, z), 0.03f, 0.095f);
     }
     MeshWriter& iron = k.m.Use(kDarkSteel, Pattern::Metal);
     for (int side = -1; side <= 1; side += 2) {
-        const float x = 0.62f * static_cast<float>(side);
-        iron.BoxAt(x, 0.17f, -0.2f, 0.05f, 0.63f, 0.05f);
-        iron.BoxAt(x, -0.2f, -0.2f, 0.05f, 1.15f, 0.05f);
-        iron.Beam(Vector3(x, 0.41f, -0.22f), Vector3(x, 0.41f, 0.2f), 0.05f, 0.04f);
-        iron.Beam(Vector3(x, 0.64f, -0.2f), Vector3(x, 0.64f, 0.2f), 0.05f, 0.03f);  // arm rest
+        const float x = 0.68f * static_cast<float>(side);
+        iron.BoxAt(x, 0.19f, -0.2f, 0.05f, 0.85f, 0.05f);  // front leg, up to the arm rest
+        iron.Beam(Vector3(x, -0.2f, -0.2f), Vector3(x, 0.95f, -0.35f), 0.05f, 0.05f);  // back leg
+        iron.Beam(Vector3(x, 0.395f, -0.24f), Vector3(x, 0.395f, 0.21f), 0.05f, 0.04f);
+        iron.Beam(Vector3(x, 0.655f, -0.28f), Vector3(x, 0.655f, 0.24f), 0.06f, 0.03f);  // arm rest
+        iron.BoxAt(x, 0.19f, 0.0f, 0.1f, 0.015f, 0.1f);
+        iron.BoxAt(x, -0.2f, 0.0f, 0.1f, 0.015f, 0.1f);
+    }
+    iron.Beam(Vector3(-0.68f, 0.14f, 0.0f), Vector3(0.68f, 0.14f, 0.0f), 0.03f, 0.03f);
+    if (k.R(0.0f, 1.0f) < 0.4f) {
+        // Somebody gave this one: a small plate on the back says who.
+        k.m.Use({0.85f, 0.82f, 0.7f}, Pattern::Plain)
+            .Box(Vector3(-0.09f, 0.825f, -0.305f), Vector3(0.09f, 0.875f, -0.3f));
     }
 }
 
 void PicnicTable(Maker& k) {
+    // Planks with gaps between them: the top at table height, the seats at 0.45 m.
     MeshWriter& wood = k.m.Use(k.def.color, Pattern::Planks);
-    wood.BoxAt(0.0f, 0.0f, 0.72f, 1.8f, 0.05f, 0.8f);
-    wood.BoxAt(0.0f, -0.72f, 0.42f, 1.8f, 0.05f, 0.28f);
-    wood.BoxAt(0.0f, 0.72f, 0.42f, 1.8f, 0.05f, 0.28f);
+    for (int i = 0; i < 5; ++i) {
+        wood.BoxAt(0.0f, -0.32f + 0.16f * static_cast<float>(i), 0.71f, 1.8f, 0.045f, 0.15f);
+    }
+    for (int side = -1; side <= 1; side += 2) {
+        for (int i = 0; i < 2; ++i) {
+            wood.BoxAt(0.0f, static_cast<float>(side) * (0.66f + 0.15f * static_cast<float>(i)), 0.405f, 1.8f,
+                       0.045f, 0.14f);
+        }
+    }
     MeshWriter& frame = k.Timber();
     for (int side = -1; side <= 1; side += 2) {
         const float x = 0.7f * static_cast<float>(side);
-        frame.Beam(Vector3(x, -0.3f, -0.8f), Vector3(x, 0.72f, -0.22f), 0.06f, 0.1f);
-        frame.Beam(Vector3(x, -0.3f, 0.8f), Vector3(x, 0.72f, 0.22f), 0.06f, 0.1f);
-        frame.Beam(Vector3(x, 0.4f, -0.85f), Vector3(x, 0.4f, 0.85f), 0.06f, 0.08f);
+        frame.Beam(Vector3(x, -0.3f, -0.8f), Vector3(x, 0.7f, -0.22f), 0.06f, 0.1f);
+        frame.Beam(Vector3(x, -0.3f, 0.8f), Vector3(x, 0.7f, 0.22f), 0.06f, 0.1f);
+        frame.Beam(Vector3(x, 0.37f, -0.85f), Vector3(x, 0.37f, 0.85f), 0.06f, 0.08f);
+        frame.Beam(Vector3(x, 0.68f, -0.38f), Vector3(x, 0.68f, 0.38f), 0.06f, 0.06f);
+        frame.Beam(Vector3(x * 0.96f, 0.37f, 0.0f), Vector3(x * 0.3f, 0.68f, 0.0f), 0.05f, 0.07f);
     }
 }
 
 void Bin(Maker& k) {
     MeshWriter& body = k.m.Use(k.def.color, Pattern::Metal);
-    body.Tube(Vector3(0.0f, -0.1f, 0.0f), Vector3(0.0f, 0.8f, 0.0f), 0.24f, 0.27f, 10, false, true);
+    body.Tube(Vector3(0.0f, 0.03f, 0.0f), Vector3(0.0f, 0.8f, 0.0f), 0.23f, 0.25f, 10, false, true);
+    // Timber staves round the steel liner, as park bins have them.
+    MeshWriter& staves = k.Timber();
+    for (int i = 0; i < 12; ++i) {
+        const float angle = 2.0f * kPi * static_cast<float>(i) / 12.0f;
+        staves.BoxAt(std::cos(angle) * 0.262f, std::sin(angle) * 0.262f, 0.0f, 0.11f, 0.78f, 0.03f,
+                     kPi * 0.5f - angle);
+    }
     MeshWriter& dark = k.m.Use(kDarkSteel, Pattern::Metal);
-    dark.Tube(Vector3(0.0f, 0.8f, 0.0f), Vector3(0.0f, 0.86f, 0.0f), 0.29f, 0.29f, 10, true, true);
+    dark.Tube(Vector3(0.0f, 0.78f, 0.0f), Vector3(0.0f, 0.86f, 0.0f), 0.295f, 0.295f, 10, true, true);
+    dark.Tube(Vector3(0.0f, 0.1f, 0.0f), Vector3(0.0f, 0.15f, 0.0f), 0.285f, 0.285f, 10, false, false);
     dark.Disc(Vector3(0.0f, 0.865f, 0.0f), 0.17f, 10);
     // A roof against rain on two stays.
     Limb(dark, Vector3(-0.22f, 0.86f, 0.0f), Vector3(-0.22f, 1.05f, 0.0f), 0.015f, 0.015f, 4);
@@ -785,27 +883,40 @@ void Bin(Maker& k) {
 void Lamp(Maker& k) {
     MeshWriter& iron = k.m.Use(k.def.color, Pattern::Metal);
     const float H = k.H;
-    iron.Tube(Vector3(0.0f, -0.3f, 0.0f), Vector3(0.0f, 0.5f, 0.0f), 0.09f, 0.06f, 8, false, false);
-    iron.Tube(Vector3(0.0f, 0.5f, 0.0f), Vector3(0.0f, H - 0.45f, 0.0f), 0.05f, 0.04f, 8, false, false);
-    iron.Tube(Vector3(0.0f, H - 0.45f, 0.0f), Vector3(0.0f, H - 0.38f, 0.0f), 0.04f, 0.14f, 8, false, false);
+    // A cast foot on its flange, the shaft, the bar a ladder leans on, and a lantern of four
+    // panes under a hood.
+    iron.Tube(Vector3(0.0f, -0.3f, 0.0f), Vector3(0.0f, 0.1f, 0.0f), 0.14f, 0.14f, 8, false, true);
+    iron.Tube(Vector3(0.0f, 0.1f, 0.0f), Vector3(0.0f, 0.62f, 0.0f), 0.09f, 0.058f, 8, false, false);
+    iron.Tube(Vector3(0.0f, 0.62f, 0.0f), Vector3(0.0f, 0.68f, 0.0f), 0.078f, 0.078f, 8, true, true);
+    iron.Tube(Vector3(0.0f, 0.62f, 0.0f), Vector3(0.0f, H - 0.48f, 0.0f), 0.052f, 0.038f, 8, false, false);
+    iron.Tube(Vector3(-0.24f, H - 0.72f, 0.0f), Vector3(0.24f, H - 0.72f, 0.0f), 0.014f, 0.014f, 5, true,
+              true);
+    iron.Tube(Vector3(0.0f, H - 0.48f, 0.0f), Vector3(0.0f, H - 0.4f, 0.0f), 0.04f, 0.13f, 8, false, false);
     MeshWriter& glass = k.m.Use({0.95f, 0.9f, 0.7f}, Pattern::Plain);
-    glass.Tube(Vector3(0.0f, H - 0.38f, 0.0f), Vector3(0.0f, H - 0.1f, 0.0f), 0.13f, 0.17f, 8, true, false);
-    iron.Tube(Vector3(0.0f, H - 0.1f, 0.0f), Vector3(0.0f, H, 0.0f), 0.21f, 0.03f, 8, true, true);
+    glass.Tube(Vector3(0.0f, H - 0.4f, 0.0f), Vector3(0.0f, H - 0.12f, 0.0f), 0.12f, 0.17f, 8, true, false);
+    for (int i = 0; i < 4; ++i) {
+        const float angle = kPi * 0.25f + kPi * 0.5f * static_cast<float>(i);
+        Limb(iron, Polar(angle, 0.125f, H - 0.4f), Polar(angle, 0.178f, H - 0.12f), 0.012f, 0.012f, 4);
+    }
+    iron.Tube(Vector3(0.0f, H - 0.12f, 0.0f), Vector3(0.0f, H - 0.02f, 0.0f), 0.22f, 0.05f, 8, true, true);
+    iron.Tube(Vector3(0.0f, H - 0.02f, 0.0f), Vector3(0.0f, H + 0.07f, 0.0f), 0.02f, 0.008f, 5, false, true);
 }
 
 void InfoBoard(Maker& k) {
+    // Two posts in the ground carry a framed, printed panel at reading height; it leans back
+    // a little from the reader, who stands on +z. Which of the printed panels it is, the
+    // seed says: the model does not know whose habitat it stands at.
     MeshWriter& wood = k.m.Use(k.def.color, Pattern::Wood);
-    wood.BoxAt(-0.42f, 0.0f, -0.3f, 0.08f, 1.55f, 0.08f);
-    wood.BoxAt(0.42f, 0.0f, -0.3f, 0.08f, 1.55f, 0.08f);
-    // A sloping reading desk towards +z.
-    k.m.SetLocal(Matrix::CreateRotationX(0.6f) * Matrix::CreateTranslation(0.0f, 1.12f, 0.08f));
-    wood.Box(Vector3(-0.55f, -0.03f, -0.36f), Vector3(0.55f, 0.03f, 0.36f));
-    k.m.Use({0.85f, 0.82f, 0.7f}, Pattern::Plain)
-        .Quad(Vector3(-0.5f, 0.035f, 0.31f), Vector3(0.5f, 0.035f, 0.31f), Vector3(0.5f, 0.035f, -0.2f),
-              Vector3(-0.5f, 0.035f, -0.2f));
-    k.m.Use({0.1f, 0.3f, 0.16f}, Pattern::Plain)
-        .Quad(Vector3(-0.5f, 0.035f, -0.2f), Vector3(0.5f, 0.035f, -0.2f), Vector3(0.5f, 0.035f, -0.32f),
-              Vector3(-0.5f, 0.035f, -0.32f));
+    wood.BoxAt(-0.63f, -0.02f, -0.3f, 0.09f, 1.98f, 0.09f);
+    wood.BoxAt(0.63f, -0.02f, -0.3f, 0.09f, 1.98f, 0.09f);
+    const auto panel = static_cast<Sign>(static_cast<int>(Sign::Board0) + static_cast<int>(k.Seed() % 4u));
+    const float w = 1.1f;
+    const float h = w / SignAspect(panel);
+    k.m.SetLocal(Matrix::CreateRotationX(-0.14f) * Matrix::CreateTranslation(0.0f, 0.78f, 0.04f));
+    wood.Box(Vector3(-0.585f, -0.05f, -0.03f), Vector3(0.585f, h + 0.05f, 0.03f));
+    WriteSign(k.m, panel, Vector3(-w * 0.5f, 0.0f, 0.034f), Vector3(w * 0.5f, 0.0f, 0.034f),
+              Vector3(w * 0.5f, h, 0.034f), Vector3(-w * 0.5f, h, 0.034f));
+    wood.Box(Vector3(-0.68f, h + 0.05f, -0.1f), Vector3(0.68f, h + 0.09f, 0.11f));
     k.m.ClearLocal();
 }
 
@@ -831,6 +942,7 @@ void Fountain(Maker& k) {
     const float r = k.def.radiusM;
     MeshWriter& stone = k.m.Use(kStone, Pattern::Stone);
     Ring(stone, Vector3(0.0f, 0.0f, 0.0f), r, -0.3f, 0.5f, 0.2f, 16);
+    Ring(stone, Vector3(0.0f, 0.0f, 0.0f), r + 0.06f, 0.5f, 0.57f, 0.32f, 16);  // the coping one sits on
     stone.Disc(Vector3(0.0f, 0.05f, 0.0f), r - 0.1f, 16);
     stone.Tube(Vector3(0.0f, 0.05f, 0.0f), Vector3(0.0f, 1.3f, 0.0f), 0.2f, 0.13f, 10, false, false);
     stone.Tube(Vector3(0.0f, 1.3f, 0.0f), Vector3(0.0f, 1.45f, 0.0f), 0.13f, 0.6f, 12, false, false);

@@ -407,6 +407,22 @@ void MeshWriter::HipRoof(float minX, float maxX, float minZ, float maxZ, float e
     Quad({minX, e, minZ}, {maxX, e, minZ}, {maxX, e, maxZ}, {minX, e, maxZ});
 }
 
+void MeshWriter::Picture(const Vector3& a, const Vector3& b, const Vector3& c, const Vector3& d, float u0,
+                         float v0, float u1, float v1) {
+    const Vector3 cross = Vector3::Cross(b - a, d - a);
+    const float area = cross.Length();
+    if (area < 1e-9f) {
+        return;
+    }
+    const Vector3 normal = cross / area;
+    const std::uint32_t ia = Vertex(a, normal, u0, v1);
+    const std::uint32_t ib = Vertex(b, normal, u1, v1);
+    const std::uint32_t ic = Vertex(c, normal, u1, v0);
+    const std::uint32_t id = Vertex(d, normal, u0, v0);
+    Face(ia, ib, ic);
+    Face(ia, ic, id);
+}
+
 MeshWriter& ModelBuilder::Use(const zoo::Color3& color, Pattern pattern) {
     const Finish finish{color, pattern};
     for (ModelPart& part : parts_) {

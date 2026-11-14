@@ -5,6 +5,8 @@
 #include <cmath>
 #include <numbers>
 
+#include "RockModels.hpp"
+#include "SignTextures.hpp"
 #include "zoo/world/World.hpp"
 
 namespace zoogame {
@@ -31,6 +33,7 @@ const zoo::Color3 kSteel{0.36f, 0.38f, 0.4f};
 const zoo::Color3 kBrick{0.42f, 0.2f, 0.13f};
 const zoo::Color3 kGateGreen{0.07f, 0.2f, 0.12f};
 const zoo::Color3 kCream{0.85f, 0.8f, 0.62f};
+const zoo::Color3 kStraw{0.66f, 0.55f, 0.24f};
 
 enum class Side { Front, Back, Right, Left };
 
@@ -92,6 +95,74 @@ void Window(const Shell& k, float x, float y0, float w, float h) {
     k.m.Use(kPane, Pattern::Plain)
         .Quad({x - w * 0.5f, y0, z}, {x + w * 0.5f, y0, z}, {x + w * 0.5f, y0 + h, z},
               {x - w * 0.5f, y0 + h, z});
+    // Somebody has pulled a blind half down in one window out of three, so that a row of
+    // them is not a row of the same hole.
+    const int which = static_cast<int>(std::floor(x * 1.7f + k.wx * 3.1f + 40.0f)) % 3;
+    if (which == 0 && h > 0.8f) {
+        const float drop =
+            h * (0.25f + 0.1f * static_cast<float>(static_cast<int>(std::floor(x + 40.0f)) % 3));
+        k.m.Use(kCream, Pattern::Plain)
+            .Quad({x - w * 0.5f, y0 + h - drop, z + 0.01f}, {x + w * 0.5f, y0 + h - drop, z + 0.01f},
+                  {x + w * 0.5f, y0 + h, z + 0.01f}, {x - w * 0.5f, y0 + h, z + 0.01f});
+    }
+}
+
+/// A printed sign on a wall: its middle at x, its foot at y0, `w` wide, on a board of the
+/// building's colour that stands out from the wall.
+void NameSign(const Shell& k, Sign sign, float x, float y0, float w, const zoo::Color3& board) {
+    const float h = w / SignAspect(sign);
+    const float out = kPlinthOut + 0.05f;
+    const float face = out + 0.004f;
+    k.m.Use(board, Pattern::Plain)
+        .Box({x - w * 0.5f - 0.05f, y0 - 0.05f, 0.0f}, {x + w * 0.5f + 0.05f, y0 + h + 0.05f, out});
+    WriteSign(k.m, sign, {x - w * 0.5f, y0, face}, {x + w * 0.5f, y0, face}, {x + w * 0.5f, y0 + h, face},
+              {x - w * 0.5f, y0 + h, face});
+}
+
+/// A lantern on a bracket over a door.
+void Lantern(const Shell& k, float x, float y) {
+    MeshWriter& iron = k.m.Use(kSteel, Pattern::Metal);
+    iron.Box({x - 0.02f, y + 0.2f, 0.0f}, {x + 0.02f, y + 0.24f, 0.26f});
+    iron.Box({x - 0.09f, y + 0.16f, 0.14f}, {x + 0.09f, y + 0.2f, 0.32f});
+    k.m.Use(kCream, Pattern::Plain).Box({x - 0.06f, y, 0.17f}, {x + 0.06f, y + 0.16f, 0.29f});
+}
+
+/// The building's name as its board prints it; false for a building without one.
+bool NameOf(const zoo::BuildingDef& def, Sign& sign) {
+    if (def.id == "ice_cream_stand") {
+        sign = Sign::IceCream;
+        return true;
+    }
+    switch (def.role) {
+        case zoo::BuildingRole::FoodStall:
+            sign = Sign::Burgers;
+            return true;
+        case zoo::BuildingRole::DrinkStall:
+            sign = Sign::Drinks;
+            return true;
+        case zoo::BuildingRole::Restroom:
+            sign = Sign::Toilets;
+            return true;
+        case zoo::BuildingRole::GiftShop:
+            sign = Sign::GiftShop;
+            return true;
+        case zoo::BuildingRole::StaffRoom:
+            sign = Sign::Staff;
+            return true;
+        case zoo::BuildingRole::VetClinic:
+            sign = Sign::Vet;
+            return true;
+        case zoo::BuildingRole::EducationCenter:
+            sign = Sign::Education;
+            return true;
+        case zoo::BuildingRole::ResearchCenter:
+            sign = Sign::Research;
+            return true;
+        case zoo::BuildingRole::AnimalShelter:
+        case zoo::BuildingRole::Count:
+            break;
+    }
+    return false;
 }
 
 /// A dark hole in a wall with a frame around it: a doorway one cannot look
@@ -127,8 +198,8 @@ void Door(const Shell& k, float x, float w, float h, const zoo::Color3& color) {
         .Box({x - w * 0.5f - 0.25f, -0.6f, 0.0f}, {x + w * 0.5f + 0.25f, 0.06f, 0.55f});
 }
 
-/// A sign board: a coloured panel with a pale band.
-void Sign(const Shell& k, float x, float y0, float w, float h, const zoo::Color3& color) {
+/// A board without lettering: a coloured panel with a pale band.
+void Board(const Shell& k, float x, float y0, float w, float h, const zoo::Color3& color) {
     const float out = kPlinthOut + 0.04f;
     k.m.Use(color, Pattern::Plain).Box({x - w * 0.5f, y0, 0.0f}, {x + w * 0.5f, y0 + h, out});
     k.m.Use(kCream, Pattern::Plain)
@@ -162,7 +233,35 @@ float Gable(const Shell& k, const zoo::Color3& color, Pattern pattern, float pit
     } else {
         cap.Beam({0.0f, ridge, -k.wz - overhang}, {0.0f, ridge, k.wz + overhang}, 0.2f, 0.1f);
     }
+    // Along the ridge `a`, across it `c`: the same carpentry whichever way the roof runs.
+    const float length = (alongX ? k.wx : k.wz) + overhang;
+    const auto at = [alongX](float a, float y, float c) {
+        return alongX ? Vector3(a, y, c) : Vector3(c, y, a);
+    };
+    MeshWriter& gutter = k.m.Use(kSteel, Pattern::Metal);
+    for (const float s : {-1.0f, 1.0f}) {
+        // Barge boards close the roof's edge over the gables.
+        for (const float end : {-1.0f, 1.0f}) {
+            cap.Beam(at(end * length, eaves - 0.05f, s * (span + overhang)),
+                     at(end * length, ridge - 0.02f, 0.0f), 0.045f, 0.2f);
+        }
+        // A gutter under each eaves, and a pipe from it back to the wall and down to the ground.
+        const float edge = s * (span + overhang + 0.06f);
+        gutter.Beam(at(-length, eaves - 0.07f, edge), at(length, eaves - 0.07f, edge), 0.12f, 0.08f);
+        const float pipe = s * (length - overhang - 0.14f);
+        const float wall = s * (span + kPlinthOut + 0.05f);
+        gutter.Tube(at(pipe, eaves - 0.1f, edge), at(pipe, eaves - 0.1f - overhang * 0.8f, wall), 0.035f,
+                    0.035f, 6, false, false);
+        gutter.Tube(at(pipe, eaves - 0.1f - overhang * 0.8f, wall), at(pipe, 0.12f, wall), 0.035f, 0.035f, 6,
+                    false, false);
+    }
     return ridge;
+}
+
+/// Straw trodden out of a doorway.
+void StrawAt(const Shell& k, float x, float reach) {
+    k.m.Use(kStraw, Pattern::Thatch)
+        .Blob({x, -0.06f, k.wz + reach * 0.5f}, {reach * 1.2f, 0.17f, reach}, 31u, 0.25f, 8, 4, 0.2f);
 }
 
 void Hip(const Shell& k, const zoo::Color3& color, Pattern pattern, float pitch, float overhang) {
@@ -207,26 +306,53 @@ void House(const Shell& k) {
     const float ridge =
         Gable(k, def.roofColor, Pattern::RoofTiles, 0.62f, 0.4f, def.wallColor, Pattern::Plaster);
     const bool shop = def.role == zoo::BuildingRole::GiftShop;
-    const float winY = shop ? 0.75f : 1.0f;
-    const float winW = shop ? 1.5f : 1.1f;
-    const float winH = shop ? 1.5f : 1.15f;
+    // A toilet block has its windows small and high.
+    const bool closet = def.role == zoo::BuildingRole::Restroom;
+    const float winY = shop ? 0.75f : closet ? 1.6f : 1.0f;
+    const float winW = shop ? 1.5f : closet ? 0.8f : 1.1f;
+    const float winH = shop ? 1.5f : closet ? 0.55f : 1.15f;
     const float topH = std::min(winH, k.H - winY - 0.45f);
+    Sign name = Sign::Staff;
+    const bool named = NameOf(def, name);
 
     k.Enter(Side::Front);
     for (int i = 0; i < k.Slots(Side::Front); ++i) {
         const float x = k.SlotX(Side::Front, i);
         if (i == def.doorOffset) {
             Door(k, x, 1.05f, 2.1f, kDoorWood);
-            Sign(k, x, 2.28f, 1.5f, std::min(0.42f, k.H - 2.4f), RoleColor(def.role));
+            const float signH = std::min(0.42f, k.H - 2.45f);
+            if (named) {
+                NameSign(k, name, x, 2.3f, std::min(1.9f, signH * SignAspect(name)), RoleColor(def.role));
+            } else {
+                Board(k, x, 2.28f, 1.5f, signH, RoleColor(def.role));
+            }
+            Lantern(k, x - 0.85f, 1.95f);
             if (def.role == zoo::BuildingRole::VetClinic) {
-                // A red cross on the white board.
-                const float out = kPlinthOut + 0.055f;
+                // A red cross on a white plate beside the door.
+                const float out = kPlinthOut + 0.02f;
+                k.m.Use(kTrim, Pattern::Plain).Box({x + 0.72f, 1.35f, 0.0f}, {x + 1.12f, 1.75f, out});
                 MeshWriter& red = k.m.Use({0.6f, 0.03f, 0.03f}, Pattern::Plain);
-                red.Box({x - 0.05f, 2.32f, out}, {x + 0.05f, 2.66f, out + 0.01f});
-                red.Box({x - 0.17f, 2.44f, out}, {x + 0.17f, 2.54f, out + 0.01f});
+                red.Box({x + 0.88f, 1.4f, out}, {x + 0.96f, 1.7f, out + 0.01f});
+                red.Box({x + 0.77f, 1.51f, out}, {x + 1.07f, 1.59f, out + 0.01f});
             }
         } else {
             Window(k, x, winY, winW, topH);
+            if (shop) {
+                // What the shop sells, on a shelf behind the glass.
+                const float z0 = 0.025f;
+                k.m.Use(kTimber, Pattern::Wood)
+                    .Box({x - winW * 0.5f, winY + 0.42f, z0}, {x + winW * 0.5f, winY + 0.46f, z0 + 0.03f});
+                for (int item = 0; item < 5; ++item) {
+                    const float ix = x - winW * 0.5f + 0.18f + 0.28f * static_cast<float>(item);
+                    const float tall = 0.16f + 0.07f * static_cast<float>((item * 7 + i * 3) % 4);
+                    MeshWriter& toy = k.m.Use(item % 3 == 0   ? RoleColor(def.role)
+                                              : item % 3 == 1 ? kCream
+                                                              : kStraw,
+                                              Pattern::Plain);
+                    toy.Box({ix - 0.08f, winY + 0.46f, z0}, {ix + 0.08f, winY + 0.46f + tall, z0 + 0.03f});
+                    toy.Box({ix - 0.1f, winY + 0.04f, z0}, {ix + 0.1f, winY + 0.1f + tall, z0 + 0.03f});
+                }
+            }
         }
     }
     k.Leave();
@@ -237,7 +363,8 @@ void House(const Shell& k) {
             if (side == Side::Back && k.Slots(side) > 3 && i % 2 == 1) {
                 continue;
             }
-            Window(k, k.SlotX(side, i), 1.0f, 1.1f, std::min(1.15f, k.H - 1.45f));
+            Window(k, k.SlotX(side, i), closet ? 1.6f : 1.0f, closet ? 0.8f : 1.1f,
+                   closet ? 0.55f : std::min(1.15f, k.H - 1.45f));
         }
         k.Leave();
     }
@@ -254,26 +381,64 @@ void House(const Shell& k) {
 void Barn(const Shell& k) {
     const zoo::BuildingDef& def = k.def;
     Walls(k, def.wallColor, Pattern::Planks, 0.5f);
+    // Animal houses are roofed with corrugated sheet.
     const float ridge =
-        Gable(k, def.roofColor, Pattern::RoofTiles, 0.55f, 0.45f, def.wallColor, Pattern::Planks);
+        Gable(k, def.roofColor, Pattern::Sheeting, 0.55f, 0.45f, def.wallColor, Pattern::Planks);
     const float slitY = k.H - 1.15f;
 
     k.Enter(Side::Front);
     for (int i = 0; i < k.Slots(Side::Front); ++i) {
         const float x = k.SlotX(Side::Front, i);
         if (i == def.doorOffset) {
-            Opening(k, x, 0.0f, 1.7f, std::min(k.H - 0.6f, 3.0f), kTimber, Pattern::Wood);
+            const float doorH = std::min(k.H - 0.6f, 3.0f);
+            Opening(k, x, 0.0f, 1.7f, doorH, kTimber, Pattern::Wood);
+            // The rail the sliding door hangs from, the door itself pushed in behind the
+            // boards; steel angles where hides rub the jambs.
+            MeshWriter& steel = k.m.Use(kSteel, Pattern::Metal);
+            steel.Box({x - 1.05f, doorH + 0.16f, 0.0f}, {x + 1.05f, doorH + 0.22f, kPlinthOut + 0.12f});
+            for (const float s : {-1.0f, 1.0f}) {
+                steel.Box({x + s * 0.85f - 0.03f, 0.0f, kPlinthOut + 0.07f},
+                          {x + s * 0.85f + 0.03f, 1.3f, kPlinthOut + 0.1f});
+            }
         } else {
             Window(k, x, slitY, 0.95f, 0.5f);
         }
     }
     k.Leave();
+    StrawAt(k, k.doorX, 0.8f);
     for (const Side side : {Side::Back, Side::Right, Side::Left}) {
         k.Enter(side);
         for (int i = 0; i < k.Slots(side); ++i) {
-            Window(k, k.SlotX(side, i), slitY, 0.95f, 0.5f);
+            const float x = k.SlotX(side, i);
+            Window(k, x, slitY, 0.95f, 0.5f);
+            if (side == Side::Back && i == 0) {
+                // The keepers' door.
+                Door(k, x, 0.9f, 2.05f, kSteel);
+            }
         }
         k.Leave();
+    }
+    // A loading hatch into the loft in one gable, under the beam of its hoist.
+    const bool ridgeAlongX = k.wx >= k.wz;
+    const float span = ridgeAlongX ? k.wz : k.wx;
+    if (span > 2.2f && k.H > 3.2f) {
+        k.Enter(ridgeAlongX ? Side::Right : Side::Back);
+        const float out = kPlinthOut + 0.03f;
+        k.m.Use(kTimber, Pattern::Wood).Box({-0.5f, k.H - 0.1f, 0.0f}, {0.5f, k.H + 0.8f, out});
+        k.m.Use(Scaled(def.wallColor, 0.7f), Pattern::Planks)
+            .Box({-0.42f, k.H - 0.03f, out}, {0.42f, k.H + 0.72f, out + 0.02f});
+        k.m.Use(kTimber, Pattern::Wood).Box({-0.07f, k.H + 0.92f, -0.3f}, {0.07f, k.H + 1.06f, 0.8f});
+        k.Leave();
+    }
+    if (k.wx > 3.0f || k.wz > 3.0f) {
+        // Ventilators ride the ridge of the bigger houses.
+        MeshWriter& vent = k.m.Use(kSteel, Pattern::Metal);
+        for (const float t : {-0.45f, 0.45f}) {
+            const float vx = ridgeAlongX ? t * k.wx : 0.0f;
+            const float vz = ridgeAlongX ? 0.0f : t * k.wz;
+            vent.BoxAt(vx, vz, ridge - 0.05f, 0.5f, 0.3f, 0.5f);
+            vent.HipRoof(vx - 0.34f, vx + 0.34f, vz - 0.34f, vz + 0.34f, ridge + 0.25f, ridge + 0.42f);
+        }
     }
     // Corner boards.
     MeshWriter& timber = k.m.Use(kTimber, Pattern::Wood);
@@ -300,6 +465,11 @@ void Hut(const Shell& k) {
     k.Enter(Side::Front);
     Opening(k, 0.0f, 0.0f, 2.0f * k.wx - 0.8f, std::min(k.H - 0.5f, 2.1f), kTimber, Pattern::Wood);
     k.Leave();
+    StrawAt(k, 0.0f, 0.9f);
+    // The thatch is bound into a knot at the top, and a pole ties the eaves together.
+    const float top = k.H + std::min(k.wx, k.wz) * 0.8f + 0.25f;
+    k.m.Use(k.def.roofColor, Pattern::Thatch)
+        .Tube({0.0f, top - 0.25f, 0.0f}, {0.0f, top + 0.22f, 0.0f}, 0.2f, 0.09f, 7);
     MeshWriter& timber = k.m.Use(kTimber, Pattern::Wood);
     for (const float sx : {-1.0f, 1.0f}) {
         for (const float sz : {-1.0f, 1.0f}) {
@@ -320,6 +490,24 @@ void Kiosk(const Shell& k) {
     const float hatch = 2.0f * k.wx - 0.5f;
     Opening(k, 0.0f, 1.02f, hatch, 1.1f, kSteel, Pattern::Metal);
     k.m.Use(kTimber, Pattern::Wood).Box({-k.wx + 0.05f, 0.93f, 0.0f}, {k.wx - 0.05f, 1.01f, 0.42f});
+    {
+        // What stands behind the hatch: a shelf of cups and bottles, the till on the counter.
+        const float z0 = kPlinthOut + 0.025f;
+        MeshWriter& steel = k.m.Use(kSteel, Pattern::Metal);
+        steel.Box({-hatch * 0.5f, 1.62f, z0}, {hatch * 0.5f, 1.65f, z0 + 0.03f});
+        steel.Box({hatch * 0.5f - 0.42f, 1.02f, z0}, {hatch * 0.5f - 0.1f, 1.3f, z0 + 0.04f});
+        const int items = std::max(3, static_cast<int>(hatch / 0.2f));
+        for (int i = 0; i < items; ++i) {
+            const float ix = -hatch * 0.5f + 0.12f +
+                             (hatch - 0.24f) * static_cast<float>(i) / static_cast<float>(items - 1);
+            const float tall = 0.13f + 0.05f * static_cast<float>((i * 5) % 3);
+            k.m.Use(i % 3 == 0   ? def.roofColor
+                    : i % 3 == 1 ? kCream
+                                 : kStraw,
+                    Pattern::Plain)
+                .Box({ix - 0.05f, 1.65f, z0}, {ix + 0.05f, 1.65f + tall, z0 + 0.03f});
+        }
+    }
     // The awning in stripes of the stall's colour and cream.
     const float y0 = std::min(k.H - 0.25f, 2.65f);
     const int stripes = std::max(3, static_cast<int>(std::lround(2.0f * k.wx / 0.42f)) | 1);
@@ -337,16 +525,38 @@ void Kiosk(const Shell& k) {
         steel.Tube({sx * (k.wx - 0.04f), y0 - 0.9f, 0.04f}, {sx * (k.wx - 0.04f), y0 - 0.4f, 1.03f}, 0.015f,
                    0.015f, 4, false, false);
     }
-    // The sign on the roof.
+    // The sign on the roof says what the stall sells.
     const float signW = 2.0f * k.wx * 0.85f;
-    k.m.Use(def.roofColor, Pattern::Plain)
-        .Box({-signW * 0.5f, k.H + 0.18f, -0.14f}, {signW * 0.5f, k.H + 0.95f, 0.0f});
-    k.m.Use(kCream, Pattern::Plain)
-        .Box({-signW * 0.38f, k.H + 0.4f, 0.0f}, {signW * 0.38f, k.H + 0.75f, 0.012f});
+    Sign name = Sign::Menu;
+    if (NameOf(def, name)) {
+        const float w = std::min(signW - 0.12f, 2.6f);
+        const float h = w / SignAspect(name);
+        k.m.Use(def.roofColor, Pattern::Plain)
+            .Box({-signW * 0.5f, k.H + 0.18f, -0.14f}, {signW * 0.5f, k.H + 0.32f + h, 0.0f});
+        WriteSign(k.m, name, {-w * 0.5f, k.H + 0.25f, 0.006f}, {w * 0.5f, k.H + 0.25f, 0.006f},
+                  {w * 0.5f, k.H + 0.25f + h, 0.006f}, {-w * 0.5f, k.H + 0.25f + h, 0.006f});
+    }
     k.Leave();
+
+    // The prices hang on both flanks, where the queue stands.
+    for (const Side side : {Side::Right, Side::Left}) {
+        k.Enter(side);
+        const float out = kPlinthOut + 0.03f;
+        k.m.Use(kTimber, Pattern::Wood).Box({-0.42f, 1.22f, 0.0f}, {0.42f, 1.9f, out});
+        WriteSign(k.m, Sign::Menu, {-0.39f, 1.27f, out + 0.004f}, {0.39f, 1.27f, out + 0.004f},
+                  {0.39f, 1.855f, out + 0.004f}, {-0.39f, 1.855f, out + 0.004f});
+        k.Leave();
+    }
 
     k.Enter(Side::Back);
     Door(k, 0.0f, 0.85f, 2.0f, kSteel);
+    {
+        const float out = kPlinthOut + 0.065f;
+        const float w = 0.4f;
+        const float h = w / SignAspect(Sign::StaffOnly);
+        WriteSign(k.m, Sign::StaffOnly, {-w * 0.5f, 1.45f, out}, {w * 0.5f, 1.45f, out},
+                  {w * 0.5f, 1.45f + h, out}, {-w * 0.5f, 1.45f + h, out});
+    }
     k.Leave();
 }
 
@@ -388,8 +598,25 @@ void Pavilion(const Shell& k) {
         const float z = -k.wz + 0.2f;
         k.m.Use(boards[i % 3], Pattern::Plain)
             .Box({x - 0.75f, floor + 0.9f, z}, {x + 0.75f, floor + 2.2f, z + 0.04f});
-        k.m.Use(kCream, Pattern::Plain)
-            .Box({x - 0.6f, floor + 1.05f, z + 0.04f}, {x + 0.6f, floor + 1.7f, z + 0.05f});
+        const auto panel = static_cast<Sign>(static_cast<int>(Sign::Board0) + i % 4);
+        const float w = 1.36f;
+        const float h = w / SignAspect(panel);
+        const float y0 = floor + 1.03f;
+        WriteSign(k.m, panel, {x - w * 0.5f, y0, z + 0.045f}, {x + w * 0.5f, y0, z + 0.045f},
+                  {x + w * 0.5f, y0 + h, z + 0.045f}, {x - w * 0.5f, y0 + h, z + 0.045f});
+    }
+    // The hall's name hangs from the front beam, over the way in.
+    {
+        const float w = std::min(3.0f, 2.0f * k.wx - 1.0f);
+        const float h = w / SignAspect(Sign::Education);
+        const float y0 = k.H - 0.3f - h;
+        const float z = k.wz + 0.03f;
+        k.m.Use(RoleColor(def.role), Pattern::Plain)
+            .Box({k.doorX - w * 0.5f - 0.06f, y0 - 0.06f, k.wz - 0.04f},
+                 {k.doorX + w * 0.5f + 0.06f, k.H - 0.26f, z});
+        WriteSign(k.m, Sign::Education, {k.doorX - w * 0.5f, y0, z + 0.004f},
+                  {k.doorX + w * 0.5f, y0, z + 0.004f}, {k.doorX + w * 0.5f, y0 + h, z + 0.004f},
+                  {k.doorX - w * 0.5f, y0 + h, z + 0.004f});
     }
     for (const float sx : {-1.0f, 1.0f}) {
         const float x = sx * k.wx * 0.45f;
@@ -399,25 +626,30 @@ void Pavilion(const Shell& k) {
     }
 }
 
-/// A den of piled rock with a dark mouth: cool in summer.
+/// A den of rockwork with a dark mouth: cool in summer. Built as zoos build them, in beds
+/// of sprayed concrete over a chamber, so it is a crag and not a heap of boulders.
 void Cave(const Shell& k) {
-    MeshWriter& rock = k.m.Use(k.def.wallColor, Pattern::Stone);
+    MeshWriter& rock = k.m.Use(k.def.wallColor, Pattern::Rock);
     const float w = k.W * 0.5f;
     const float d = k.D * 0.5f;
-    rock.Blob({0.0f, 0.0f, -d * 0.12f}, {w * 0.95f, k.H, d * 0.86f}, 811u, 0.2f, 14, 9, 0.3f);
-    rock.Blob({-w * 0.55f, 0.0f, d * 0.2f}, {w * 0.45f, k.H * 0.55f, d * 0.6f}, 812u, 0.25f, 9, 6, 0.4f);
-    rock.Blob({w * 0.6f, 0.0f, -d * 0.3f}, {w * 0.42f, k.H * 0.62f, d * 0.55f}, 813u, 0.25f, 9, 6, 0.4f);
-    rock.Blob({w * 0.1f, k.H * 0.55f, -d * 0.35f}, {w * 0.5f, k.H * 0.6f, d * 0.5f}, 814u, 0.22f, 9, 6, 1.0f);
-    // The mouth: a porch of three rocks around darkness.
+    Crag(rock, {0.0f, 0.0f, -d * 0.12f}, {w * 0.95f, k.H, d * 0.86f}, 811u,
+         {.sides = 11, .tiers = 4, .rugged = 0.12f, .dip = 0.06f, .taper = 0.5f, .sink = 1.2f});
+    Crag(rock, {-w * 0.6f, 0.0f, d * 0.25f}, {w * 0.45f, k.H * 0.55f, d * 0.6f}, 812u,
+         {.sides = 7, .tiers = 3, .rugged = 0.16f, .dip = -0.08f, .taper = 0.5f, .sink = 1.2f});
+    Crag(rock, {w * 0.62f, 0.0f, -d * 0.2f}, {w * 0.42f, k.H * 0.66f, d * 0.6f}, 813u,
+         {.sides = 7, .tiers = 3, .rugged = 0.16f, .dip = 0.1f, .taper = 0.45f, .sink = 1.2f});
+    // The mouth: two piers and a slab laid over them, around darkness.
     const float x = k.doorX;
     const float z = d - 0.55f;
     const float mouthW = 1.9f;
     const float mouthH = std::min(1.9f, k.H * 0.55f);
-    rock.Blob({x - mouthW * 0.5f - 0.45f, 0.5f, z - 0.25f}, {0.75f, mouthH * 0.95f, 0.85f}, 815u, 0.22f, 8, 6,
-              0.6f);
-    rock.Blob({x + mouthW * 0.5f + 0.45f, 0.5f, z - 0.25f}, {0.75f, mouthH * 0.9f, 0.85f}, 816u, 0.22f, 8, 6,
-              0.6f);
-    rock.Blob({x, mouthH + 0.45f, z - 0.3f}, {mouthW * 0.5f + 1.0f, 0.75f, 0.95f}, 817u, 0.2f, 9, 5, 1.0f);
+    for (const float s : {-1.0f, 1.0f}) {
+        Crag(rock, {x + s * (mouthW * 0.5f + 0.5f), 0.0f, z - 0.2f}, {0.6f, mouthH + 0.25f, 0.85f},
+             815u + static_cast<std::uint32_t>(s > 0.0f ? 1 : 0),
+             {.sides = 6, .tiers = 3, .rugged = 0.12f, .dip = 0.0f, .taper = 0.75f, .sink = 1.2f});
+    }
+    rock.Beam({x - mouthW * 0.5f - 1.1f, mouthH + 0.4f, z - 0.25f},
+              {x + mouthW * 0.5f + 1.1f, mouthH + 0.52f, z - 0.3f}, 1.5f, 0.6f);
     // Whatever shows between the porch and the hill behind it is rock too.
     rock.Box({x - mouthW * 0.5f - 0.5f, -0.5f, -d * 0.2f},
              {x + mouthW * 0.5f + 0.5f, mouthH + 0.5f, z - 0.3f});
@@ -469,9 +701,67 @@ void BuildEntranceArch(ModelBuilder& model, float width) {
     // The board between the pillars, the same on both faces.
     const float boardLo = 4.0f;
     model.Use(kGateGreen, Pattern::Plain).Box({-px, boardLo, -0.22f}, {px, top, 0.22f});
-    MeshWriter& cream = model.Use(kCream, Pattern::Plain);
-    cream.Box({-half * 0.72f, boardLo + 0.3f, 0.22f}, {half * 0.72f, top - 0.3f, 0.235f});
-    cream.Box({-half * 0.72f, boardLo + 0.3f, -0.235f}, {half * 0.72f, top - 0.3f, -0.22f});
+    {
+        // The zoo's name, to those who come and to those who leave.
+        const float h = top - boardLo - 0.24f;
+        const float w = std::min(h * SignAspect(Sign::Zoo), 2.0f * half * 0.8f);
+        const float y0 = boardLo + 0.12f;
+        const float y1 = y0 + w / SignAspect(Sign::Zoo);
+        WriteSign(model, Sign::Zoo, {-w * 0.5f, y0, 0.226f}, {w * 0.5f, y0, 0.226f}, {w * 0.5f, y1, 0.226f},
+                  {-w * 0.5f, y1, 0.226f});
+        WriteSign(model, Sign::Zoo, {w * 0.5f, y0, -0.226f}, {-w * 0.5f, y0, -0.226f},
+                  {-w * 0.5f, y1, -0.226f}, {w * 0.5f, y1, -0.226f});
+    }
+    // A lantern on each face of each pillar.
+    MeshWriter& lantern = model.Use(kGateGreen, Pattern::Metal);
+    MeshWriter& glow = model.Use(kCream, Pattern::Plain);
+    for (const float s : {-1.0f, 1.0f}) {
+        for (const float f : {-1.0f, 1.0f}) {
+            const float z = f * (pillar * 0.5f + 0.2f);
+            lantern.Beam({s * px, 3.52f, f * pillar * 0.5f}, {s * px, 3.52f, z}, 0.04f, 0.04f);
+            lantern.BoxAt(s * px, z, 3.44f, 0.24f, 0.05f, 0.24f);
+            glow.BoxAt(s * px, z, 3.14f, 0.17f, 0.3f, 0.17f);
+            lantern.BoxAt(s * px, z, 3.1f, 0.2f, 0.04f, 0.2f);
+        }
+    }
+    // The ticket office: a lodge built against the wall outside, beside the gateway, its
+    // window to the forecourt under a tiled lean-to.
+    {
+        const float x0 = px + pillar * 0.5f + 0.05f;
+        const float x1 = x0 + 2.9f;
+        const float z0 = 0.16f;
+        const float z1 = 2.1f;
+        const float eave = 2.55f;
+        // The walls stop under the roof's lower edge; the cheeks above them follow its fall.
+        const float wallTop = eave + 0.17f;
+        const float lean = eave + 0.95f;
+        brick.Box({x0, 0.4f, z0}, {x1, wallTop, z1});
+        brick.Tri({x1, wallTop, z1}, {x1, wallTop, z0}, {x1, lean - 0.03f, z0});
+        brick.Tri({x0, wallTop, z0}, {x0, wallTop, z1}, {x0, lean - 0.03f, z0});
+        cap.Box({x0 - 0.05f, -1.2f, z0}, {x1 + 0.05f, 0.4f, z1 + 0.05f});
+        MeshWriter& tiles = model.Use({0.3f, 0.12f, 0.08f}, Pattern::RoofTiles);
+        tiles.QuadTwoSided({x0 - 0.3f, eave, z1 + 0.55f}, {x1 + 0.3f, eave, z1 + 0.55f},
+                           {x1 + 0.3f, lean, z0}, {x0 - 0.3f, lean, z0});
+        // A fascia and a gutter along the drip edge, and the flashing where the roof meets the wall.
+        model.Use(kTrim, Pattern::Plain)
+            .Box({x0 - 0.3f, eave - 0.13f, z1 + 0.5f}, {x1 + 0.3f, eave - 0.01f, z1 + 0.54f});
+        MeshWriter& gutter = model.Use(kSteel, Pattern::Metal);
+        gutter.Box({x0 - 0.3f, eave - 0.1f, z1 + 0.54f}, {x1 + 0.3f, eave - 0.02f, z1 + 0.63f});
+        gutter.Box({x0 - 0.3f, lean - 0.02f, z0 - 0.01f}, {x1 + 0.3f, lean + 0.1f, z0 + 0.05f});
+        const float mid = (x0 + x1) * 0.5f;
+        const float face = z1 + 0.012f;
+        model.Use(kDark, Pattern::Plain)
+            .Quad({mid - 0.75f, 1.05f, face}, {mid + 0.75f, 1.05f, face}, {mid + 0.75f, 1.95f, face},
+                  {mid - 0.75f, 1.95f, face});
+        MeshWriter& trim = model.Use(kTrim, Pattern::Plain);
+        trim.Box({mid - 0.85f, 0.95f, z1}, {mid + 0.85f, 1.05f, z1 + 0.3f});
+        trim.Box({mid - 0.85f, 1.95f, z1}, {mid + 0.85f, 2.05f, z1 + 0.06f});
+        trim.Box({mid - 0.85f, 1.05f, z1}, {mid - 0.75f, 1.95f, z1 + 0.06f});
+        trim.Box({mid + 0.75f, 1.05f, z1}, {mid + 0.85f, 1.95f, z1 + 0.06f});
+        trim.Box({mid - 0.03f, 1.05f, z1}, {mid + 0.03f, 1.95f, z1 + 0.05f});
+        // The keepers of the till come and go by the end.
+        model.Use(kGateGreen, Pattern::Planks).Box({x1, 0.42f, z0 + 0.5f}, {x1 + 0.04f, 2.4f, z0 + 1.4f});
+    }
     // A tiled roof over all of it.
     const float eaves = top + 0.14f;
     const float ridge = eaves + 0.75f;

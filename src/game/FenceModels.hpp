@@ -20,6 +20,10 @@ struct FenceLook {
     bool heavy = false;
     /// The low rail the public leans on before a planted stand-off: a broad top board.
     bool handrail = false;
+    /// Which side of a panel from a to b the animals are on, for the overhang of heavy mesh:
+    /// +1 towards Across(a, b) (Up x (b - a)), -1 away from it, 0 when nobody said (the
+    /// overhang then leans both ways). SceneryRenderer sets it from the public side.
+    int inward = 0;
 };
 
 /// The look of a fence of the world; false when there is no such fence kind.

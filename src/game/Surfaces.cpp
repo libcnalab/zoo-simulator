@@ -8,7 +8,9 @@
 #include "CnaEngine/Core/Noise.hpp"
 #include "CnaEngine/Graphics/Image.hpp"
 
+#include "BarrierTextures.hpp"
 #include "FoliageTextures.hpp"
+#include "SignTextures.hpp"
 
 namespace zoogame {
 
@@ -57,10 +59,37 @@ float Shade(Pattern pattern, float u, float v) {
         case Pattern::Plain:
         case Pattern::WireMesh:
         case Pattern::Glass:
+        case Pattern::Pane:
+        case Pattern::WeldMesh:
+        case Pattern::Signs:
         case Pattern::LeafSpray:
         case Pattern::NeedleSpray:
         case Pattern::Count:
             return 1.0f;
+        case Pattern::Sheeting: {
+            // Sixteen ribs a repeat: the crest catches the light, the trough lies in shade,
+            // and rain has drawn faint runs down them.
+            const float rib = 0.5f - 0.5f * std::cos(u * 16.0f * 6.2831853f);
+            const float runs = Cloud(u, v, 32, 2, 2, 131);
+            return (0.62f + 0.38f * rib) * (0.9f + 0.1f * runs);
+        }
+        case Pattern::Rock: {
+            // Beds a hand to a forearm thick, their joints dark and wandering a little, a
+            // few cracks across them, and pale lichen in patches.
+            const float wander = 0.035f * (Cloud(u, v, 3, 2, 2, 141) - 0.5f);
+            const float bed = (v + wander) * 6.0f;
+            const int layer = static_cast<int>(std::floor(bed)) % 6;
+            const float within = bed - std::floor(bed);
+            const float joint = within < 0.07f ? 0.62f : (within < 0.16f ? 0.86f : 1.0f);
+            const float tone = 0.78f + 0.22f * Noise::Random2(layer, 0, 142);
+            const float grain = Cloud(u, v, 16, 16, 3, 143);
+            const float cracks = Cloud(u, v, 5, 5, 2, 144);
+            const float crack = std::abs(cracks - 0.5f) < 0.012f ? 0.7f : 1.0f;
+            const float lichen = Cloud(u, v, 5, 5, 3, 145);
+            const float patch = std::clamp((lichen - 0.6f) * 6.0f, 0.0f, 1.0f);
+            const float rock = (0.52f + 0.3f * grain) * tone * joint * crack;
+            return std::clamp(rock + 0.3f * patch, 0.0f, 1.0f);
+        }
         case Pattern::Wood: {
             const float grain = Cloud(u, v, 24, 2, 2, 11);
             const float figure = Cloud(u, v, 4, 2, 2, 12);
@@ -244,6 +273,12 @@ float Surfaces::PatternMetres(Pattern pattern) {
             return 3.0f;
         case Pattern::WireMesh:
             return 0.72f;
+        case Pattern::WeldMesh:
+            return 0.6f;  // eight cells of 7.5 cm
+        case Pattern::Sheeting:
+            return 1.2f;
+        case Pattern::Rock:
+            return 1.6f;
         default:
             return 1.0f;
     }
@@ -344,6 +379,21 @@ Surfaces::Surfaces(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device) 
         mark.doubleSided = true;
         mark.baseTexture = patterns_[0].get();
     }
+
+    // What is built: the sheet of signs, the pane of a viewing window, welded mesh.
+    {
+        const SignSheet sheet = PaintSigns();
+        Image image(sheet.size, sheet.size);
+        image.Bytes() = sheet.rgba;
+        signs_ = CnaEngine::Graphics::UploadTexture(device, image, {.srgb = true});
+        const auto upload = [&device](const BarrierImage& from) {
+            Image to(from.width, from.height);
+            to.Bytes() = from.rgba;
+            return CnaEngine::Graphics::UploadTexture(device, to, {.srgb = true});
+        };
+        pane_ = upload(ViewingPane());
+        weld_ = upload(WeldedMesh());
+    }
 }
 
 void Surfaces::Animate(double seconds) {
@@ -355,6 +405,10 @@ void Surfaces::Animate(double seconds) {
 }
 
 const Material& Surfaces::Get(const Finish& finish) {
+    if (finish.pattern == Pattern::Signs || finish.pattern == Pattern::Pane ||
+        finish.pattern == Pattern::WeldMesh) {
+        return Built(finish);
+    }
     if (finish.pattern == Pattern::WireMesh) {
         return WireMesh(finish.color);
     }
@@ -407,6 +461,40 @@ const Material& Surfaces::WireMesh(const zoo::Color3& color) {
         slot->baseTexture = wire_.get();
         slot->sampler = &SamplerState::AnisotropicWrap;
         const float scale = 1.0f / PatternMetres(Pattern::WireMesh);  // eight wire cells per repeat
+        slot->uvScale = Vector2(scale, scale);
+    }
+    return *slot;
+}
+
+const Material& Surfaces::Built(const Finish& finish) {
+    auto& slot = built_[Key(finish.color, static_cast<std::uint32_t>(finish.pattern))];
+    if (slot) {
+        return *slot;
+    }
+    slot = std::make_unique<Material>();
+    slot->shading = CnaEngine::Graphics::ShadingModel::PhysicallyBased;
+    slot->diffuseColor = ToVector(finish.color);
+    if (finish.pattern == Pattern::Signs) {
+        // Painted board: opaque, and it casts its shadow like the plate it is fixed to.
+        slot->name = "signs";
+        slot->roughness = 0.6f;
+        slot->baseTexture = signs_.get();
+        slot->sampler = &SamplerState::AnisotropicClamp;
+    } else if (finish.pattern == Pattern::Pane) {
+        slot->name = "pane";
+        slot->blend = CnaEngine::Graphics::BlendMode::AlphaBlend;
+        slot->roughness = 0.06f;
+        slot->doubleSided = true;
+        slot->baseTexture = pane_.get();
+        slot->sampler = &SamplerState::AnisotropicClamp;
+    } else {
+        slot->name = "welded mesh";
+        slot->blend = CnaEngine::Graphics::BlendMode::AlphaBlend;
+        slot->roughness = 0.5f;
+        slot->doubleSided = true;
+        slot->baseTexture = weld_.get();
+        slot->sampler = &SamplerState::AnisotropicWrap;
+        const float scale = 1.0f / PatternMetres(Pattern::WeldMesh);
         slot->uvScale = Vector2(scale, scale);
     }
     return *slot;

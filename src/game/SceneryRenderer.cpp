@@ -46,6 +46,29 @@ bool IsEntrance(zoo::Fence fence) {
     return fence.kind == zoo::kPerimeterFence && fence.gate;
 }
 
+/// Where the public stands: a path or the planted strip before a barrier.
+bool PublicSide(const zoo::World& world, zoo::TileCoord tile) {
+    if (!world.InBounds(tile)) {
+        return false;
+    }
+    const zoo::Tile& t = world.At(tile);
+    return t.path != zoo::PathKind::None || t.standOff;
+}
+
+/// FenceLook::inward for the panel of `edge`: the overhang leans away from the public side,
+/// 0 when both or neither side is public. Across(a, b) points to the tile north of a
+/// horizontal edge and east of a vertical one.
+int AnimalSide(const zoo::World& world, const zoo::EdgeRef& edge) {
+    const zoo::TileCoord across = edge.horizontal ? zoo::TileCoord{edge.x, edge.z - 1} : zoo::TileCoord{edge.x, edge.z};
+    const zoo::TileCoord behind = edge.horizontal ? zoo::TileCoord{edge.x, edge.z} : zoo::TileCoord{edge.x - 1, edge.z};
+    const bool publicAcross = PublicSide(world, across);
+    const bool publicBehind = PublicSide(world, behind);
+    if (publicAcross == publicBehind) {
+        return 0;
+    }
+    return publicBehind ? 1 : -1;
+}
+
 }  // namespace
 
 struct SceneryRenderer::Cell {
@@ -190,6 +213,9 @@ void SceneryRenderer::BuildFences(const zoo::World& world, Cell& cell) {
                 }
                 const Vector3 a = VertexAt(world, x, z);
                 const Vector3 b = horizontal ? VertexAt(world, x + 1, z) : VertexAt(world, x, z + 1);
+                if (look.heavy) {
+                    look.inward = AnimalSide(world, edge);
+                }
                 BuildFencePanel(model, look, a, b, fence.gate,
                                 Scramble(static_cast<std::uint32_t>(x), static_cast<std::uint32_t>(z),
                                          horizontal ? 1u : 2u));

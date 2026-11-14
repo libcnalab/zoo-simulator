@@ -55,15 +55,22 @@ public:
 private:
     using Texture = Microsoft::Xna::Framework::Graphics::Texture2D;
 
+    /// Pattern::Signs, Pattern::Pane and Pattern::WeldMesh: pictures of their own.
+    const CnaEngine::Graphics::Material& Built(const Finish& finish);
+
     std::array<std::unique_ptr<Texture>, static_cast<std::size_t>(Pattern::Count)> patterns_;
     std::unique_ptr<Texture> wire_;
     std::unique_ptr<Texture> leafSpray_;
     std::unique_ptr<Texture> needleSpray_;
+    std::unique_ptr<Texture> signs_;
+    std::unique_ptr<Texture> pane_;
+    std::unique_ptr<Texture> weld_;
     std::vector<std::unique_ptr<Texture>> ripples_;  ///< one loop of the water's surface
     double rippleTime_ = 0.0;
     std::map<std::uint32_t, std::unique_ptr<CnaEngine::Graphics::Material>> opaque_;
     std::map<std::uint32_t, std::unique_ptr<CnaEngine::Graphics::Material>> meshes_;
     std::map<std::uint32_t, std::unique_ptr<CnaEngine::Graphics::Material>> sprays_;
+    std::map<std::uint32_t, std::unique_ptr<CnaEngine::Graphics::Material>> built_;
     CnaEngine::Graphics::Material glass_;
     CnaEngine::Graphics::Material water_;
     std::array<CnaEngine::Graphics::Material, static_cast<std::size_t>(Mark::Count)> marks_;
