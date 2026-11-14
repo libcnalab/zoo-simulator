@@ -66,7 +66,9 @@ cmake -S . -B build -DZOO_LIBCNA_ROOT=$D -DCNA_ENGINE_ROOT=$D/cna-engine \
       -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_C_COMPILER_LAUNCHER=ccache
 ```
 
-`grep github.com/libcna build/CMakeCache.txt` must then show only the FNA3D repository URL.
+`tools/build/use-libcna-snapshot.sh . build build-probe/reconfigure.log` does the same for an existing
+build directory. `grep github.com/libcna build/CMakeCache.txt` must then show only the FNA3D
+repository URL.
 
 ```bash
 cmake -S . -B build -G Ninja \

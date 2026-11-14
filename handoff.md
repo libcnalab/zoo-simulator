@@ -109,7 +109,7 @@ Everything lives in `.codex-work/` (git-ignored):
   prepended to every brief. `brief-<id>.md` is the task, `report-<id>.md` the agent's final
   report, `log-<id>.txt` the Codex log.
 - Each task has a git worktree `wt-<name>` with its own Release `build/` (configured with
-  `-DFETCHCONTENT_SOURCE_DIR_FNA3D=<main>/build/_deps/fna3d-src`). Agents never commit; a
+  `-DFETCHCONTENT_SOURCE_DIR_FNA3D=<main>/build/_deps/fna3d-src`; since 2026-11-14 every build directory, the worktrees' too, points at the snapshot `~/deps/zoo-libcna/`, FNA3D included: `tools/build/use-libcna-snapshot.sh <source> <build> <log>` does it for another). Agents never commit; a
   follow-up task in the same worktree starts from a local **seed commit** that is never
   merged into main.
 - Codex run (in the background, then wait for the notification):
