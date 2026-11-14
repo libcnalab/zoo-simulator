@@ -6,6 +6,11 @@ For the next agent, who starts without this session's context. Read this file, t
 
 ## 0. Session of 2026-11-14 (live status; newest first, keep this section current)
 
+**Where the session stopped (owner's request, 2026-11-14): G8 finished and committed
+(`a08e4eb`), this file updated, `main` pushed to `origin` at the owner's explicit request (the
+"never push" rule of section 1 stands otherwise). Nothing is uncommitted in the main tree.
+Next: G5 keepers by hand, then G1b/G2b/G6b/G7 or leave them (see "Next" below).**
+
 **Owner's limits, tightened later on 2026-11-14: at most 2 CPUs for compiling
 (`--parallel 2`, `ctest -j2`), NO Codex agent and NO Claude subagents.** The lead does
 everything alone. (Section 1's "delegate to Codex" and "most parallel use possible" no longer
@@ -14,8 +19,8 @@ at Nov 18th, 2026 10:05 PM"), its report is empty; its last state is in `log-G8c
 `Meerkat Lookout: no place for sandstone_rock` failure in `VisitorZooPlan` it was fixing) and
 uncommitted in `wt-life`.
 
-- **G8 the zoo's plan: taken** (finished by hand by the lead from `wt-life`; commit after
-  `b2ebdd2`). Families with young in every social species (88 animals), hoofstock behind
+- **G8 the zoo's plan: taken** (finished by hand by the lead from `wt-life`; commit
+  `a08e4eb`). Families with young in every social species (88 animals), hoofstock behind
   `tall_cable_fence`/`paddock_rail`/`cable_barrier`, meerkat mound with a dish, lagoon with a
   0.3 m shelf (flamingos wade: seen), furnishing and groves that keep views and corridors
   open, a service apron to every keeper gate. Lead's own fixes: feeders searched in the front
@@ -25,7 +30,12 @@ uncommitted in `wt-life`.
   prop buckets on every feeding tick (fixed in `Objects.cpp`, hashes unchanged; fastest fill
   2.52 s before G8, 2.05 s after, `docs/VISIT_START.md`).
   Golden hashes re-recorded. `docs/VISITOR_ZOO.md` "The zoo's plan". `wt-life` has nothing
-  left to take. **Open problems 1-3 of section 5 are resolved by it** (re-measured).
+  left to take. Open problems 1 and 2 of section 5 are resolved by it (re-measured); 3 (the
+  meerkat's pond) is now a two-tile dish at minimum depth, not re-checked on a screenshot.
+  Still open from it (`docs/REALISM.md` "Open" 2): no dry moat in the catalog, 48 paved tiles
+  on 2 m walks, a slender tree may stand 1 m inside a barrier behind a strip (Elephant
+  Valley), six species' young drawn as scaled adults, bear cub models unused (bears are
+  pairs), area per animal an estimate. Full suite 221/221 (`ctest -j2`, 5 min 14 s).
 - **S7 big cats: taken** (commit after `5dd19c4`). Merged by hand over S10's `sculpt.py`: the
   big-cat coat path is opt-in through `data['source_material']` (bears and birds unchanged; a
   rebuilt bear cub matches its asset but for two tangent components, a rebuilt lion matches
@@ -93,9 +103,9 @@ Standing rules (from the owner, `../CLAUDE.md` and the agent's memory):
 
 ## 2. State of the main tree
 
-Branch `main`; the campaign's last code commit is `b8a1e9c` (2026-11-13), followed only by
-this file's commit; the working tree is clean. The core suite passes:
-`ctest --test-dir build -j6 --output-on-failure`, 201 tests, about 9 minutes. The animal
+Branch `main`; the last code commit is `a08e4eb` (G8, 2026-11-14), followed only by this
+file's commit, pushed to `origin/main`; the working tree is clean. The core suite passes:
+`ctest --test-dir build -j2 --output-on-failure`, 221 tests, about 5 minutes (2026-11-14). The animal
 pipeline's tests (74, about 10 minutes) passed at `faa4568`.
 
 Taken in this campaign (newest first; details in `docs/REALISM.md`, figures in the documents
@@ -160,7 +170,7 @@ G4, G5, then whatever of G2/G6/G7/G8 is usable; hashes last.
 | G2 plants (distance forms, palms, ferns, hedges) | `wt-plants`, base `0544337` | **Stopped by the API limit, no report.** Uncommitted work, last state "built cleanly", shots in `wt-plants/build-probe/`. | Read the diff and shots; finish or drop. Conflicts with G3 in `PropModels.cpp`. |
 | G6 reliability and sanitizer audit | `wt-audit`, base `0544337` | **Stopped by the API limit, no report.** It was correcting `docs/RELIABILITY.md`. | Read its diff; take tests and the document if sound. Add the lead's ASan smoke result: the game ran clean under ASan once (`--stand habitat:lion --frames 30`, `build-asan`). |
 | G7 audio measured audit | `wt-sound`, base `0544337` | **Stopped by the API limit, no report.** It was looking at spectrograms of a new set. | Read its diff and `build-probe/`; remember nobody can listen here. |
-| G8 zoo plan and young animals | `wt-life`, base `0544337` | **Stopped by the API limit, no report.** Diff so far: `data/construction/fences.json`, `src/core/zoo/sim/VisitorZoo.cpp` (+893/-240: among other things a lagoon with a 0.3 m shallow shelf and a deep heart), `tests/core/{CatalogTests,VisitorZooHabitatTests}.cpp`. | Most valuable of the four: the flamingos need its shallows, the keepers need gate approaches. Finish (young animals, keeper gates) and test; conflicts with G5 in `VisitorZoo.cpp`. |
+| G8 zoo plan and young animals | `wt-life`, base `0544337` | **Taken** by the lead by hand (`a08e4eb`, 2026-11-14). | Nothing left. G5 now has to fit G8's plan: drop `OpenKeeperLanes`, the gates have service aprons. |
 
 Old worktrees with nothing left to take: `wt-audio`, `wt-species`, `wt-vzoo`, `wt-world`,
 `wt-birds` (S9, taken), `wt-behave` (F4, taken; has `build-asan/`). Their `build*/`
@@ -170,7 +180,8 @@ Kept patches: `zebra.patch`, `birds.patch`, `giraffe.patch`, `S6-final.patch`, `
 
 ## 5. Open problems found by the lead
 
-1. **Animals stall in thickets** (measured, not fixed; `docs/ANIMAL_BEHAVIOUR.md` "In the
+1. **Animals stall in thickets** (since G8: 1.35 % instead of 5.4 %, the tiger's pocket gone,
+   one wolf 820 ticks; the navigator itself still knows no props. Original note: `docs/ANIMAL_BEHAVIOUR.md` "In the
    game"). 5.4 % of the ticks an animal is under way it does not move (3.0 % before F4); a
    tiger stands pinned between a `bamboo_clump` and a `tropical_fern` at (245.9, 52.4) for
    most of 6000 ticks. Cause: the navigator is tile-based and knows no props, while
@@ -180,10 +191,10 @@ Kept patches: `zebra.patch`, `birds.patch`, `giraffe.patch`, `S6-final.patch`, `
    (or `RoutinePlace`/`ClearPlace` in `AnimalHabitat.cpp` reject places in pockets and
    remember unreachable ones), then turn the probe into a regression test. The probe is
    `.codex-work/probe-stall-ZzProbeTests.cpp` (copy to `tests/core/` to run it:
-   `--gtest_filter='ZzProbe.*' --gtest_also_run_disabled_tests`). Re-measure after G2/G8,
-   which change the planting.
-2. **Flamingos keep to the bank** until the lagoon has shallows (G8). After G8, check
-   they stand in the 0.3 m shelf (`--stand habitat:flamingo --ticks 3000`).
+   `--gtest_filter='ZzProbe.*' --gtest_also_run_disabled_tests`). Re-measure after G2,
+   which changes the planting.)
+2. ~~Flamingos keep to the bank~~: resolved by G8, 11 of 12 stand in the 0.3 m shelf, seen
+   in the game.
 3. **Meerkat looked chest-deep at its pond** on a screenshot although the core keeps all
    meerkats on dry tiles: probably the bank slope; re-check after G1.
 4. No model has clips for preen, dust bathe, dig or sentry duty: those activities stand in
