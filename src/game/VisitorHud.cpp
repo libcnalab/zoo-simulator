@@ -275,8 +275,47 @@ void VisitorHud::Load(ui::Ui& ui, Visit& visit, const Box& box) {
     ui.ScrollEnd();
 }
 
+namespace {
+
+// The eyepieces of binoculars: two overlapping circles of sight, black about them. Drawn as
+// rows of black outside the circles, which the canvas does without a mask.
+void Eyepieces(ui::Ui& ui, float up) {
+    const Vector2 screen = ui.Screen();
+    const float eased = up * up * (3.0f - 2.0f * up);
+    // From beyond the screen's corners in to the eyepieces' rims as they come up to the eyes.
+    const float full = 0.5f * std::hypot(screen.X, screen.Y) + 40.0f;
+    const float radius = full + (0.47f * screen.Y - full) * eased;
+    const float apart = 0.36f * screen.Y * eased;
+    const float cy = 0.5f * screen.Y;
+    const float left = 0.5f * screen.X - apart;
+    const float right = 0.5f * screen.X + apart;
+    const ui::Rgba black = ui::Rgb(4, 5, 6, static_cast<int>(255.0f * std::min(1.0f, 1.6f * up)));
+    constexpr float kRow = 2.0f;
+    for (float y = 0.0f; y < screen.Y; y += kRow) {
+        const float dy = y + 0.5f * kRow - cy;
+        if (std::abs(dy) >= radius) {
+            ui.Paint().Fill({0.0f, y, screen.X, kRow}, black);
+            continue;
+        }
+        const float half = std::sqrt(radius * radius - dy * dy);
+        const float x0 = std::max(0.0f, left - half);
+        const float x1 = std::min(screen.X, right + half);
+        if (x0 > 0.0f)
+            ui.Paint().Fill({0.0f, y, x0, kRow}, black);
+        if (x1 < screen.X)
+            ui.Paint().Fill({x1, y, screen.X - x1, kRow}, black);
+        // Where the two circles do not overlap any more, a dark wedge between them.
+        if (left + half < right - half)
+            ui.Paint().Fill({left + half, y, right - half - (left + half), kRow}, black);
+    }
+}
+
+}  // namespace
+
 void VisitorHud::Walking(ui::Ui& ui, Visit& visit) {
     const Vector2 screen = ui.Screen();
+    if (visit.binocularsUp > 0.0f)
+        Eyepieces(ui, visit.binocularsUp);
     // A dot to aim with: where the eyes look.
     const Vector2 middle(std::round(0.5f * screen.X), std::round(0.5f * screen.Y));
     ui.Paint().Disc(middle, 2.6f, ui::Rgb(0, 0, 0, 70));
@@ -297,11 +336,12 @@ void VisitorHud::Walking(ui::Ui& ui, Visit& visit) {
         Card(ui, visit);
 
     visit.hintLeft = std::max(0.0f, visit.hintLeft - ui.Seconds());
-    if (visit.hintLeft > 0.0f && visit.window == VisitWindow::None)
+    if (visit.hintLeft > 0.0f && visit.window == VisitWindow::None && visit.binocularsUp <= 0.0f)
         KeyHints(ui, middle.X, screen.Y - 52.0f,
                  {{"W A S D", "Walk"},
                   {"Mouse", "Look around"},
                   {"Shift", "Walk / run"},
+                  {"B", "Binoculars"},
                   {"M", "Map"},
                   {"Esc", "Menu"}},
                  std::min(1.0f, visit.hintLeft / 1.5f));

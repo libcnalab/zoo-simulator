@@ -96,6 +96,11 @@ private:
     void LookAtAnimals(float seconds);
     void OpenBoard(const zoo::Prop& board);
     void BuildVisitMap();
+    /// How much nearer the binoculars bring things now: 1 without them, kBinocularPower raised.
+    float Magnification() const;
+    /// Binoculars of 7 x: what one buys for a zoo or for birds.
+    static constexpr float kBinocularPower = 7.0f;
+    float appliedMagnification_ = 1.0f;
     /// The places of the map one can go to straight away (VisitMap::places).
     void AddMapPlaces(VisitMap& map) const;
     void PrintVisitFigures(const char* when) const;

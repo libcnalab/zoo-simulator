@@ -192,6 +192,8 @@ void ZooGame::BeginWalk(const Pose& pose) {
     visit_.window = VisitWindow::None;
     visit_.hintLeft = 14.0f;
     visit_.running = false;
+    visit_.binoculars = false;
+    visit_.binocularsUp = 0.0f;
     freshZoo_ = false;
     sinceKept_ = 0.0;
     tickDebt_ = 0.0;
@@ -298,12 +300,19 @@ void ZooGame::ReadVisitSettings() {
             s.crowd = static_cast<int>(i);
 }
 
+float ZooGame::Magnification() const {
+    // Raised smoothly, the way the eyepieces come up to the eyes.
+    const float up = visit_.binocularsUp;
+    const float eased = up * up * (3.0f - 2.0f * up);
+    return 1.0f + (kBinocularPower - 1.0f) * eased;
+}
+
 void ZooGame::ApplyVisitSettings(bool store) {
     using Microsoft::Xna::Framework::MathHelper;
     const VisitSettings& s = visit_.settings;
     auto& camera = MainCamera();
-    camera.SetPerspective(MathHelper::ToRadians(s.fieldOfView), camera.AspectRatio(), camera.NearPlane(),
-                          camera.FarPlane());
+    camera.SetPerspective(MathHelper::ToRadians(s.fieldOfView / Magnification()), camera.AspectRatio(),
+                          camera.NearPlane(), camera.FarPlane());
     walker_.SetHeadBob(s.headBob ? 0.012f : 0.0f);
     sounds_->SetVolume(s.volume);
     if (zoo_) {
@@ -457,6 +466,29 @@ void ZooGame::UpdateVisit(double seconds) {
         // Over the map the mouse points; it does not turn the head.
         if (visit_.window == VisitWindow::Map)
             look = Vector2(0.0f, 0.0f);
+
+        // Binoculars: B raises and lowers them, the right mouse button holds them up. They are
+        // used standing still, and the head turns as much less as the view is narrower.
+        const bool free = visit_.window == VisitWindow::None;
+        if (controls_.KeyboardFree() && controls_.Pressed(Keys::B) && free)
+            visit_.binoculars = !visit_.binoculars;
+        if (!free)
+            visit_.binoculars = false;
+        const bool raised = visit_.binoculars || (free && controls_.Down(MouseKey::Right));
+        visit_.binocularsUp = std::clamp(visit_.binocularsUp + (raised ? 4.0f : -5.0f) * dt, 0.0f, 1.0f);
+        const float magnified = Magnification();
+        if (visit_.binocularsUp > 0.0f || magnified != appliedMagnification_) {
+            auto& camera = MainCamera();
+            camera.SetPerspective(
+                Microsoft::Xna::Framework::MathHelper::ToRadians(visit_.settings.fieldOfView / magnified),
+                camera.AspectRatio(), camera.NearPlane(), camera.FarPlane());
+            appliedMagnification_ = magnified;
+        }
+        if (visit_.binocularsUp > 0.5f) {
+            input.ahead = 0.0f;
+            input.right = 0.0f;
+        }
+        look = look * (1.0f / magnified);
         const float turn = kTurnPerPixel * visit_.settings.sensitivity;
         input.turn = look.X * turn;
         input.tilt = look.Y * turn * (visit_.settings.invertY ? -1.0f : 1.0f);

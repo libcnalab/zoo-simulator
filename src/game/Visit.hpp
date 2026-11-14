@@ -159,6 +159,10 @@ struct Visit {
     float hintLeft = 0.0f;
     /// Shift switches between walking and running; it is not held.
     bool running = false;
+    /// B switches the binoculars on and off (the right mouse button holds them up while pressed).
+    bool binoculars = false;
+    /// 0..1: how far they are raised to the eyes (the view narrows and the eyepieces close in).
+    float binocularsUp = 0.0f;
     AnimalCard card;
     BoardText board;
     VisitMap map;

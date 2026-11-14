@@ -20,6 +20,7 @@ the morning's crowd already spread over the park.
 | Walking | `W A S D` or the arrows; the mouse looks around |
 | Pace | `Shift` **switches** between walking (4.4 m/s; 1.6 until 2026-11-14) and running (8.8 m/s; 4.4 before); it is not held |
 | Looking at an animal | a card fades in: its name, species, sex and age, what it is doing |
+| `B`, right mouse button held | binoculars (since 2026-11-14): the view narrows to a seventh (7 x), eased up over a quarter of a second behind two round eyepieces; the head turns seven times slower, one stands still, and an animal's card is shown up to 300 m away (70 m without) |
 | `E` | read the information board one stands at (range, diet, facts, who lives here) |
 | `M` | the visitor map: every habitat by name, buildings, "You are here"; since 2026-11-14 the mouse is free over it and twenty places are marked (the entrance, each habitat at its main front, the gift shop, the education centre, two food courts, a restroom): a click on one takes you there. A habitat's place is the viewing place farthest to the south, passed over for a free one where people stand at the glass; a house's place is a few steps before its door |
 | `Esc` | the pause menu (Resume, Save Visit, Load Visit, Settings, Back to the Title); the mouse is released and the world stands |

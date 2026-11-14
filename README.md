@@ -25,6 +25,7 @@ cd build && ./zoo-simulator
 | `W A S D`, arrows | walk (4.4 m/s; running 8.8 m/s) |
 | Mouse | look around |
 | `Shift` | switch between walking and running (press once; it stays) |
+| `B`, or hold the right mouse button | binoculars (7 x): animals far off come near, their card shows up to 300 m; you stand still while they are up |
 | `E` | read the information board you stand at |
 | `M` | visitor map; click a marked place (every habitat, the entrance, the food courts, gift shop, education centre, restroom) to go there at once |
 | `Esc` | pause menu (resume, save, load, settings); releases the mouse |

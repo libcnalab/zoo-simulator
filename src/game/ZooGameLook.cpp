@@ -147,6 +147,9 @@ void ZooGame::LookAtAnimals(float seconds) {
     const auto& species = zoo_->SpeciesList().All();
     const zoo::Animal* found = nullptr;
     float bestMiss = 1.0f;
+    // Through binoculars the eyes reach across the zoo and are as precise as the view is narrow.
+    const float magnified = Magnification();
+    const float reach = std::min(kLookReach * magnified, 300.0f);
     for (const zoo::Animal& animal : zoo_->Fauna().All()) {
         if (!animal.Visible() || animal.species < 0)
             continue;
@@ -156,12 +159,12 @@ void ZooGame::LookAtAnimals(float seconds) {
                            animal.position.z);
         const Vector3 to = body - eye;
         const float along = to.X * gaze.X + to.Y * gaze.Y + to.Z * gaze.Z;
-        if (along < 0.8f || along > kLookReach)
+        if (along < 0.8f || along > reach)
             continue;
         const float aside =
             std::sqrt(std::max(0.0f, to.X * to.X + to.Y * to.Y + to.Z * to.Z - along * along));
         // A far animal is a small target: the eyes are allowed a little more there.
-        const float size = std::max(0.45f, 0.5f * def.bodyLengthM) + 0.2f + 0.012f * along;
+        const float size = std::max(0.45f, 0.5f * def.bodyLengthM) + 0.2f + 0.012f * along / magnified;
         const float miss = aside / size;
         if (miss < bestMiss) {
             bestMiss = miss;
