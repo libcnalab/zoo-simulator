@@ -476,6 +476,18 @@ from the Release build, visitor zoo, seed 1, after the visit's fill.
   moving ticks (1.35 %); the tiger's pocket is gone, the only animal above 300 ticks is a wolf
   (820 ticks, longest run 687, at 195.7, 64.0). The navigator itself is unchanged, so a
   player-built habitat can still make such pockets.
+  **Waypoints moved off props (2026-11-14, after the keepers):** on the keepers' zoo the
+  probe found 5,650 of 268,697 moving ticks (2.10 %), and a giraffe of Acacia Plain stalled
+  2,113 of its 4,870: the navigator had planned its route through the centre of a tile a
+  sandstone rock stands on, the giraffe gave that waypoint up, found the straight line to
+  the next one shut and planned the same route again, over and over. After `FindPath`,
+  `KeepWaypointsOffProps` (`AnimalMovement.cpp`) moves every waypoint but the goal that lies
+  within a blocking prop's clearance out to its rim (straight out, else to either side of the
+  way), or drops it when the way from the one before to the one after is open. The probe
+  then: 4,183 of 280,044 (1.49 %), the giraffe 392 ticks. The count is a regression test now,
+  `AnimalStall.AnimalsOnTheirWayGetThere` (a visit's fill, then 6,000 ticks: under 2 % of
+  all moving ticks, no animal that walks 1,000 ticks or more above 15 % of its own; 1.17 %
+  measured).
 - **Golden hashes** of `tests/core/VisitStartTests.cpp` re-recorded for the routines.
 - Pictures: `docs/evidence/animal-routines-2026-11-13.jpg` (lions resting in the shade at
   midday; penguins standing together, one swimming; flamingos at the lagoon after the wader

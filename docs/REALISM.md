@@ -95,7 +95,7 @@ where an animal wades. Penguins swim and float with their own clips now, and pol
    lions' and bears' habitats are never entered (`docs/KEEPERS.md` "Open"). Only penguin, polar bear, rhinoceros and elephant have swimming clips. Bear growl
    is quiet in the mix.
 5. Loading 5.5 s, 2.4 s of it painting the ground.
-6. Animals get stuck less since the plan keeps room between blocking props (1.35 % of the
-   moving ticks, was 5.4 %; one wolf still 820 ticks of 6,000), but the navigator still does
-   not know what plants and rocks block (`docs/ANIMAL_BEHAVIOUR.md` "In the game"). No model
+6. Animals get stuck less since the plan keeps room between blocking props and routes are
+   kept off them (1.2 to 1.5 % of the moving ticks, was 5.4 %; a regression test holds it under
+   2 %), but the navigator still does not know what plants and rocks block (`docs/ANIMAL_BEHAVIOUR.md` "In the game"). No model
    has clips for preening, dust bathing, digging or sentry duty.

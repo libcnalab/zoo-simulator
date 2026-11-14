@@ -18,6 +18,66 @@ float Approach(float current, float target, float amount) {
     return std::max(target, current - amount);
 }
 
+/// The navigator plans through tile centres and knows nothing of trees and rocks, so a
+/// waypoint can lie on a rock: the animal cannot reach it, gives it up, finds the straight
+/// line to the next one shut and plans the same route again, for ever (a giraffe stalled 43 %
+/// of its walking that way, 2026-11-14). Every waypoint but the goal that lies within a
+/// blocking prop's clearance is moved out to its rim, or dropped when the way from the one
+/// before to the one after is open; one that can be neither stays.
+void KeepWaypointsOffProps(std::vector<Vec2>& route, Vec2 start, float girth, const Env& env,
+                           const NavProfile& profile, std::vector<PropId>& props) {
+    const auto inside = [&](Vec2 point, const Prop*& hit) {
+        env.objects.PropsNear(point, girth + tuning::kObstacleClearanceM + tuning::kObstacleSearchRadiusM,
+                              props);
+        for (const PropId id : props) {
+            const Prop* prop = std::as_const(env.objects).FindProp(id);
+            if (prop == nullptr || prop->def < 0 ||
+                static_cast<std::size_t>(prop->def) >= env.catalog.props.size()) {
+                continue;
+            }
+            const PropDef& def = env.catalog.props[static_cast<std::size_t>(prop->def)];
+            const float clearance = def.radiusM + girth + tuning::kObstacleClearanceM;
+            if (def.blocksWalking && DistanceSquared(point, prop->position) < clearance * clearance) {
+                hit = prop;
+                return clearance;
+            }
+        }
+        return 0.0f;
+    };
+    for (std::size_t i = 0; i + 1 < route.size();) {
+        const Vec2 before = i == 0 ? start : route[i - 1];
+        const Vec2 after = route[i + 1];
+        const Prop* prop = nullptr;
+        const float clearance = inside(route[i], prop);
+        if (prop == nullptr) {
+            ++i;
+            continue;
+        }
+        const Vec2 off = route[i] - prop->position;
+        const Vec2 across = Normalized(after - before, {1.0f, 0.0f});
+        const Vec2 out = Normalized(off, {-across.z, across.x});
+        bool moved = false;
+        // Straight out from the prop first, else to either side of the way being walked.
+        for (const Vec2 direction : {out, Vec2{-across.z, across.x}, Vec2{across.z, -across.x}}) {
+            const Vec2 rim = prop->position + direction * (clearance + tuning::kWaypointRimM);
+            const Prop* other = nullptr;
+            if (env.enclosures.At(rim) == env.enclosures.At(route[i]) && inside(rim, other) == 0.0f &&
+                env.nav.Walkable(before, rim, profile) && env.nav.Walkable(rim, after, profile)) {
+                route[i] = rim;
+                moved = true;
+                break;
+            }
+        }
+        if (moved) {
+            ++i;
+        } else if (env.nav.Walkable(before, after, profile)) {
+            route.erase(route.begin() + static_cast<std::ptrdiff_t>(i));
+        } else {
+            ++i;
+        }
+    }
+}
+
 }  // namespace
 
 void AdvanceMovement(Animal& animal, const SpeciesDef& species, const Env& env, int& pathCalls,
@@ -136,6 +196,9 @@ void AdvanceMovement(Animal& animal, const SpeciesDef& species, const Env& env, 
                 animal.activityLeft = 0;
                 return;
             }
+            KeepWaypointsOffProps(animal.route, animal.position,
+                                  species.bodyRadiusM * bodyScale * tuning::kBodyWidthFraction, env, profile,
+                                  propScratch);
             animal.routeIndex = 0;
         }
     }

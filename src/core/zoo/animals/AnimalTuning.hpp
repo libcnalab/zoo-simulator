@@ -144,6 +144,8 @@ inline constexpr float kStallProgressM = 0.02f;
 inline constexpr std::int32_t kStallTicks = 30;
 /// Stalled this near to the waypoint (plus the body radius), metres, counts as arrived.
 inline constexpr float kStallArriveM = 1.0f;
+/// How far outside a blocking prop's clearance a waypoint planned onto it is moved, metres.
+inline constexpr float kWaypointRimM = 0.15f;
 /// The sidestep out of a pocket: tries, first angle off the goal and its growth (radians), reach (metres).
 inline constexpr std::uint32_t kDetourAttempts = 6;
 inline constexpr float kDetourAngle = 1.2f;
