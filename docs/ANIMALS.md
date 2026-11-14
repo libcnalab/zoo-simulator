@@ -41,7 +41,8 @@ python3 -m unittest discover -s tools/animals/tests
 | `zoogen/sculpt.py`, `bigcat.py` on a prepared third-party sculpt (below) | lion, lion_female, lion_juvenile, tiger |
 | `zoogen/rigged.py`, `pachyderm.py`, `pachyderm_motion.py` on a prepared third-party rigged model (below) | rhino, rhino_juvenile, elephant, elephant_female, elephant_juvenile |
 | `zoogen/scan.py` on a prepared third-party static sculpt, rigged by us (below) | zebra, zebra_female, zebra_juvenile |
-| `zoogen/quadruped.py`, `wild_quadruped.py`, `anatomy.py` | wolf, brown bear, polar bear, giraffe, camel, meerkat |
+| `zoogen/giraffe2.py` on a prepared head-and-neck scan, body modelled by us (below) | giraffe, giraffe_female, giraffe_juvenile |
+| `zoogen/quadruped.py`, `wild_quadruped.py`, `anatomy.py` | wolf, brown bear, polar bear, camel, meerkat |
 | `zoogen/birdscan.py` on a prepared third-party scan or sculpt, rigged by us (below) | penguin, penguin_juvenile, flamingo |
 | `zoogen/biped.py` | ostrich, kangaroo |
 
@@ -111,6 +112,43 @@ dark in the game's light (nearly black against the sand), the tusks are too long
 level, the ears are smooth where the body is wrinkled, and the source was an Asian elephant,
 so face and ears are a conversion and read as one from close by. The calf keeps adult skin.
 No calf lives in the Visitor Zoo yet, so both juveniles are only seen in the viewer.
+
+### Elephant, second pass, and giraffe (2026-11-14)
+
+**Elephant** (Codex task S6b, on the S6 model): the skin was nearly black in the game's light;
+the body albedo is now 83 % of the rhino's (linear luminance 0.080 -> 0.185, the rhino 0.224)
+with a warm tint, the occlusion map no longer darkens everything (mean 0.88 -> 0.96), the
+bull's tusks are 0.66 m instead of 1.51 m and curve down and forward, the cow's 0.36 m, the
+calf has none; ears, forehead and the calf's proportions were revised. Triangles, bones and
+clips are unchanged. `zoogen/elephant_look.py`, `pachyderm_metrics.py` and
+`pachyderm_review.py` measure what the task judged by. Seen in Blender beside the rhino, in
+the viewer and in the habitat (`evidence/elephant-second-pass-2026-11-14.jpg`). Honest state:
+a grey elephant that stands beside the rhino in the same light now; the face and the root of
+the ear still read as the Asian source's from close by (a fold at the back of the ear shows in
+the viewer), the tusks are a clean white where real ones are stained, the calf keeps mesh
+folds.
+
+**Giraffe** (Codex tasks S11 and S11b): the head and neck come from a photogrammetry scan of a
+taxidermy mount ("Giraffe (textured)" by aellis43, CC BY 4.0; `tools/animals/prepare_giraffe.py`,
+`sources/giraffe/`); body, legs, hooves, tail, mane and skeleton are modelled by us in
+`zoogen/giraffe2.py`. The first pass (S11) kept the mount's photo texture, which was olive
+with green background bleeding into it, and the lead refused it in the game; S11b paints a
+reticulated coat over the whole animal (chestnut patches, cream lines; no green texel left;
+the scan's photo is not used in any material) and gives it compact cloven hooves (15 x 25 cm).
+
+| Model | Triangles | Height | What it is |
+|---|---:|---:|---|
+| `giraffe` | 26,504 | 5.2 m | bull |
+| `giraffe_female` | 27,143 | 4.5 m | cow, slimmer |
+| `giraffe_juvenile` | 19,641 | 2.0 m | calf: long legs, short neck |
+
+The `eat` clip browses: the muzzle reaches up into the crowns (about 5 m for the bull), which
+is what the species' `browse` activity plays (`meta.activity_clips`), and the one exception to
+the pipeline's test that an eating muzzle is on the ground. Seen in Blender, in the viewer and
+in the habitat (`evidence/giraffe-2026-11-14.jpg`). Honest state: the first giraffe that reads
+as a giraffe at any distance; the patch pattern is rather regular and clean for a real coat,
+the mane is faceted, the calf's eyes are large and its tufts simple. The subspecies of the
+scanned mount is unknown; the coat is painted as reticulated and labelled so in the manifest.
 
 ### Zebra from a static sculpt (2026-11-13)
 
@@ -188,7 +226,7 @@ and standing empty).
   animal younger than half its species' age of maturity with the juvenile one; a species without
   them uses the one model for everybody. A model is scaled by height:
   `species shoulder height x share of its sex x growth / meta.shoulder_height_m` of the model
-  drawn, so a variant states its own height. (Lion, elephant, zebra, rhinoceros and penguin have variants so far.)
+  drawn, so a variant states its own height. (Lion, elephant, zebra, rhinoceros, giraffe and penguin have variants so far.)
 - **Swimming.** Where the water is deeper than about 0.6 of the animal's standing height it
   floats: the body rides with `meta.swim_depth_m` (default 0.72 of the model's shoulder height)
   under the surface instead of walking on the pool bed under water, and plays the optional

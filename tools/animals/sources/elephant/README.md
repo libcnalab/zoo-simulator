@@ -35,6 +35,24 @@ Species builds mirror the intact left ear over the perforated right ear, reshape
 
 Builds export baseline JPEG colour (quality 90), JPEG normal (97), PNG occlusion, standard glTF tangent attributes and roughness 0.9. The neutral source PNGs remain unaltered by the variant builder.
 
+S6b appearance revision (the prepared NPZ and source PNGs are unchanged):
+
+- Corrected skin luminance in linear light with a neutral, slightly warm tint; retained source
+  photographic variation and wrinkle maps. Body albedo is checked against the unmodified rhino.
+- Lifted broad baked AO while retaining deeper creases. Ivory has a cream gradient, a darker
+  base, subdued source variation and a flat normal tile instead of the source's woody relief.
+- Shortened both adult tusks, directed their roots down and forward, and curved their tips
+  inward and upward. Longitudinal UVs now follow the cross-sections of the generated mesh.
+- Lowered the broad ear lobes below the crown, retained the source's two surfaces and rim, and
+  mapped both ears continuously using photographic body colour and matching normal detail at
+  approximately 246 source texels per prepared metre. No synthetic veins are claimed.
+- Receded the upper adult forehead and lowered the crown slightly while preserving the single
+  medial dome, saddle back, ringed trunk and two tip fingers from S6.
+- Enlarged the calf's head, shortened/thinned its trunk, narrowed the legs without changing IK
+  lengths, lifted the belly, rounded the back and reduced albedo/normal wrinkle contrast.
+- Adults rest standing with a low, relaxed distal trunk curl. There are no eyelid joints in the
+  retained rig, so half-closed eyelids and optional calf hair remain unimplemented.
+
 Bone mapping:
 
 - `Armature_rootJoint` → `root`

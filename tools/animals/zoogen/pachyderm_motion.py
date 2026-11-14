@@ -138,7 +138,8 @@ def elephant_rest(solver, data, phase):
     if data['variant'] == 'juvenile':
         return lateral_sleep(solver, data, phase)
     pose = idle_pose(solver, data, phase)
-    leg = solver.rig.legs['HR']
+    # A relaxed distal curl keeps the tip clear of the sand throughout the sway.
+    trunk_curl(pose, [0, 0, 0, 0, 2, 6, 12, 20, 28, 32], .3 * math.sin(2 * math.pi * phase))
     position = solver.toe_base('HR') + [-.025 * data['height'], 0, .012 * data['height']]
     pose.plant('HR', position, foot_pitch=3)
     return pose

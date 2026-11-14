@@ -127,6 +127,23 @@ def build_rigged(spec):
         image = node.image
         if spec.name == 'rhino_juvenile':
             calf_forehead_texture(image)
+        if data['kind'] == 'elephant':
+            from .elephant_look import correct_texture
+            width, height = image.size
+            pixels = np.empty(width * height * 4, dtype=np.float32)
+            image.pixels.foreach_get(pixels)
+            role = ('base' if image.colorspace_settings.name == 'sRGB' else
+                    'normal' if 'normal' in image.name.lower() else 'occlusion')
+            pixels = correct_texture(pixels.reshape(height, width, 4), role, data['shape'])
+            image.pixels.foreach_set(pixels.ravel())
+            extension = 'png' if role == 'occlusion' else 'jpg'
+            image.filepath_raw = str(scratch / (spec.name + '_' + role + '.' + extension))
+            image.file_format = 'PNG' if role == 'occlusion' else 'JPEG'
+            image.save(quality=97 if role == 'normal' else 90)
+            replacement = bpy.data.images.load(image.filepath_raw, check_existing=False)
+            replacement.colorspace_settings.name = 'sRGB' if role == 'base' else 'Non-Color'
+            node.image = replacement
+            continue
         if image.colorspace_settings.name == 'sRGB':
             width, height = image.size
             rgba = np.empty(width * height * 4, dtype=np.float32)
@@ -136,17 +153,6 @@ def build_rigged(spec):
             lum = rgb @ np.array([.2126, .7152, .0722])
             adjusted = (lum[..., None] + data['shape']['color_saturation'] * (rgb - lum[..., None]))
             adjusted *= data['shape']['color_gain']
-            if data['kind'] == 'elephant':
-                # Correct the skin tiles only; source ivory and eyes retain their colours.
-                skin = np.zeros((height, width), dtype=bool)
-                skin[:1040, :1840] = True
-                redness = np.clip((rgb[..., 0] - rgb[..., 2]) / (lum + .01) * 3, 0, 1)
-                adjusted *= (1 - .50 * redness)[..., None]
-                face = np.zeros((height, width), dtype=bool)
-                face[:1040, 1040:1840] = True
-                corrected = .25 + .22 * (adjusted - .25)
-                adjusted = np.where(face[..., None], corrected, adjusted)
-                adjusted = np.where(skin[..., None], adjusted, rgb)
             rgba[..., :3] = np.clip(adjusted, 0, 1)
             if 'texture_transform' in data:
                 rgba = data['texture_transform'](rgba)
@@ -182,25 +188,36 @@ def model_previews(scene, arm, spec, clips, args):
     data = spec.sculpt
     output = Path(args.preview)
     output.mkdir(parents=True, exist_ok=True)
-    prefix = str(output / spec.name)
+    prefix = str(output / (('S6b_' if data['kind'] == 'elephant' else '') + spec.name))
     lo, hi = data['vertices'].min(axis=0), data['vertices'].max(axis=0)
     center = build.to_blender((lo+hi)/2)
     radius = float(np.linalg.norm(hi-lo)) / 2
-    cam, _ = preview.setup_stage(scene, radius)
-    preview.sculpt_lighting(scene)
+    if data['kind'] == 'elephant':
+        from .pachyderm_review import stage
+        scene, cam = stage()
+    else:
+        cam, _ = preview.setup_stage(scene, radius)
+        preview.sculpt_lighting(scene)
     anim.clear_pose(arm)
     if not args.preview_clips_only:
+        cam.data.lens = 70
         preview.render_views(scene, cam, center, radius, prefix)
-        distance = 9 if data['kind'] == 'elephant' else 6
+        distance = 8 if data['kind'] == 'elephant' else 6
         cam.data.type = 'PERSP'
-        cam.data.lens = 40
+        cam.data.lens = 32 if data['kind'] == 'elephant' else 40
         scene.render.resolution_x, scene.render.resolution_y = 1600, 1000
         scene.render.image_settings.file_format = 'PNG'
         cam.location = (distance * .65, -distance * math.sqrt(1-.65**2), 1.6)
         preview._look_at(cam, (0, -.15, .58 * data['height']))
         scene.render.filepath = prefix + '_eye.png'
         bpy.ops.render.render(write_still=True)
-        cam.location = (distance, -.05, .65 * data['height'])
+        if data['kind'] == 'elephant':
+            cam.location = (25 * .65, -25 * math.sqrt(1-.65**2), 1.6)
+            preview._look_at(cam, (0, -.25, 1.8))
+            scene.render.filepath = prefix + '_25m.png'
+            bpy.ops.render.render(write_still=True)
+        cam.location = ((10, -.05, 1.6) if data['kind'] == 'elephant' else
+                        (distance, -.05, .65 * data['height']))
         preview._look_at(cam, center)
         scene.render.filepath = prefix + '_side.png'
         bpy.ops.render.render(write_still=True)

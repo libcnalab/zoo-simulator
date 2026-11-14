@@ -61,11 +61,45 @@ def elephant_shape(data, shape):
     x, z = vertices[:, 0], vertices[:, 2]
     dorsal = smoothstep(2.35, 3.05, z) * (1 - ear)
     vertices[:, 2] -= shape['saddle'] * np.exp(-((x - .05) / .65) ** 2) * dorsal
+    if shape.get('calf_skin'):
+        slim_calf(data)
     # Fill the medial crown depression without widening the temples.
     head_weight = data['weights'][:, names.index('head')]
     vertices[:, 2] += shape['dome'] * np.exp(-(vertices[:, 1] / .23) ** 2) * head_weight * smoothstep(2.8, 3.2, z)
+    # Recede the upper forehead into a flatter slope, preserving the rounded
+    # medial dome and leaving the eyes and trunk attachment undisturbed.
+    upper = head_weight * (1 - ear) * smoothstep(3.05, 3.65, vertices[:, 2])
+    vertices[:, 0] -= shape.get('forehead_recede', 0) * upper * smoothstep(2.1, 2.5, vertices[:, 0])
+    vertices[:, 2] -= shape.get('crown_lower', 0) * upper
+    from .elephant_look import ear_uv
+    # Lower the broad upper lobe below the crown without shortening the lower tip.
+    crown = vertices[(head_weight > .65) & (ear < .5), 2].max()
+    for sign in (-1, 1):
+        selected = (ear > .5) & (vertices[:, 1] * sign > 0)
+        high = vertices[selected, 2].max()
+        vertices[selected, 2] -= max(0, high - crown + .12) * smoothstep(2.2, high, vertices[selected, 2])
+    ear_uv(data, shape)
     replace_tusks(data, shape)
     add_trunk_fingers(data)
+
+
+def slim_calf(data):
+    """Narrow limb cross-sections without changing the stance or leg IK lengths."""
+    vertices = data['vertices']
+    names = data['bone_names'].tolist()
+    original = vertices.copy()
+    for index, name in enumerate(names):
+        if not name.startswith(('upper_arm', 'forearm', 'thigh', 'shin')):
+            continue
+        axis = data['tails'][index] - data['heads'][index]
+        axis /= np.linalg.norm(axis)
+        delta = original - data['heads'][index]
+        radial = delta - (delta @ axis)[:, None] * axis
+        vertices -= .12 * radial * data['weights'][:, index, None]
+    core = [names.index(name) for name in ('hips', 'spine1', 'spine2', 'chest')]
+    body = data['weights'][:, core].sum(axis=1)
+    belly = (1 - smoothstep(1.5, 2.2, original[:, 2])) * np.exp(-(original[:, 0] / .85) ** 2)
+    vertices[:, 2] += .18 * body * belly
 
 
 def append_loft(data, part, tile, tag):
@@ -83,6 +117,11 @@ def append_loft(data, part, tile, tag):
     uv_vertex[:, 0] = (np.arange(len(vertices)) % part.segments) / part.segments
     uv_vertex[:, 1] = np.linspace(.04, .96, len(vertices))
     if tag == 'tusk':
+        # Constant longitudinal UV per cross-section gives an unstretched ivory
+        # gradient and lets tests recover the actual exported centerline.
+        rings = (len(vertices) - 2) // part.segments
+        uv_vertex[:-2, 1] = np.repeat(np.linspace(.04, .96, rings), part.segments)
+        uv_vertex[-2:, 1] = [.04, .96]
         uv_vertex[:, 0] = .5 + (uv_vertex[:, 0] - .5) * .35 * (1 - uv_vertex[:, 1])
         uv_vertex[:, 1] = .25 + .6 * uv_vertex[:, 1]
     uv = uv_vertex[triangles]
@@ -112,7 +151,7 @@ def replace_tusks(data, shape):
         radius = .095 * shape['tusk_width']
         rings = []
         for t in np.linspace(0, 1, 9):
-            center = base + length * np.array([.90 * t, sign * .18 * t, -.60 * t + .48 * t*t])
+            center = base + length * np.array([.78 * t, sign * (.04 * t - .10 * t*t), -.72 * t + .55 * t*t])
             width = max(.0025, radius * (1-t) ** .7)
             rings.append(R(center, width, width))
         part = Part('tusk', rings, weights={'head': 1}, segments=16, subdiv=2,
@@ -243,6 +282,7 @@ def make_pachyderm(model_name, kind, height, edits, shape, walk, fast, meta):
     source_path = SOURCE_DIR / kind / 'rigged.npz'
     source = read_source(str(source_path))
     if kind == 'elephant':
+        shape = dict(shape)
         source = intact_elephant_ears(source)
     if kind == 'rhino' and shape.get('horn_scale', 1) != 1:
         source = calf_horns(source, shape['horn_scale'])

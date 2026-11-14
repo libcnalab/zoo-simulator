@@ -21,7 +21,8 @@ from zoogen.rig import Pose, Solver, quat_from_matrix, rot_x, rot_y, rot_z  # no
 
 CATS = ["lion", "lion_female", "lion_juvenile", "tiger"]
 SPECIES = ["lion", "lion_female", "lion_juvenile", "tiger", "wolf", "brown_bear", "polar_bear",
-           "zebra", "zebra_female", "zebra_juvenile", "rhino", "camel", "elephant", "giraffe", "meerkat",
+           "zebra", "zebra_female", "zebra_juvenile", "rhino", "camel", "elephant", "giraffe",
+           "giraffe_female", "giraffe_juvenile", "meerkat",
            "penguin", "penguin_juvenile", "ostrich", "flamingo", "kangaroo"]
 
 
@@ -197,7 +198,11 @@ class ClipTests(unittest.TestCase):
             by = {c.name: c for c in clips}
             eat = quadruped.muzzle(solver, by["eat"].pose(0.0))[2]
             drink = quadruped.muzzle(solver, by["drink"].pose(0.0))[2]
-            self.assertLess(eat, 0.12, species)
+            if species.startswith("giraffe"):
+                # Giraffes browse: their eat clip reaches up into the crowns, not down to the ground.
+                self.assertGreater(eat, 1.5, species)
+            else:
+                self.assertLess(eat, 0.12, species)
             self.assertLess(drink, 0.06, species)
             self.assertGreater(drink, 0.0, species)
 

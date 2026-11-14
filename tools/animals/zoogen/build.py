@@ -229,6 +229,9 @@ def _dilate(rgb, filled, iters=8):
 
 def build_mesh(spec):
     """Create the skinned mesh object (without armature). Returns (object, info)."""
+    if spec.sculpt is not None and spec.sculpt.get("giraffe2", False):
+        from .giraffe2 import build_giraffe
+        return build_giraffe(spec)
     if spec.sculpt is not None and spec.sculpt.get("rigged", False):
         from .rigged import build_rigged
         return build_rigged(spec)

@@ -2,40 +2,17 @@
 """Portable skin, gait, posture and exported glTF contracts for all five pachyderms."""
 import json
 from pathlib import Path
-import struct
 import unittest
 
 import numpy as np
 
 import test_clips as common
 from zoogen.pachyderm_motion import skin_points
+from zoogen.pachyderm_metrics import accessor, glb, measure
 
 ROOT = Path(__file__).resolve().parents[3]
 SPECIES = ['rhino', 'rhino_juvenile', 'elephant', 'elephant_female', 'elephant_juvenile']
 CLIPS = {'idle', 'walk', 'trot', 'eat', 'drink', 'rest', 'sleep', 'vocalize', 'swim'}
-
-
-def glb(path):
-    with path.open('rb') as source:
-        header = source.read(12)
-        if header[:4] != b'glTF':
-            raise ValueError('Not a GLB')
-        size, _ = struct.unpack('<II', source.read(8))
-        document = json.loads(source.read(size))
-        size, _ = struct.unpack('<II', source.read(8))
-        binary = source.read(size)
-    return document, binary
-
-
-def accessor(document, binary, index):
-    item = document['accessors'][index]
-    view = document['bufferViews'][item['bufferView']]
-    dtype = {5121: '<u1', 5123: '<u2', 5125: '<u4', 5126: '<f4'}[item['componentType']]
-    columns = {'SCALAR': 1, 'VEC2': 2, 'VEC3': 3, 'VEC4': 4, 'MAT4': 16}[item['type']]
-    offset = view.get('byteOffset', 0) + item.get('byteOffset', 0)
-    stride = view.get('byteStride', np.dtype(dtype).itemsize * columns)
-    return np.ndarray((item['count'], columns), dtype=dtype, buffer=binary,
-                      offset=offset, strides=(stride, np.dtype(dtype).itemsize))
 
 
 def world_translation(document, node, translation):
@@ -166,6 +143,52 @@ class PachydermTests(unittest.TestCase):
             for ear in solver.rig.ears:
                 frames = [solver.solve(idle.pose(i / 24))[ear][:3, :3] for i in range(24)]
                 self.assertGreater(np.ptp(np.array(frames), axis=0).max(), .05, species)
+
+    def test_exported_elephant_albedo_ao_and_tusks(self):
+        reference = measure(ROOT / 'assets/animals/rhino.glb')['luminance']
+        for species in ('elephant', 'elephant_female', 'elephant_juvenile'):
+            with self.subTest(species=species):
+                metrics = measure(ROOT / 'assets/animals' / (species + '.glb'))
+                self.assertGreaterEqual(metrics['luminance'] / reference, .75)
+                self.assertLessEqual(metrics['luminance'] / reference, .90)
+                red, green, blue = metrics['linear_rgb']
+                self.assertGreaterEqual(red, green)
+                self.assertGreaterEqual(green, blue)
+                self.assertLess(red / blue, 1.25)
+                self.assertGreater(metrics['ao_mean'], .8)
+                self.assertLess(metrics['ao_mean'], .99)
+                self.assertLess(metrics['ao_p05'], .90, 'Real creases must retain occlusion')
+                if species.endswith('juvenile'):
+                    self.assertEqual(metrics['tusk_chord_m'], [])
+                    self.assertEqual(metrics['tusk_arc_m'], [])
+                else:
+                    lower, upper = (.6, .9) if species == 'elephant' else (.3, .5)
+                    self.assertEqual(len(metrics['tusk_arc_m']), 2)
+                    for length in metrics['tusk_arc_m']:
+                        self.assertGreaterEqual(length, lower)
+                        self.assertLessEqual(length, upper)
+
+    def test_elephant_ears_below_crown_and_rest_curl(self):
+        for species, solver, clips in self.cases:
+            if not species.startswith('elephant'):
+                continue
+            data = self.specs[species].sculpt
+            names = data['bone_names'].tolist()
+            ear = data['tags'][:, data['tag_names'].tolist().index('ear')] > .5
+            crown = (data['weights'][:, names.index('head')] > .65) & ~ear
+            self.assertLess(data['vertices'][ear, 2].max(), data['vertices'][crown, 2].max())
+            if species.endswith('juvenile'):
+                continue
+            rest = next(clip for clip in clips if clip.name == 'rest')
+            for phase in np.linspace(0, 1, 13):
+                pose = rest.pose(float(phase))
+                points = skin_points(solver, pose, data)
+                self.assertLess(points[ear, 2].max(), points[crown, 2].max(), species)
+                world = solver.solve(pose)
+                tip = solver.point(world, 'trunk10', solver.tail['trunk10'])
+                curl_base = world['trunk8'][:3, 3]
+                self.assertGreater(tip[2], curl_base[2], 'Relaxed tip must turn upward')
+                self.assertLess(tip[2], .4 * data['height'], 'Rest curl must remain low')
 
     def test_glb_material_skin_budgets_and_manifest(self):
         for species, _, clips in self.cases:

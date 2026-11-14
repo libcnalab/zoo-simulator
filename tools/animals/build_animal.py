@@ -67,6 +67,11 @@ def main():
         model_previews(scene, arm_ob, spec, clips, args)
         return
 
+    if args.preview and spec.sculpt is not None and spec.sculpt.get("giraffe2", False):
+        from zoogen.giraffe2 import model_previews
+        model_previews(scene, arm_ob, spec, clips, args)
+        return
+
     if args.preview and spec.sculpt is not None and spec.sculpt.get("rigged", False):
         from zoogen.rigged import model_previews
         model_previews(scene, arm_ob, spec, clips, args)

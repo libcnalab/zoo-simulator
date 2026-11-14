@@ -1,0 +1,140 @@
+{
+  "bones": 36,
+  "clips": [
+    {
+      "duration": 8.0,
+      "events": [],
+      "frames": 241,
+      "loop": true,
+      "name": "idle",
+      "speed": 0.0
+    },
+    {
+      "duration": 1.6667,
+      "events": [
+        {
+          "name": "step",
+          "time": 0.0
+        },
+        {
+          "name": "step",
+          "time": 0.1
+        },
+        {
+          "name": "step",
+          "time": 0.8333
+        },
+        {
+          "name": "step",
+          "time": 0.9333
+        }
+      ],
+      "frames": 51,
+      "loop": true,
+      "name": "walk",
+      "speed": 1.1163
+    },
+    {
+      "duration": 0.9667,
+      "events": [
+        {
+          "name": "step",
+          "time": 0.0
+        },
+        {
+          "name": "step",
+          "time": 0.174
+        },
+        {
+          "name": "step",
+          "time": 0.5027
+        },
+        {
+          "name": "step",
+          "time": 0.6767
+        }
+      ],
+      "frames": 30,
+      "loop": true,
+      "name": "trot",
+      "speed": 2.5117
+    },
+    {
+      "duration": 5.0,
+      "events": [],
+      "frames": 151,
+      "loop": true,
+      "name": "eat",
+      "speed": 0.0
+    },
+    {
+      "duration": 5.0,
+      "events": [],
+      "frames": 151,
+      "loop": true,
+      "name": "drink",
+      "speed": 0.0
+    },
+    {
+      "duration": 8.0,
+      "events": [],
+      "frames": 241,
+      "loop": true,
+      "name": "rest",
+      "speed": 0.0
+    },
+    {
+      "duration": 8.0,
+      "events": [],
+      "frames": 241,
+      "loop": true,
+      "name": "sleep",
+      "speed": 0.0
+    },
+    {
+      "duration": 2.0,
+      "events": [],
+      "frames": 61,
+      "loop": false,
+      "name": "vocalize",
+      "speed": 0.0
+    }
+  ],
+  "generator": "tools/animals (zoogen)",
+  "license": "CC-BY-4.0",
+  "meta": {
+    "activity_clips": {
+      "browse": "eat"
+    },
+    "asset_license": "CC-BY-4.0",
+    "body_length_m": 3.721153846153846,
+    "coat_identity": "Reticulated pattern repainted over the complete animal; scan identity unverified",
+    "common_name": "Giraffe",
+    "fast_gait": "Moderate rotary gallop exported under the required name trot",
+    "relative_height": 0.8653846153846153,
+    "roughness": 0.94,
+    "scientific_name": "Giraffa reticulata",
+    "shoulder_height_m": 4.5,
+    "source_author": "aellis43",
+    "source_url": "https://sketchfab.com/3d-models/673b69aaafc14d94940a862225794f01",
+    "variant": "female",
+    "variant_of": "giraffe",
+    "withers_height_m": 2.8557692307692304
+  },
+  "name": "giraffe_female",
+  "skeleton_bounds_animal_space": {
+    "max": [
+      1.7654,
+      0.3071,
+      4.3096
+    ],
+    "min": [
+      -1.4625,
+      -0.3071,
+      0.0
+    ]
+  },
+  "texture": 2048,
+  "triangles": 27143,
+  "vertices": 13282
+}

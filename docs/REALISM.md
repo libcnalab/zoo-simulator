@@ -23,7 +23,7 @@ loudspeaker stays muted and nobody has listened to any of it.
 | Light from the sky and the ground | below | `src/game/SkyLight.*` |
 | Water with ripples | below | `src/game/Surfaces.cpp` |
 | Lion, lioness, cub and tiger on a professional sculpt (CC BY 4.0) | real cat anatomy; the lioness has no mane any more | `docs/ANIMALS.md`, `evidence/big-cats-sculpt-2026-11-13.jpg` |
-| Rhinoceros and elephant on rigged models (CC BY 4.0 as published; authorship unconfirmed, `assets/ATTRIBUTION.md`) | photographic skin with normal maps, real proportions, bull, cow and calves; the rhino is good, the elephant too dark with tusks too long | `docs/ANIMALS.md`, `evidence/rhino-elephant-rigged-2026-11-13.jpg` |
+| Rhinoceros and elephant on rigged models (CC BY 4.0 as published; authorship unconfirmed, `assets/ATTRIBUTION.md`) | photographic skin with normal maps, real proportions, bull, cow and calves; the elephant's second pass (2026-11-14) made it grey in the game's light with tusks of a believable length | `docs/ANIMALS.md`, `evidence/rhino-elephant-rigged-2026-11-13.jpg` |
 | Zebra stallion, mare and foal from a static sculpt (CC BY 4.0), rigged by us | a real horse's body and stripes instead of a striped barrel; lying reads as lying; mirror-symmetric stripes from the front | `docs/ANIMALS.md`, `evidence/zebra-scan-2026-11-13.jpg` |
 | Penguin (adult and juvenile) from a museum scan and flamingo from a sculpt (both CC BY 4.0), rigged by us | real birds' shapes instead of bowling pins; penguins have `swim` and `float` clips; the adult African plumage is painted on a Magellanic specimen's shape and labelled so | `docs/ANIMALS.md`, `assets/ATTRIBUTION.md`, `evidence/penguin-flamingo-scan-2026-11-13.jpg` |
 | Penguins on the water | a resting penguin floats, one under way swims, each with its own clip and depth from the model's manifest (they walked upright through the pool before) | `src/game/AnimalRenderer.cpp`, `evidence/penguin-floating-2026-11-13.jpg` |
@@ -31,6 +31,7 @@ loudspeaker stays muted and nobody has listened to any of it.
 | Habitat fronts a zoo would build | elephants and rhinos behind a 4 m planted stand-off with a leaning rail, hoofstock behind 2 m; heavy dark mesh instead of bars at bears and cats; chain-link one looks through; nobody walks on the planting | `docs/VISITOR_ZOO.md`, `evidence/habitat-fronts-2026-11-13.jpg` |
 | People at every habitat | 192 to 260 of 800 stand watching (was 110 to 215) and no habitat is left without watchers (several were, most of the time) | `docs/VISITOR_ZOO.md` "Who watches where" |
 | Trees and shrubs with leaves | every crown and bush was a lumpy green blob; now a dark core that casts the shadow, covered with cut-out sprays of leaves or needles (two painted 512 px atlases, alpha-tested with coverage kept through the mip levels); spruces are tiers of boughs | `src/game/FoliageTextures.*`, `src/game/PropModels.cpp`, `evidence/foliage-2026-11-13.jpg`, `docs/PERFORMANCE.md` |
+| Giraffe bull, cow and calf: a scanned head and neck (CC BY 4.0) on a body modelled by us, a painted reticulated coat | a giraffe's silhouette and coat instead of a lofted toy; browsing reaches the crowns | `docs/ANIMALS.md`, `evidence/giraffe-2026-11-14.jpg` |
 | Animals with a species' day | each species has its own shares of resting, feeding, walking and a signature activity (browse, ruminate, bathe, dust bathe, preen, sentinel, dig, filter feed, patrol, huddle), chooses its place in the habitat (shade at midday, high ground for the sentry, the group), and keeps them through a save; lions rest 70 % of the day, elephants move or feed 62 %, a meerkat sentry is posted 85 % of daylight | `docs/ANIMAL_BEHAVIOUR.md`, `evidence/animal-routines-2026-11-13.jpg` |
 
 ### Light from the sky and the ground (2026-11-13)
@@ -70,10 +71,9 @@ paddles with its walk clip.
 
 ## Open (in the order they hurt)
 
-1. Animals: eight of fifteen species are still the stylised first generation
+1. Animals: seven of fifteen species are still the stylised first generation
    (`docs/ANIMALS.md`). Of the sculpt-based cats only the lioness is good: the male needs a
-   real head and mane, the tiger a face. The elephant is too dark and its tusks too long.
-   No young animal lives in the zoo yet.
+   real head and mane, the tiger a face. No young animal lives in the zoo yet.
 2. Habitat fronts: hoofstock is still seen through chain-link behind its strip.
 3. Meerkat Lookout's pool is too large and props stand in it.
 4. Plants: trees and shrubs have leaves now, but there is no distance form (1.93 million
