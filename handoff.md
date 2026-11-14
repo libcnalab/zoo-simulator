@@ -35,8 +35,8 @@ uncommitted in `wt-life`.
 - **G3 buildings and barriers: taken** (commit after S7), with `FenceLook::inward` wired in
   `SceneryRenderer.cpp`. Its leftovers are in `docs/CODEX_TASKS.md`.
 - **G4 visitors: taken** (commit after G3) with three fixes by the lead and its measured
-  cost (+3 ms a frame with 800 people, cause not found; `docs/PERFORMANCE.md`). The "before"
-  binary of that bench is `build-probe/zoo-simulator-g4before` (delete when no longer needed).
+  cost (+3 ms a frame with 800 people, cause not found; `docs/PERFORMANCE.md`). The bench's
+  "before" binary was deleted after the figures were written down; rebuild `d715179` to repeat.
 - **Next:** G5 (keepers; conflicts with G8 in `VisitorZoo.cpp`), or G8 first by hand. The stopped Codex work (G8c in `wt-life`, G2b, G6b, G1b) is
   now the lead's to finish by hand or to leave; G8 first, it is the most valuable.
 
