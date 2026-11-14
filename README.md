@@ -78,6 +78,8 @@ cmake --build build --parallel 4
 ctest --test-dir build --output-on-failure
 ```
 
+The browser build (Emscripten, WebGL 2) is described in [`docs/WEB.md`](docs/WEB.md).
+
 Sanitizer builds of the simulation core: add `-DZOO_SANITIZE=address -DZOO_BUILD_GAME=OFF` and
 build in `build-asan/`.
 

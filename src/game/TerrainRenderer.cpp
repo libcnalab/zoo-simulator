@@ -148,7 +148,12 @@ void TerrainRenderer::Build(const zoo::World& world) {
         }
     };
     {
+#ifdef __EMSCRIPTEN__
+        // The browser build has no threads (CNA's Wasm is built without pthreads).
+        const unsigned count = 1;
+#else
         const unsigned count = std::clamp(std::thread::hardware_concurrency(), 1u, 6u);
+#endif
         std::vector<std::jthread> threads;
         for (unsigned i = 1; i < count; ++i)
             threads.emplace_back(work);

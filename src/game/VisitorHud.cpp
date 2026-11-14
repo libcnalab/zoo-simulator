@@ -76,7 +76,9 @@ bool Switch(ui::Ui& ui, Box row, std::string_view label, bool& on) {
 }
 
 std::string Written(const SaveEntry& entry) {
-    const auto system = std::chrono::clock_cast<std::chrono::system_clock>(entry.written);
+    // Through "now" on both clocks: libc++ (the browser build) has no std::chrono::clock_cast.
+    const auto system = std::chrono::time_point_cast<std::chrono::system_clock::duration>(
+        entry.written - std::filesystem::file_time_type::clock::now() + std::chrono::system_clock::now());
     const std::time_t seconds = std::chrono::system_clock::to_time_t(system);
     std::tm local{};
     localtime_r(&seconds, &local);

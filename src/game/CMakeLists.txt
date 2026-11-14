@@ -19,3 +19,8 @@ add_custom_target(zoo-simulator-files
     COMMAND "${CMAKE_COMMAND}" -E copy_directory_if_different "${CMAKE_SOURCE_DIR}/assets" "${CMAKE_BINARY_DIR}/assets"
     COMMENT "Copying data/ and assets/ beside zoo-simulator" VERBATIM)
 add_dependencies(zoo-simulator zoo-simulator-files)
+if(EMSCRIPTEN)
+    # In the browser the working directory is "/": the definitions are preloaded beside the
+    # assets (cna_engine_add_game preloads assets/ only). docs/WEB.md.
+    target_link_options(zoo-simulator PRIVATE "SHELL:--preload-file ${CMAKE_SOURCE_DIR}/data@/data")
+endif()

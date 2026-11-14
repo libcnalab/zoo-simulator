@@ -14,6 +14,12 @@ people at the glass, the gift shop, the education centre, two food courts, a res
 kiosks are not places), `ZooGame::AddMapPlaces`, drawn in `VisitorHud::Map`. Tried with
 `--script` runs (hover, click, arrival, measured speeds); nobody has used it with a real mouse.
 
+**Then (owner's request, 2026-11-14), done:** binoculars (`B` or the right mouse button, 7 x,
+`7588339`) and a browser build (`docs/WEB.md`: Emscripten 6.0.9 from `~/emsdk`, WebGL 2, built
+in `build-probe/web/`, which is inside the closed list; a `build-web/` would need the owner's
+word). The package is `build-probe/web/web-package/` (126 MB); it was played through in headless
+Chrome over the DevTools protocol (`build-probe/web/drive*.mjs`), never in a visible browser.
+
 **Where the session stopped (owner's request, 2026-11-14): G8 finished and committed
 (`a08e4eb`), this file updated, `main` pushed to `origin` at the owner's explicit request (the
 "never push" rule of section 1 stands otherwise). Nothing is uncommitted in the main tree.
