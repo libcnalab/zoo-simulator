@@ -110,19 +110,21 @@
   "meta": {
     "asset_license": "CC-BY-4.0",
     "common_name": "African lion",
+    "material_source": "adapted authored base, normal and occlusion",
+    "preparation_version": 2,
     "proportion_edits": {
       "chest": {
         "scale": [
           1.02,
-          1.12,
+          1.18,
           1.04
         ]
       },
       "head": {
         "scale": [
-          1.06,
-          1.12,
-          1.06
+          1.1,
+          1.25,
+          1.13
         ]
       },
       "hips": {
@@ -132,11 +134,18 @@
           1
         ]
       },
+      "jaw": {
+        "scale": [
+          1.04,
+          1.08,
+          1.04
+        ]
+      },
       "neck1": {
         "scale": [
           1,
-          1.1,
-          1.04
+          1.22,
+          1.08
         ]
       },
       "scapula": {
@@ -147,7 +156,7 @@
         ]
       }
     },
-    "roughness": 0.86,
+    "roughness": 0.84,
     "scientific_name": "Panthera leo",
     "sex": "male",
     "shoulder_height_m": 1.15,
@@ -158,17 +167,17 @@
   "name": "lion",
   "skeleton_bounds_animal_space": {
     "max": [
-      1.4861,
-      0.2038,
-      1.3004
+      1.5097,
+      0.2657,
+      1.322
     ],
     "min": [
-      -1.2663,
-      -0.2038,
+      -1.266,
+      -0.2657,
       0.0
     ]
   },
-  "texture": 2048,
-  "triangles": 33744,
-  "vertices": 17664
+  "texture": 1024,
+  "triangles": 40574,
+  "vertices": 28207
 }

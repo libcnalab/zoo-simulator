@@ -57,7 +57,7 @@ def prepare_instance(path, edits, height):
                 source_path=str(path), scale=scale)
 
 
-def _map_pixels(path, non_color=False):
+def _map_pixels(path, non_color=False, color=False):
     import bpy
     image = bpy.data.images.load(str(path), check_existing=False)
     if non_color:
@@ -66,7 +66,8 @@ def _map_pixels(path, non_color=False):
     rgba = np.empty(width * height * 4, dtype=np.float32)
     image.pixels.foreach_get(rgba)
     bpy.data.images.remove(image)
-    return rgba.reshape(height, width, 4)[..., 0]
+    pixels = rgba.reshape(height, width, 4)
+    return pixels[..., :3] if color else pixels[..., 0]
 
 
 def build_sculpt(spec):
@@ -86,7 +87,11 @@ def build_sculpt(spec):
     source_weights = data['weights'][:, [data['bone_names'].tolist().index(name) for name in names]]
     weights = [source_weights]
     tag_values = [np.pad(data['tags'], ((0, 0), (0, len(tags) - data['tags'].shape[1])))]
-    atlas = .62 if any(part.tag == 'mane' for part in spec.parts) else .86 if spec.parts else 1.0
+    # Big cats with source materials keep the authored atlas whole; the others paint a coat
+    # beside it and give the added parts strips of their own.
+    source_material = data.get('source_material', False)
+    atlas = (1.0 if source_material else .62 if any(part.tag == 'mane' for part in spec.parts)
+             else .86 if spec.parts else 1.0)
     uvs = [data['uv'] * [atlas, 1]]
     # Extra lofted hair is unwrapped into a separate strip, never fused with the sculpt.
     for part in geom.expand_parts(spec.parts):
@@ -98,18 +103,22 @@ def build_sculpt(spec):
         bpy.ops.uv.smart_project(island_margin=.025)
         bpy.ops.object.mode_set(mode='OBJECT')
         uv = np.array([loop.uv[:] for loop in extra.data.uv_layers.active.data]).reshape(-1, 3, 2)
-        # Each part has its own vertical strip cell; separate sampling prevents coat bleeding.
-        number = len(vertices) - 1
-        count = len(geom.expand_parts(spec.parts))
-        columns = 8
-        rows = (count + columns - 1) // columns
-        if part.name == 'mane_undercoat':
-            uv[..., 0] = atlas + .005 + uv[..., 0] * .24
-            uv[..., 1] = .005 + .99 * uv[..., 1]
+        if source_material:
+            # A verified unused corner of the authored atlas holds opaque hair shadows.
+            uv = uv * [.14, .20] + [.85, .79] if part.tag == 'mane' else uv * .02 + [.45, .96]
         else:
-            strip = .87 if atlas == .62 else atlas
-            uv[..., 0] = strip + (number % columns + .03 + .94 * uv[..., 0]) / columns * (1 - strip)
-            uv[..., 1] = (number // columns + .03 + .94 * uv[..., 1]) / rows
+            # Each part has its own vertical strip cell; separate sampling prevents coat bleeding.
+            number = len(vertices) - 1
+            count = len(geom.expand_parts(spec.parts))
+            columns = 8
+            rows = (count + columns - 1) // columns
+            if part.name == 'mane_undercoat':
+                uv[..., 0] = atlas + .005 + uv[..., 0] * .24
+                uv[..., 1] = .005 + .99 * uv[..., 1]
+            else:
+                strip = .87 if atlas == .62 else atlas
+                uv[..., 0] = strip + (number % columns + .03 + .94 * uv[..., 0]) / columns * (1 - strip)
+                uv[..., 1] = (number // columns + .03 + .94 * uv[..., 1]) / rows
         uvs.append(uv)
         triangles.append(tris + sum(len(value) for value in vertices))
         vertices.append(build.to_blender(verts))
@@ -139,6 +148,19 @@ def build_sculpt(spec):
         modifier = ob.modifiers.new('cub_budget', 'DECIMATE')
         modifier.ratio = spec.target_tris / len(triangles)
         modifier.use_collapse_triangulate = True
+        if source_material:
+            # The shared derivative already devotes about 22k triangles to the head.
+            # A uniform second collapse retains that bias without starving the round torso.
+            low, high = 0., modifier.ratio
+            for _ in range(9):
+                modifier.ratio = (low + high) / 2
+                bpy.context.view_layer.update()
+                evaluated = ob.evaluated_get(bpy.context.evaluated_depsgraph_get())
+                if len(evaluated.data.polygons) > spec.target_tris:
+                    high = modifier.ratio
+                else:
+                    low = modifier.ratio
+            modifier.ratio = low
         bpy.ops.object.modifier_apply(modifier=modifier.name)
         simplified = bmesh.new()
         simplified.from_mesh(ob.data)
@@ -175,6 +197,9 @@ def build_sculpt(spec):
     tri_id, bary = build._rasterize(uvs, size)
     rgb = np.zeros((size, size, 3), dtype=np.float32)
     source_dir = Path(data['source_path']).parent
+    if source_material:
+        return _paint_source_material(spec, ob, bones, names, tags, tag_values, weights, triangles,
+                                      animal, normals, tri_id, bary, rgb, source_dir)
     detail = _map_pixels(source_dir / 'detail.png', non_color=data.get('detail_non_color', False))
     occlusion = _map_pixels(source_dir / 'occlusion.png')
     # Paint in rows to keep the 2048 atlas well below a gigabyte of working arrays.
@@ -239,3 +264,57 @@ def attach_source_normal(material, data, atlas=1.0):
     shader = material.node_tree.nodes.get('Principled BSDF')
     material.node_tree.links.new(normal.outputs['Normal'], shader.inputs['Normal'])
     bpy.data.images.remove(source)
+
+
+def _paint_source_material(spec, ob, bones, names, tags, tag_values, weights, triangles, animal,
+                           normals, tri_id, bary, rgb, source_dir):
+    """Big cats: the source's own albedo, normal and occlusion maps, recoated, plus hair cards."""
+    import bpy
+    from . import build
+    from .rigged import material as rigged_material
+
+    data = spec.sculpt
+    size = spec.texture_size
+    mesh = ob.data
+    from .bigcat_coat import coat, soften
+    base = _map_pixels(source_dir / 'base.png', color=True)
+    normal_map = _map_pixels(source_dir / 'normal.png', color=True)
+    occlusion = _map_pixels(source_dir / 'occlusion.png', color=True)
+    if data['kind'] == 'juvenile':
+        base = .65 * base + .35 * soften(base, 2)
+    for start in range(0, size, 64):
+        end = min(start + 64, size)
+        context = build.PaintContext(size, tri_id[start:end], bary[start:end], triangles, animal,
+                                     normals, tag_values, tags, weights, names)
+        rgb[start:end] = coat(context, base[start:end], data)
+        if data['kind'] == 'juvenile':
+            muscle = context.bones('scapula', 'upper_arm', 'forearm', 'thigh', 'shin', 'chest', 'hips')
+            strength = np.clip(1 - .88 * muscle - .60 * context.bones('head', 'jaw'), .12, 1)
+            normal_map[start:end, :, :2] = .5 + (normal_map[start:end, :, :2] - .5) * strength[..., None]
+    # The extra opaque volume shares the body's material and therefore casts shadows.
+    normal_map[807:1016, 869:1016] = [.5, .5, 1]
+    occlusion[807:1016, 869:1016] = 1
+    normal_map[982:1005, 459:483] = [.5, .5, 1]
+    occlusion[982:1005, 459:483] = 1
+    rgb = build._dilate(rgb, tri_id >= 0, iters=6)
+    images = {}
+    scratch = Path.cwd() / 'build-probe'
+    scratch.mkdir(parents=True, exist_ok=True)
+    for role, values in [('base', rgb), ('normal', normal_map), ('occlusion', occlusion)]:
+        image = bpy.data.images.new(spec.name + '_' + role, size, size, alpha=False)
+        image.colorspace_settings.name = 'sRGB' if role == 'base' else 'Non-Color'
+        rgba = np.ones((size, size, 4), dtype=np.float32)
+        rgba[..., :3] = values
+        image.pixels.foreach_set(rgba.ravel())
+        image.filepath_raw = str(scratch / (spec.name + '_' + role + '.jpg'))
+        image.file_format = 'JPEG'
+        image.save(quality=90 if role == 'base' else 97)
+        replacement = bpy.data.images.load(image.filepath_raw, check_existing=False)
+        replacement.colorspace_settings.name = image.colorspace_settings.name
+        images[role] = replacement
+    mesh.materials.append(rigged_material(source_dir, spec.name, images=images, roughness=.84))
+    from .bigcat_hair import attach_cards
+    attach_cards(ob, data, names)
+    mesh = ob.data
+    return ob, dict(bones=bones, bone_names=names, triangles=len(mesh.polygons),
+                    vertices=len(mesh.vertices), image=images['base'])

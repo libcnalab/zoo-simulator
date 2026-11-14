@@ -110,6 +110,8 @@
   "meta": {
     "asset_license": "CC-BY-4.0",
     "common_name": "African lion",
+    "material_source": "adapted authored base, normal and occlusion",
+    "preparation_version": 2,
     "proportion_edits": {
       "ear": {
         "scale": [
@@ -120,24 +122,25 @@
       },
       "fingers": {
         "scale": [
-          1.2,
-          1.15,
+          1.25,
+          1.24,
           1.12
         ]
       },
       "forearm": {
         "scale": [
           1.0,
-          1.0,
-          0.88
+          1.1,
+          0.8
         ]
       },
       "head": {
         "eye_scale": 1.35,
+        "muzzle_scale": 0.75,
         "scale": [
-          0.91,
-          1.34,
-          1.3
+          1.22,
+          1.45,
+          1.4
         ]
       },
       "hips": {
@@ -150,8 +153,8 @@
       "shin": {
         "scale": [
           1.0,
-          1.0,
-          0.88
+          1.1,
+          0.8
         ]
       },
       "tail1": {
@@ -170,8 +173,8 @@
       },
       "toes": {
         "scale": [
-          1.2,
-          1.15,
+          1.25,
+          1.24,
           1.12
         ]
       },
@@ -183,7 +186,7 @@
         ]
       }
     },
-    "roughness": 0.86,
+    "roughness": 0.84,
     "scientific_name": "Panthera leo",
     "shoulder_height_m": 0.45,
     "source_author": "Pedro B. Goulart (Pebegou)",
@@ -195,17 +198,17 @@
   "name": "lion_juvenile",
   "skeleton_bounds_animal_space": {
     "max": [
-      0.5755,
-      0.1164,
-      0.5101
+      0.639,
+      0.1309,
+      0.5175
     ],
     "min": [
-      -0.4844,
-      -0.1164,
+      -0.5036,
+      -0.1309,
       0.0
     ]
   },
-  "texture": 2048,
-  "triangles": 23491,
-  "vertices": 11972
+  "texture": 1024,
+  "triangles": 23122,
+  "vertices": 11955
 }

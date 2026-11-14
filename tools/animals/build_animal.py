@@ -52,6 +52,8 @@ def main():
         build.export_glb(glb, mesh_ob, arm_ob, tangents=True, all_bones=True)
     elif spec.sculpt is not None and spec.sculpt.get("normal_map"):
         build.export_glb(glb, mesh_ob, arm_ob, tangents=True, all_bones=True)
+    elif spec.sculpt is not None and spec.sculpt.get("source_material", False):
+        build.export_glb(glb, mesh_ob, arm_ob, tangents=True)
     else:
         build.export_glb(glb, mesh_ob, arm_ob)
     build.write_manifest(os.path.join(args.out, spec.name + ".json"), spec, info, clips)
@@ -94,6 +96,8 @@ def main():
         cam, _ = preview.setup_stage(scene, radius)
         if spec.sculpt is not None:
             preview.sculpt_lighting(scene)
+            if spec.sculpt.get("source_material", False):
+                scene.render.threads = 4
         if anim is not None:
             anim.clear_pose(arm_ob)
         if not (spec.sculpt is not None and args.preview_clips_only):
@@ -101,6 +105,9 @@ def main():
             if spec.sculpt is not None:
                 preview.render_eye_level(scene, cam, spec.meta["shoulder_height_m"],
                                          os.path.join(args.preview, spec.name))
+                if spec.sculpt.get("source_material", False):
+                    from zoogen.bigcat_review import face_views
+                    face_views(scene, cam, spec.sculpt, os.path.join(args.preview, spec.name))
         if anim is not None:
             want = args.clips.split(",") if args.clips else [c["name"] for c in clips]
             for c in clips:

@@ -45,3 +45,28 @@ Animals are lit by the sun and still throw their shadows on the ground. The cost
 longer dimmed when it stands under a tree or in a shelter's shadow, and a skinned caster can
 still darken a rigid surface that lies between it and the sun (a branch above an animal). When
 cna-engine is corrected, `EnableSunShadows` goes back to `Enhanced::EnableShadows`.
+
+## ZOO-UP-002: `--screenshot` writes the back buffer's alpha into the PNG
+
+Found 2026-11-14 with the lion's mane (alpha-tested hair cards). `AutomatedRun::BeginDraw`
+(`cna-engine/src/Graphics/AutomatedRun.cpp`) captures with default `CaptureOptions`, so
+`opaque` is false and the PNG keeps whatever alpha the frame left in the back buffer. An
+alpha-tested surface writes its texture's alpha (0.5..1 where it passes the test), and an
+image viewer composites those pixels over white: on the screenshot the dark brown mane looked
+pale grey, on screen it is brown. The game's own scripted shots already ask for
+`.opaque = true` (`ZooGame.cpp`, `ZooGameVisit.cpp`).
+
+**Suggested correction in cna-engine** (not applied from here): `capture.opaque = true;` in
+`AutomatedRun::BeginDraw`, or a `--screenshot-alpha` switch for the rare caller that wants the
+alpha. **What the game does meanwhile:** nothing in the game; screenshots of hair or leaves are
+flattened to RGB before anyone judges them (the evidence sheets are JPEG, which has no alpha).
+
+## ZOO-UP-003: imported glTF models are culled inside out when single-sided (observed)
+
+Found 2026-11-14 while looking for the cause of ZOO-UP-002. With `doubleSided` switched off in
+a copy of `lion.glb`, the game's viewer drew the lion inside out (paw pads and the inside of
+the mouth seen through the body), although the file's winding agrees with its normals for
+99.8 % of the triangles. `Enhanced/ModelImport.cpp` copies `doubleSided` but never sets
+`Material::frontFace`, which defaults to `FrontFace::Clockwise` (XNA's), while glTF front faces
+are counter-clockwise. Not investigated further. **What the game does meanwhile:** every animal
+model is exported double-sided, so nothing is culled; the cost is the back faces' fragments.

@@ -430,13 +430,15 @@ class BipedTests(unittest.TestCase):
                 document = json.loads(source.read(length))
                 length, _ = struct.unpack("<II", source.read(8))
                 binary = source.read(length)
-            self.assertEqual(len(document["images"]), 1, species)
-            texture = document["images"][0]
-            self.assertEqual(texture["mimeType"], "image/png", species)
-            texture_view = document["bufferViews"][texture["bufferView"]]
-            texture_offset = texture_view.get("byteOffset", 0)
-            self.assertEqual(binary[texture_offset:texture_offset + 8], b"\x89PNG\r\n\x1a\n")
-            self.assertEqual(struct.unpack_from(">II", binary, texture_offset + 16), (2048, 2048) if species in CATS else (1024, 1024))
+            # Sculpt cats have separate source maps; their material contract is checked below.
+            if species not in CATS:
+                self.assertEqual(len(document["images"]), 1, species)
+                texture = document["images"][0]
+                self.assertEqual(texture["mimeType"], "image/png", species)
+                texture_view = document["bufferViews"][texture["bufferView"]]
+                texture_offset = texture_view.get("byteOffset", 0)
+                self.assertEqual(binary[texture_offset:texture_offset + 8], b"\x89PNG\r\n\x1a\n")
+                self.assertEqual(struct.unpack_from(">II", binary, texture_offset + 16), (1024, 1024))
             with open(os.path.join(root, "assets", "animals", species + ".json")) as source:
                 manifest = json.load(source)
             triangles = sum(document["accessors"][primitive["indices"]]["count"] // 3
@@ -497,7 +499,7 @@ class SculptCatTests(unittest.TestCase):
                     self.assertTrue(np.allclose(data["heads"][index] * [1, -1, 1],
                                                 data["heads"][other], atol=1e-6))
         self.assertLess(sum(path.stat().st_size for path in SOURCE.parent.iterdir() if path.is_file()),
-                        8_000_000)
+                        14_000_000)
 
     def test_all_four_rest_paws_are_grounded(self):
         for species in CATS:
@@ -566,9 +568,9 @@ class SculptCatTests(unittest.TestCase):
         for species in CATS:
             with open(os.path.join(root, "assets", "animals", species + ".json")) as source:
                 manifest = json.load(source)
-            self.assertLessEqual(manifest["triangles"], 24000 if species == "lion_juvenile" else 34000)
+            self.assertLessEqual(manifest["triangles"], 24000 if species == "lion_juvenile" else 42000 if species == "lion" else 34000)
             self.assertLessEqual(manifest["bones"], 60)
-            self.assertEqual(manifest["texture"], 2048)
+            self.assertEqual(manifest["texture"], 1024)
             self.assertEqual(manifest["license"], "CC-BY-4.0")
             clips = {clip["name"]: clip for clip in manifest["clips"]}
             self.assertEqual(set(clips), {"idle", "walk", "trot", "eat", "drink", "rest", "sleep", "vocalize"})
@@ -589,11 +591,26 @@ class SculptCatTests(unittest.TestCase):
                 document = json.loads(source.read(length))
                 length, _ = struct.unpack("<II", source.read(8))
                 binary = source.read(length)
-            self.assertEqual(len(document["images"]), 1)
-            image = document["images"][0]
-            view = document["bufferViews"][image["bufferView"]]
-            offset = view.get("byteOffset", 0)
-            self.assertEqual(struct.unpack_from(">II", binary, offset + 16), (2048, 2048))
+            self.assertLessEqual(os.path.getsize(os.path.join(root, "assets", "animals", species + ".glb")),
+                                 4_500_000 if species == "lion_juvenile" else 7_000_000)
+            opaque = [material for material in document["materials"]
+                      if material.get("alphaMode", "OPAQUE") == "OPAQUE"]
+            self.assertEqual(len(opaque), 1)
+            self.assertIn("normalTexture", opaque[0])
+            self.assertIn("occlusionTexture", opaque[0])
+            self.assertGreaterEqual(opaque[0]["pbrMetallicRoughness"]["roughnessFactor"], .75)
+            self.assertLessEqual(opaque[0]["pbrMetallicRoughness"]["roughnessFactor"], .9)
+            self.assertEqual(len(document["images"]), 4)
+            self.assertEqual(sorted(image["mimeType"] for image in document["images"]),
+                             ["image/jpeg", "image/jpeg", "image/jpeg", "image/png"])
+            for mesh in document["meshes"]:
+                for primitive in mesh["primitives"]:
+                    self.assertIn("TANGENT", primitive["attributes"])
+            hair = [material for material in document["materials"]
+                    if material.get("alphaMode") == "MASK"]
+            self.assertEqual(len(hair), 1)
+            self.assertTrue(hair[0]["doubleSided"])
+            self.assertAlmostEqual(hair[0].get("alphaCutoff", .5), .5)
             triangles = sum(document["accessors"][primitive["indices"]]["count"] // 3
                             for mesh in document["meshes"] for primitive in mesh["primitives"])
             self.assertEqual(triangles, manifest["triangles"])

@@ -23,6 +23,7 @@ loudspeaker stays muted and nobody has listened to any of it.
 | Light from the sky and the ground | below | `src/game/SkyLight.*` |
 | Water with ripples | below | `src/game/Surfaces.cpp` |
 | Lion, lioness, cub and tiger on a professional sculpt (CC BY 4.0) | real cat anatomy; the lioness has no mane any more | `docs/ANIMALS.md`, `evidence/big-cats-sculpt-2026-11-13.jpg` |
+| Big cats, second pass: the sculpt's own colour and normal maps, a mane of hair cards | the male has a lion's head and a mane instead of a lioness's head in a collar; eyes, nose and lips are the sculptor's; irregular tiger stripes | `docs/ANIMALS.md`, `evidence/big-cats-s7-2026-11-14.jpg` |
 | Rhinoceros and elephant on rigged models (CC BY 4.0 as published; authorship unconfirmed, `assets/ATTRIBUTION.md`) | photographic skin with normal maps, real proportions, bull, cow and calves; the elephant's second pass (2026-11-14) made it grey in the game's light with tusks of a believable length | `docs/ANIMALS.md`, `evidence/rhino-elephant-rigged-2026-11-13.jpg` |
 | Zebra stallion, mare and foal from a static sculpt (CC BY 4.0), rigged by us | a real horse's body and stripes instead of a striped barrel; lying reads as lying; mirror-symmetric stripes from the front | `docs/ANIMALS.md`, `evidence/zebra-scan-2026-11-13.jpg` |
 | Penguin (adult and juvenile) from a museum scan and flamingo from a sculpt (both CC BY 4.0), rigged by us | real birds' shapes instead of bowling pins; penguins have `swim` and `float` clips; the adult African plumage is painted on a Magellanic specimen's shape and labelled so | `docs/ANIMALS.md`, `assets/ATTRIBUTION.md`, `evidence/penguin-flamingo-scan-2026-11-13.jpg` |
@@ -72,8 +73,8 @@ where an animal wades. Penguins swim and float with their own clips now, and pol
 ## Open (in the order they hurt)
 
 1. Animals: five of fifteen species (wolf, camel, meerkat, ostrich, kangaroo) are still the stylised first generation; the bears are sculpt-based but crude
-   (`docs/ANIMALS.md`). Of the sculpt-based cats only the lioness is good: the male needs a
-   real head and mane, the tiger a face. No young animal lives in the zoo yet.
+   (`docs/ANIMALS.md`). The cats are believable now but not photographs (the tiger's cheek
+   ruff reads as a grey comb, the mane's cards show close up). No young animal lives in the zoo yet.
 2. Habitat fronts: hoofstock is still seen through chain-link behind its strip.
 3. Meerkat Lookout's pool is too large and props stand in it.
 4. Plants: trees and shrubs have leaves now, but there is no distance form (1.93 million

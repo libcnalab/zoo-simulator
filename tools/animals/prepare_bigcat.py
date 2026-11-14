@@ -15,6 +15,7 @@ from mathutils import Matrix
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from zoogen import build, preview
 from zoogen.rig import rot_y
+from zoogen.bigcat_review import head_comparison
 
 
 PREFIXES = {
@@ -62,7 +63,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--source', required=True)
     parser.add_argument('--out', required=True)
-    parser.add_argument('--jaw-close', type=float, default=29.0)
+    parser.add_argument('--jaw-close', type=float, default=31.5)
     args = parser.parse_args(sys.argv[sys.argv.index('--') + 1:])
     out = Path(args.out).resolve()
     out.mkdir(parents=True, exist_ok=True)
@@ -107,13 +108,25 @@ def main():
             heads[left], heads[right] = mean, mean * [1, -1, 1]
         elif name != 'root' and '.' not in name:
             heads[by[name], 1] = 0
+    comparison = []
     material = bpy.data.materials['Leao']
     bsdf = material.node_tree.nodes.get('Principled BSDF')
     base_image = bsdf.inputs['Base Color'].links[0].from_node.image
     base = image_array(base_image)
-    occlusion_node = next(node for node in material.node_tree.nodes if node.type == 'TEX_IMAGE'
-                          and node.image != base_image and '001' in node.name)
-    occlusion = image_array(occlusion_node.image)[..., 0]
+    normal_node = bsdf.inputs['Normal'].links[0].from_node
+    normal_image = normal_node.inputs['Color'].links[0].from_node.image
+    image_nodes = [node for node in material.node_tree.nodes if node.type == 'TEX_IMAGE']
+    for node in image_nodes:
+        print('SOURCE_MAP', node.name, node.image.name, tuple(node.image.size),
+              [(link.to_node.name, link.to_socket.name) for link in node.outputs['Color'].links])
+    orm_image = next(node.image for node in image_nodes
+                     if node.image not in (base_image, normal_image))
+    occlusion = image_array(orm_image)[..., 0]
+    for filename, image in [('base.png', base_image), ('normal.png', normal_image),
+                            ('orm.png', orm_image)]:
+        image.filepath_raw = str(out / filename)
+        image.file_format = 'PNG'
+        image.save()
     luminance = base[..., :3] @ np.array([.2126, .7152, .0722])
     # Retain high-frequency fur and wrinkles without retaining the brown dye or broad lighting.
     blur = luminance.copy()
@@ -147,11 +160,37 @@ def main():
         bpy.ops.mesh.remove_doubles(threshold=.00001)
         bpy.ops.object.mode_set(mode='OBJECT')
         original = sum(len(poly.vertices) - 2 for poly in mesh.polygons)
-        target = 22500 if mesh_name == 'Base_Leao_0' else 1800 if mesh_name.startswith('Teeth') else original
+        if mesh_name in ('Base_Leao_0', 'Olhos.002_Leao_0'):
+            mesh.calc_loop_triangles()
+            comparison.append((build.from_blender([v.co for v in mesh.vertices]),
+                               np.array([tri.vertices[:] for tri in mesh.loop_triangles])))
+        target = 29000 if mesh_name == 'Base_Leao_0' else 1800 if mesh_name.startswith('Teeth') else original
         if target < original:
             modifier = ob.modifiers.new('preserve_sculpt', 'DECIMATE')
             modifier.ratio = target / original
             modifier.use_collapse_triangulate = True
+            if mesh_name == 'Base_Leao_0':
+                protected = ob.vertex_groups.new(name='face_density')
+                for vertex in mesh.vertices:
+                    influence = sum(group.weight for group in vertex.groups
+                                    if mapped(ob.vertex_groups[group.group].name)
+                                    in ('head', 'jaw', 'ear.L', 'ear.R'))
+                    if influence > .05:
+                        protected.add([vertex.index], min(1.0, influence * 4), 'REPLACE')
+                modifier.vertex_group = protected.name
+                modifier.vertex_group_factor = 1000
+                modifier.invert_vertex_group = True
+                low, high = 0.0, modifier.ratio
+                for _ in range(9):
+                    modifier.ratio = (low + high) / 2
+                    bpy.context.view_layer.update()
+                    evaluated = ob.evaluated_get(bpy.context.evaluated_depsgraph_get())
+                    count = sum(len(poly.vertices) - 2 for poly in evaluated.data.polygons)
+                    if count > target:
+                        high = modifier.ratio
+                    else:
+                        low = modifier.ratio
+                modifier.ratio = low
             bpy.ops.object.modifier_apply(modifier=modifier.name)
         modifier = ob.modifiers.new('triangles', 'TRIANGULATE')
         bpy.ops.object.modifier_apply(modifier=modifier.name)
@@ -162,7 +201,10 @@ def main():
         weights = np.zeros((len(vertices), len(names)))
         for vertex in mesh.vertices:
             for group in vertex.groups:
-                name = mapping[ob.vertex_groups[group.group].name]
+                group_name = ob.vertex_groups[group.group].name
+                if group_name not in mapping:
+                    continue
+                name = mapping[group_name]
                 weights[vertex.index, by[name]] += group.weight
         weights = build._limit_influences(weights)
         if np.any(weights.sum(axis=1) < .99):
@@ -198,6 +240,10 @@ def main():
         closed = (vertices - pivot) @ rot_y(-args.jaw_close).T + pivot
         vertices += weights[:, by['jaw'], None] * (closed - vertices)
         if mesh_name.startswith('Teeth'):
+            # The source tongue projects through the upper lip when the open jaw is closed.
+            # Retract soft mouth tissue into the oral cavity; its jaw weights are unchanged.
+            soft = tags[:, 2] > .5
+            vertices[soft, 0] -= .025
             # Retract the sculpt's permanently extended claws into their toe sheaths.
             claws = tags[:, 4] > .5
             vertices[claws, 0] -= .025
@@ -244,6 +290,7 @@ def main():
         data[key] = data[key].astype(np.float32)
     np.savez_compressed(out / 'sculpt.npz', **data)
     print('DERIVATIVE', sum(path.stat().st_size for path in out.glob('*') if path.is_file()), 'bytes')
+    head_comparison(comparison, data)
     build.reset_scene()
     ob = build._mesh_object('prepared_sculpt', build.to_blender(data['vertices']), data['triangles'])
     grey = bpy.data.materials.new('preparation_grey')
@@ -253,6 +300,7 @@ def main():
         poly.use_smooth = True
     cam, _ = preview.setup_stage(bpy.context.scene, 2)
     preview.sculpt_lighting(bpy.context.scene)
+    bpy.context.scene.render.threads = 4
     prefix = Path.cwd() / 'build-probe/animal-previews/bigcat_prepared'
     prefix.parent.mkdir(parents=True, exist_ok=True)
     preview.render_views(bpy.context.scene, cam, build.to_blender((.05, 0, .6)), 1.35, str(prefix))

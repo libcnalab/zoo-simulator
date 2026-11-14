@@ -11,16 +11,18 @@ import numpy as np
 from . import build, preview
 
 
-def material(source_dir, name, normal_strength=1.0, optional_maps=False):
+def material(source_dir, name, normal_strength=1.0, optional_maps=False, images=None, roughness=.9):
     mat = bpy.data.materials.new(name)
     mat.use_nodes = True
     shader = mat.node_tree.nodes['Principled BSDF']
-    shader.inputs['Roughness'].default_value = .9
+    shader.inputs['Roughness'].default_value = roughness
     shader.inputs['Metallic'].default_value = 0
     for filename, role in [('base.png', 'base'), ('normal.png', 'normal'), ('occlusion.png', 'occlusion')]:
-        if optional_maps and role != 'base' and not (Path(source_dir) / filename).is_file():
+        if (images is None and optional_maps and role != 'base'
+                and not (Path(source_dir) / filename).is_file()):
             continue
-        image = bpy.data.images.load(str(Path(source_dir) / filename), check_existing=False)
+        image = (images[role] if images is not None else
+                 bpy.data.images.load(str(Path(source_dir) / filename), check_existing=False))
         image.colorspace_settings.name = 'sRGB' if role == 'base' else 'Non-Color'
         texture = mat.node_tree.nodes.new('ShaderNodeTexImage')
         texture.image = image

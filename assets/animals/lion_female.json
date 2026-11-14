@@ -110,6 +110,8 @@
   "meta": {
     "asset_license": "CC-BY-4.0",
     "common_name": "African lion",
+    "material_source": "adapted authored base, normal and occlusion",
+    "preparation_version": 2,
     "proportion_edits": {
       "neck1": {
         "scale": [
@@ -120,7 +122,7 @@
       }
     },
     "relative_height": 0.91,
-    "roughness": 0.86,
+    "roughness": 0.84,
     "scientific_name": "Panthera leo",
     "sex": "female",
     "shoulder_height_m": 1.05,
@@ -133,17 +135,17 @@
   "name": "lion_female",
   "skeleton_bounds_animal_space": {
     "max": [
-      1.1919,
-      0.1389,
-      1.1546
+      1.1905,
+      0.1387,
+      1.1535
     ],
     "min": [
-      -1.0911,
-      -0.1389,
+      -1.0898,
+      -0.1387,
       0.0
     ]
   },
-  "texture": 2048,
-  "triangles": 26556,
-  "vertices": 13524
+  "texture": 1024,
+  "triangles": 32398,
+  "vertices": 16601
 }

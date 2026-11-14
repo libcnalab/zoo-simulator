@@ -6,35 +6,37 @@ For the next agent, who starts without this session's context. Read this file, t
 
 ## 0. Session of 2026-11-14 (live status; newest first, keep this section current)
 
-**New limits from the owner (2026-11-14): at most 2 CPUs for compiling (`--parallel 2`,
-`ctest -j2`) and at most ONE Codex agent at a time.** The lead works too, or hires a Claude
-subagent. `RULES-GAME.md` says `--parallel 2` now. (Section 1's "most parallel use possible"
-no longer holds.)
+**Owner's limits, tightened later on 2026-11-14: at most 2 CPUs for compiling
+(`--parallel 2`, `ctest -j2`), NO Codex agent and NO Claude subagents.** The lead does
+everything alone. (Section 1's "delegate to Codex" and "most parallel use possible" no longer
+hold.) Codex could not run anyway: G8c stopped at 08:56 on the Codex usage limit ("try again
+at Nov 18th, 2026 10:05 PM"), its report is empty; its last state is in `log-G8c.txt` (a
+`Meerkat Lookout: no place for sandstone_rock` failure in `VisitorZooPlan` it was fixing) and
+uncommitted in `wt-life`.
 
-- **Running Codex task (the only one):** G8c in `wt-life` = resume of G8b (finish G8: families
-  with young, hoofstock barriers, meerkat mound, plant placement; **plus** keeper gates onto a
-  service path, never onto stand-off planting, and corridors between blocking plants against
-  the thicket stalls). Brief `brief-G8c-plan-resume.md` (which contains G8b's), log
-  `log-G8c.txt`, report `report-G8c-plan-resume.md`. G8b had made good progress before the stop
-  (`log-G8b.txt`).
+- **S7 big cats: taken** (commit after `5dd19c4`). Merged by hand over S10's `sculpt.py`: the
+  big-cat coat path is opt-in through `data['source_material']` (bears and birds unchanged; a
+  rebuilt bear cub matches its asset but for two tangent components, a rebuilt lion matches
+  S7's). `src/game/AnimalTextures.cpp` passes the alpha reference for MASK textures. Found:
+  `--screenshot` PNGs keep the frame's alpha (hair looks pale in a PNG viewer; flatten to RGB
+  before judging, ZOO-UP-002) and single-sided imported models are culled inside out
+  (ZOO-UP-003).
+
 - **Stopped by the lead for the new limits, work left uncommitted in their worktrees** (each
   moved onto `f77bc8f` with the earlier partial work on top; the pre-move diffs are kept as
   `.codex-work/<name>-partial.patch`): G2b `wt-plants` (brief `brief-G2b-plants-finish.md`),
   G6b `wt-audit` (`brief-G6b-audit-finish.md`; it had an ASan tree and was running save-damage
   tests), G1b `wt-ground` (`brief-G1b-ground-finish.md`: pond-corner wedge, feet at the drawn
-  bank height, interleaved bench). Restart each, one at a time after G8c, with a preface like
-  `brief-G8c-plan-resume.md`'s (read the diff and `build-probe/`, carry on). G7 (sound) not
-  restarted (`wt-sound`, brief `brief-G7b-sound-finish.md`).
-- **Committed:** `6ce4b9a` S6b elephant second pass + S11/S11b giraffe (59 pipeline tests pass).
-- **In the main working tree, not committed yet:** S10 bears (applied, `test_clips.py`
-  conflict resolved, attribution row, docs and `evidence/bears-sculpt-2026-11-14.jpg` written;
-  `test_bears` + `test_clips` were running). Commit when green.
-- **Next:** S7 big cats (`.codex-work/S7.patch`, diff against seed `700b81a`; `zoogen/sculpt.py`
-  also changed by S10, expect a conflict; look in the game; MASK hair cards and `GiveMipmaps`).
-  Then G3 (bench done, `wt-built/build-probe/g3lead/`: before 24.8/27.4/28.0 ms mean frame,
+  bank height, interleaved bench). Their briefs say what was left; with Codex forbidden the
+  lead finishes them by hand (read the diff and `build-probe/`) or leaves them. G7 (sound)
+  `wt-sound`, brief `brief-G7b-sound-finish.md`.
+- **Committed:** `6ce4b9a` S6b elephant second pass + S11/S11b giraffe (59 pipeline tests
+  pass); `5dd19c4` S10 bears.
+- **Next:** G3 (bench done, `wt-built/build-probe/g3lead/`: before 24.8/27.4/28.0 ms mean frame,
   after 35.1/24.2/26.7 ms, load 12-17: no measurable cost within the noise; the binaries
   `wt-built/build/zoo-simulator-g3{before,after}` are there), then G4 (needs a full ctest and
-  the 800-people bench), then G5 after G8c.
+  the 800-people bench), then G5. The stopped Codex work (G8c in `wt-life`, G2b, G6b, G1b) is
+  now the lead's to finish by hand or to leave; G8 first, it is the most valuable.
 
 ## 1. The mission and the owner's rules
 

@@ -61,18 +61,20 @@ read on 2026-11-13 from Sketchfab's public record of the model
 (`api.sketchfab.com/v3/models/84d56e6cfcf247cb8fe468312f371677`: "CC Attribution",
 `creativecommons.org/licenses/by/4.0`, downloadable).
 `tools/animals/prepare_bigcat.py` turns the download into a small derivative
-(`tools/animals/sources/bigcat/`, 1.9 MB: decimated mesh with its skin weights under our
-bone names, a detail map and an occlusion map); the species files re-proportion it per
+(`tools/animals/sources/bigcat/`, 4.7 MB since S7: decimated mesh with its skin weights under
+our bone names and the source's colour, normal and occlusion maps); the species files re-proportion it per
 bone (heavier male, short-legged cub with larger head, ears and paws, longer tiger), paint
 the coat anew and add mane, tail tuft and cheek ruff. The original has no animation: the
 eight clips are ours, as for every other species.
 
 | Model | Triangles | Shoulder | What it is |
 |---|---:|---:|---|
-| `lion` | 33,744 | 1.15 m | male with a mane of separate locks |
-| `lion_female` | 26,556 | 1.05 m | the game draws it for every female lion |
-| `lion_juvenile` | 23,491 | 0.45 m | drawn below half of the age of maturity |
-| `tiger` | 26,780 | 1.00 m | longer body, broad paws, striped coat |
+| `lion` | 40,574 | 1.15 m | male with a mane of hair cards over an opaque backing |
+| `lion_female` | 32,398 | 1.05 m | the game draws it for every female lion |
+| `lion_juvenile` | 23,122 | 0.45 m | drawn below half of the age of maturity |
+| `tiger` | 32,390 | 1.00 m | longer body, broad paws, striped coat |
+
+(Triangles after the second pass, S7.)
 
 Seen in Blender previews, in the game's viewer and in the lion habitat
 (`evidence/big-cats-sculpt-2026-11-13.jpg`). Honest state: the lioness is the good one.
@@ -80,6 +82,23 @@ The male still has the lioness's head inside a dark collar (a real mane starts o
 forehead and the cheeks and the skull is broader); the tiger's face markings and chest are
 visibly painted by rule and its body is a lioness's; the cub keeps adult shoulder muscles.
 No cub lives in the Visitor Zoo yet, so `lion_juvenile` is only seen in the viewer.
+
+**Second pass (S7, 2026-11-14).** The sculpt's own material is used now: its 1024 px base
+colour, tangent-space normal map and packed occlusion map (`sources/bigcat/base.png`,
+`normal.png`, `orm.png`; CC BY 4.0 like the mesh) carry the eyes, nose leather, lips and fur
+direction that the procedural coat had replaced; `zoogen/bigcat_coat.py` recolours them per
+species (tiger stripes irregular and asymmetric, rosettes on the cub). The jaw is closed by
+31.5 degrees and head, jaw and ear density are kept through the decimation. The male's mane,
+the tail tufts and the tiger's cheek ruff are skinned hair cards (`zoogen/bigcat_hair.py`) in
+a second material, `alphaMode: MASK`, cutoff 0.5, double-sided, over an opaque backing that
+casts the shadow. The game gives alpha-tested textures mip levels that keep the full-size
+coverage (`src/game/AnimalTextures.cpp`, the engine's `MipOptions::alphaTestReference`), so the
+mane stays full at 30 m. Seen in Blender and in the game's viewer
+(`evidence/big-cats-s7-2026-11-14.jpg`): the male finally has a lion's head inside a mane, the
+lioness's face is the sculptor's. Still wrong: the tiger's cheek ruff reads as a grey comb
+close up, the faces are not at photograph quality (Codex's own verdict), and the mane's cards
+are visible as cards at arm's length. Screenshots of hair taken with `--screenshot` keep the
+cards' alpha in the PNG; view them flattened (`docs/UPSTREAM.md`, ZOO-UP-002).
 
 ### Rhinoceros and elephant on rigged models (2026-11-13)
 
