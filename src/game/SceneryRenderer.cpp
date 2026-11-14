@@ -4,10 +4,13 @@
 #include <algorithm>
 #include <bit>
 #include <cmath>
+#include <cstdio>
+#include <cstdlib>
 #include <numbers>
 
 #include "BuildingModels.hpp"
 #include "FenceModels.hpp"
+#include "PlantModels.hpp"
 #include "PropModels.hpp"
 
 namespace zoogame {
@@ -83,9 +86,25 @@ struct SceneryRenderer::Cell {
     bool fencesBuilt = false, objectsBuilt = false;
 };
 
+struct SceneryRenderer::Grove {
+    int x0 = 0, z0 = 0, x1 = 0, z1 = 0;  // tiles [x0, x1) x [z0, z1)
+    float ground = 0.0f;                 // the height its plants stand at, on average
+    StaticBatch near;
+    StaticBatch far;
+    std::uint64_t hash = 0, wanted = 0;
+    bool built = false;
+    bool showsFar = false;
+};
+
 SceneryRenderer::SceneryRenderer(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
                                  Surfaces& surfaces, const zoo::Catalog& catalog, int cellTiles)
-    : device_(device), surfaces_(surfaces), catalog_(catalog), cellTiles_(std::max(cellTiles, 8)) {}
+    : device_(device),
+      surfaces_(surfaces),
+      catalog_(catalog),
+      palette_(device),
+      cellTiles_(std::max(cellTiles, 8)) {
+    fullDetail_ = std::getenv("ZOO_PLANTS_FULL_DETAIL") != nullptr;
+}
 
 SceneryRenderer::~SceneryRenderer() = default;
 
@@ -103,6 +122,18 @@ void SceneryRenderer::Layout(const zoo::World& world) {
             cell->lastX = cell->x1 == width_;
             cell->lastZ = cell->z1 == depth_;
             cells_.push_back(std::move(cell));
+        }
+    }
+    groves_.clear();
+    const int groveTiles = std::min(kGroveTiles, cellTiles_);
+    for (int z = 0; z < depth_; z += groveTiles) {
+        for (int x = 0; x < width_; x += groveTiles) {
+            auto grove = std::make_unique<Grove>();
+            grove->x0 = x;
+            grove->z0 = z;
+            grove->x1 = std::min(x + groveTiles, width_);
+            grove->z1 = std::min(z + groveTiles, depth_);
+            groves_.push_back(std::move(grove));
         }
     }
     worldRevision_ = 0;
@@ -140,7 +171,7 @@ std::uint64_t SceneryRenderer::ObjectHash(const zoo::World& world, const zoo::Zo
     objects.PropsInTiles({cell.x0, cell.z0}, {cell.x1 - 1, cell.z1 - 1}, ids);
     for (const zoo::PropId id : ids) {
         const zoo::Prop* prop = objects.FindProp(id);
-        if (prop == nullptr) {
+        if (prop == nullptr || PlantDef(prop) != nullptr) {
             continue;
         }
         h.Add(static_cast<int>(id.value));
@@ -264,7 +295,7 @@ void SceneryRenderer::BuildObjects(const zoo::World& world, const zoo::ZooObject
     for (const zoo::PropId id : ids) {
         const zoo::Prop* prop = objects.FindProp(id);
         if (prop == nullptr || prop->def < 0 ||
-            static_cast<std::size_t>(prop->def) >= catalog_.props.size()) {
+            static_cast<std::size_t>(prop->def) >= catalog_.props.size() || PlantDef(prop) != nullptr) {
             continue;
         }
         const Vector3 position(prop->position.x, world.HeightAt(prop->position), prop->position.z);
@@ -299,6 +330,67 @@ void SceneryRenderer::BuildObjects(const zoo::World& world, const zoo::ZooObject
     cell.objects.Build(device_, surfaces_, model);
 }
 
+const zoo::PropDef* SceneryRenderer::PlantDef(const zoo::Prop* prop) const {
+    if (prop == nullptr || prop->def < 0 || static_cast<std::size_t>(prop->def) >= catalog_.props.size()) {
+        return nullptr;
+    }
+    const zoo::PropDef& def = catalog_.props[static_cast<std::size_t>(prop->def)];
+    return IsPlant(def) ? &def : nullptr;
+}
+
+std::uint64_t SceneryRenderer::GroveHash(const zoo::World& world, const zoo::ZooObjects& objects,
+                                         const Grove& grove) const {
+    Hasher h;
+    std::vector<zoo::PropId> ids;
+    objects.PropsInTiles({grove.x0, grove.z0}, {grove.x1 - 1, grove.z1 - 1}, ids);
+    for (const zoo::PropId id : ids) {
+        const zoo::Prop* prop = objects.FindProp(id);
+        if (PlantDef(prop) == nullptr) {
+            continue;
+        }
+        h.Add(static_cast<int>(id.value));
+        h.Add(prop->def);
+        h.Add(prop->position.x);
+        h.Add(prop->position.z);
+        h.Add(prop->heading);
+        h.Add(prop->scale);
+        h.Add(world.HeightAt(prop->position));
+    }
+    return h.value;
+}
+
+void SceneryRenderer::BuildGrove(const zoo::World& world, const zoo::ZooObjects& objects, Grove& grove) {
+    ModelBuilder near, far;
+    std::vector<zoo::PropId> ids;
+    objects.PropsInTiles({grove.x0, grove.z0}, {grove.x1 - 1, grove.z1 - 1}, ids);
+    float heights = 0.0f;
+    int count = 0;
+    for (const zoo::PropId id : ids) {
+        const zoo::Prop* prop = objects.FindProp(id);
+        const zoo::PropDef* def = PlantDef(prop);
+        if (def == nullptr) {
+            continue;
+        }
+        const Vector3 position(prop->position.x, world.HeightAt(prop->position), prop->position.z);
+        const Matrix placement = Placement(position, prop->heading, prop->scale);
+        const std::uint32_t seed = Scramble(id.value, 17u, 3u);
+        near.SetTransform(placement);
+        BuildPlant(near, *def, seed, PlantDetail::Near);
+        far.SetTransform(placement);
+        BuildPlant(far, *def, seed, PlantDetail::Far);
+        heights += position.Y;
+        ++count;
+    }
+    grove.ground = count > 0 ? heights / static_cast<float>(count) : 0.0f;
+    grove.near.Build(device_, surfaces_, near);
+    // The far form in the palette's two materials, whatever grows here.
+    CnaEngine::Graphics::MeshData solid, cards;
+    palette_.Merge(far, solid, cards);
+    grove.far.Clear();
+    grove.far.Add(device_, solid, palette_.Solid());
+    grove.far.Add(device_, cards, palette_.Cards());
+}
+
 void SceneryRenderer::Update(const zoo::World& world, const zoo::ZooObjects& objects, int maxCells) {
     if (cells_.empty() || world.Width() != width_ || world.Depth() != depth_) {
         Layout(world);
@@ -311,6 +403,9 @@ void SceneryRenderer::Update(const zoo::World& world, const zoo::ZooObjects& obj
                 cell->fenceWanted = FenceHash(world, *cell);
             }
             cell->objectWanted = ObjectHash(world, objects, *cell);
+        }
+        for (auto& grove : groves_) {
+            grove->wanted = GroveHash(world, objects, *grove);
         }
         worldRevision_ = world.Revision();
         objectsRevision_ = objects.Revision();
@@ -343,6 +438,49 @@ void SceneryRenderer::Update(const zoo::World& world, const zoo::ZooObjects& obj
         }
         --budget;
     }
+    for (auto& grove : groves_) {
+        if (grove->built && grove->hash == grove->wanted) {
+            continue;
+        }
+        if (maxCells >= 0 && budget <= 0) {
+            pending_ = true;
+            break;
+        }
+        BuildGrove(world, objects, *grove);
+        grove->hash = grove->wanted;
+        grove->built = true;
+        --budget;
+    }
+    palette_.Upload();
+}
+
+void SceneryRenderer::Submit(CnaEngine::App::Frame& frame, const Vector3& eye) {
+    if (fullDetail_) {
+        static_cast<const SceneryRenderer&>(*this).Submit(frame);
+        return;
+    }
+    for (const auto& cell : cells_) {
+        cell->fences.Submit(frame);
+        cell->objects.Submit(frame);
+    }
+    for (const auto& grove : groves_) {
+        if (grove->near.Empty()) {
+            continue;
+        }
+        // From the eye to the nearest point of the grove's square on the ground.
+        const float dx = std::max({static_cast<float>(grove->x0) * kTile - eye.X, 0.0f,
+                                   eye.X - static_cast<float>(grove->x1) * kTile});
+        const float dz = std::max({static_cast<float>(grove->z0) * kTile - eye.Z, 0.0f,
+                                   eye.Z - static_cast<float>(grove->z1) * kTile});
+        const float dy = eye.Y - grove->ground;
+        const float distance = std::sqrt(dx * dx + dy * dy + dz * dz);
+        if (distance > kFarBeyond) {
+            grove->showsFar = true;
+        } else if (distance < kNearWithin) {
+            grove->showsFar = false;
+        }
+        (grove->showsFar ? grove->far : grove->near).Submit(frame);
+    }
 }
 
 void SceneryRenderer::Submit(CnaEngine::App::Frame& frame) const {
@@ -350,12 +488,18 @@ void SceneryRenderer::Submit(CnaEngine::App::Frame& frame) const {
         cell->fences.Submit(frame);
         cell->objects.Submit(frame);
     }
+    for (const auto& grove : groves_) {
+        grove->near.Submit(frame);
+    }
 }
 
 std::size_t SceneryRenderer::Triangles() const {
     std::size_t total = 0;
     for (const auto& cell : cells_) {
         total += cell->fences.Triangles() + cell->objects.Triangles();
+    }
+    for (const auto& grove : groves_) {
+        total += grove->near.Triangles();
     }
     return total;
 }
@@ -365,6 +509,7 @@ std::string SceneryRenderer::Tally(const zoo::ZooObjects& objects) const {
         std::string name;
         std::size_t each = 0;
         std::size_t count = 0;
+        std::size_t far = 0;  // a plant's triangles in the far form
     };
     const auto triangles = [](const ModelBuilder& model) {
         std::size_t total = 0;
@@ -374,7 +519,7 @@ std::string SceneryRenderer::Tally(const zoo::ZooObjects& objects) const {
         return total;
     };
     std::vector<Line> lines;
-    Line fences{"(all fences)", 0, 1};
+    Line fences{"(all fences)", 0, 1, 0};
     for (const auto& cell : cells_) {
         fences.each += cell->fences.Triangles();
     }
@@ -390,9 +535,10 @@ std::string SceneryRenderer::Tally(const zoo::ZooObjects& objects) const {
             continue;
         }
         // One of them stands for all: the seed changes a tree's shape, hardly its size.
-        ModelBuilder model;
+        ModelBuilder model, far;
         BuildProp(model, catalog_.props[i], 1u);
-        lines.push_back({catalog_.props[i].id, triangles(model), props[i]});
+        BuildPlant(far, catalog_.props[i], 1u, PlantDetail::Far);
+        lines.push_back({catalog_.props[i].id, triangles(model), props[i], triangles(far)});
     }
     std::vector<std::size_t> buildings(catalog_.buildings.size(), 0);
     for (const zoo::Building& building : objects.Buildings()) {
@@ -406,7 +552,7 @@ std::string SceneryRenderer::Tally(const zoo::ZooObjects& objects) const {
         }
         ModelBuilder model;
         BuildBuilding(model, catalog_.buildings[i]);
-        lines.push_back({catalog_.buildings[i].id, triangles(model), buildings[i]});
+        lines.push_back({catalog_.buildings[i].id, triangles(model), buildings[i], 0});
     }
     std::sort(lines.begin(), lines.end(),
               [](const Line& a, const Line& b) { return a.each * a.count > b.each * b.count; });
@@ -415,10 +561,25 @@ std::string SceneryRenderer::Tally(const zoo::ZooObjects& objects) const {
         text += " " + std::to_string(cell->fences.Pieces()) + "+" + std::to_string(cell->objects.Pieces());
     }
     text += "\n";
+    std::size_t planted = 0, pieces = 0, near = 0, far = 0;
+    for (const auto& grove : groves_) {
+        planted += grove->near.Empty() ? 0 : 1;
+        pieces += grove->near.Pieces();
+        near += grove->near.Triangles();
+        far += grove->far.Triangles();
+    }
+    text += "  plants: " + std::to_string(planted) + " groves of " + std::to_string(groves_.size()) +
+            " planted, " + std::to_string(pieces) + " draw calls and " + std::to_string(near) +
+            " triangles all near, " + std::to_string(far) + " triangles all far (two draw calls a grove)\n";
     for (const Line& line : lines) {
-        char row[160];
-        std::snprintf(row, sizeof row, "  %-24s %5zu x %6zu = %8zu\n", line.name.c_str(), line.count,
-                      line.each, line.each * line.count);
+        char row[200];
+        if (line.far > 0) {
+            std::snprintf(row, sizeof row, "  %-24s %5zu x %6zu = %8zu  (far %zu each)\n", line.name.c_str(),
+                          line.count, line.each, line.each * line.count, line.far);
+        } else {
+            std::snprintf(row, sizeof row, "  %-24s %5zu x %6zu = %8zu\n", line.name.c_str(), line.count,
+                          line.each, line.each * line.count);
+        }
         text += row;
     }
     return text;
@@ -428,6 +589,9 @@ std::size_t SceneryRenderer::DrawCalls() const {
     std::size_t total = 0;
     for (const auto& cell : cells_) {
         total += cell->fences.Pieces() + cell->objects.Pieces();
+    }
+    for (const auto& grove : groves_) {
+        total += grove->near.Pieces();
     }
     return total;
 }

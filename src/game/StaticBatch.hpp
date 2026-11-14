@@ -20,6 +20,10 @@ public:
     /// Replaces the contents with the builder's geometry (empty parts are skipped).
     void Build(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, Surfaces& surfaces,
                const ModelBuilder& builder);
+    /// Adds one mesh in a material of the caller's, which must outlive the batch (nothing
+    /// when the mesh is empty).
+    void Add(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
+             const CnaEngine::Graphics::MeshData& mesh, const CnaEngine::Graphics::Material& material);
     void Clear();
     void Submit(CnaEngine::App::Frame& frame) const;
     void Submit(CnaEngine::App::Frame& frame, const Matrix& world) const;

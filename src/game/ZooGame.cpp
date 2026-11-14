@@ -612,7 +612,7 @@ void ZooGame::Submit(App::Frame& frame) {
     if (!without_.terrain)
         terrain_->Submit(frame);
     if (!without_.scenery)
-        scenery_->Submit(frame);
+        scenery_->Submit(frame, MainCamera().Position());
     if (!without_.animals)
         animals_->Submit(frame);
     if (editor_ && !play_.mainMenu)

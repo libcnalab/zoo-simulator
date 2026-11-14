@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 #include "MeshWriter.hpp"
 
+#include <algorithm>
 #include <cmath>
 #include <numbers>
 
@@ -235,6 +236,66 @@ void MeshWriter::Tube(const Vector3& from, const Vector3& to, float radiusFrom, 
     }
     if (capFrom && radiusFrom > 1e-5f) {
         cap(from, radiusFrom, -axis, false);
+    }
+}
+
+void MeshWriter::Pipe(std::span<const Vector3> points, std::span<const float> radii, int sides) {
+    const std::size_t count = std::min(points.size(), radii.size());
+    if (count < 2 || sides < 3) {
+        return;
+    }
+    float widest = 0.0f;
+    for (std::size_t j = 0; j < count; ++j) {
+        widest = std::max(widest, radii[j]);
+    }
+    const float girth = 2.0f * kPi * widest;
+    const auto first = static_cast<std::uint32_t>(mesh.positions.size());
+    const auto columns = static_cast<std::uint32_t>(sides) + 1u;
+    Vector3 side;
+    Vector3 up;
+    float travelled = 0.0f;
+    for (std::size_t j = 0; j < count; ++j) {
+        // A ring halves the bend between the piece that arrives and the one that leaves.
+        const Vector3 before = points[j] - points[j > 0 ? j - 1 : j];
+        const Vector3 after = points[j + 1 < count ? j + 1 : j] - points[j];
+        Vector3 axis = (before.LengthSquared() > 1e-12f ? Vector3::Normalize(before) : Vector3(0.0f, 0.0f, 0.0f)) +
+                       (after.LengthSquared() > 1e-12f ? Vector3::Normalize(after) : Vector3(0.0f, 0.0f, 0.0f));
+        axis = axis.LengthSquared() > 1e-12f ? Vector3::Normalize(axis) : Vector3(0.0f, 1.0f, 0.0f);
+        if (j == 0) {
+            Basis(axis, side, up);
+        } else {
+            // Carried along from the ring before, so that the skin does not twist.
+            side = side - axis * Vector3::Dot(side, axis);
+            if (side.LengthSquared() < 1e-8f) {
+                Basis(axis, side, up);
+            } else {
+                side = Vector3::Normalize(side);
+                up = Vector3::Cross(axis, side);
+            }
+            travelled += before.Length();
+        }
+        const std::size_t a = j > 0 ? j - 1 : j;
+        const std::size_t b = j + 1 < count ? j + 1 : j;
+        const float run = (points[b] - points[a]).Length();
+        const float slope = run > 1e-6f ? (radii[a] - radii[b]) / run : 0.0f;
+        for (int i = 0; i <= sides; ++i) {
+            const float angle = 2.0f * kPi * static_cast<float>(i) / static_cast<float>(sides);
+            const Vector3 radial = side * std::cos(angle) + up * std::sin(angle);
+            Vertex(points[j] + radial * radii[j], Vector3::Normalize(radial + axis * slope),
+                   girth * static_cast<float>(i) / static_cast<float>(sides), travelled);
+        }
+    }
+    for (std::size_t j = 0; j + 1 < count; ++j) {
+        for (std::uint32_t i = 0; i + 1 < columns; ++i) {
+            const std::uint32_t b0 = first + static_cast<std::uint32_t>(j) * columns + i;
+            const std::uint32_t t0 = b0 + columns;
+            if (radii[j] > 1e-5f) {
+                Face(b0, b0 + 1, t0 + 1);
+            }
+            if (radii[j + 1] > 1e-5f) {
+                Face(b0, t0 + 1, t0);
+            }
+        }
     }
 }
 

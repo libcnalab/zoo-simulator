@@ -3,6 +3,7 @@
 
 #include <cstdint>
 #include <deque>
+#include <span>
 #include <vector>
 
 #include "CnaEngine/Graphics/MeshData.hpp"
@@ -35,6 +36,9 @@ enum class Pattern : std::uint8_t {
     Rock,         ///< bedded rock: strata across v, lichen
     LeafSpray,    ///< a twig's worth of leaves, cut out (MeshWriter::Card; texture coordinates 0..1)
     NeedleSpray,  ///< a conifer bough, cut out (the same)
+    Fronds,       ///< fronds, tufts and flower heads, cut out (FoliageTextures: PlantCard)
+    BirchBark,    ///< white paper bark with its dark lines and scars
+    LeafShade,    ///< the inside of a crown: leaves in the shade and the dark between them
     Count
 };
 
@@ -85,6 +89,10 @@ public:
     /// A round, possibly tapering tube with smooth sides.
     void Tube(const Vector3& from, const Vector3& to, float radiusFrom, float radiusTo, int sides = 8,
               bool capFrom = false, bool capTo = true);
+    /// A round tube through several points, `radii[i]` its radius at `points[i]`, open at both
+    /// ends: one skin with smooth sides, without the seams that tubes laid end to end show at
+    /// a bend. For trunks and limbs. Texture coordinates as for Tube, v running on along it.
+    void Pipe(std::span<const Vector3> points, std::span<const float> radii, int sides = 8);
     /// A horizontal disc facing up.
     void Disc(const Vector3& center, float radius, int sides = 12);
     /// A lumpy ellipsoid with smooth normals: tree crowns, bushes, boulders.

@@ -6,6 +6,7 @@
 #include <numbers>
 #include <string_view>
 
+#include "PlantModels.hpp"
 #include "RockModels.hpp"
 #include "SignTextures.hpp"
 #include "zoo/base/Rng.hpp"
@@ -46,88 +47,8 @@ struct Maker {
     MeshWriter& Steel() { return m.Use(kSteel, Pattern::Metal); }
 };
 
-/// What a crown is written into: its dark heart, which hides what is behind it and casts
-/// the shadow (cut-out cards cast none), and the sprays of leaves round it.
-struct Foliage {
-    MeshWriter& heart;
-    MeshWriter& sprays;
-};
-
-Foliage Broadleaves(Maker& k) {
-    return {k.m.Use(Scaled(k.def.color, 0.6f), Pattern::Leaves), k.m.Use(k.def.color, Pattern::LeafSpray)};
-}
-
-Foliage Conifer(Maker& k) {
-    return {k.m.Use(Scaled(k.def.color, 0.6f), Pattern::Needles), k.m.Use(k.def.color, Pattern::NeedleSpray)};
-}
-
 Vector3 Polar(float angle, float distance, float y = 0.0f) {
     return Vector3(std::cos(angle) * distance, y, std::sin(angle) * distance);
-}
-
-/// One spray out of the four of an atlas, sometimes mirrored: a card of `size` metres with
-/// its twig's foot at `center - tip * size / 2`.
-void SprayCard(Maker& k, MeshWriter& sprays, const Vector3& center, const Vector3& side, const Vector3& tip,
-               float size, const Vector3& shade) {
-    const int cell = static_cast<int>(k.R(0.0f, 3.999f));
-    float u0 = static_cast<float>(cell % 2) * 0.5f;
-    float u1 = u0 + 0.5f;
-    const float v0 = static_cast<float>(cell / 2) * 0.5f;
-    if (k.R(0.0f, 1.0f) < 0.5f) {
-        std::swap(u0, u1);
-    }
-    sprays.Card(center, side * (size * 0.5f), tip * (size * 0.5f), shade, u0, v0, u1, v0 + 0.5f);
-}
-
-Vector3 AnyDirection(Maker& k) {
-    const float y = k.R(-1.0f, 1.0f);
-    const float ring = std::sqrt(std::max(0.0f, 1.0f - y * y));
-    const float angle = k.R(0.0f, 2.0f * kPi);
-    return Vector3(ring * std::cos(angle), y, ring * std::sin(angle));
-}
-
-/// A mass of foliage filling an ellipsoid: a dark heart and, all over it, sprays on cards of
-/// `card` metres, turned every way but mostly outwards, each lit as the place of the crown it
-/// sits on. `cover` is the cards' area to the ellipsoid's; `hanging` lets the sprays hang
-/// (a willow's curtains). `flatBase` as for MeshWriter::Blob.
-void Crown(Maker& k, const Foliage& f, const Vector3& center, const Vector3& radii, float card,
-           float lumpiness = 0.2f, float flatBase = 1.0f, float cover = 1.7f, bool hanging = false) {
-    const bool small = std::max(radii.X, radii.Z) < 1.0f;
-    f.heart.Blob(center, radii * 0.62f, k.Seed(), lumpiness, small ? 6 : 7, small ? 4 : 5, flatBase);
-    const float a = radii.X, b = radii.Y, c = radii.Z;
-    const float area =
-        4.0f * kPi *
-        std::pow((std::pow(a * b, 1.6f) + std::pow(a * c, 1.6f) + std::pow(b * c, 1.6f)) / 3.0f, 1.0f / 1.6f) *
-        (1.0f + flatBase) * 0.5f;
-    const int count = std::max(6, static_cast<int>(std::lround(cover * area / (card * card))));
-    const float turn = k.R(0.0f, 2.0f * kPi);
-    for (int i = 0; i < count; ++i) {
-        // Evenly over the ellipsoid (a spiral from the top down), then shaken.
-        const float y = 1.0f - (1.0f + flatBase) * (static_cast<float>(i) + 0.5f) / static_cast<float>(count);
-        const float ring = std::sqrt(std::max(0.0f, 1.0f - y * y));
-        const float angle = turn + 2.39996323f * static_cast<float>(i) + k.R(-0.3f, 0.3f);
-        const Vector3 dir(ring * std::cos(angle), y, ring * std::sin(angle));
-        const Vector3 at = center + radii * dir * k.R(0.72f, 0.94f);
-        const Vector3 normal = Vector3::Normalize(Vector3(dir.X / a, dir.Y / b, dir.Z / c));
-        // The underside of a crown is in its own shade but not black: the light of the sky
-        // and of the ground reaches it, which a normal straight down would deny it.
-        const Vector3 shade = Vector3::Normalize(normal + Vector3(0.0f, 0.3f, 0.0f));
-        Vector3 face, tip;
-        if (hanging) {
-            const float round = k.R(0.0f, 2.0f * kPi);
-            face = Vector3(std::cos(round), 0.0f, std::sin(round));
-            tip = Vector3::Normalize(Vector3(k.R(-0.15f, 0.15f), -1.0f, k.R(-0.15f, 0.15f)));
-        } else {
-            face = Vector3::Normalize(normal * 0.55f + AnyDirection(k));
-            tip = normal + AnyDirection(k) * 0.6f;
-        }
-        tip = tip - face * Vector3::Dot(tip, face);
-        if (tip.LengthSquared() < 1e-4f) {
-            tip = Vector3::Cross(face, Vector3(0.3f, 0.9f, 0.1f));
-        }
-        tip = Vector3::Normalize(tip);
-        SprayCard(k, f.sprays, at, Vector3::Cross(tip, face), tip, card * k.R(0.8f, 1.2f), shade);
-    }
 }
 
 /// A branch or log without end caps.
@@ -159,337 +80,6 @@ void Tub(MeshWriter& w, float base, float sizeX, float sizeY, float sizeZ, float
     w.BoxAt((sizeX - wall) * 0.5f, 0.0f, base, wall, sizeY, sizeZ);
     w.BoxAt(0.0f, -(sizeZ - wall) * 0.5f, base, sizeX - 2.0f * wall, sizeY, wall);
     w.BoxAt(0.0f, (sizeZ - wall) * 0.5f, base, sizeX - 2.0f * wall, sizeY, wall);
-}
-
-/// An arching leaf: a V-shaped ribbon from `base` outwards in direction
-/// `angle`, rising first and drooping towards its tip.
-void Frond(MeshWriter& w, const Vector3& base, float angle, float length, float rise, float droop,
-           float width) {
-    const Vector3 out = Polar(angle, 1.0f);
-    const Vector3 side = Polar(angle + kPi * 0.5f, 1.0f);
-    constexpr int kSegments = 5;
-    Vector3 spine[kSegments + 1];
-    float half[kSegments + 1];
-    for (int i = 0; i <= kSegments; ++i) {
-        const float t = static_cast<float>(i) / static_cast<float>(kSegments);
-        const float s = t * length;
-        spine[i] = base + out * s + Vector3(0.0f, rise * s - droop * s * s / length, 0.0f);
-        half[i] = width * 0.5f * (0.35f + 0.65f * std::sin(kPi * std::min(1.0f, t * 1.25f + 0.12f)));
-        if (i == kSegments) {
-            half[i] = 0.03f;
-        }
-    }
-    const Vector3 keel(0.0f, 0.3f, 0.0f);
-    for (int i = 0; i < kSegments; ++i) {
-        const Vector3 l0 = spine[i] - side * half[i] + keel * half[i];
-        const Vector3 l1 = spine[i + 1] - side * half[i + 1] + keel * half[i + 1];
-        const Vector3 r0 = spine[i] + side * half[i] + keel * half[i];
-        const Vector3 r1 = spine[i + 1] + side * half[i + 1] + keel * half[i + 1];
-        w.QuadTwoSided(spine[i], spine[i + 1], l1, l0);
-        w.QuadTwoSided(spine[i + 1], spine[i], r0, r1);
-    }
-}
-
-// ---- trees ----------------------------------------------------------------------------
-
-struct Broadleaf {
-    float trunkHeight = 0.36f;  ///< where the trunk forks, as a share of the height
-    float trunkRadius = 0.35f;  ///< metres at breast height
-    float crownRadius = 0.3f;   ///< horizontal reach of the crown, share of the height
-    float crownHeight = 0.24f;  ///< vertical half-size of the crown, share of the height
-    int blobs = 5;
-    float lumpiness = 0.2f;
-    float spray = 1.7f;  ///< edge of a card of leaves, metres: the smaller, the finer the leaves
-    zoo::Color3 bark{0.3f, 0.22f, 0.15f};
-};
-
-/// Returns the crown's centre.
-Vector3 BroadleafTree(Maker& k, const Broadleaf& p) {
-    MeshWriter& bark = k.m.Use(p.bark, Pattern::Bark);
-    const Foliage leaves = Broadleaves(k);
-    const float H = k.H;
-    const Vector3 fork(k.R(-0.03f, 0.03f) * H, H * p.trunkHeight, k.R(-0.03f, 0.03f) * H);
-    bark.Tube(Vector3(0.0f, -0.4f, 0.0f), Vector3(0.0f, 0.6f, 0.0f), p.trunkRadius * 1.5f, p.trunkRadius, 8,
-              false, false);
-    bark.Tube(Vector3(0.0f, 0.6f, 0.0f), fork, p.trunkRadius, p.trunkRadius * 0.72f, 8, false, false);
-
-    const float reach = p.crownRadius * H;
-    const float tall = p.crownHeight * H;
-    const Vector3 heart = fork + Vector3(0.0f, tall * 0.95f, 0.0f);
-    Limb(bark, fork, heart, p.trunkRadius * 0.7f, p.trunkRadius * 0.2f);
-    Crown(k, leaves, heart + Vector3(0.0f, tall * 0.15f, 0.0f), Vector3(reach * 0.72f, tall, reach * 0.72f),
-          p.spray, p.lumpiness);
-    const float start = k.R(0.0f, 2.0f * kPi);
-    for (int i = 0; i < p.blobs; ++i) {
-        const float angle =
-            start + 2.0f * kPi * static_cast<float>(i) / static_cast<float>(p.blobs) + k.R(-0.25f, 0.25f);
-        const Vector3 c = heart + Polar(angle, reach * k.R(0.5f, 0.66f), tall * k.R(-0.55f, 0.3f));
-        const float radius = reach * k.R(0.44f, 0.58f);
-        Crown(k, leaves, c, Vector3(radius, radius * k.R(0.68f, 0.85f), radius), p.spray, p.lumpiness);
-        Limb(bark, fork - Vector3(0.0f, k.R(0.0f, 0.12f) * H, 0.0f), c - Vector3(0.0f, radius * 0.3f, 0.0f),
-             p.trunkRadius * 0.38f, p.trunkRadius * 0.12f, 5);
-    }
-    return heart;
-}
-
-void Oak(Maker& k) {
-    Broadleaf p;
-    p.trunkHeight = k.R(0.3f, 0.38f);
-    p.trunkRadius = 0.4f;
-    p.crownRadius = 0.34f;
-    p.crownHeight = 0.24f;
-    p.blobs = 6;
-    p.bark = k.def.color2;
-    BroadleafTree(k, p);
-}
-
-void Birch(Maker& k) {
-    Broadleaf p;
-    p.trunkHeight = k.R(0.46f, 0.54f);
-    p.trunkRadius = 0.15f;
-    p.crownRadius = 0.2f;
-    p.crownHeight = 0.24f;
-    p.blobs = 4;
-    p.lumpiness = 0.24f;
-    p.spray = 1.2f;
-    p.bark = {0.74f, 0.73f, 0.68f};
-    BroadleafTree(k, p);
-}
-
-void Willow(Maker& k) {
-    Broadleaf p;
-    p.trunkHeight = 0.3f;
-    p.trunkRadius = 0.42f;
-    p.crownRadius = 0.36f;
-    p.crownHeight = 0.22f;
-    p.blobs = 5;
-    p.bark = k.def.color2;
-    const Vector3 heart = BroadleafTree(k, p);
-    // The hanging curtains.
-    const Foliage leaves = Broadleaves(k);
-    const float reach = p.crownRadius * k.H;
-    const int curtains = 9;
-    const float start = k.R(0.0f, 2.0f * kPi);
-    for (int i = 0; i < curtains; ++i) {
-        const float angle = start + 2.0f * kPi * static_cast<float>(i) / static_cast<float>(curtains);
-        const float drop = k.H * k.R(0.26f, 0.34f);
-        const Vector3 c =
-            Vector3(heart.X, 0.0f, heart.Z) + Polar(angle, reach * k.R(0.8f, 0.95f), heart.Y - drop * 0.7f);
-        Crown(k, leaves, c, Vector3(reach * 0.3f, drop, reach * 0.3f), 1.5f, 0.22f, 1.0f, 1.3f, true);
-    }
-}
-
-void Spruce(Maker& k) {
-    MeshWriter& bark = k.Bark();
-    const Foliage needles = Conifer(k);
-    const float H = k.H;
-    bark.Tube(Vector3(0.0f, -0.4f, 0.0f), Vector3(0.0f, H * 0.95f, 0.0f), 0.24f, 0.03f, 7, false, false);
-    const int tiers = 8;
-    const float bottom = H * 0.1f;
-    const float widest = H * k.R(0.19f, 0.23f);
-    for (int i = 0; i < tiers; ++i) {
-        const float t = static_cast<float>(i) / static_cast<float>(tiers);
-        const float y0 = bottom + (H - bottom) * t * 0.93f;
-        const float radius = widest * (1.0f - t * 0.82f) * k.R(0.92f, 1.08f);
-        const float tall = (H - bottom) / static_cast<float>(tiers) * 1.9f;
-        const float y1 = std::min(H, y0 + tall);
-        // The heart of each whorl is a dark cone; the boughs are cards from the trunk
-        // outwards and down, every other one on edge so that some face every onlooker.
-        needles.heart.Tube(Vector3(0.0f, y0 + tall * 0.1f, 0.0f), Vector3(0.0f, y1, 0.0f), radius * 0.5f, 0.0f, 7,
-                           true, false);
-        const int boughs = 7 + static_cast<int>(std::lround(5.0f * (1.0f - t)));
-        const float start = k.R(0.0f, 2.0f * kPi);
-        for (int j = 0; j < boughs; ++j) {
-            const float angle =
-                start + 2.0f * kPi * static_cast<float>(j) / static_cast<float>(boughs) + k.R(-0.2f, 0.2f);
-            const Vector3 out = Polar(angle, 1.0f);
-            const Vector3 tip = Vector3::Normalize(out + Vector3(0.0f, -k.R(0.3f, 0.6f), 0.0f));
-            const Vector3 across = Polar(angle + kPi * 0.5f, 1.0f);
-            const Vector3 over = Vector3::Cross(across, tip);
-            const float roll = (j % 2 == 0 ? k.R(0.1f, 0.5f) : k.R(1.0f, 1.5f)) * (k.R(0.0f, 1.0f) < 0.5f ? -1.0f : 1.0f);
-            const Vector3 side = across * std::cos(roll) + over * std::sin(roll);
-            const float length = std::max(0.7f, radius * k.R(1.1f, 1.35f));
-            const Vector3 foot(0.0f, y0 + tall * k.R(0.3f, 0.55f), 0.0f);
-            SprayCard(k, needles.sprays, foot + tip * (length * 0.5f), side, tip, length,
-                      Vector3::Normalize(out * 0.7f + Vector3(0.0f, 0.7f, 0.0f)));
-        }
-    }
-    // The leader.
-    for (int j = 0; j < 2; ++j) {
-        const float angle = k.R(0.0f, kPi) + kPi * 0.5f * static_cast<float>(j);
-        SprayCard(k, needles.sprays, Vector3(0.0f, H - 0.45f, 0.0f), Polar(angle, 1.0f), Vector3(0.0f, 1.0f, 0.0f),
-                  1.3f, Vector3::Normalize(Polar(angle + kPi * 0.5f, 0.5f, 0.85f)));
-    }
-}
-
-void Pine(Maker& k) {
-    MeshWriter& bark = k.m.Use({0.36f, 0.2f, 0.12f}, Pattern::Bark);
-    const Foliage needles = Conifer(k);
-    const float H = k.H;
-    const Vector3 top(k.R(-0.04f, 0.04f) * H, H * 0.8f, k.R(-0.04f, 0.04f) * H);
-    bark.Tube(Vector3(0.0f, -0.4f, 0.0f), Vector3(0.0f, 0.6f, 0.0f), 0.42f, 0.28f, 8, false, false);
-    bark.Tube(Vector3(0.0f, 0.6f, 0.0f), top, 0.28f, 0.1f, 8, false, false);
-    const int pads = 5;
-    const float start = k.R(0.0f, 2.0f * kPi);
-    for (int i = 0; i < pads; ++i) {
-        const float angle = start + 2.0f * kPi * static_cast<float>(i) / static_cast<float>(pads - 1);
-        const bool crown = i == pads - 1;
-        const float radius = H * (crown ? 0.17f : k.R(0.12f, 0.16f));
-        const Vector3 c = crown ? top + Vector3(0.0f, H * 0.05f, 0.0f)
-                                : top + Polar(angle, H * k.R(0.12f, 0.17f), -H * k.R(0.02f, 0.2f));
-        Crown(k, needles, c, Vector3(radius, radius * 0.5f, radius), 1.5f, 0.22f);
-        if (!crown) {
-            const Vector3 root(top.X * 0.8f, c.Y - H * 0.06f, top.Z * 0.8f);
-            Limb(bark, root, c - Vector3(0.0f, radius * 0.2f, 0.0f), 0.09f, 0.04f, 5);
-        }
-    }
-    // A dead stub or two below the crown.
-    for (int i = 0; i < 2; ++i) {
-        const float y = H * k.R(0.35f, 0.55f);
-        Limb(bark, Vector3(0.0f, y, 0.0f), Polar(k.R(0.0f, 6.28f), k.R(0.7f, 1.3f), y + 0.3f), 0.05f, 0.02f,
-             4);
-    }
-}
-
-void Acacia(Maker& k) {
-    MeshWriter& bark = k.Bark();
-    const Foliage leaves = Broadleaves(k);
-    const float H = k.H;
-    const Vector3 fork(k.R(-0.06f, 0.06f) * H, H * k.R(0.36f, 0.45f), k.R(-0.06f, 0.06f) * H);
-    bark.Tube(Vector3(0.0f, -0.4f, 0.0f), fork, 0.3f, 0.2f, 7, false, false);
-    const int limbs = 4;
-    const float start = k.R(0.0f, 2.0f * kPi);
-    const float canopy = H * 0.86f;
-    for (int i = 0; i < limbs; ++i) {
-        const float angle =
-            start + 2.0f * kPi * static_cast<float>(i) / static_cast<float>(limbs) + k.R(-0.3f, 0.3f);
-        const Vector3 tip =
-            Vector3(fork.X, 0.0f, fork.Z) + Polar(angle, H * k.R(0.2f, 0.3f), canopy - H * 0.04f);
-        const Vector3 elbow = fork + (tip - fork) * 0.55f + Vector3(0.0f, H * 0.06f, 0.0f);
-        Limb(bark, fork, elbow, 0.16f, 0.1f);
-        Limb(bark, elbow, tip, 0.1f, 0.04f, 5);
-        const float radius = H * k.R(0.22f, 0.3f);
-        Crown(k, leaves, tip + Vector3(0.0f, H * 0.035f, 0.0f), Vector3(radius, H * 0.055f, radius), 1.1f,
-              0.16f);
-    }
-    const float radius = H * 0.3f;
-    Crown(k, leaves, Vector3(fork.X, canopy + H * 0.05f, fork.Z), Vector3(radius, H * 0.07f, radius), 1.1f,
-          0.16f);
-}
-
-void Baobab(Maker& k) {
-    MeshWriter& bark = k.m.Use({0.4f, 0.34f, 0.3f}, Pattern::Bark);
-    const Foliage leaves = Broadleaves(k);
-    const float H = k.H;
-    const float girth = k.def.radiusM * 0.95f;
-    bark.Tube(Vector3(0.0f, -0.4f, 0.0f), Vector3(0.0f, H * 0.08f, 0.0f), girth * 1.15f, girth, 10, false,
-              false);
-    bark.Tube(Vector3(0.0f, H * 0.08f, 0.0f), Vector3(0.0f, H * 0.4f, 0.0f), girth, girth * 0.9f, 10, false,
-              false);
-    const Vector3 shoulder(0.0f, H * 0.6f, 0.0f);
-    bark.Tube(Vector3(0.0f, H * 0.4f, 0.0f), shoulder, girth * 0.9f, girth * 0.55f, 10, false, true);
-    const int limbs = 7;
-    const float start = k.R(0.0f, 2.0f * kPi);
-    for (int i = 0; i < limbs; ++i) {
-        const float angle =
-            start + 2.0f * kPi * static_cast<float>(i) / static_cast<float>(limbs) + k.R(-0.2f, 0.2f);
-        const Vector3 root = shoulder + Polar(angle, girth * 0.3f, -H * 0.03f);
-        const Vector3 tip = shoulder + Polar(angle, H * k.R(0.2f, 0.3f), H * k.R(0.14f, 0.3f));
-        Limb(bark, root, tip, girth * 0.22f, girth * 0.07f);
-        const float radius = H * k.R(0.08f, 0.11f);
-        Crown(k, leaves, tip + Vector3(0.0f, radius * 0.4f, 0.0f),
-              Vector3(radius * 1.3f, radius * 0.75f, radius * 1.3f), 1.0f, 0.22f, 1.0f, 1.2f);
-        // A side twig with its own tuft.
-        const Vector3 twig = root + (tip - root) * 0.6f;
-        const Vector3 twigTip = twig + Polar(angle + k.R(0.6f, 1.2f), H * 0.1f, H * 0.08f);
-        Limb(bark, twig, twigTip, girth * 0.08f, girth * 0.03f, 4);
-        Crown(k, leaves, twigTip, Vector3(radius, radius * 0.6f, radius), 1.0f, 0.22f, 1.0f, 1.2f);
-    }
-}
-
-void Palm(Maker& k) {
-    MeshWriter& bark = k.m.Use({0.36f, 0.31f, 0.24f}, Pattern::Bark);
-    MeshWriter& leaves = k.Leaves();
-    const float H = k.H * 0.8f;  // the fronds rise above the trunk
-    const float bendAngle = k.R(0.0f, 2.0f * kPi);
-    const float bend = k.R(0.05f, 0.16f) * H;
-    constexpr int kSegments = 6;
-    Vector3 previous(0.0f, -0.4f, 0.0f);
-    for (int i = 1; i <= kSegments; ++i) {
-        const float t = static_cast<float>(i) / static_cast<float>(kSegments);
-        const Vector3 next = Polar(bendAngle, bend * t * t, H * t);
-        const float r0 = 0.24f - 0.1f * static_cast<float>(i - 1) / static_cast<float>(kSegments);
-        const float r1 = 0.24f - 0.1f * t;
-        bark.Tube(previous, next, i == 1 ? 0.34f : r0, r1, 7, false, false);
-        previous = next;
-    }
-    const Vector3 top = previous;
-    leaves.Blob(top, Vector3(0.4f, 0.45f, 0.4f), k.Seed(), 0.1f, 7, 4);
-    const int fronds = 11;
-    const float start = k.R(0.0f, 2.0f * kPi);
-    for (int i = 0; i < fronds; ++i) {
-        const float angle =
-            start + 2.0f * kPi * static_cast<float>(i) / static_cast<float>(fronds) + k.R(-0.15f, 0.15f);
-        const float length = k.H * k.R(0.26f, 0.33f);
-        const bool upper = i % 2 == 0;
-        Frond(leaves, top + Vector3(0.0f, 0.2f, 0.0f), angle, length,
-              upper ? k.R(0.75f, 1.0f) : k.R(0.2f, 0.45f), upper ? 1.25f : 1.0f, 0.95f);
-    }
-}
-
-void Bamboo(Maker& k) {
-    MeshWriter& cane = k.m.Use(Mix(k.def.color, {0.55f, 0.6f, 0.2f}, 0.45f), Pattern::Plain);
-    const Foliage leaves = Broadleaves(k);
-    const int culms = 12;
-    for (int i = 0; i < culms; ++i) {
-        const Vector3 base = Polar(k.R(0.0f, 2.0f * kPi), k.def.radiusM * std::sqrt(k.R(0.0f, 0.8f)), -0.3f);
-        const float tall = k.H * k.R(0.65f, 1.0f);
-        const Vector3 tip = base + Polar(k.R(0.0f, 2.0f * kPi), tall * k.R(0.03f, 0.16f), tall);
-        cane.Tube(base, tip, 0.045f, 0.02f, 5, false, false);
-        for (int j = 0; j < 2; ++j) {
-            const float t = j == 0 ? k.R(0.55f, 0.75f) : k.R(0.82f, 0.98f);
-            const Vector3 c = base + (tip - base) * t + Polar(k.R(0.0f, 2.0f * kPi), 0.25f);
-            Crown(k, leaves, c, Vector3(k.R(0.45f, 0.7f), k.R(0.7f, 1.1f), k.R(0.45f, 0.7f)), 0.9f, 0.25f, 1.0f,
-                  0.8f, true);
-        }
-    }
-}
-
-// ---- bushes and rocks -----------------------------------------------------------------
-
-void Bush(Maker& k, const Foliage& foliage, int blobs, float spread, float squash, bool twigs) {
-    const float H = k.H;
-    for (int i = 0; i < blobs; ++i) {
-        const float angle = k.R(0.0f, 2.0f * kPi);
-        const float distance = i == 0 ? 0.0f : spread * k.R(0.5f, 1.0f);
-        const float tall = H * (i == 0 ? 0.5f : k.R(0.3f, 0.45f)) * squash;
-        const float wide = k.def.radiusM * k.R(0.75f, 1.1f);
-        Crown(k, foliage, Polar(angle, distance, tall * 0.8f), Vector3(wide, tall, wide),
-              std::clamp(wide * 1.1f, 0.5f, 0.8f), 0.25f, 0.75f, 1.5f);
-    }
-    if (twigs) {
-        MeshWriter& bark = k.Bark();
-        // Stems from the root, which show through the leaves; none stands out above them.
-        for (int i = 0; i < 4; ++i) {
-            const float angle = k.R(0.0f, 2.0f * kPi);
-            Limb(bark, Polar(angle, 0.1f, -0.1f), Polar(angle, k.R(0.3f, 0.6f), H * squash * k.R(0.4f, 0.6f)), 0.03f,
-                 0.012f, 4);
-        }
-    }
-}
-
-void Fern(Maker& k) {
-    MeshWriter& leaves = k.Leaves();
-    const int fronds = 10;
-    const float start = k.R(0.0f, 2.0f * kPi);
-    for (int i = 0; i < fronds; ++i) {
-        const float angle =
-            start + 2.0f * kPi * static_cast<float>(i) / static_cast<float>(fronds) + k.R(-0.2f, 0.2f);
-        const bool upper = i % 2 == 0;
-        Frond(leaves, Vector3(0.0f, 0.05f, 0.0f), angle, k.H * k.R(0.7f, 0.95f), upper ? 1.3f : 0.7f,
-              upper ? 1.3f : 0.9f, 0.5f);
-    }
-    leaves.Blob(Vector3(0.0f, 0.15f, 0.0f), Vector3(0.3f, 0.3f, 0.3f), k.Seed(), 0.2f, 6, 4, 0.5f);
 }
 
 void Rocks(Maker& k, Pattern pattern, float squash, float lumpiness, int extra) {
@@ -920,24 +510,6 @@ void InfoBoard(Maker& k) {
     k.m.ClearLocal();
 }
 
-void FlowerBed(Maker& k) {
-    const float r = k.def.radiusM;
-    MeshWriter& kerb = k.m.Use(kStone, Pattern::Stone);
-    Ring(kerb, Vector3(0.0f, 0.0f, 0.0f), r, -0.2f, 0.2f, 0.14f, 14);
-    k.m.Use(kSoil, Pattern::Concrete).Disc(Vector3(0.0f, 0.15f, 0.0f), r - 0.12f, 14);
-    MeshWriter& green = k.m.Use({0.13f, 0.32f, 0.1f}, Pattern::Leaves);
-    const zoo::Color3 petals[3] = {k.def.color, {0.9f, 0.7f, 0.1f}, {0.9f, 0.88f, 0.82f}};
-    for (int i = 0; i < 16; ++i) {
-        const Vector3 c = Polar(k.R(0.0f, 2.0f * kPi), (r - 0.3f) * std::sqrt(k.R(0.0f, 1.0f)), 0.0f);
-        const float tall = k.R(0.25f, 0.42f);
-        green.Blob(c + Vector3(0.0f, 0.15f + tall * 0.4f, 0.0f), Vector3(0.17f, tall * 0.55f, 0.17f),
-                   k.Seed(), 0.25f, 6, 4);
-        MeshWriter& flower = k.m.Use(petals[i % 3], Pattern::Plain);
-        flower.Blob(c + Vector3(0.0f, 0.15f + tall, 0.0f), Vector3(0.11f, 0.07f, 0.11f), k.Seed(), 0.3f, 6,
-                    3);
-    }
-}
-
 void Fountain(Maker& k) {
     const float r = k.def.radiusM;
     MeshWriter& stone = k.m.Use(kStone, Pattern::Stone);
@@ -990,35 +562,12 @@ void Marker(Maker& k) {
 }  // namespace
 
 void BuildProp(ModelBuilder& model, const zoo::PropDef& def, std::uint32_t seed) {
+    if (BuildPlant(model, def, seed)) {
+        return;
+    }
     Maker k(model, def, seed);
     const std::string_view look = def.look;
-    if (look == "oak") {
-        Oak(k);
-    } else if (look == "birch") {
-        Birch(k);
-    } else if (look == "pine") {
-        Pine(k);
-    } else if (look == "spruce") {
-        Spruce(k);
-    } else if (look == "acacia") {
-        Acacia(k);
-    } else if (look == "baobab") {
-        Baobab(k);
-    } else if (look == "palm") {
-        Palm(k);
-    } else if (look == "bamboo") {
-        Bamboo(k);
-    } else if (look == "willow") {
-        Willow(k);
-    } else if (look == "juniper") {
-        Bush(k, Conifer(k), 3, 0.3f, 1.15f, false);
-    } else if (look == "shrub") {
-        Bush(k, Broadleaves(k), 4, 0.45f, 0.9f, true);
-    } else if (look == "scrub") {
-        Bush(k, Broadleaves(k), 2, 0.4f, 0.6f, true);
-    } else if (look == "fern") {
-        Fern(k);
-    } else if (look == "boulder") {
+    if (look == "boulder") {
         Rocks(k, Pattern::Stone, 1.0f, 0.24f, 2);
     } else if (look == "rock") {
         Rocks(k, Pattern::Stone, 0.7f, 0.16f, 3);
@@ -1062,8 +611,6 @@ void BuildProp(ModelBuilder& model, const zoo::PropDef& def, std::uint32_t seed)
         Lamp(k);
     } else if (look == "info_board") {
         InfoBoard(k);
-    } else if (look == "flower_bed") {
-        FlowerBed(k);
     } else if (look == "fountain") {
         Fountain(k);
     } else if (look == "statue") {

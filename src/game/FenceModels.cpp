@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <cmath>
 
+#include "PlantModels.hpp"
 #include "SignTextures.hpp"
 
 namespace zoogame {
@@ -465,17 +466,7 @@ void BuildFencePanel(ModelBuilder& model, const FenceLook& look, const Vector3& 
                 Slab(w, Along(a, b, 0.07f, 0.0f), Along(a, b, 0.93f, 0.0f), 0.14f, h - 0.08f, 0.05f);
                 break;
             }
-            MeshWriter& w = model.Use(look.color, Pattern::Leaves);
-            // Clipped, but alive: two lumpy cushions per panel over a solid core.
-            Slab(w, a, b, -0.3f, h * 0.85f, 0.6f);
-            const Vector3 half = (b - a) * 0.25f;
-            for (int i = 0; i < 2; ++i) {
-                const Vector3 c = a + half * (i == 0 ? 1.0f : 3.0f) + Up(h * 0.6f);
-                const float lengthX = std::abs(half.X) + 0.42f;
-                const float lengthZ = std::abs(half.Z) + 0.42f;
-                w.Blob(c, Vector3(lengthX, h * 0.48f, lengthZ), seed * 2u + static_cast<std::uint32_t>(i),
-                       0.12f, 8, 5);
-            }
+            BuildHedge(model, a, b, h, look.color, seed);
             break;
         }
         case zoo::FenceStyle::Count:

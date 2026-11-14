@@ -241,3 +241,14 @@ runs each, load 3.6 to 4.9: frame ms mean 15.05 / 14.22 / 14.53 before against 1
 13.98 after; the people pass (visitors and keepers) 3.16 to 3.41 ms against 4.29 to 4.85 ms; the
 simulation 0.27 to 0.30 ms against 0.33 to 0.48 ms. The frame as a whole shows no cost beyond
 the spread of the runs.
+
+## Plants in groves with a far form (G2c, 2026-11-14)
+
+Plants are drawn apart from the other scenery in 16 groves of 80 m, each built twice: near (one
+draw call a finish) and far (the same individuals with a quarter of the triangles, two draw calls
+through one palette texture), far when the whole grove is beyond 56 m, near again within 48 m.
+Scenery triangles: all plants near 1.88 million, all far 0.51 million. Entrance bench, Release,
+interleaved with develop, load 2.6-4.1: 68.8 / 63.4 / 70.3 fps before, 73.0 / 74.8 / 78.6 after;
+triangles a frame 4.67 -> 3.29 million, draw calls 478 -> 516, resident 2,190 -> 2,275 MB. Without
+scenery the view runs at 147 fps and with every grove far at about 71: the rest of the scenery's
+cost is fill by overlapping alpha-tested cards more than triangles (`docs/PLANTS.md`).

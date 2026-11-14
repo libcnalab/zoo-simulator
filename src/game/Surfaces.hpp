@@ -51,6 +51,9 @@ public:
 
     /// Edge length in metres that one repeat of a pattern covers.
     static float PatternMetres(Pattern pattern);
+    /// How light a pattern is on the whole (linear, 0..1): what its texture comes to where
+    /// it is too far away to make out, as a factor on the material's colour.
+    static float PatternBrightness(Pattern pattern);
 
 private:
     using Texture = Microsoft::Xna::Framework::Graphics::Texture2D;
@@ -65,6 +68,7 @@ private:
     std::unique_ptr<Texture> signs_;
     std::unique_ptr<Texture> pane_;
     std::unique_ptr<Texture> weld_;
+    std::unique_ptr<Texture> fronds_;
     std::vector<std::unique_ptr<Texture>> ripples_;  ///< one loop of the water's surface
     double rippleTime_ = 0.0;
     std::map<std::uint32_t, std::unique_ptr<CnaEngine::Graphics::Material>> opaque_;

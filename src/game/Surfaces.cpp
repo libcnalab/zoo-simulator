@@ -64,6 +64,7 @@ float Shade(Pattern pattern, float u, float v) {
         case Pattern::Signs:
         case Pattern::LeafSpray:
         case Pattern::NeedleSpray:
+        case Pattern::Fronds:
         case Pattern::Count:
             return 1.0f;
         case Pattern::Sheeting: {
@@ -89,6 +90,22 @@ float Shade(Pattern pattern, float u, float v) {
             const float patch = std::clamp((lichen - 0.6f) * 6.0f, 0.0f, 1.0f);
             const float rock = (0.52f + 0.3f * grain) * tone * joint * crack;
             return std::clamp(rock + 0.3f * patch, 0.0f, 1.0f);
+        }
+        case Pattern::LeafShade: {
+            // Leaf-sized patches of light and dark with hard edges: what one sees looking
+            // into a crown, where a smooth dark body would be taken for a ball.
+            const float leaves = Cloud(u, v, 20, 20, 2, 141);
+            const float depth = Cloud(u, v, 5, 5, 2, 142);
+            const float lit = 0.62f + 0.38f * Cloud(u, v, 40, 40, 1, 143);
+            return leaves > 0.42f + 0.2f * depth ? lit : 0.22f + 0.2f * depth;
+        }
+        case Pattern::BirchBark: {
+            // Short dark lenticels across the trunk and, here and there, a dark scar wider
+            // than it is tall where a twig fell off; most of the bark is white.
+            const float lines = Cloud(u, v, 6, 50, 2, 131);
+            const float scars = Cloud(u, v, 3, 11, 2, 132);
+            const float mark = scars > 0.75f ? 0.22f : lines > 0.68f ? 0.55f : 1.0f;
+            return (0.86f + 0.14f * Cloud(u, v, 8, 8, 2, 133)) * mark;
         }
         case Pattern::Wood: {
             const float grain = Cloud(u, v, 24, 2, 2, 11);
@@ -251,6 +268,19 @@ std::uint32_t Key(const zoo::Color3& color, std::uint32_t extra) {
 
 }  // namespace
 
+float Surfaces::PatternBrightness(Pattern pattern) {
+    constexpr int kSamples = 64;
+    float sum = 0.0f;
+    for (int y = 0; y < kSamples; ++y) {
+        for (int x = 0; x < kSamples; ++x) {
+            sum += std::clamp(Shade(pattern, (static_cast<float>(x) + 0.5f) / kSamples,
+                                    (static_cast<float>(y) + 0.5f) / kSamples),
+                              0.0f, 1.0f);
+        }
+    }
+    return sum / static_cast<float>(kSamples * kSamples);
+}
+
 float Surfaces::PatternMetres(Pattern pattern) {
     switch (pattern) {
         case Pattern::Wood:
@@ -265,6 +295,7 @@ float Surfaces::PatternMetres(Pattern pattern) {
         case Pattern::Needles:
         case Pattern::Plaster:
         case Pattern::Brick:
+        case Pattern::LeafShade:
             return 2.0f;
         case Pattern::Thatch:
         case Pattern::RoofTiles:
@@ -289,7 +320,7 @@ Surfaces::Surfaces(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device) 
         const auto pattern = static_cast<Pattern>(p);
         const bool flat = pattern == Pattern::Plain || pattern == Pattern::WireMesh ||
                           pattern == Pattern::Glass || pattern == Pattern::LeafSpray ||
-                          pattern == Pattern::NeedleSpray;
+                          pattern == Pattern::NeedleSpray || pattern == Pattern::Fronds;
         const int size = flat ? 4 : kSize;
         Image image(size, size);
         for (int y = 0; y < size; ++y) {
@@ -340,6 +371,7 @@ Surfaces::Surfaces(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device) 
     };
     leafSpray_ = spray(LeafSprays());
     needleSpray_ = spray(NeedleSprays());
+    fronds_ = spray(PlantCards());
 
     glass_.name = "glass";
     glass_.shading = CnaEngine::Graphics::ShadingModel::PhysicallyBased;
@@ -415,7 +447,8 @@ const Material& Surfaces::Get(const Finish& finish) {
     if (finish.pattern == Pattern::Glass) {
         return glass_;
     }
-    if (finish.pattern == Pattern::LeafSpray || finish.pattern == Pattern::NeedleSpray) {
+    if (finish.pattern == Pattern::LeafSpray || finish.pattern == Pattern::NeedleSpray ||
+        finish.pattern == Pattern::Fronds) {
         auto& slot = sprays_[Key(finish.color, static_cast<std::uint32_t>(finish.pattern))];
         if (!slot) {
             slot = std::make_unique<Material>();
@@ -427,7 +460,10 @@ const Material& Surfaces::Get(const Finish& finish) {
             slot->roughness = 0.72f;
             // One-sided: the cards are written with both windings and one shading normal
             // (MeshWriter::Card), which a two-sided material would turn round on the back.
-            slot->baseTexture = (finish.pattern == Pattern::LeafSpray ? leafSpray_ : needleSpray_).get();
+            slot->baseTexture = (finish.pattern == Pattern::LeafSpray     ? leafSpray_
+                                 : finish.pattern == Pattern::NeedleSpray ? needleSpray_
+                                                                          : fronds_)
+                                    .get();
             slot->sampler = &SamplerState::AnisotropicClamp;
         }
         return *slot;

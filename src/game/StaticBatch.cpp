@@ -19,6 +19,20 @@ void StaticBatch::Build(Microsoft::Xna::Framework::Graphics::GraphicsDevice& dev
     }
 }
 
+void StaticBatch::Add(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
+                      const CnaEngine::Graphics::MeshData& mesh,
+                      const CnaEngine::Graphics::Material& material) {
+    if (mesh.indices.empty()) {
+        return;
+    }
+    auto piece = std::make_unique<Piece>();
+    piece->mesh = CnaEngine::Graphics::GpuMesh::Upload(
+        device, mesh, CnaEngine::Graphics::VertexLayout::PositionNormalTexture());
+    piece->material = &material;
+    triangles_ += mesh.TriangleCount();
+    pieces_.push_back(std::move(piece));
+}
+
 void StaticBatch::Clear() {
     pieces_.clear();
     triangles_ = 0;
