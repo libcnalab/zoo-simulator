@@ -16,6 +16,19 @@ target_include_directories(zoo_core_tests SYSTEM PRIVATE "${ZOO_NLOHMANN_JSON_IN
 target_compile_definitions(zoo_core_tests PRIVATE ZOO_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
 gtest_discover_tests(zoo_core_tests DISCOVERY_TIMEOUT 60)
 
+# The player's body (src/game/Walker.cpp) needs no window: the simulation and cna-engine's
+# collision module carry it, so its walks are tested like the core.
+if(ZOO_BUILD_GAME AND TARGET CnaEngine::Core)
+    file(GLOB ZOO_GAME_TEST_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/game/*.cpp")
+    # The walker stands on the ground as it is drawn (GroundPaint.cpp: no device, pure maths).
+    add_executable(zoo_game_tests ${ZOO_GAME_TEST_SOURCES} "${CMAKE_SOURCE_DIR}/src/game/Walker.cpp"
+                                  "${CMAKE_SOURCE_DIR}/src/game/GroundPaint.cpp")
+    target_link_libraries(zoo_game_tests PRIVATE Zoo::Core zoo_warnings CnaEngine::Core GTest::gtest_main)
+    target_include_directories(zoo_game_tests PRIVATE "${CMAKE_SOURCE_DIR}/src/game" "${CMAKE_CURRENT_SOURCE_DIR}/core")
+    target_compile_definitions(zoo_game_tests PRIVATE ZOO_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
+    gtest_discover_tests(zoo_game_tests DISCOVERY_TIMEOUT 60)
+endif()
+
 # The procedural animation maths of the asset pipeline is pure numpy and tested without Blender.
 find_package(Python3 COMPONENTS Interpreter)
 if(Python3_FOUND)

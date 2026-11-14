@@ -2,8 +2,10 @@
 #include "AnimalRenderer.hpp"
 
 #include <algorithm>
+#include <chrono>
 #include <cmath>
 #include <cstdio>
+#include <cstdlib>
 #include <exception>
 #include <fstream>
 
@@ -120,6 +122,7 @@ const AnimalRenderer::Kind* AnimalRenderer::Load(const std::string& model) {
         return nullptr;
     auto kind = std::make_unique<Kind>();
     kind->shown = DefaultShownPoses();
+    const auto started = std::chrono::steady_clock::now();
     try {
         kind->model = std::make_unique<Xna::Model>(content_.Load<Xna::Model>("animals/" + model));
     } catch (const std::exception& error) {
@@ -127,7 +130,13 @@ const AnimalRenderer::Kind* AnimalRenderer::Load(const std::string& model) {
         return nullptr;
     }
     kind->view = std::make_unique<Graphics::ModelView>(*kind->model, Enhanced::PbrMaterialFromEffect);
+    const auto loaded = std::chrono::steady_clock::now();
     kind->textures = GiveMipmaps(*kind->view);
+    if (std::getenv("ZOO_LOAD_TIMING") != nullptr) {
+        std::printf("zoo: model: %s load/view %.3f s, mipmaps %.3f s\n", model.c_str(),
+                    std::chrono::duration<double>(loaded - started).count(),
+                    std::chrono::duration<double>(std::chrono::steady_clock::now() - loaded).count());
+    }
     const auto* skin = Enhanced::FindSkinningData(*kind->model);
     if (skin == nullptr) {
         std::printf("zoo: animals: %s has no skeleton\n", model.c_str());

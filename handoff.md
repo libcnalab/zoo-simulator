@@ -10,20 +10,43 @@ whatever you take up (`docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `docs/V
 - **The game:** Greenhill Zoo, a first-person walk through a zoo (C++23, the simulation core in
   `src/core/zoo/`, the game on CNA / cna-engine in `src/game/`). Zoo management must not come
   back as the primary gameplay.
-- **State:** branch `main`, working tree clean, all 221 core tests pass, everything pushed to
-  `origin/main` (2026-11-14, at the owner's request). Push again only when the owner asks.
-- **Next step, in this order:** (1) the keepers, G5 (section 4.1); (2) plants' distance forms,
-  G2b (4.3); (3) ground and water edges, G1/G1b (4.2); then 4.4 to 4.8 as time allows.
+- **State (end of 2026-11-14):** branch **`develop`** (the owner switched to it), pushed to
+  `origin/develop` at the owner's request; `main` = `origin/main` = `0b13f7c` is behind. New on
+  develop this session: keepers G5 (`e22d473`), animals' routes kept off props (`00e269f`),
+  reliability audit part 1 with a save/load defect fixed (`7010638`), plants G2c (`f8d0adf`),
+  ground and water edges G1c (`6985b10`), and the audit's walker corrections, start-up marks and
+  `zoo_game_tests` (last commit). 245 core tests and 12 walker tests pass.
+- **The owner restarted the machine at about 20:00:** game instances of the lead and four
+  subagents took 99 % of the GPU. The CPU lock covered builds, tests and benches but **not game
+  runs**. New rule: **only one rendering `zoo-simulator` on the machine at a time**, every game
+  run under the same lock (`flock .codex-work/cpu.lock`), always with `timeout` and a short
+  `--frames`; no long runs under gdb. At most 2 subagents (owner's last word).
+- **The owner's complaint: the game takes about 2.5 GB of RAM** (benches showed 2.2-2.3 GB
+  resident all day). Never measured by kind. Do this first: measure memory by kind
+  (`tools/bench/memory.sh` from the audit), then cut the biggest items (CPU copies of meshes and
+  textures kept after upload, uncompressed/oversized animal textures, generated mipmaps, audio
+  decoded to PCM, the 4096 shadow map, plant groves built twice). Aim under 1 GB, measured.
+- **Stopped mid-work when the machine restarted (uncommitted, in their worktrees; no reports):**
+  - `wt-sound`: G7c audio audit (brief `.codex-work/brief-G7c-sound-develop.md`), 28 files.
+  - `wt-visitors`: P1 visitors' frame cost (brief `brief-P1-visitor-cost.md`), 2 files.
+  - `wt-life`: G8d plan details (brief `brief-G8d-plan-details.md`: ferns in the lagoon's
+    water, 2 m walks, a tree inside a barrier, the meerkat stand on the gate; plus **a strip at
+    Red Dune without a rail towards public ground**, found by the walker test that is now
+    `DISABLED_` in `tests/game/WalkerTests.cpp`: re-enable it with the fix), 6 files.
+  - `wt-plants` (reused): A1 animal activity clips (brief `brief-A1-activity-clips.md`), 31 files.
+  Look at each diff before going on; none is reviewed. Their earlier finished work is in develop.
 - **Deadline:** about **2026-11-28** the owner puts Zoo Simulator under the same AI policy as
   the libcna repositories; the work should be done by then.
 
 ## 1. The owner's rules (all still in force)
 
 - **Resources (since 2026-11-14): at most 2 CPUs for compiling** (`--parallel 2`, `ctest -j2`,
-  Blender `-t 1`/`-t 2`), **no Codex agent and no Claude subagents**: the lead works alone.
+  Blender `-t 1`/`-t 2`), **no Codex agent**; Claude subagents: none in the morning, then up to 2, then up to 4,
+  and at the end of 2026-11-14 **at most 2** again (the owner's last word; ask in a new session).
   (Older documents speak of delegating to Codex `gpt-6-astra` and of "maximum parallelism":
   that no longer holds.)
-- **Never push unless the owner asks** in so many words; a permission given once does not carry
+- **Never push unless the owner asks** in so many words (asked once on 2026-11-14 evening for
+  develop); a permission given once does not carry
   over to the next work. Commit each finished, reviewed piece locally. No AI attribution lines
   in commit messages.
 - **libcna is off limits:** do not read, change or build anything under
@@ -85,43 +108,15 @@ sound unknown); saves there live only in the page's memory.
 
 ## 4. Remaining work (priority order)
 
-### 4.1 Keepers (G5) — the most visible gap
+### 4.1 to 4.3: done on develop (2026-11-14)
 
-`.codex-work/wt-keepers` (base `0544337`, far behind main; uncommitted, about 4,100 lines with
-the new files). Report: `.codex-work/report-G5-keepers.md`. Content: core `zoo::Staff` (9 crew,
-rounds, feeding hours, saved and hashed; `src/core/zoo/staff/*`), hooks in `Zoo.*`,
-`ZooSave.cpp`, one staffing call in `VisitorZoo.cpp`, a game `KeeperRenderer`, and
-`--stand keeper:<id>[:<activity>]` for screenshots. Seen once in the game (a keeper wading in
-the lagoon; a fix was added and never re-run). Not done: hashes, full suite, bench,
-`docs/KEEPERS.md`.
+Keepers (`docs/KEEPERS.md`; open: no collision with animals and visitors, dangerous habitats
+never entered), ground and water edges (`docs/GROUND.md`; open: steep banks at deep pools, props'
+collision floor still at the simulation's height in `Walker.cpp`), plants (`docs/PLANTS.md`;
+open: far cut-out edges aliased, reeds unused, fill cost of alpha-tested cards). The new first
+priority is memory (section 0).
 
-How to take it: export its diff (`git -C wt-keepers add -N .; git -C wt-keepers diff --binary
-HEAD > ../G5.patch; git -C wt-keepers reset -q`) and apply by hand, file by file: main has
-since changed `VisitorZoo.cpp` (G8), `ZooGame*.cpp` and `ZooGameLook.cpp` (map, binoculars), so
-`git apply -3` will conflict. **Drop `OpenKeeperLanes`** (it cleared planting before the gates):
-since G8 every gate has a dry service apron (`EveryKeeperGateHasADryConnectedApproach`). Make
-keepers use the aprons, check they never stand in water or planting, keep AutoCare as a safety
-net, record the hashes, write `docs/KEEPERS.md`, measure the frame cost with
-`--bench --frames 300` interleaved before/after.
-
-### 4.2 Ground and water edges (G1, G1b)
-
-`.codex-work/wt-ground` (moved onto `f77bc8f`; G1 plus the unfinished G1b, uncommitted).
-Reports: `report-G1-ground.md` (G1b's report is empty), brief `brief-G1b-ground-finish.md`.
-G1 is **not in main**. Needs its `ZooGame.cpp` "ground detail" pass hunk or nothing is drawn.
-Left: light wedges at pond corners (fix designed in the report), feet at the drawn bank height
-(`kShoreLiftMaxM`, feet float or sink up to 0.2 m), an interleaved before/after bench.
-Re-check afterwards that the meerkats do not look chest-deep at their (now two-tile) dish.
-
-### 4.3 Plants (G2b): distance forms, palms, ferns, hedges
-
-`.codex-work/wt-plants` (on `f77bc8f`, uncommitted, about 2,000 lines, "built cleanly", shots
-in `wt-plants/build-probe/`), brief `brief-G2b-plants-finish.md`. Plants are 1.93 of the
-scenery's 2.18 million triangles; cut-out leaves cast no shadow; far edges are pixelated.
-Conflicts with G3 (taken) in `src/game/PropModels.cpp`: merge by hand. Re-run the stall probe
-after it (4.6).
-
-### 4.4 Reliability audit (G6b)
+### 4.4 Reliability audit (G6b): merged, see `docs/RELIABILITY.md` top; left: re-run the sanitizers on develop
 
 `.codex-work/wt-audit` (on `f77bc8f`, uncommitted; it has a 4 GB ASan tree), brief
 `brief-G6b-audit-finish.md`; it was correcting `docs/RELIABILITY.md` and running save-damage

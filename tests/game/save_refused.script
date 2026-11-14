@@ -1,0 +1,8 @@
+# SPDX-License-Identifier: MIT
+# tools/bench/audit.sh supplies a file in place of the save directory.
+10 key F5
+30 shot ../build-probe/shots/save-refused.png
+60 key Escape
+70 click 640 355
+82 shot ../build-probe/shots/load-nothing.png
+90 key Escape

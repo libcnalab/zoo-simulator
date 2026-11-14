@@ -28,7 +28,12 @@ CharacterSettings Body() {
     settings.radius = 0.28f;
     settings.height = 1.75f;
     settings.eyeHeight = 1.62f;
-    settings.stepHeight = 0.3f;
+    // No ledges: the ground is a height field (a facet steeper than a body climbs rises two
+    // metres), and fences, walls, trunks and posts all stand higher than a step. With a step
+    // height cna-engine's controller, stopped by a wall, tries a hop of the body's radius and
+    // keeps it wherever the ground beyond lies a millimetre higher: on any rising ground the
+    // body shot along a fence at 0.29 m a step (26 m/s) and through gaps narrower than itself.
+    settings.stepHeight = 0.0f;
     settings.stepDown = 0.45f;
     settings.acceleration = 10.0f;
     settings.deceleration = 12.0f;
@@ -38,7 +43,22 @@ CharacterSettings Body() {
     return settings;
 }
 
+/// The body stands deeper in a wall, a trunk or a post than being pushed out of it leaves it.
+bool Wedged(const CnaEngine::Collision::StaticWorld& world, const CnaEngine::Collision::CharacterController& body) {
+    for (const auto& contact : world.Contacts(body.Body())) {
+        if (std::abs(contact.normal.Y) < 0.7f && contact.depth > 0.005f)
+            return true;
+    }
+    return false;
+}
+
 float WrapAngle(float a) {
+    // A finite but damaged saved heading can be so large that subtracting one turn
+    // rounds back to the same float forever. Reduction must take bounded time.
+    if (!std::isfinite(a))
+        return 0.0f;
+    if (std::abs(a) > 2.0f * kPi)
+        a = std::fmod(a, 2.0f * kPi);
     while (a > kPi)
         a -= 2.0f * kPi;
     while (a < -kPi)
@@ -213,9 +233,22 @@ void Walker::Update(const zoo::Zoo& zoo, const Input& input, float seconds) {
     // The body moves in steps of its own, so that a slow frame cannot carry it through a fence.
     stepped_ = false;
     float left = std::min(seconds, 0.25f);
+    // cna-engine's controller pushes a body out of what it meets in four passes and keeps the
+    // place it has then, also when that is still inside something. Between two solids a
+    // little closer to each other than the body is wide (a bench and the lamp before it:
+    // 0.51 m for 0.56 m) the passes push it from the one into the other, and step by step it
+    // was carried through, into a corner with no way out. A step that ends so is not taken.
+    bool clear = !Wedged(world_, body_);
     while (left > 1.0e-5f) {
         const float step = std::min(left, 1.0f / 90.0f);
+        const Vector3 before = body_.Feet();
         body_.Step(world_, wish, false, step);
+        if (Wedged(world_, body_)) {
+            if (clear)
+                body_.Teleport(world_, before);
+        } else {
+            clear = true;
+        }
         stepped_ = stepped_ || body_.StrideTaken();
         left -= step;
     }

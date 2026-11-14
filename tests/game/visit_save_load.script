@@ -1,0 +1,34 @@
+# A visit from end to end: read a board, walk, turn, look at the map, pause, save, load the
+# save twice while the visit runs, save with F5, quit from the pause menu.
+# Run from the build directory (build/ or build-asan/), nothing on the speakers:
+#   SDL_VIDEODRIVER=offscreen SDL_AUDIODRIVER=dummy ./zoo-simulator --stand board:0 --frames 400 \
+#       --lockstep --saves ../build-probe/saves --script ../tests/game/visit_save_load.script
+# Expect, in this order: "zoo: saved" (pause menu), "zoo: loaded" twice, "zoo: saved" (F5),
+# and the process leaving with status 0 before frame 400 (the Quit button).
+5 key E
+20 shot ../build-probe/shots/visit-board.png
+30 key E
+36 hold W
+80 release W
+82 look 400 0 20
+106 hold A
+130 release A
+134 key M
+146 shot ../build-probe/shots/visit-map.png
+150 key M
+156 key Escape
+166 shot ../build-probe/shots/visit-paused.png
+168 click 640 309
+180 click 640 355
+190 shot ../build-probe/shots/visit-load-list.png
+192 click 640 215
+215 hold W
+240 release W
+244 key Escape
+252 click 640 355
+262 click 640 215
+285 look -300 40 12
+300 key F5
+310 shot ../build-probe/shots/visit-after-loads.png
+316 key Escape
+326 click 640 493

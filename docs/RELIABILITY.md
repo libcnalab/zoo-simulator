@@ -5,11 +5,14 @@ birth loop no longer runs past an invalidated end iterator, and a litter keeps t
 for other mothers; `ZooSave.cpp`: a failed read is an error, not an exception), the new core
 tests (`AnimalBirthCapacityTests`, `ZooSaveDamageTests`, `VisitStartCostTests`,
 `VisitorZooHabitat.SaveLoadInTheMiddleOfTheVisit`), the board and saved-pose corrections of
-`ZooGameLook.cpp` and `ZooGameVisit.cpp`, and `tools/bench/`. **Not merged yet**, because the
-ground task edits the same files at this moment: corrections 1 and 2 of `Walker.cpp`,
-`StartMark` in `ZooGame.cpp`, the model timing of `AnimalRenderer.cpp` and the `zoo_game_tests`
-target with `tests/game/`. Until they are, what this document says of them describes the audit's
-working tree, not develop.
+`ZooGameLook.cpp` and `ZooGameVisit.cpp`, and `tools/bench/`; after the ground task also
+corrections 1 and 2 of `Walker.cpp`, `StartMark` in `ZooGame.cpp`, the model timing of
+`AnimalRenderer.cpp` and the `zoo_game_tests` target with `tests/game/` (it links
+`GroundPaint.cpp` now: the walker stands on the drawn ground). On develop 12 walker tests pass;
+`StandsOnTheGroundWhereTheVisitBeginsAndWalksAtAStroll` was shortened for the brisker pace (the
+body ran into the forecourt's fountain), and `NoHabitatAndNoPlantedStripIsEnteredFromAnySide` is
+disabled: it found a plan defect (a strip at Red Dune without a rail towards public ground).
+The sanitizer runs described below were made in the audit's tree, not on develop.
 
 **Found while merging:** `SaveLoadInTheMiddleOfTheVisit` failed on develop for seed 2: 100 steps
 after a load the zoo was no longer the saved one. The number of people watching each habitat,

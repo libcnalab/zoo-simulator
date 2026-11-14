@@ -1,0 +1,3 @@
+# SPDX-License-Identifier: MIT
+# Use --stand board:N --frames 20 --screenshot FILE to inspect the board's displayed data.
+5 key E

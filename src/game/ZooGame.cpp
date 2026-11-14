@@ -38,6 +38,29 @@ App::GameOptions MakeOptions() {
     return options;
 }
 
+/// --bench: what starting up has cost up to here, on the clock and in resident memory
+/// (docs/RELIABILITY.md). The clock starts with the first mark.
+void StartMark(bool on, const char* done) {
+    static const auto began = std::chrono::steady_clock::now();
+    static auto last = began;
+    if (!on)
+        return;
+    const auto now = std::chrono::steady_clock::now();
+    long resident = 0;
+    if (std::FILE* status = std::fopen("/proc/self/status", "r")) {
+        char line[256];
+        while (std::fgets(line, sizeof line, status)) {
+            if (std::sscanf(line, "VmRSS: %ld", &resident) == 1)
+                break;
+        }
+        std::fclose(status);
+    }
+    std::printf("zoo: start: %-22s %6.2f s (+%5.2f s) %5ld MB resident\n", done,
+                std::chrono::duration<double>(now - began).count(),
+                std::chrono::duration<double>(now - last).count(), resident / 1024);
+    last = now;
+}
+
 template <typename T>
 bool Parse(std::string_view text, T& out) {
     const auto result = std::from_chars(text.data(), text.data() + text.size(), out);
@@ -51,6 +74,7 @@ ZooGame::ZooGame() : EngineGame(MakeOptions()) {}
 ZooGame::~ZooGame() {
     if (!editor_ && zoo_ && visitors_ && (Automation().Options().Automated() || script_))
         PrintVisitFigures("at the end");
+    StartMark(bench_.on, "the last frame");
     bench_.Print(standAt_.empty() ? "entrance" : standAt_.c_str());
 }
 
@@ -170,6 +194,7 @@ bool ZooGame::ParseArgument(std::span<const std::string_view> arguments, std::si
 
 void ZooGame::LoadGame() {
     auto& device = getGraphicsDeviceProperty();
+    StartMark(bench_.on, "window and device");
     binder_ = std::make_shared<Enhanced::PbrMaterialBinder>(device, Renderer().StockBinder());
     Renderer().SetMaterialBinder(binder_);
     Renderer().Lighting().defaultLighting = false;
@@ -192,6 +217,7 @@ void ZooGame::LoadGame() {
     canvas_ = std::make_unique<ui::Canvas>(device, getContentProperty(), *assets);
     ui_ = std::make_unique<ui::Ui>(*canvas_, controls_);
     ShowLoading("Building the habitats and planting the park", 0.05f);
+    StartMark(bench_.on, "definitions and canvas");
 
     std::unique_ptr<zoo::Zoo> first;
     if (editor_) {
@@ -213,8 +239,10 @@ void ZooGame::LoadGame() {
         first = MakeVisitorZoo();
     }
 
+    StartMark(bench_.on, "the zoo, built and filled");
     ShowLoading("Laying the paths and the lawns", 0.7f);
     sounds_ = std::make_unique<Soundscape>(*assets);
+    StartMark(bench_.on, "sounds");
     sky_ = std::make_unique<Graphics::SkyDome>(device);
     sky_->AttachTo(Renderer());
     if (!without_.skyLight)
@@ -222,6 +250,7 @@ void ZooGame::LoadGame() {
     clock_.latitudeDegrees = 48.0;
     if (!without_.shadows)
         (void)EnableSunShadows(*this, {.size = 4096, .radius = 90.0f, .ahead = 0.7f});
+    StartMark(bench_.on, "sky, sky light, shadows");
 
     // Visitors are CNA avatars, which belong to its gamer services. Avatars
     // draw themselves, so they get a pass of their own after the opaque scene.
@@ -257,6 +286,7 @@ void ZooGame::LoadGame() {
                            keepers_->Draw(getGraphicsDeviceProperty(), camera, Renderer().Lighting());
                        });
 
+    StartMark(bench_.on, "visitors' renderer");
     const int speed = play_.speed;
     Adopt(std::move(first));
     play_.speed = speed;
@@ -372,19 +402,23 @@ void ZooGame::Adopt(std::unique_ptr<zoo::Zoo> zoo) {
 
     terrain_ = std::make_unique<TerrainRenderer>(device, *surfaces_);
     terrain_->Build(zoo_->Map());
+    StartMark(bench_.on, "ground");
     // Nothing is built during a visit: the whole zoo is one cell there (a quarter of the draw
     // calls of the editor's small cells, which an edit rebuilds quickly).
     scenery_ = std::make_unique<SceneryRenderer>(
         device, *surfaces_, *catalog_,
         editor_ ? SceneryRenderer::kEditCellTiles : std::max(zoo_->Map().Width(), zoo_->Map().Depth()));
     scenery_->Update(zoo_->Map(), zoo_->Objects(), -1);
+    StartMark(bench_.on, "scenery");
     animals_ = std::make_unique<AnimalRenderer>(getContentProperty(), *species_);
     animals_->Update(*zoo_, 0.0f, 0.0f);
+    StartMark(bench_.on, "animals");
     visitors_->Clear();
     visitors_->Update(*zoo_, 0.0f, 0.0f);
     keepers_->Clear();
     keepers_->Update(*zoo_, 0.0f, 0.0f);
     tools_ = std::make_unique<WorldTools>(device, *surfaces_, *catalog_);
+    StartMark(bench_.on, "visitors and tools");
 
     camera_.SetMode(CameraMode::Overview, zoo_->Map());
     const zoo::Vec2 entrance = zoo::World::TileCenter(zoo_->Map().EntranceTile());
