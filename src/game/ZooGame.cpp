@@ -108,6 +108,18 @@ bool ZooGame::ParseArgument(std::span<const std::string_view> arguments, std::si
         emptyMap_ = true;
         return true;
     }
+    if (name == "--crowd" && hasValue) {
+        // The settings window's crowd (nobody, few, fewer, normal, more), for runs that do
+        // not read the player's preferences.
+        const std::string_view value = arguments[++index];
+        for (std::size_t i = 0; i < kCrowdLevels.size(); ++i) {
+            if (value == kCrowdLevels[i].key) {
+                visit_.settings.crowd = static_cast<int>(i);
+                return true;
+            }
+        }
+        return false;
+    }
     if (name == "--menu") {
         startAtMenu_ = true;
         return true;
@@ -197,6 +209,7 @@ void ZooGame::LoadGame() {
         for (std::int64_t i = 0; i < warmUpTicks_; ++i)
             first->Step();
     } else {
+        ReadVisitSettings();  // the crowd setting decides how many people the zoo fills with
         first = MakeVisitorZoo();
     }
 

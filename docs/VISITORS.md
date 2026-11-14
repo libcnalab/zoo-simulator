@@ -160,7 +160,18 @@ All in `VisitorTuning.hpp`; the more important ones:
 | `kQueueLimit`, `kQueuePatienceSeconds` | 16, 24 s | queues nobody joins, or leaves |
 | `kThreatM` | 28 m | a loose dangerous animal this near: run |
 
-Limits: `Visitors::kMaxVisitors` 800, `kMaxGroupSize` 5, `kMaxLitter` 1500.
+Limits: `Visitors::kMaxVisitors` 1200 (800 until 2026-11-14; what a zoo can hold and a save
+may contain), `kMaxGroupSize` 5, `kMaxLitter` 1500.
+
+**The crowd setting** (Settings, "Visitors"; `visit.crowd` in the preferences; `--crowd` for
+runs that read no preferences): Nobody 0, Few 150, Fewer 500, Normal 800, More 1200 people.
+It is `VisitorPace::most`, the most people let in at once, with the arrivals (and those of
+the morning's fill) scaled by the same share, so a small crowd is not a full zoo with a queue
+at the gate. Normal is the pace the visit was tuned with, unchanged (the golden hashes did not
+move). Like the rest of the pace it is a setting, neither saved nor hashed. A smaller crowd
+chosen during a visit sends whole groups home at once, those farthest from the player first
+(`Visitors::SendHome`); a larger one fills up as people come in at the gate. After the
+morning's fill: 0, 150, 500, 800 and 1,200 people (2026-11-14).
 
 ## What the player sees of it
 

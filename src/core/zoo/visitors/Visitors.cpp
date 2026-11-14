@@ -279,6 +279,7 @@ void Visitors::SetPace(const VisitorPace& pace) {
     pace_.linger = std::clamp(pace.linger, 0.25f, 20.0f);
     pace_.stay = std::clamp(pace.stay, 0.25f, 20.0f);
     pace_.arrivals = std::clamp(pace.arrivals, 0.0f, 20.0f);
+    pace_.most = std::clamp(pace.most, 0, kMaxVisitors);
 }
 
 int Visitors::Spread(const Env& env) {
@@ -386,6 +387,54 @@ void Visitors::Clear() {
     visitors_.clear();
     CleanAllLitter();
     arrivalRemainder_ = 0.0f;
+}
+
+int Visitors::SendHome(int keep) {
+    keep = std::max(keep, 0);
+    const int before = Count();
+    if (before <= keep) {
+        return 0;
+    }
+    // The groups, consecutive in the list, ordered by who goes first.
+    struct Party {
+        std::size_t first = 0, end = 0;
+        float order = 0.0f;
+    };
+    std::vector<Party> parties;
+    for (std::size_t i = 0; i < visitors_.size();) {
+        std::size_t end = i + 1;
+        while (end < visitors_.size() && visitors_[end].group == visitors_[i].group) {
+            ++end;
+        }
+        const float order = hasBystander_ ? DistanceSquared(visitors_[i].position, bystander_)
+                                          : static_cast<float>(visitors_[i].id.value);
+        parties.push_back({i, end, order});
+        i = end;
+    }
+    std::stable_sort(parties.begin(), parties.end(),
+                     [](const Party& a, const Party& b) { return a.order > b.order; });
+    std::vector<char> going(visitors_.size(), 0);
+    int left = before;
+    for (const Party& party : parties) {
+        if (left <= keep) {
+            break;
+        }
+        std::fill(going.begin() + static_cast<std::ptrdiff_t>(party.first),
+                  going.begin() + static_cast<std::ptrdiff_t>(party.end), 1);
+        left -= static_cast<int>(party.end - party.first);
+    }
+    std::size_t kept = 0;
+    for (std::size_t i = 0; i < visitors_.size(); ++i) {
+        if (going[i] == 0) {
+            if (kept != i) {
+                visitors_[kept] = std::move(visitors_[i]);
+            }
+            ++kept;
+        }
+    }
+    visitors_.resize(kept);
+    arrivalRemainder_ = 0.0f;
+    return before - left;
 }
 
 std::uint64_t Visitors::StateHash() const {
@@ -657,7 +706,7 @@ void Stepper::Arrivals() {
         // Alone, couples, families and parties of friends.
         const float roll = all.rng_.NextFloat();
         const int size = roll < 0.2f ? 1 : roll < 0.55f ? 2 : roll < 0.75f ? 3 : roll < 0.93f ? 4 : 5;
-        if (all.Count() + size > Visitors::kMaxVisitors) {
+        if (all.Count() + size > all.pace_.most) {
             all.arrivalRemainder_ = 0.0f;
             break;
         }

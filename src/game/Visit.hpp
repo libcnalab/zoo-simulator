@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 #pragma once
 
+#include <array>
 #include <string>
 #include <utility>
 #include <vector>
@@ -63,6 +64,21 @@ struct VisitMap {
 /// What the interface asks the game to do after this frame.
 enum class VisitRequest { None, NewVisit, Continue, Save, Load, ToTitle, Quit };
 
+/// How many people are in the zoo: the most it holds at once. Normal is the crowd of a
+/// mid-morning in summer the visit was tuned with; people arrive in proportion, so a smaller
+/// crowd is not a full zoo with a queue at the gate.
+struct CrowdLevel {
+    const char* key;   ///< in the preferences file
+    const char* name;  ///< in the settings window
+    int people;
+};
+inline constexpr std::array<CrowdLevel, 5> kCrowdLevels{{{"nobody", "Nobody", 0},
+                                                         {"few", "Few", 150},
+                                                         {"fewer", "Fewer", 500},
+                                                         {"normal", "Normal", 800},
+                                                         {"more", "More", 1200}}};
+inline constexpr int kNormalCrowd = 3;
+
 /// What the player set (kept in the engine's preferences).
 struct VisitSettings {
     /// A factor on the mouse's speed: 1 turns 0.12 degrees a pixel.
@@ -75,6 +91,8 @@ struct VisitSettings {
     float volume = 0.8f;
     /// The figures of the visitors and their avatars on the screen (F4).
     bool diagnostics = false;
+    /// An index into kCrowdLevels.
+    int crowd = kNormalCrowd;
 };
 
 /// What the sound of the zoo reports about itself (F4, and the figures line of

@@ -57,7 +57,7 @@ void KeyHints(ui::Ui& ui, float midX, float y, std::initializer_list<KeyHint> hi
 int Stepper(ui::Ui& ui, Box row, std::string_view label, std::string_view value, bool canLess, bool canMore) {
     ui.LabelIn(row.CutLeft(std::round(row.w * 0.46f)), label, theme::kBody, theme::kMuted);
     int step = 0;
-    if (ui.Button(row.CutLeft(30.0f), "−", {.enabled = canLess, .bold = true}))
+    if (ui.Button(row.CutLeft(30.0f), "-", {.enabled = canLess, .bold = true}))
         step = -1;
     if (ui.Button(row.CutRight(30.0f), "+", {.enabled = canMore, .bold = true}))
         step = 1;
@@ -158,7 +158,7 @@ void VisitorHud::Title(ui::Ui& ui, Visit& visit) {
     const float left = band.Right() + 36.0f;
     const float top = std::round(0.16f * screen.h);
     if (visit.window == VisitWindow::Settings)
-        Settings(ui, visit, {left, top, 440.0f, 334.0f});
+        Settings(ui, visit, {left, top, 440.0f, 372.0f});
     else if (visit.window == VisitWindow::Load)
         Load(ui, visit, {left, top, std::min(560.0f, screen.w - left - 24.0f), 420.0f});
 }
@@ -169,7 +169,7 @@ void VisitorHud::Pause(ui::Ui& ui, Visit& visit) {
     ui.Paint().Fill(screen, ui::Rgb(6, 10, 14, 120));
     if (visit.window == VisitWindow::Settings) {
         Settings(ui, visit,
-                 {std::round(screen.MidX() - 220.0f), std::round(screen.MidY() - 178.0f), 440.0f, 334.0f});
+                 {std::round(screen.MidX() - 220.0f), std::round(screen.MidY() - 197.0f), 440.0f, 372.0f});
         return;
     }
     if (visit.window == VisitWindow::Load) {
@@ -231,6 +231,11 @@ void VisitorHud::Settings(ui::Ui& ui, Visit& visit, const Box& box) {
                                  s.volume > 0.05f, s.volume < 0.95f)) {
         s.volume =
             std::clamp(std::round((s.volume + 0.1f * static_cast<float>(step)) * 10.0f) / 10.0f, 0.0f, 1.0f);
+        visit.settingsChanged = true;
+    }
+    if (const int step = Stepper(ui, row(), "Visitors", kCrowdLevels[static_cast<std::size_t>(s.crowd)].name,
+                                 s.crowd > 0, s.crowd + 1 < static_cast<int>(kCrowdLevels.size()))) {
+        s.crowd = std::clamp(s.crowd + step, 0, static_cast<int>(kCrowdLevels.size()) - 1);
         visit.settingsChanged = true;
     }
     visit.settingsChanged |= Switch(ui, row(), "Diagnostics (F4)", s.diagnostics);

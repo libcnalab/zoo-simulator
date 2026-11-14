@@ -93,6 +93,9 @@ struct VisitorPace {
     float stay = 1.0f;
     /// On how many people arrive (with a longer stay, fewer arrivals keep the same crowd).
     float arrivals = 1.0f;
+    /// The most people in the zoo at once: nobody is let in beyond it (the visit's crowd
+    /// setting). Clamped to 0..Visitors::kMaxVisitors.
+    int most = 800;
 };
 
 /// One person visiting the zoo.
@@ -179,7 +182,8 @@ float PaceOf(const Visitor& visitor);
 /// per tick), see docs/VISITORS.md.
 class Visitors {
 public:
-    static constexpr int kMaxVisitors = 800;
+    /// The most a zoo can hold (and a save may contain); VisitorPace::most is the crowd wanted.
+    static constexpr int kMaxVisitors = 1200;
     static constexpr int kMaxGroupSize = 5;
     static constexpr std::size_t kMaxLitter = 1500;
 
@@ -258,6 +262,11 @@ public:
     void CloseDay();
     /// Removes everybody and all litter (the ticket price and the rating stay).
     void Clear();
+    /// Sends whole groups home at once until at most `keep` people are left: those farthest
+    /// from the bystander first (the player does not see them go), without one the last to
+    /// come. Their litter stays; they count neither as arrived nor as having left. For a
+    /// smaller crowd chosen during a visit. Returns how many people went.
+    int SendHome(int keep);
 
     /// Hash of the saved state.
     std::uint64_t StateHash() const;

@@ -42,6 +42,19 @@ constexpr int kVisitPace = 12;
 /// kFillArrivals times as fast as that.
 constexpr zoo::VisitorPace kVisitPeople = zoo::VisitStartOptions{}.pace;
 constexpr float kFillArrivals = 1.7f;
+
+/// The visitors' pace for a crowd setting: Normal is kVisitPeople as it is; another crowd
+/// holds that many people at most and lets them in in proportion.
+zoo::VisitorPace CrowdPace(int level) {
+    const int last = static_cast<int>(kCrowdLevels.size()) - 1;
+    const CrowdLevel& crowd = kCrowdLevels[static_cast<std::size_t>(std::clamp(level, 0, last))];
+    zoo::VisitorPace pace = kVisitPeople;
+    if (level != kNormalCrowd) {
+        pace.arrivals *= static_cast<float>(crowd.people) / static_cast<float>(kVisitPeople.most);
+        pace.most = crowd.people;
+    }
+    return pace;
+}
 /// The day stops before the afternoon thins the crowd out: a visit has no closing time.
 constexpr float kLatestHour = 15.5f;
 constexpr float kEarliestHour = 9.5f;
@@ -90,7 +103,10 @@ std::unique_ptr<zoo::Zoo> ZooGame::MakeVisitorZoo() {
 void ZooGame::PrepareVisit(zoo::Zoo& zoo, bool fill) {
     // People take their time here: a minute or two at a fence, not the few seconds of a day
     // that passes in a quarter of an hour.
-    zoo.Guests().SetPace(kVisitPeople);
+    const zoo::VisitorPace pace = CrowdPace(visit_.settings.crowd);
+    zoo.Guests().SetPace(pace);
+    if (zoo.Guests().Count() > pace.most)
+        zoo.Guests().SendHome(pace.most);
     const float hour = startHour_ ? static_cast<float>(*startHour_) : kVisitHour;
     const float now = zoo.Time().Hour();
     const std::int64_t day = fill ? kVisitDay : zoo.Time().Day();
@@ -106,8 +122,9 @@ void ZooGame::PrepareVisit(zoo::Zoo& zoo, bool fill) {
         const zoo::VisitStartOptions options{.day = day,
                                              .hour = hour,
                                              .fillTicks = warmUpTicks_ > 0 ? warmUpTicks_ : kFillTicks,
-                                             .pace = kVisitPeople,
-                                             .fillArrivals = kFillArrivals};
+                                             .pace = pace,
+                                             .fillArrivals = kFillArrivals * pace.arrivals /
+                                                             kVisitPeople.arrivals};
         const zoo::VisitStartReport filled = zoo::FillForVisit(zoo, options, [this](float share) {
             ShowLoading("The gates opened at nine: the morning's visitors are coming in",
                         0.3f + 0.4f * share);
@@ -275,6 +292,10 @@ void ZooGame::ReadVisitSettings() {
     s.headBob = file.GetBool("visit.head_bob", s.headBob);
     s.volume = file.GetFloat("visit.volume", s.volume, 0.0f, 1.0f);
     s.diagnostics = file.GetBool("visit.diagnostics", s.diagnostics);
+    const std::string crowd = file.GetString("visit.crowd", "");
+    for (std::size_t i = 0; i < kCrowdLevels.size(); ++i)
+        if (crowd == kCrowdLevels[i].key)
+            s.crowd = static_cast<int>(i);
 }
 
 void ZooGame::ApplyVisitSettings(bool store) {
@@ -285,6 +306,15 @@ void ZooGame::ApplyVisitSettings(bool store) {
                           camera.FarPlane());
     walker_.SetHeadBob(s.headBob ? 0.012f : 0.0f);
     sounds_->SetVolume(s.volume);
+    if (zoo_) {
+        // A smaller crowd chosen during a visit: the groups the player does not see go home
+        // at once; a larger one fills up as people come in.
+        const zoo::VisitorPace pace = CrowdPace(s.crowd);
+        zoo_->Guests().SetPace(pace);
+        if (const int gone = zoo_->Guests().SendHome(pace.most); gone > 0)
+            std::printf("zoo: settings: %d visitors went home (%s)\n", gone,
+                        kCrowdLevels[static_cast<std::size_t>(s.crowd)].name);
+    }
     if (!store)
         return;
     auto& file = Preferences();
@@ -294,6 +324,7 @@ void ZooGame::ApplyVisitSettings(bool store) {
     file.SetBool("visit.head_bob", s.headBob);
     file.SetFloat("visit.volume", s.volume, 2);
     file.SetBool("visit.diagnostics", s.diagnostics);
+    file.Set("visit.crowd", kCrowdLevels[static_cast<std::size_t>(s.crowd)].key);
     std::string error;
     if (!SavePreferences(&error))
         std::printf("zoo: settings: %s\n", error.c_str());

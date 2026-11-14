@@ -4,6 +4,8 @@
 #include <array>
 #include <chrono>
 #include <iostream>
+#include <map>
+#include <memory>
 #include <vector>
 
 #include "TestData.hpp"
@@ -130,6 +132,65 @@ TEST(VisitStart, EmptyFillStillSetsCalendarAndPace) {
         EXPECT_EQ(zoo.Config().dayPace, 0);
         EXPECT_EQ(calls, 1);
     }
+}
+
+// The crowd setting of a visit: a smaller crowd holds at most that many people, nobody means
+// nobody, and sending people home during a visit takes whole groups, the farthest first.
+TEST(VisitStart, CrowdSettingLimitsAndSendsWholeGroupsHome) {
+    const auto filled = [](int most) {
+        auto zoo = std::make_unique<Zoo>(testdata::GameCatalog(), testdata::GameSpecies(), VisitorZooConfig(1));
+        BuildVisitorZoo(*zoo);
+        VisitStartOptions options;
+        const float share = static_cast<float>(most) / static_cast<float>(options.pace.most);
+        options.pace.arrivals *= share;
+        options.pace.most = most;
+        options.fillArrivals *= share;
+        options.fillTicks = 3000;
+        const VisitStartReport report = FillForVisit(*zoo, options);
+        EXPECT_LE(report.visitors, most);
+        std::cout << "CROWD most=" << most << " visitors=" << report.visitors << '\n';
+        return zoo;
+    };
+    EXPECT_EQ(filled(0)->Guests().Count(), 0);
+    const auto few = filled(150);
+    EXPECT_GT(few->Guests().Count(), 100) << "a small crowd still fills up to near its size";
+    for (int step = 0; step < 600; ++step) {
+        few->Step();
+        ASSERT_LE(few->Guests().Count(), 150);
+    }
+
+    auto zoo = filled(500);
+    const std::vector<Visitor> before = zoo->Guests().All();
+    const Vec2 player = before.front().position;
+    zoo->Guests().SetBystander(player);
+    const int gone = zoo->Guests().SendHome(200);
+    const std::vector<Visitor>& after = zoo->Guests().All();
+    EXPECT_LE(static_cast<int>(after.size()), 200);
+    EXPECT_EQ(gone, static_cast<int>(before.size() - after.size()));
+    // Whole groups: every group left has as many members as it had.
+    std::map<std::uint32_t, int> had, has;
+    for (const Visitor& v : before) {
+        ++had[v.group];
+    }
+    for (const Visitor& v : after) {
+        ++has[v.group];
+    }
+    for (const auto& [group, count] : has) {
+        EXPECT_EQ(count, had[group]) << "group " << group;
+    }
+    // The farthest went first: nobody who went was nearer the player than everybody kept.
+    float farthestKept = 0.0f;
+    for (const Visitor& v : after) {
+        farthestKept = std::max(farthestKept, Distance(v.position, player));
+    }
+    for (const Visitor& v : before) {
+        if (has.count(v.group) == 0 && zoo->Guests().LeaderOf(v.id) == nullptr) {
+            EXPECT_GE(Distance(v.position, player) + 6.0f, farthestKept) << "visitor " << v.id.value;
+        }
+    }
+    EXPECT_EQ(zoo->Guests().SendHome(0), static_cast<int>(after.size()));
+    EXPECT_EQ(zoo->Guests().Count(), 0);
+    zoo->Step();
 }
 }  // namespace
 }  // namespace zoo
