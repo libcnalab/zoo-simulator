@@ -4,6 +4,38 @@ For the next agent, who starts without this session's context. Read this file, t
 `docs/REALISM.md` (the progress log and the honest list of what is open) and
 `docs/CODEX_TASKS.md` (every delegated task and how it was taken).
 
+## 0. Session of 2026-11-14 (live status; newest first, keep this section current)
+
+**New limits from the owner (2026-11-14): at most 2 CPUs for compiling (`--parallel 2`,
+`ctest -j2`) and at most ONE Codex agent at a time.** The lead works too, or hires a Claude
+subagent. `RULES-GAME.md` says `--parallel 2` now. (Section 1's "most parallel use possible"
+no longer holds.)
+
+- **Running Codex task (the only one):** G8c in `wt-life` = resume of G8b (finish G8: families
+  with young, hoofstock barriers, meerkat mound, plant placement; **plus** keeper gates onto a
+  service path, never onto stand-off planting, and corridors between blocking plants against
+  the thicket stalls). Brief `brief-G8c-plan-resume.md` (which contains G8b's), log
+  `log-G8c.txt`, report `report-G8c-plan-resume.md`. G8b had made good progress before the stop
+  (`log-G8b.txt`).
+- **Stopped by the lead for the new limits, work left uncommitted in their worktrees** (each
+  moved onto `f77bc8f` with the earlier partial work on top; the pre-move diffs are kept as
+  `.codex-work/<name>-partial.patch`): G2b `wt-plants` (brief `brief-G2b-plants-finish.md`),
+  G6b `wt-audit` (`brief-G6b-audit-finish.md`; it had an ASan tree and was running save-damage
+  tests), G1b `wt-ground` (`brief-G1b-ground-finish.md`: pond-corner wedge, feet at the drawn
+  bank height, interleaved bench). Restart each, one at a time after G8c, with a preface like
+  `brief-G8c-plan-resume.md`'s (read the diff and `build-probe/`, carry on). G7 (sound) not
+  restarted (`wt-sound`, brief `brief-G7b-sound-finish.md`).
+- **Committed:** `6ce4b9a` S6b elephant second pass + S11/S11b giraffe (59 pipeline tests pass).
+- **In the main working tree, not committed yet:** S10 bears (applied, `test_clips.py`
+  conflict resolved, attribution row, docs and `evidence/bears-sculpt-2026-11-14.jpg` written;
+  `test_bears` + `test_clips` were running). Commit when green.
+- **Next:** S7 big cats (`.codex-work/S7.patch`, diff against seed `700b81a`; `zoogen/sculpt.py`
+  also changed by S10, expect a conflict; look in the game; MASK hair cards and `GiveMipmaps`).
+  Then G3 (bench done, `wt-built/build-probe/g3lead/`: before 24.8/27.4/28.0 ms mean frame,
+  after 35.1/24.2/26.7 ms, load 12-17: no measurable cost within the noise; the binaries
+  `wt-built/build/zoo-simulator-g3{before,after}` are there), then G4 (needs a full ctest and
+  the 800-people bench), then G5 after G8c.
+
 ## 1. The mission and the owner's rules
 
 The owner (Robert Vokac) asked for Greenhill Zoo, a **first-person walk through a zoo**, to

@@ -32,6 +32,7 @@ loudspeaker stays muted and nobody has listened to any of it.
 | People at every habitat | 192 to 260 of 800 stand watching (was 110 to 215) and no habitat is left without watchers (several were, most of the time) | `docs/VISITOR_ZOO.md` "Who watches where" |
 | Trees and shrubs with leaves | every crown and bush was a lumpy green blob; now a dark core that casts the shadow, covered with cut-out sprays of leaves or needles (two painted 512 px atlases, alpha-tested with coverage kept through the mip levels); spruces are tiers of boughs | `src/game/FoliageTextures.*`, `src/game/PropModels.cpp`, `evidence/foliage-2026-11-13.jpg`, `docs/PERFORMANCE.md` |
 | Giraffe bull, cow and calf: a scanned head and neck (CC BY 4.0) on a body modelled by us, a painted reticulated coat | a giraffe's silhouette and coat instead of a lofted toy; browsing reaches the crowns | `docs/ANIMALS.md`, `evidence/giraffe-2026-11-14.jpg` |
+| Brown and polar bears with cubs from a sculpt (CC BY 4.0), rigged by us | bears with fur, claws and a bear's head instead of blobs on block feet; crude still (angular shoulders, a snarling polar bear) | `docs/ANIMALS.md`, `evidence/bears-sculpt-2026-11-14.jpg` |
 | Animals with a species' day | each species has its own shares of resting, feeding, walking and a signature activity (browse, ruminate, bathe, dust bathe, preen, sentinel, dig, filter feed, patrol, huddle), chooses its place in the habitat (shade at midday, high ground for the sentry, the group), and keeps them through a save; lions rest 70 % of the day, elephants move or feed 62 %, a meerkat sentry is posted 85 % of daylight | `docs/ANIMAL_BEHAVIOUR.md`, `evidence/animal-routines-2026-11-13.jpg` |
 
 ### Light from the sky and the ground (2026-11-13)
@@ -66,12 +67,11 @@ Picture: `evidence/sky-light-water-2026-11-13.jpg` (left before, right after: me
 penguins, elephant).
 
 Not done about water: the bank is still a straight tile edge, nothing splashes or rings
-where an animal wades. Penguins swim and float with their own clips now; a polar bear still
-paddles with its walk clip.
+where an animal wades. Penguins swim and float with their own clips now, and polar bears swim with theirs.
 
 ## Open (in the order they hurt)
 
-1. Animals: seven of fifteen species are still the stylised first generation
+1. Animals: five of fifteen species (wolf, camel, meerkat, ostrich, kangaroo) are still the stylised first generation; the bears are sculpt-based but crude
    (`docs/ANIMALS.md`). Of the sculpt-based cats only the lioness is good: the male needs a
    real head and mane, the tiger a face. No young animal lives in the zoo yet.
 2. Habitat fronts: hoofstock is still seen through chain-link behind its strip.
@@ -81,7 +81,7 @@ paddles with its walk clip.
    alpha-to-coverage), cut-out leaves cast no shadow (the engine's shadow pass skips
    alpha-tested items; the crown's core casts it), and palms, ferns and hedge fences are
    still the old solid shapes. The pines of Bear Ridge stand in an odd dense clump.
-5. Keepers are not seen. Only penguin, rhinoceros and elephant have swimming clips. Bear growl
+5. Keepers are not seen. Only penguin, polar bear, rhinoceros and elephant have swimming clips. Bear growl
    is quiet in the mix.
 6. Loading 5.5 s, 2.4 s of it painting the ground.
 7. Animals get stuck: 5.4 % of the ticks in which an animal is under way it does not move

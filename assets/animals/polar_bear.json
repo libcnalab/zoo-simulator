@@ -10,7 +10,7 @@
       "speed": 0.0
     },
     {
-      "duration": 1.1333,
+      "duration": 0.9333,
       "events": [
         {
           "name": "step",
@@ -18,24 +18,24 @@
         },
         {
           "name": "step",
-          "time": 0.068
+          "time": 0.112
         },
         {
           "name": "step",
-          "time": 0.5667
+          "time": 0.4667
         },
         {
           "name": "step",
-          "time": 0.6347
+          "time": 0.5787
         }
       ],
-      "frames": 35,
+      "frames": 29,
       "loop": true,
       "name": "walk",
       "speed": 1.0
     },
     {
-      "duration": 0.6333,
+      "duration": 0.5667,
       "events": [
         {
           "name": "step",
@@ -43,18 +43,18 @@
         },
         {
           "name": "step",
-          "time": 0.0
+          "time": 0.0567
         },
         {
           "name": "step",
-          "time": 0.3167
+          "time": 0.272
         },
         {
           "name": "step",
-          "time": 0.3167
+          "time": 0.3287
         }
       ],
-      "frames": 20,
+      "frames": 18,
       "loop": true,
       "name": "trot",
       "speed": 2.5
@@ -103,31 +103,103 @@
       "loop": false,
       "name": "vocalize",
       "speed": 0.0
+    },
+    {
+      "duration": 1.5,
+      "events": [],
+      "frames": 46,
+      "loop": true,
+      "name": "swim",
+      "speed": 0.975
     }
   ],
   "generator": "tools/animals (zoogen)",
-  "license": "MIT",
+  "license": "CC-BY-4.0",
   "meta": {
-    "body_length_m": 2.4,
+    "asset_license": "CC-BY-4.0",
     "common_name": "Polar bear",
+    "derivation": "Re-proportioned and repainted brown-bear sculpt",
+    "proportion_edits": {
+      "ear": {
+        "scale": [
+          0.72,
+          0.72,
+          0.72
+        ]
+      },
+      "foot": {
+        "scale": [
+          1.12,
+          1.2,
+          1
+        ]
+      },
+      "hand": {
+        "scale": [
+          1.15,
+          1.18,
+          1
+        ]
+      },
+      "head": {
+        "scale": [
+          0.78,
+          0.83,
+          0.9
+        ]
+      },
+      "hips": {
+        "scale": [
+          1.16,
+          0.94,
+          1
+        ]
+      },
+      "neck1": {
+        "scale": [
+          0.96,
+          0.92,
+          0.9
+        ]
+      },
+      "neck2": {
+        "scale": [
+          1.02,
+          0.96,
+          1
+        ]
+      }
+    },
+    "rest_pose": "Sternal recumbency, chin on forepaws",
     "roughness": 0.9,
     "scientific_name": "Ursus maritimus",
-    "shoulder_height_m": 1.5
+    "shoulder_height_m": 1.5,
+    "sleep_pose": "Lying on side with folded legs",
+    "source_author": "Pedro B. Goulart (Pebegou)",
+    "source_pose": "Upright roaring brown-bear-like sculpt; species identification is visual",
+    "source_title": "Strong Bear",
+    "source_url": "https://sketchfab.com/3d-models/1d1bb459a39a428282ce4cb46bdc3ed5",
+    "swim": {
+      "clip": "swim",
+      "depth_m": 1.365,
+      "speed_mps": 0.9750000000000001
+    },
+    "water_origin_convention": "Place the asset origin at water surface - depth_m"
   },
   "name": "polar_bear",
   "skeleton_bounds_animal_space": {
     "max": [
-      1.176,
-      0.2175,
-      1.59
+      2.3169,
+      0.4368,
+      1.6295
     ],
     "min": [
-      -1.608,
-      -0.2175,
+      -1.1498,
+      -0.4368,
       0.0
     ]
   },
-  "texture": 1024,
-  "triangles": 19806,
-  "vertices": 9948
+  "texture": 2048,
+  "triangles": 30000,
+  "vertices": 15501
 }

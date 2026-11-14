@@ -21,6 +21,7 @@ from zoogen.rig import Pose, Solver, quat_from_matrix, rot_x, rot_y, rot_z  # no
 
 CATS = ["lion", "lion_female", "lion_juvenile", "tiger"]
 SPECIES = ["lion", "lion_female", "lion_juvenile", "tiger", "wolf", "brown_bear", "polar_bear",
+           "brown_bear_juvenile", "polar_bear_juvenile",
            "zebra", "zebra_female", "zebra_juvenile", "rhino", "camel", "elephant", "giraffe",
            "giraffe_female", "giraffe_juvenile", "meerkat",
            "penguin", "penguin_juvenile", "ostrich", "flamingo", "kangaroo"]

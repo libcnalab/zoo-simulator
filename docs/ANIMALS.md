@@ -42,7 +42,8 @@ python3 -m unittest discover -s tools/animals/tests
 | `zoogen/rigged.py`, `pachyderm.py`, `pachyderm_motion.py` on a prepared third-party rigged model (below) | rhino, rhino_juvenile, elephant, elephant_female, elephant_juvenile |
 | `zoogen/scan.py` on a prepared third-party static sculpt, rigged by us (below) | zebra, zebra_female, zebra_juvenile |
 | `zoogen/giraffe2.py` on a prepared head-and-neck scan, body modelled by us (below) | giraffe, giraffe_female, giraffe_juvenile |
-| `zoogen/quadruped.py`, `wild_quadruped.py`, `anatomy.py` | wolf, brown bear, polar bear, camel, meerkat |
+| `zoogen/sculpt.py`, `bear.py` on a prepared third-party sculpt, rigged by us (below) | brown_bear, brown_bear_juvenile, polar_bear, polar_bear_juvenile |
+| `zoogen/quadruped.py`, `wild_quadruped.py`, `anatomy.py` | wolf, camel, meerkat |
 | `zoogen/birdscan.py` on a prepared third-party scan or sculpt, rigged by us (below) | penguin, penguin_juvenile, flamingo |
 | `zoogen/biped.py` | ostrich, kangaroo |
 
@@ -112,6 +113,29 @@ dark in the game's light (nearly black against the sand), the tusks are too long
 level, the ears are smooth where the body is wrinkled, and the source was an Asian elephant,
 so face and ears are a conversion and read as one from close by. The calf keeps adult skin.
 No calf lives in the Visitor Zoo yet, so both juveniles are only seen in the viewer.
+
+### Bears from a sculpt (2026-11-14)
+
+Codex task S10: "Strong Bear" by Pebegou (CC BY 4.0), an upright, roaring brown bear sculpt
+without a skeleton. `tools/animals/prepare_bear.py` drops the scene's butterflies, decimates
+the bear, fits our 33 bones in the upright pose, weights it, closes the jaw by 39 degrees and
+bakes it down onto four legs; `zoogen/bear.py` builds four models from it, with the source's
+fur detail and normal maps. **The polar bears come from the same brown-bear sculpt**: a longer
+neck, a narrower head and a white coat are ours.
+
+| Model | Triangles | Withers | What it is |
+|---|---:|---:|---|
+| `brown_bear` | 30,000 | 1.20 m | adult |
+| `brown_bear_juvenile` | 19,500 | | cub: larger head, collar marking |
+| `polar_bear` | 30,000 | 1.49 m | adult, `swim` (1.37 m under the surface) |
+| `polar_bear_juvenile` | 19,500 | | cub, `swim` |
+
+Seen in Blender, in the viewer and in both habitats (`evidence/bears-sculpt-2026-11-14.jpg`).
+Honest state, and Codex said it first: **these are not realistic bears**, but they are bears,
+where the old ones were lofted blobs with block feet. What is wrong: the upright sculpt's
+muscles leave angular shoulders and sharp hip folds after the repose; the brown bear stands
+crouched; the polar bear's lips are a dark snarl and its facial pigment has rough edges; the
+cubs are small adults rather than fluffy cubs; the fur tufts are sparse and spiky.
 
 ### Elephant, second pass, and giraffe (2026-11-14)
 
@@ -226,15 +250,15 @@ and standing empty).
   animal younger than half its species' age of maturity with the juvenile one; a species without
   them uses the one model for everybody. A model is scaled by height:
   `species shoulder height x share of its sex x growth / meta.shoulder_height_m` of the model
-  drawn, so a variant states its own height. (Lion, elephant, zebra, rhinoceros, giraffe and penguin have variants so far.)
+  drawn, so a variant states its own height. (Lion, elephant, zebra, rhinoceros, giraffe, both bears and penguin have variants so far.)
 - **Swimming.** Where the water is deeper than about 0.6 of the animal's standing height it
   floats: the body rides with `meta.swim_depth_m` (default 0.72 of the model's shoulder height)
   under the surface instead of walking on the pool bed under water, and plays the optional
   clip `swim`. A model may also have `float` for lying still on the water, with its own depth
   (`meta.swim.depth_m` and `meta.float.depth_m`; the penguins have both): under way the animal
   swims, at rest it floats, and the body moves between the two depths smoothly. Rhinoceros,
-  elephant and penguin have `swim`; the other species still paddle with their walk clip (a
-  polar bear swims as if it walked). Seen at Penguin Cove:
+  elephant, polar bear and penguin have `swim`; the other species still paddle with their walk
+  clip. Seen at Penguin Cove:
   `evidence/penguin-floating-2026-11-13.jpg` (a resting penguin on the pool: the head above
   the water, the body under it; a real one floats a little higher).
 - **Textures.** CNA imports glTF images with one level (its warning GLTF-206), so the game

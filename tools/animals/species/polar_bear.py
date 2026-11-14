@@ -1,17 +1,17 @@
 # SPDX-License-Identifier: MIT
-"""Polar bear, adult. Shoulder height 1.50 m; head and body length 2.40 m."""
-from zoogen.wild_quadruped import make_wild_quadruped
+"""Polar conversion: extended neck/body, narrow straight head, broad paws, cream coat."""
+from zoogen.bear import make_bear
+
+EDITS = {
+    'hips': {'scale': [1.16, .94, 1]},
+    'neck1': {'scale': [.96, .92, .90]},
+    'neck2': {'scale': [1.02, .96, 1]},
+    'head': {'scale': [.78, .83, .90]},
+    'ear': {'scale': [.72, .72, .72]},
+    'hand': {'scale': [1.15, 1.18, 1]},
+    'foot': {'scale': [1.12, 1.20, 1]},
+}
 
 
 def make_spec():
-    return make_wild_quadruped({
-        "name": "polar_bear",
-        "kind": "polar_bear",
-        "common_name": "Polar bear",
-        "scientific_name": "Ursus maritimus",
-        "height": 1.5,
-        "length": 2.4,
-        "walk_speed": 1.0,
-        "trot_speed": 2.5,
-        "validate_mesh": True,
-    })
+    return make_bear('polar_bear', True, False, 1.5, EDITS)

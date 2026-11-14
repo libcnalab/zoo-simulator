@@ -1,0 +1,201 @@
+{
+  "bones": 33,
+  "clips": [
+    {
+      "duration": 6.0,
+      "events": [],
+      "frames": 181,
+      "loop": true,
+      "name": "idle",
+      "speed": 0.0
+    },
+    {
+      "duration": 0.6333,
+      "events": [
+        {
+          "name": "step",
+          "time": 0.0
+        },
+        {
+          "name": "step",
+          "time": 0.076
+        },
+        {
+          "name": "step",
+          "time": 0.3167
+        },
+        {
+          "name": "step",
+          "time": 0.3927
+        }
+      ],
+      "frames": 20,
+      "loop": true,
+      "name": "walk",
+      "speed": 0.42
+    },
+    {
+      "duration": 0.3667,
+      "events": [
+        {
+          "name": "step",
+          "time": 0.0
+        },
+        {
+          "name": "step",
+          "time": 0.0367
+        },
+        {
+          "name": "step",
+          "time": 0.176
+        },
+        {
+          "name": "step",
+          "time": 0.2127
+        }
+      ],
+      "frames": 12,
+      "loop": true,
+      "name": "trot",
+      "speed": 0.95
+    },
+    {
+      "duration": 3.0,
+      "events": [],
+      "frames": 91,
+      "loop": true,
+      "name": "eat",
+      "speed": 0.0
+    },
+    {
+      "duration": 2.4,
+      "events": [],
+      "frames": 73,
+      "loop": true,
+      "name": "drink",
+      "speed": 0.0
+    },
+    {
+      "duration": 8.0,
+      "events": [],
+      "frames": 241,
+      "loop": true,
+      "name": "rest",
+      "speed": 0.0
+    },
+    {
+      "duration": 8.0,
+      "events": [],
+      "frames": 241,
+      "loop": true,
+      "name": "sleep",
+      "speed": 0.0
+    },
+    {
+      "duration": 2.6,
+      "events": [
+        {
+          "name": "call",
+          "time": 0.572
+        }
+      ],
+      "frames": 79,
+      "loop": false,
+      "name": "vocalize",
+      "speed": 0.0
+    }
+  ],
+  "generator": "tools/animals (zoogen)",
+  "license": "CC-BY-4.0",
+  "meta": {
+    "asset_license": "CC-BY-4.0",
+    "common_name": "Eurasian brown bear",
+    "derivation": "Reposed brown-bear sculpt",
+    "proportion_edits": {
+      "ear": {
+        "scale": [
+          1.15,
+          1.15,
+          1.25
+        ]
+      },
+      "foot": {
+        "scale": [
+          1.14,
+          1.15,
+          1.1
+        ]
+      },
+      "hand": {
+        "scale": [
+          1.14,
+          1.15,
+          1.1
+        ]
+      },
+      "head": {
+        "scale": [
+          0.86,
+          1.22,
+          1.18
+        ]
+      },
+      "hips": {
+        "scale": [
+          0.94,
+          1.04,
+          1
+        ]
+      },
+      "neck1": {
+        "scale": [
+          0.85,
+          1.08,
+          0.93
+        ]
+      },
+      "thigh": {
+        "scale": [
+          1,
+          1.12,
+          0.82
+        ]
+      },
+      "upper_arm": {
+        "scale": [
+          1,
+          1.12,
+          0.82
+        ]
+      }
+    },
+    "relative_height": 0.375,
+    "rest_pose": "Sternal recumbency, chin on forepaws",
+    "roughness": 0.9,
+    "scientific_name": "Ursus arctos",
+    "shoulder_height_m": 0.45,
+    "sleep_pose": "Lying on side with folded legs",
+    "source_author": "Pedro B. Goulart (Pebegou)",
+    "source_pose": "Upright roaring brown-bear-like sculpt; species identification is visual",
+    "source_title": "Strong Bear",
+    "source_url": "https://sketchfab.com/3d-models/1d1bb459a39a428282ce4cb46bdc3ed5",
+    "variant": "juvenile",
+    "variant_of": "brown_bear"
+  },
+  "name": "brown_bear_juvenile",
+  "skeleton_bounds_animal_space": {
+    "max": [
+      0.4555,
+      0.1355,
+      0.4662
+    ],
+    "min": [
+      -0.3042,
+      -0.1355,
+      0.0
+    ]
+  },
+  "texture": 2048,
+  "triangles": 19500,
+  "vertices": 10206
+}

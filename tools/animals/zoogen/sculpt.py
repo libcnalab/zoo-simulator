@@ -206,6 +206,36 @@ def build_sculpt(spec):
     texture.image = image
     material.node_tree.links.new(texture.outputs['Color'], shader.inputs['Base Color'])
     shader.inputs['Roughness'].default_value = .86
+    if data.get('normal_map'):
+        attach_source_normal(material, data, atlas)
     mesh.materials.append(material)
     return ob, dict(bones=bones, bone_names=names, triangles=len(mesh.polygons),
                     vertices=len(mesh.vertices), image=image)
+
+
+def attach_source_normal(material, data, atlas=1.0):
+    """Opt-in source normal atlas, with flat normals over added silhouette geometry."""
+    import bpy
+    source = bpy.data.images.load(str(data['normal_map']), check_existing=False)
+    source.colorspace_settings.name = 'Non-Color'
+    width, height = source.size
+    pixels = np.empty(width * height * 4, dtype=np.float32)
+    source.pixels.foreach_get(pixels)
+    pixels = pixels.reshape(height, width, 4)
+    target = np.ones_like(pixels)
+    target[..., :3] = [.5, .5, 1]
+    limit = int(width * atlas)
+    indices = np.minimum((np.arange(limit) / atlas).astype(int), width - 1)
+    target[:, :limit] = pixels[:, indices]
+    image = bpy.data.images.new(material.name + '_fur_normal', width, height, alpha=False)
+    image.colorspace_settings.name = 'Non-Color'
+    image.pixels.foreach_set(target.ravel())
+    image.pack()
+    texture = material.node_tree.nodes.new('ShaderNodeTexImage')
+    texture.image = image
+    normal = material.node_tree.nodes.new('ShaderNodeNormalMap')
+    normal.inputs['Strength'].default_value = data.get('normal_strength', 1.0)
+    material.node_tree.links.new(texture.outputs['Color'], normal.inputs['Color'])
+    shader = material.node_tree.nodes.get('Principled BSDF')
+    material.node_tree.links.new(normal.outputs['Normal'], shader.inputs['Normal'])
+    bpy.data.images.remove(source)
