@@ -178,6 +178,14 @@ int StripDepth(const Enclosure& home) {
     return 0;
 }
 
+/// What the hoofstock stands behind: cables for the heavy and the tall, a timber rail for the rest.
+std::string_view FrontBarrier(const Enclosure& home) {
+    if (home.name == "Elephant Valley" || home.name == "Rhino Hollow") {
+        return "cable_barrier";
+    }
+    return home.name == "Acacia Plain" || home.name == "Ostrich Rise" ? "tall_cable_fence" : "paddock_rail";
+}
+
 void ExpectFronts(const Zoo& zoo) {
     for (const Enclosure& home : zoo.Habitats().All()) {
         SCOPED_TRACE(home.name);
@@ -216,7 +224,7 @@ void ExpectFronts(const Zoo& zoo) {
             const auto* barrier =
                 zoo.Definitions().FenceByKind(zoo.Map().FenceOn(next, Opposite(spot.side)).kind);
             ASSERT_NE(barrier, nullptr);
-            EXPECT_EQ(barrier->id, depth == 2 ? "cable_barrier" : "tall_mesh");
+            EXPECT_EQ(barrier->id, FrontBarrier(home));
             EXPECT_FLOAT_EQ(spot.visibility, rail->visibility * barrier->visibility);
         }
         if (home.name == "Lion Rock" || home.name == "Tiger Forest" || home.name == "Bear Falls" ||
@@ -444,7 +452,8 @@ void CheckVisiting(Zoo& zoo, std::int64_t ticks) {
         ExpectSeparation(zoo);
         if (step % 50 == 0) {
             for (const Visitor& guest : zoo.Guests().All()) {
-                if (guest.activity != VisitorActivity::Watching || frontWatched.contains(guest.targetEnclosure.value)) {
+                if (guest.activity != VisitorActivity::Watching ||
+                    frontWatched.contains(guest.targetEnclosure.value)) {
                     continue;
                 }
                 const Enclosure* home = zoo.Habitats().Find(guest.targetEnclosure);
@@ -491,7 +500,8 @@ void CheckVisiting(Zoo& zoo, std::int64_t ticks) {
         }
     }
     for (const Enclosure& home : zoo.Habitats().All()) {
-        EXPECT_TRUE(frontWatched.contains(home.id.value)) << home.name << ": nobody at its front in 2,000 steps";
+        EXPECT_TRUE(frontWatched.contains(home.id.value))
+            << home.name << ": nobody at its front in 2,000 steps";
     }
     for (const auto& [species, over] : deepest) {
         EXPECT_LE(over, 0.05f) << species << " stood " << over << " m deeper than it wades";

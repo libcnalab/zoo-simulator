@@ -452,7 +452,9 @@ from the Release build, visitor zoo, seed 1, after the visit's fill.
   0.42 m. Until the plan has shallows (the plan's rework gives the lagoon a 0.3 m shelf)
   no wet place qualifies and the birds keep to the bank; `filter_feed` falls back to `forage`.
   Seen in the game afterwards: most birds on the bank or at its edge, two still swimming out
-  on a route across the water.
+  on a route across the water. Since 2026-11-14 the lagoon has the shelf (0.3 m, 74 of 103 water
+  tiles under 0.45 m): after 6,000 ticks 11 of the 12 birds stand in the shallows, and the game
+  shows them wading and feeding there.
 - **Animals that walk without getting anywhere: measured, not fixed.** Counting the ticks in
   which an animal is `moving` at a speed under 0.05 m/s, over 6000 ticks: 12,528 of 232,441
   moving ticks (5.4 %); with the profiles switched off (the behaviour before this task) 7,198
@@ -469,6 +471,11 @@ from the Release build, visitor zoo, seed 1, after the visit's fill.
   navigation (tiles a blocking prop fills are not passable for animals, places inside pockets
   are not chosen), with this count as its regression test; the probe is kept in
   `.codex-work/probe-stall-ZzProbeTests.cpp`.
+  **Measured again on the reworked plan (2026-11-14, `docs/VISITOR_ZOO.md` "The zoo's plan"),
+  which keeps the largest resident's width plus 1 m between blocking props:** 3,686 of 273,800
+  moving ticks (1.35 %); the tiger's pocket is gone, the only animal above 300 ticks is a wolf
+  (820 ticks, longest run 687, at 195.7, 64.0). The navigator itself is unchanged, so a
+  player-built habitat can still make such pockets.
 - **Golden hashes** of `tests/core/VisitStartTests.cpp` re-recorded for the routines.
 - Pictures: `docs/evidence/animal-routines-2026-11-13.jpg` (lions resting in the shade at
   midday; penguins standing together, one swimming; flamingos at the lagoon after the wader

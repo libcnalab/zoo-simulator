@@ -14,7 +14,7 @@ loudspeaker stays muted and nobody has listened to any of it.
 
 | What | Result | Where |
 |---|---|---|
-| Visit start runs in the core | fill of 800 visitors 7 s -> 1.2-1.6 s | `docs/VISIT_START.md` |
+| Visit start runs in the core | fill of 800 visitors 7 s -> 1.2-1.6 s; with 88 animals the prop buckets are no longer rebuilt on every feeding tick (fastest fill 2.52 -> 2.05 s under load) | `docs/VISIT_START.md` |
 | Scenery in one cell during a visit | engine time at the entrance 11.7 -> 5.7 ms | `docs/PERFORMANCE.md` |
 | At most 18 full CNA avatars a frame | people pass at the meerkats 15.5 -> 8.0 ms | `docs/PERFORMANCE.md`, `evidence/people-*.jpg` |
 | Groups at benches | a group sits only if half of it can; the rest stand in an arc | `docs/VISITORS.md` |
@@ -36,6 +36,7 @@ loudspeaker stays muted and nobody has listened to any of it.
 | Trees and shrubs with leaves | every crown and bush was a lumpy green blob; now a dark core that casts the shadow, covered with cut-out sprays of leaves or needles (two painted 512 px atlases, alpha-tested with coverage kept through the mip levels); spruces are tiers of boughs | `src/game/FoliageTextures.*`, `src/game/PropModels.cpp`, `evidence/foliage-2026-11-13.jpg`, `docs/PERFORMANCE.md` |
 | Giraffe bull, cow and calf: a scanned head and neck (CC BY 4.0) on a body modelled by us, a painted reticulated coat | a giraffe's silhouette and coat instead of a lofted toy; browsing reaches the crowns | `docs/ANIMALS.md`, `evidence/giraffe-2026-11-14.jpg` |
 | Brown and polar bears with cubs from a sculpt (CC BY 4.0), rigged by us | bears with fur, claws and a bear's head instead of blobs on block feet; crude still (angular shoulders, a snarling polar bear) | `docs/ANIMALS.md`, `evidence/bears-sculpt-2026-11-14.jpg` |
+| The zoo's plan: families with young, barriers a zoo builds, believable habitats | 88 animals instead of 74, every social species with this season's young beside their mothers (lion cubs, an elephant calf in a cow group, a rhino calf, a foal, chicks, pups, joeys at foot), pairs of tigers and bears; hoofstock behind cables and timber paddock fences instead of chain-link; a sand mound with a drinking dish for the meerkats; a lagoon with a 0.3 m shelf where the flamingos wade; feeders in view, nothing in water or in another thing; plants in groves with glades and no trunk before a viewing place; a dry service apron to every keeper gate; animals stalled on their way 5.4 % -> 1.35 % of the moving ticks | `docs/VISITOR_ZOO.md` "The zoo's plan", `evidence/zoo-plan-g8-2026-11-14.jpg` |
 | Animals with a species' day | each species has its own shares of resting, feeding, walking and a signature activity (browse, ruminate, bathe, dust bathe, preen, sentinel, dig, filter feed, patrol, huddle), chooses its place in the habitat (shade at midday, high ground for the sentry, the group), and keeps them through a save; lions rest 70 % of the day, elephants move or feed 62 %, a meerkat sentry is posted 85 % of daylight | `docs/ANIMAL_BEHAVIOUR.md`, `evidence/animal-routines-2026-11-13.jpg` |
 
 ### Light from the sky and the ground (2026-11-13)
@@ -76,19 +77,23 @@ where an animal wades. Penguins swim and float with their own clips now, and pol
 
 1. Animals: five of fifteen species (wolf, camel, meerkat, ostrich, kangaroo) are still the stylised first generation; the bears are sculpt-based but crude
    (`docs/ANIMALS.md`). The cats are believable now but not photographs (the tiger's cheek
-   ruff reads as a grey comb, the mane's cards show close up). No young animal lives in the zoo yet.
-2. Habitat fronts: hoofstock is still seen through chain-link behind its strip.
-3. Meerkat Lookout's pool is too large and props stand in it.
-4. Plants: trees and shrubs have leaves now, but there is no distance form (1.93 million
+   ruff reads as a grey comb, the mane's cards show close up). Meerkat pups, ostrich chicks, wolf
+   pups, camel and kangaroo young and flamingo juveniles have no juvenile model and are drawn as
+   scaled adults.
+2. Habitat fronts: the catalog has no dry moat or ha-ha; 48 paved tiles are still on a walk
+   only 2 m wide. Behind a planted strip a slender tree may stand a metre inside the barrier,
+   in the view (Elephant Valley); a zoo keeps trees farther from a fence, but moving them all
+   back leaves Rhino Hollow and Red Dune too bare for their species. `--stand habitat:meerkat`
+   may pick the keeper gate's mesh.
+3. Plants: trees and shrubs have leaves now, but there is no distance form (1.93 million
    of the scenery's 2.18 million triangles are plants), cut-out edges far away are pixelated (no
    alpha-to-coverage), cut-out leaves cast no shadow (the engine's shadow pass skips
    alpha-tested items; the crown's core casts it), and palms, ferns and hedge fences are
-   still the old solid shapes. The pines of Bear Ridge stand in an odd dense clump.
-5. Keepers are not seen. Only penguin, polar bear, rhinoceros and elephant have swimming clips. Bear growl
+   still the old solid shapes.
+4. Keepers are not seen. Only penguin, polar bear, rhinoceros and elephant have swimming clips. Bear growl
    is quiet in the mix.
-6. Loading 5.5 s, 2.4 s of it painting the ground.
-7. Animals get stuck: 5.4 % of the ticks in which an animal is under way it does not move
-   (3.0 % before the species routines), and one tiger stands pinned in the bamboo thicket for
-   most of an hour; the navigator does not know what plants and rocks block
-   (`docs/ANIMAL_BEHAVIOUR.md` "In the game"). Flamingos keep to the bank because the lagoon
-   has no shallows. No model has clips for preening, dust bathing, digging or sentry duty.
+5. Loading 5.5 s, 2.4 s of it painting the ground.
+6. Animals get stuck less since the plan keeps room between blocking props (1.35 % of the
+   moving ticks, was 5.4 %; one wolf still 820 ticks of 6,000), but the navigator still does
+   not know what plants and rocks block (`docs/ANIMAL_BEHAVIOUR.md` "In the game"). No model
+   has clips for preening, dust bathing, digging or sentry duty.

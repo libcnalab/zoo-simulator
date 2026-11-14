@@ -20,7 +20,7 @@ Json Entry(std::string_view plural, Json value) {
 TEST(CatalogTests, ShippedDataLoadsAndHasCompleteEnumsAndLookups) {
     const Catalog c = Shipped();
     ASSERT_TRUE(c.errors.empty()) << (c.errors.empty() ? "" : c.errors.front());
-    EXPECT_EQ(c.fences.size(), 12U);
+    EXPECT_EQ(c.fences.size(), 14U);
     EXPECT_EQ(c.foods.size(), 8U);
     EXPECT_GE(c.buildings.size(), 13U);
     EXPECT_GE(c.props.size(), 35U);

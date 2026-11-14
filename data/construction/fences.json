@@ -179,6 +179,36 @@
       "wearPerDay": 0.0015,
       "color": "#966338",
       "postColor": "#51371f"
+    },
+    {
+      "id": "paddock_rail",
+      "name": "Timber paddock fence",
+      "kind": 13,
+      "style": "rail",
+      "heightM": 2.4,
+      "strength": 3,
+      "visibility": 0.9,
+      "cost": 120,
+      "gateCost": 60,
+      "upkeepPerDay": 2,
+      "wearPerDay": 0.0015,
+      "color": "#8a6238",
+      "postColor": "#4a3520"
+    },
+    {
+      "id": "tall_cable_fence",
+      "name": "Tall cable fence",
+      "kind": 14,
+      "style": "cable",
+      "heightM": 3.0,
+      "strength": 3,
+      "visibility": 0.92,
+      "cost": 240,
+      "gateCost": 110,
+      "upkeepPerDay": 4,
+      "wearPerDay": 0.0015,
+      "color": "#77766e",
+      "postColor": "#4a3b2c"
     }
   ]
 }

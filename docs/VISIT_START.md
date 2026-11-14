@@ -240,3 +240,27 @@ No existing public API was changed. The only added API is the requested visit-st
 report and function. Negative fill counts are explicitly treated as zero. Suggested follow-ups
 are a per-habitat occupancy/omission report and persistence/hash coverage for `VisitorPace`.
 All work is left uncommitted; nothing was published remotely.
+
+## The zoo's plan and the prop buckets (2026-11-14)
+
+The reworked plan (`docs/VISITOR_ZOO.md` "The zoo's plan") stocks 88 animals instead of 74.
+Measured with `VisitStart.DISABLED_FillTiming` (seed 1, Release with debug information, three
+runs per invocation, invocations of the binary before and after interleaved), the machine
+shared with other agents at a load average of **10 to 28**, so single figures are noise and the
+fastest run of each side is the fairest comparison:
+
+| | fastest fill, s | fastest build, s | animals |
+|---|---:|---:|---:|
+| before the plan (`b2ebdd2`) | 2.52 | 0.81 | 74 |
+| the plan alone | 3.44 | 0.86 | 88 |
+| the plan and the bucket fix below | 2.05 | 0.80 | 88 |
+
+The plan alone made the fill dearer. Stack samples taken with gdb during the fill (40 a run)
+showed the same picture before and after it: `ZooObjects::RebuildBuckets` in 30 of 40 samples,
+called from `PropsNear` in `AdvanceMovement` and `RoutinePlace`. The mutable `FindProp`
+threw the spatial buckets away on every call in case the caller moved the prop, and animals
+eating or drinking call it every tick for the amount they take, so the next query re-sorted all
+2,500 props of the zoo into a `std::map`. Nothing moves a prop through that pointer (props move
+only by removal and addition, which do invalidate), so it keeps the buckets now; loading resets
+them. The golden hashes did not change. Afterwards `RebuildBuckets` no longer appears among
+26 samples; the visitors' routing and watching are the largest part of the fill.

@@ -89,6 +89,10 @@ public:
 
     PropId AddProp(Prop prop);
     bool RemoveProp(PropId id);
+    /// For amounts, prices and condition. A prop is moved only by removing and adding it: the
+    /// buckets of `PropsNear` do not watch positions changed through this pointer. (Throwing
+    /// them away on every call made animals feeding at a trough re-sort every prop of the zoo
+    /// for the next query: three quarters of a visit's fill went into that.)
     Prop* FindProp(PropId id);
     const Prop* FindProp(PropId id) const;
     const std::vector<Prop>& Props() const { return props_; }

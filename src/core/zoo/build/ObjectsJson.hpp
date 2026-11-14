@@ -20,6 +20,7 @@ struct ObjectsAccess {
         objects.nextBuilding_ = nextBuilding;
         objects.nextProp_ = nextProp;
         objects.revision_ = revision;
+        objects.bucketsRevision_ = 0;  // the loaded revision may equal the cached one
     }
 };
 }  // namespace zoo

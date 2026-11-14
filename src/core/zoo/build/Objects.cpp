@@ -71,7 +71,6 @@ bool ZooObjects::RemoveProp(PropId id) {
     return true;
 }
 Prop* ZooObjects::FindProp(PropId id) {
-    bucketsRevision_ = 0;
     auto it = Locate(props_, id);
     return it != props_.end() && it->id == id ? &*it : nullptr;
 }

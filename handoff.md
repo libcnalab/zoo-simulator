@@ -14,6 +14,18 @@ at Nov 18th, 2026 10:05 PM"), its report is empty; its last state is in `log-G8c
 `Meerkat Lookout: no place for sandstone_rock` failure in `VisitorZooPlan` it was fixing) and
 uncommitted in `wt-life`.
 
+- **G8 the zoo's plan: taken** (finished by hand by the lead from `wt-life`; commit after
+  `b2ebdd2`). Families with young in every social species (88 animals), hoofstock behind
+  `tall_cable_fence`/`paddock_rail`/`cable_barrier`, meerkat mound with a dish, lagoon with a
+  0.3 m shelf (flamingos wade: seen), furnishing and groves that keep views and corridors
+  open, a service apron to every keeper gate. Lead's own fixes: feeders searched in the front
+  half first, planting problem only below the welfare band, no trunk before a viewing place
+  (massive ones 5 m beyond the strip), kangaroo joeys at foot. Stall probe 5.4 % -> 1.35 %.
+  The fill got dearer with 88 animals; cause was core-wide: the mutable `FindProp` dropped the
+  prop buckets on every feeding tick (fixed in `Objects.cpp`, hashes unchanged; fastest fill
+  2.52 s before G8, 2.05 s after, `docs/VISIT_START.md`).
+  Golden hashes re-recorded. `docs/VISITOR_ZOO.md` "The zoo's plan". `wt-life` has nothing
+  left to take. **Open problems 1-3 of section 5 are resolved by it** (re-measured).
 - **S7 big cats: taken** (commit after `5dd19c4`). Merged by hand over S10's `sculpt.py`: the
   big-cat coat path is opt-in through `data['source_material']` (bears and birds unchanged; a
   rebuilt bear cub matches its asset but for two tangent components, a rebuilt lion matches
@@ -39,8 +51,9 @@ uncommitted in `wt-life`.
   "before" binary was deleted after the figures were written down; rebuild `d715179` to repeat.
 - **Crowd setting (owner's request, 2026-11-14): done.** Settings > Visitors: Nobody, Few,
   Fewer, Normal (as before), More (1,200; `kMaxVisitors` raised). `docs/VISITORS.md`.
-- **Next:** G5 (keepers; conflicts with G8 in `VisitorZoo.cpp`), or G8 first by hand. The stopped Codex work (G8c in `wt-life`, G2b, G6b, G1b) is
-  now the lead's to finish by hand or to leave; G8 first, it is the most valuable.
+- **Next:** G5 keepers by hand (`wt-keepers`; its `VisitorZoo.cpp` call now meets G8's plan:
+  drop `OpenKeeperLanes`, the gates have service aprons), then G1b, G2b, G6b, G7 by hand or
+  leave them.
 
 ## 1. The mission and the owner's rules
 

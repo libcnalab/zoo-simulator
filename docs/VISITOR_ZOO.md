@@ -28,28 +28,34 @@ combine elliptical lobes. Every habitat has a keeper gate, shelter, stocked feed
 enrichment, a public information board and benches. Planting concentrates behind the open
 viewing ground, with woods between habitats and around the perimeter.
 
-The seed-1 zoo contains **74 animals in 14 habitats, 41 buildings and 2,817 props** when
-every species is included. The farthest public path tile is **77.1 m** walking distance
-from a visitor facility. `VisitorZooTests.DISABLED_PrintPlan` prints these measurements. Groups are adult males + females. **S** = south; **W/E** = west/east.
+The seed-1 zoo contains **88 animals in 14 habitats, 41 buildings and 2,508 props** when
+every species is included (74 animals and 2,817 props before the plan's rework of
+2026-11-14, below). The farthest public path tile is **77.6 m** walking distance
+from a visitor facility. `VisitorZooTests.DISABLED_PrintPlan` prints these measurements. Families
+are written out in "The zoo's plan" below. **S** = south; **W/E** = west/east.
 The principal fronts face south and the zoo's centre. The habitat footprints are unchanged:
 the public walks and rails move outward, preserving all space and habitat provisions.
 
-| Habitat | Species and group | Area before → after, m² | Front | Back | Stand-off depth |
-|---|---|---:|---|---|---:|
-| Meerkat Lookout | Meerkat 1 + 5 | 252 → 252 | Glass S/W | Wire mesh | 0 |
-| Flamingo Lagoon | Flamingo 3 + 9 | 796 → 796 | Glass S/W | Wire mesh | 0 |
-| Acacia Plain | Giraffe 1 + 3; zebra 1 + 5 | 4,284 → 4,284 | Public rail, planting, tall mesh S/W | Tall mesh | 1 tile / 2 m |
-| Ostrich Rise | Ostrich 1 + 3 | 1,016 → 1,016 | Public rail, planting, tall mesh S/W | Tall mesh | 1 tile / 2 m |
-| Lion Rock | Lion 1 + 2 | 2,236 → 2,236 | Glass S/W | Heavy welded mesh | 0 |
-| Tiger Forest | Tiger 1 + 1 | 1,788 → 1,788 | High glass S/W | Heavy welded mesh | 0 |
-| Wolf Wood | Wolf 1 + 4 | 1,788 → 1,788 | Glass S/W | Tall mesh | 0 |
-| Bear Falls | Brown bear 1 + 1 | 2,236 → 2,236 | High glass S/E | Heavy welded mesh | 0 |
-| Polar Sound | Polar bear 1 + 1 | 2,812 → 2,812 | High glass S/E | Heavy welded mesh; cooled den | 0 |
-| Penguin Cove | Penguin 4 + 8 | 1,044 → 1,044 | Glass S/E | Wire mesh | 0 |
-| Elephant Valley | Elephant 1 + 3 | 5,436 → 5,436 | Public rail, planting, cable S/E | Cable | 2 tiles / 4 m |
-| Rhino Hollow | Rhino 1 + 2 | 1,692 → 1,692 | Public rail, planting, cable S/E | Cable | 2 tiles / 4 m |
-| Red Dune | Camel 1 + 3 | 1,616 → 1,616 | Public rail, planting, tall mesh S/E | Tall mesh | 1 tile / 2 m |
-| Kangaroo Grove | Kangaroo 1 + 4 | 1,136 → 1,136 | Public rail, planting, tall mesh S/E | Tall mesh | 1 tile / 2 m |
+| Habitat | Animals (of them young) | Area, m² | m² per animal | Front | Back | Stand-off depth |
+|---|---|---:|---:|---|---|---:|
+| Meerkat Lookout | Meerkat 5 (2) | 252 | 50 | Glass S/W | Wire mesh | 0 |
+| Flamingo Lagoon | Flamingo 12 (2) | 796 | 66 | Glass S/W | Wire mesh | 0 |
+| Acacia Plain | Giraffe 5 (2); zebra 6 (2) | 4,284 | 389 | Public rail, planting, tall cable fence S/W | Tall cable fence | 1 tile / 2 m |
+| Ostrich Rise | Ostrich 7 (3) | 1,016 | 145 | Public rail, planting, tall cable fence S/W | Tall cable fence | 1 tile / 2 m |
+| Lion Rock | Lion 7 (4) | 2,236 | 319 | Glass S/W | Heavy welded mesh | 0 |
+| Tiger Forest | Tiger 2 | 1,788 | 894 | High glass S/W | Heavy welded mesh | 0 |
+| Wolf Wood | Wolf 6 (4) | 1,788 | 298 | Glass S/W | Tall mesh | 0 |
+| Bear Falls | Brown bear 2 | 2,236 | 1,118 | High glass S/E | Heavy welded mesh | 0 |
+| Polar Sound | Polar bear 2 | 2,812 | 1,406 | High glass S/E | Heavy welded mesh; cooled den | 0 |
+| Penguin Cove | Penguin 13 (3) | 1,044 | 80 | Glass S/E | Wire mesh | 0 |
+| Elephant Valley | Elephant 5 (2) | 5,436 | 1,087 | Public rail, planting, cable S/E | Cable | 2 tiles / 4 m |
+| Rhino Hollow | Rhino 4 (1) | 1,692 | 423 | Public rail, planting, cable S/E | Cable | 2 tiles / 4 m |
+| Red Dune | Camel 5 (2) | 1,616 | 323 | Public rail, planting, timber paddock fence S/E | Timber paddock fence | 1 tile / 2 m |
+| Kangaroo Grove | Kangaroo 7 (3) | 1,136 | 162 | Public rail, planting, timber paddock fence S/E | Timber paddock fence | 1 tile / 2 m |
+
+The areas did not change with the families; the area per animal is our estimate of what reads
+as roomy for the species, **not checked against EAZA or AZA husbandry figures**. Every group
+lies within its species' `groupMin`..`groupMax` and keeps to `maxAdultMales`.
 
 The six habitats with strips also have them beside their back circuits: the public cannot
 approach the same animals from behind at a smaller distance. Square dilation of the curved,
@@ -161,6 +167,119 @@ The following `Zoo::StateHash()` values were printed and pasted into `VisitStart
 | 6000 | 2 | 6197420463027346240 | 10941191729566125093 |
 | 6000 | 3 | 15964635073259134339 | 15096508033282633152 |
 
+
+## The zoo's plan (G8, 2026-11-14)
+
+Begun by a Codex task (G8, G8b, G8c) that was stopped three times by limits without a report;
+finished, reviewed and measured by the lead. All of it is in `VisitorZoo.cpp`; the checks are
+`tests/core/VisitorZooPlanTests.cpp` (both seeds unless said otherwise).
+
+**Families.** Each habitat is stocked as a zoo keeps the species (`Family()`): a breeding group
+with this season's young for the social species, a pair for tigers and both bears. The first
+of a family is its sire (Elephant Valley is a cow group: the calf's sire lives elsewhere and is
+left unset). Ages in years on the opening day:
+
+| Species | Adults | Young (mother) |
+|---|---|---|
+| Meerkat | M 4, F 5, F 3 | M 0.15, F 0.15 (F 5) |
+| Flamingo | M 9, 14, 7, 20, 11; F 10, 16, 6.5, 12, 8 | F 0.8, M 0.9 |
+| Giraffe | M 9, F 8, F 12 | F 3.0 (F 12), F 0.8 (F 8) |
+| Zebra | M 8, F 6, 9, 12 | F 1.2, M 0.4 |
+| Ostrich | M 7, F 6, 8, 5 | M, F, F 0.3 |
+| Lion | M 7, F 6, F 9 | F 2.6; M, F, F 0.6 |
+| Tiger, brown bear, polar bear | a pair | none |
+| Wolf | M 6, F 5 | F 1.3; M, F, M 0.25 |
+| Penguin | M 5, 8, 11, 6, 14; F 6, 9, 12, 5, 10 | F, M, F 0.25 |
+| Elephant | F 26, F 38, F 22 | F 7 (F 26), M 1.5 (F 38) |
+| Rhino | M 14, F 16, F 10 | F 1.0 (F 16) |
+| Camel | M 9, F 8, F 13 | F 2.0, M 0.7 |
+| Kangaroo | M 6, F 4, 5, 7 | F 1.2; M 0.7, F 0.65 |
+
+A young animal is set down beside its mother, knows her (`Animal::mother`, and the sire as
+`father`), and her `lastBirthTick` is its birth, so she is not in calf again on the opening
+day. Under a quarter of the age of maturity a juvenile suckles and follows its mother
+(`docs/ANIMAL_BEHAVIOUR.md`); under half the renderer draws the juvenile model where one exists.
+The calendar has 48 days a year, so a week ages an animal by 0.146 years: the youngest stay
+sucklings for a simulated week, which `TheYoungAreStillYoungAndFedAfterAWeek` checks (no death,
+health above 0.8, hunger below 0.9, mother in the same habitat). The kangaroos are the
+exception: a joey under half a year lives in the pouch, which the simulation does not have, so
+their joeys are young at foot (0.65 and 0.7 years), past the suckling quarter and drawn young.
+Older daughters are female, so that no second adult male grows up into a fight.
+
+**Barriers for hoofstock.** Nothing hoofed stands behind chain-link any more. Two catalog rows
+were added (`data/construction/fences.json`): `paddock_rail` (kind 13, timber, 2.4 m,
+strength 3, visibility 0.9) for camels and kangaroos, `tall_cable_fence` (kind 14, cables,
+3.0 m, strength 3, visibility 0.92) for giraffes, zebras and ostriches; elephants and rhinos
+keep `cable_barrier`. Each is a barrier the species' own figures accept (containment 1.0).
+The catalog has no dry moat or ha-ha.
+
+**Meerkat Lookout** is a sand mound (a 0.7 m rise, the sentries' place) with a two-tile drinking
+dish at the builder's minimum depth instead of a pool, one outcrop, and the scrub along the mesh.
+
+**Flamingo Lagoon** has a deep heart (the nearest eighth of its water tiles, 1.4 m) and a 0.3 m
+shelf round it: 74 of its 103 water tiles are under 0.45 m. A dry bank stays between the water
+and every fence: digging at the back fence lowered vertices shared with the boardwalk and left
+a wheelchair-steep edge in its paving (`WalksAreWideAndLevel` allows 5 %; the steepest paved
+tile is 2.8 % in seed 1, 2.7 % in seed 2). The same test counts path widths: 48 paved tiles
+(not boardwalk) are still on a walk only one tile, 2 m, wide, under the 2.5 to 3 m of a zoo's
+side path; most of the paving is 6 m and wider.
+Flamingos stand and feed in the shallows (`FlamingosUseTheShallowShelfDuringAVisit`; the stall
+probe counted 11 of 12 in the shallows after 6,000 ticks; seen in the game).
+
+**Furnishing.** A prop's whole footprint has to lie on dry, unbuilt ground of its habitat (the
+builder asks only about the tile under its centre, so rocks stood half in pools and feeders
+leaned into shelter walls). Feeders and troughs stand in the front half, where the benches look
+at them, on a fan instead of a row, two tiles and more inside the barrier (one on the mound and
+beside the lagoon); the front half is searched first, because in the lagoon the nearest dry
+place lay behind the middle. They are counted from the family's mouths, a suckling half.
+Rocks crop out together on the rise and at the pool's rim. Toys are taken in turn from the
+species' own list until the group's playfulness is met. The shelter's door apron and the ground
+inside each keeper gate are kept clear.
+
+**Room to walk.** Blocking props keep the largest resident's collision width (1.2 × body radius)
+plus 1 m apart, so that no pocket forms that an animal walks into and not out of
+(`BlockingPropsLeaveAnAdultWidthPlusOneMetre`). The stall probe of `docs/ANIMAL_BEHAVIOUR.md`
+("In the game", seed 1, 6,000 ticks after the visit's fill) counted 3,686 stalled of 273,800
+moving ticks (1.35 %; 5.4 % on the old plan, 3.0 % before the species routines). The tiger
+pinned in the bamboo is gone; the only animal above 300 stalled ticks is a wolf (820 ticks,
+longest run 687, at 195.7, 64.0).
+
+**Planting.** Plants stand in groves with glades between them (smooth noise some eight metres
+across), towards the back and the rim, in passes 3.6, 2.6 and 2.0 m apart, never in the lines
+from the three benches to the habitat's middle (3 m to either side, 2 m on the mound), never
+within 5 m of any viewing place, and a massive trunk (a metre and more: baobab, bamboo clump)
+not within 5 m behind the barrier either: a baobab beyond the giraffes' strip filled a quarter
+of the view from their rail. Each habitat has a mix of kinds (Bear Falls: pine, spruce, oak,
+birch, juniper instead of a block of pines two metres apart). The aim is the species'
+vegetation figure less 0.08 (0.12 above 0.4), which keeps views open; falling short is reported
+as a problem only below the welfare band (figure − 0.15, `Animals.cpp`). Lawn trees in the
+public grounds stand in groves as well (they stood on every third tile, an orchard), and a
+broad crown is planted beside each viewing bench, on an island left in a paved bay where the
+paving stays all round it. The lamp stands at the end of the bench, not before it.
+
+**Keeper gates.** Where a habitat has a stand-off strip, a dry stone service apron two tiles
+wide runs through the strip from the back walk to the keeper gate and is railed off from the
+planting, so that no keeper walks through planting and the lead's "remove the planting before
+the gate" is not needed (`EveryKeeperGateHasADryConnectedApproach`: the tile outside each gate
+is walkable, not stand-off, not water, and joined to the entrance).
+
+**Other checks:** `NothingStandsInWaterOrInAnotherThing`, `NoPlantOnAPathOrBeforeABench`,
+`BenchesStandInShade`, `HoofstockStandsBehindCablesAndRails`, `FoodAndWaterStandInsideAndInView`,
+`MeerkatsHaveADishAndTheLagoonIsShallow`, `TreesStandApartInGroves`,
+`FamiliesWithTheirYoungOnTheOpeningDay`, `FamiliesAreWholeWhenTheVisitBegins`.
+`VisitorZooPlanTests.DISABLED_WritePlanImage` writes the plan from above as a picture
+(`ZOO_PLAN_IMAGE`, otherwise `build-probe/plan.ppm`).
+
+Golden hashes of `tests/core/VisitStartTests.cpp`, recorded again for the plan:
+
+| Fill ticks | Seed | At fill | Later |
+|---:|---:|---:|---:|
+| 600 | 1 | 8084451664473059021 | 15350546524547536688 |
+| 600 | 2 | 12502581844747594763 | 6321072166536655050 |
+| 600 | 3 | 8882478193998727763 | 8100464436183252426 |
+| 6000 | 1 | 3859391498775618031 | 3849792363143076085 |
+| 6000 | 2 | 14232732834896138538 | 437268082544250170 |
+| 6000 | 3 | 5952713734558093167 | 4913324520738712304 |
 
 ## The zoo as the game visits it
 
@@ -331,7 +450,6 @@ The game's own line at the start of a visit (seed 1, 10:30): 245 watching, betwe
 Wood) and 30 (Ostrich Rise) at every one of the fourteen habitats. Both
 `DISABLED_VisibleAndContainedFull` variants pass. The golden fill hashes were recorded again.
 
-**Still open at the fronts:** hoofstock is seen across the strip through 3.5 m chain-link (a
-real zoo would use a moat or a low cable fence there); the strip's shrubs are the same
+**Still open at the fronts:** the strip's shrubs are the same
 coarse blobs as every other bush; the stand chooser of `--stand` may still prefer a mesh side
 to the front when the animals are nearer to it.

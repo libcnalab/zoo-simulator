@@ -3,7 +3,10 @@
 
 #include <algorithm>
 #include <array>
+#include <cmath>
+#include <optional>
 #include <set>
+#include <span>
 #include <utility>
 
 #include "zoo/sim/ScenarioScript.hpp"
@@ -44,11 +47,12 @@ constexpr std::array<HabitatPlan, 14> kHabitats{{
 }};
 
 std::vector<TileCoord> RegionTiles(const Script& script, const HabitatPlan& plan) {
-    // Two overlapping lobes keep long viewing fronts while avoiding straight rectangular pens.
     if (plan.rx <= 5) {
+        // A sandy mound with a two-tile drinking dish and room between its furnishings.
         return script.Ellipse(plan.east, plan.north, static_cast<float>(plan.rx),
                               static_cast<float>(plan.rn));
     }
+    // Two overlapping lobes keep long viewing fronts while avoiding straight rectangular pens.
     std::vector<TileCoord> tiles =
         script.Ellipse(plan.east - plan.rx / 5, plan.north, static_cast<float>(plan.rx - plan.rx / 5),
                        static_cast<float>(plan.rn));
@@ -152,65 +156,67 @@ void Walks(Zoo& zoo, Script& script) {
     }
     zoo.FreeBuilder().PlacePath(interior, PathKind::None);
 }
+
 struct HabitatStyle {
     Terrain ground;
     std::string_view fence;
     std::string_view front;
     std::string_view shelter;
     std::string_view feeder;
-    std::string_view tree;
     std::string_view bush;
     std::string_view rock;
-    std::string_view toy;
-    int males;
-    int females;
+    /// What the animals are given to do, the first two always, the rest in turn as the group asks.
+    std::vector<std::string_view> toys;
+    /// What grows inside, each kind repeated by its share of the planting.
+    std::vector<std::string_view> flora;
 };
 
+// Hoofstock stands behind what a zoo builds for it, not behind chain-link: cables for the tall and
+// the heavy (the eye loses them at a few metres), a timber paddock fence for camels and kangaroos.
+// Each is a barrier the species' own figures accept (Containment); a dry moat is not in the catalog.
 HabitatStyle Style(std::string_view species) {
     if (species == "meerkat") {
-        return {Terrain::Sand,
-                "wire_mesh",
-                "glass_wall",
-                "small_shelter",
-                "insect_feeder",
-                "palm",
-                "desert_scrub",
-                "sandstone_rock",
-                "termite_mound",
-                1,
-                5};
+        return {Terrain::Sand,    "wire_mesh",
+                "glass_wall",     "small_shelter",
+                "insect_feeder",  "desert_scrub",
+                "sandstone_rock", {"termite_mound", "log_pile", "termite_mound", "termite_mound"},
+                {"desert_scrub"}};
     }
     if (species == "flamingo") {
-        return {Terrain::Mud, "wire_mesh", "glass_wall", "heated_barn", "fish_bucket_stand",
+        return {Terrain::Mud,
+                "wire_mesh",
+                "glass_wall",
+                "heated_barn",
+                "fish_bucket_stand",
+                "tropical_fern",
+                "sandstone_rock",
+                {"log_pile"},
                 // Not willows: their curtain hangs to the ground and was all one saw from the glass.
                 // Acacias stand by the soda lakes too, and carry their crown above the eye.
-                "acacia", "tropical_fern", "sandstone_rock", "ball", 3, 9};
+                {"tropical_fern", "tropical_fern", "tropical_fern", "acacia"}};
     }
     if (species == "giraffe") {
         return {Terrain::Savanna,
-                "tall_mesh",
+                "tall_cable_fence",
                 "glass_wall",
                 "large_shelter",
                 "giraffe_browse_feeder",
-                "acacia",
                 "savanna_shrub",
                 "sandstone_rock",
-                "termite_mound",
-                1,
-                3};
+                {"termite_mound", "log_pile", "fallen_log"},
+                {"acacia", "acacia", "acacia", "acacia", "savanna_shrub", "savanna_shrub", "savanna_shrub",
+                 "baobab"}};
     }
     if (species == "ostrich") {
         return {Terrain::Savanna,
-                "tall_mesh",
+                "tall_cable_fence",
                 "glass_wall",
                 "medium_shelter",
                 "pellet_fruit_trough",
-                "acacia",
                 "savanna_shrub",
                 "sandstone_rock",
-                "termite_mound",
-                1,
-                3};
+                {"termite_mound", "log_pile", "fallen_log"},
+                {"acacia", "acacia", "savanna_shrub", "savanna_shrub", "savanna_shrub"}};
     }
     if (species == "lion") {
         return {Terrain::Savanna,
@@ -218,12 +224,10 @@ HabitatStyle Style(std::string_view species) {
                 "glass_wall",
                 "medium_shelter",
                 "meat_platform",
-                "acacia",
                 "savanna_shrub",
                 "sandstone_rock",
-                "scratching_post",
-                1,
-                2};
+                {"scratching_post", "log_pile", "climbing_frame", "ball", "fallen_log"},
+                {"acacia", "acacia", "savanna_shrub", "savanna_shrub", "savanna_shrub"}};
     }
     if (species == "tiger") {
         return {Terrain::ForestFloor,
@@ -231,12 +235,10 @@ HabitatStyle Style(std::string_view species) {
                 "high_glass_wall",
                 "medium_shelter",
                 "meat_platform",
-                "bamboo_clump",
                 "tropical_fern",
                 "granite_boulder",
-                "scratching_post",
-                1,
-                1};
+                {"scratching_post", "log_pile", "ball"},
+                {"bamboo_clump", "tropical_fern", "birch", "oak", "oak"}};
     }
     if (species == "wolf") {
         return {Terrain::ForestFloor,
@@ -244,12 +246,10 @@ HabitatStyle Style(std::string_view species) {
                 "glass_wall",
                 "medium_shelter",
                 "meat_platform",
-                "spruce",
                 "juniper",
                 "granite_boulder",
-                "log_pile",
-                1,
-                4};
+                {"log_pile", "fallen_log", "ball"},
+                {"spruce", "spruce", "spruce", "birch", "birch", "pine", "juniper", "juniper", "juniper"}};
     }
     if (species == "brown_bear") {
         return {Terrain::ForestFloor,
@@ -257,12 +257,11 @@ HabitatStyle Style(std::string_view species) {
                 "high_glass_wall",
                 "medium_shelter",
                 "meat_platform",
-                "pine",
                 "juniper",
                 "granite_boulder",
-                "climbing_frame",
-                1,
-                1};
+                {"climbing_frame", "log_pile", "tyre_swing", "ball"},
+                // A mixed mountain wood: pines alone, at the cover a bear asks for, stood as a plantation.
+                {"pine", "pine", "spruce", "spruce", "oak", "oak", "oak", "birch", "juniper", "juniper"}};
     }
     if (species == "polar_bear") {
         return {Terrain::Snow,
@@ -270,12 +269,10 @@ HabitatStyle Style(std::string_view species) {
                 "high_glass_wall",
                 "cooled_den",
                 "fish_bucket_stand",
-                "pine",
                 "juniper",
                 "ice_rock",
-                "ice_block",
-                1,
-                1};
+                {"ice_block", "ball", "log_pile"},
+                {"juniper", "juniper", "juniper", "juniper", "pine"}};
     }
     if (species == "penguin") {
         return {Terrain::Sand,
@@ -283,12 +280,10 @@ HabitatStyle Style(std::string_view species) {
                 "glass_wall",
                 "medium_shelter",
                 "fish_bucket_stand",
-                "palm",
                 "desert_scrub",
                 "ice_rock",
-                "ice_block",
-                4,
-                8};
+                {"ice_block", "ball", "ice_block", "ice_block", "ice_rock"},
+                {"desert_scrub", "desert_scrub", "desert_scrub", "desert_scrub", "palm"}};
     }
     if (species == "elephant") {
         return {Terrain::Savanna,
@@ -296,12 +291,11 @@ HabitatStyle Style(std::string_view species) {
                 "cable_barrier",
                 "large_shelter",
                 "hay_rack",
-                "acacia",
                 "savanna_shrub",
                 "sandstone_rock",
-                "log_pile",
-                1,
-                3};
+                {"log_pile", "tyre_swing", "ball", "scratching_post"},
+                {"acacia", "acacia", "acacia", "acacia", "savanna_shrub", "savanna_shrub", "savanna_shrub",
+                 "baobab"}};
     }
     if (species == "rhino") {
         return {Terrain::Grass,
@@ -309,37 +303,148 @@ HabitatStyle Style(std::string_view species) {
                 "cable_barrier",
                 "large_shelter",
                 "hay_rack",
-                "acacia",
                 "savanna_shrub",
                 "sandstone_rock",
-                "log_pile",
-                1,
-                2};
+                {"log_pile", "scratching_post"},
+                {"acacia", "acacia", "savanna_shrub", "savanna_shrub", "savanna_shrub"}};
     }
     if (species == "camel") {
         return {Terrain::Sand,
-                "tall_mesh",
+                "paddock_rail",
                 "glass_wall",
                 "large_shelter",
                 "hay_rack",
-                "palm",
                 "desert_scrub",
                 "sandstone_rock",
-                "ball",
-                1,
-                3};
+                {"log_pile", "scratching_post", "fallen_log"},
+                {"desert_scrub", "desert_scrub", "desert_scrub", "desert_scrub", "palm", "palm"}};
     }
     return {Terrain::Grass,
-            "tall_mesh",
+            "paddock_rail",
             "glass_wall",
             "medium_shelter",
             "hay_rack",
-            "acacia",
             "savanna_shrub",
             "sandstone_rock",
-            "ball",
-            1,
-            4};
+            {"log_pile", "fallen_log", "termite_mound"},
+            // Wattles are acacias: the nearest the catalog has to an Australian wood.
+            {"acacia", "acacia", "savanna_shrub", "savanna_shrub", "savanna_shrub"}};
+}
+
+/// One resident: its sex, its age in years on the opening day, and for a young animal the place in
+/// the family of its mother (who stands before it in the list).
+struct Resident {
+    Sex sex;
+    float age;
+    int mother;
+};
+
+constexpr Resident Adult(Sex sex, float age) {
+    return {sex, age, -1};
+}
+constexpr Resident Young(Sex sex, float age, int mother) {
+    return {sex, age, mother};
+}
+
+// Who lives where, as zoos keep them: a breeding group with this season's young for the social
+// species, a pair for the solitary ones. The first of each family is its sire. The youngest are
+// under a quarter of their species' age of maturity and stay under it for a week of the calendar
+// and more: they suckle, keep to their mothers and are drawn as juveniles (below half of maturity).
+// Older daughters are female so that no second adult male grows up into a fight. The kangaroos'
+// joeys are the exception: under half a year they would be in the pouch, which the simulation does
+// not have, so theirs are young at foot, past the quarter and still drawn young.
+std::span<const Resident> Family(std::string_view species) {
+    constexpr Sex m = Sex::Male;
+    constexpr Sex f = Sex::Female;
+    if (species == "meerkat") {
+        static constexpr Resident family[] = {Adult(m, 4.0f), Adult(f, 5.0f), Adult(f, 3.0f),
+                                              Young(m, 0.15f, 1), Young(f, 0.15f, 1)};
+        return family;
+    }
+    if (species == "flamingo") {
+        static constexpr Resident family[] = {Adult(m, 9.0f),  Adult(m, 14.0f),   Adult(m, 7.0f),
+                                              Adult(m, 20.0f), Adult(m, 11.0f),   Adult(f, 10.0f),
+                                              Adult(f, 16.0f), Adult(f, 6.5f),    Adult(f, 12.0f),
+                                              Adult(f, 8.0f),  Young(f, 0.8f, 5), Young(m, 0.9f, 6)};
+        return family;
+    }
+    if (species == "giraffe") {
+        static constexpr Resident family[] = {Adult(m, 9.0f), Adult(f, 8.0f), Adult(f, 12.0f),
+                                              Young(f, 3.0f, 2), Young(f, 0.8f, 1)};
+        return family;
+    }
+    if (species == "zebra") {
+        static constexpr Resident family[] = {Adult(m, 8.0f),  Adult(f, 6.0f),    Adult(f, 9.0f),
+                                              Adult(f, 12.0f), Young(f, 1.2f, 3), Young(m, 0.4f, 1)};
+        return family;
+    }
+    if (species == "ostrich") {
+        static constexpr Resident family[] = {Adult(m, 7.0f),   Adult(f, 6.0f),    Adult(f, 8.0f),
+                                              Adult(f, 5.0f),   Young(m, 0.3f, 1), Young(f, 0.3f, 1),
+                                              Young(f, 0.3f, 1)};
+        return family;
+    }
+    if (species == "lion") {
+        static constexpr Resident family[] = {Adult(m, 7.0f),    Adult(f, 6.0f),    Adult(f, 9.0f),
+                                              Young(f, 2.6f, 2), Young(m, 0.6f, 1), Young(f, 0.6f, 1),
+                                              Young(f, 0.6f, 1)};
+        return family;
+    }
+    if (species == "tiger") {
+        static constexpr Resident family[] = {Adult(m, 7.0f), Adult(f, 6.0f)};
+        return family;
+    }
+    if (species == "wolf") {
+        static constexpr Resident family[] = {Adult(m, 6.0f),     Adult(f, 5.0f),     Young(f, 1.3f, 1),
+                                              Young(m, 0.25f, 1), Young(f, 0.25f, 1), Young(m, 0.25f, 1)};
+        return family;
+    }
+    if (species == "brown_bear") {
+        static constexpr Resident family[] = {Adult(m, 12.0f), Adult(f, 10.0f)};
+        return family;
+    }
+    if (species == "polar_bear") {
+        static constexpr Resident family[] = {Adult(m, 11.0f), Adult(f, 9.0f)};
+        return family;
+    }
+    if (species == "penguin") {
+        static constexpr Resident family[] = {
+            Adult(m, 5.0f),     Adult(m, 8.0f),     Adult(m, 11.0f),   Adult(m, 6.0f), Adult(m, 14.0f),
+            Adult(f, 6.0f),     Adult(f, 9.0f),     Adult(f, 12.0f),   Adult(f, 5.0f), Adult(f, 10.0f),
+            Young(f, 0.25f, 5), Young(m, 0.25f, 6), Young(f, 0.25f, 7)};
+        return family;
+    }
+    if (species == "elephant") {
+        static constexpr Resident family[] = {Adult(f, 26.0f), Adult(f, 38.0f), Adult(f, 22.0f),
+                                              Young(f, 7.0f, 1), Young(m, 1.5f, 2)};
+        return family;
+    }
+    if (species == "rhino") {
+        static constexpr Resident family[] = {Adult(m, 14.0f), Adult(f, 16.0f), Adult(f, 10.0f),
+                                              Young(f, 1.0f, 1)};
+        return family;
+    }
+    if (species == "camel") {
+        static constexpr Resident family[] = {Adult(m, 9.0f), Adult(f, 8.0f), Adult(f, 13.0f),
+                                              Young(f, 2.0f, 2), Young(m, 0.7f, 1)};
+        return family;
+    }
+    if (species == "kangaroo") {
+        static constexpr Resident family[] = {Adult(m, 6.0f),    Adult(f, 4.0f),    Adult(f, 5.0f),
+                                              Adult(f, 7.0f),    Young(f, 1.2f, 3), Young(m, 0.7f, 1),
+                                              Young(f, 0.65f, 2)};
+        return family;
+    }
+    return {};
+}
+
+/// The mouths a family brings to its feeders: a suckling takes half a share.
+float Eaters(const SpeciesDef& species) {
+    float eaters = 0.0f;
+    for (const Resident& resident : Family(species.id)) {
+        eaters += resident.age < species.maturityYears * 0.25f ? 0.5f : 1.0f;
+    }
+    return eaters;
 }
 
 std::vector<TileCoord> NearFirst(const std::vector<TileCoord>& tiles, Vec2 target) {
@@ -361,27 +466,202 @@ bool Interior(const Zoo& zoo, TileCoord tile, EnclosureId id, int margin) {
     return true;
 }
 
-void InsideProp(Zoo& zoo, Script& script, const std::vector<TileCoord>& tiles, std::string_view kind,
-                Vec2 target) {
-    Builder builder = zoo.FreeBuilder();
-    const int def = zoo.Definitions().PropIndex(kind);
-    for (const TileCoord tile : NearFirst(tiles, target)) {
-        const Vec2 point = World::TileCenter(tile);
-        if (builder.CheckProp(def, point) == BuildError::None) {
-            script.Prop(kind, point, script.Random().Range(0.0f, kTwoPi));
-            return;
+/// What the furnishing of one habitat has to know about it.
+struct Site {
+    const HabitatPlan* plan = nullptr;
+    EnclosureId id;
+    std::vector<TileCoord> tiles;
+    Vec2 middle;
+    /// Tiles a prop keeps from the barrier, and metres it keeps from the next prop.
+    int margin = 2;
+    float clear = 2.0f;
+    // Largest adult's collision width plus one metre; never relaxed to meet a planting target.
+    float corridor = 1.0f;
+    /// Tiles nothing is set down on, as (z, x): the apron of the shelter's door, the keeper's gate.
+    std::set<std::pair<int, int>> kept;
+    /// Where the benches will stand: the lines from there to the middle stay open, `sight` metres
+    /// to either side.
+    std::vector<Vec2> watched;
+    float sight = 3.0f;
+    /// Every place a visitor looks from, with the depth of planting between it and the barrier: no
+    /// trunk stands right before one.
+    std::vector<std::pair<Vec2, float>> fronts;
+};
+
+/// How far a tree keeps from every viewing place; a massive one (a baobab, a bamboo clump: a metre of
+/// trunk and more) as far beyond the planted strip before the barrier, where it filled a quarter of
+/// the view from the giraffes' rail. A slender trunk carries its crown above the eye.
+constexpr float kTreeFromFrontM = 5.0f;
+constexpr float kMassiveTrunkM = 1.0f;
+
+/// The places of a habitat that get a bench, the outermost viewing place to the south, to the west
+/// and to the east.
+std::vector<ViewingSpot> Lookouts(const Enclosure& habitat) {
+    std::vector<ViewingSpot> spots;
+    const Vec2 centre =
+        World::TileCenter({(habitat.min.x + habitat.max.x) / 2, (habitat.min.z + habitat.max.z) / 2});
+    for (const Vec2 direction : {Vec2{0.0f, 1.0f}, Vec2{-1.0f, 0.0f}, Vec2{1.0f, 0.0f}}) {
+        const Vec2 target = centre + direction * 100.0f;
+        const ViewingSpot* best = nullptr;
+        float distance = 1.0e9f;
+        for (const ViewingSpot& spot : habitat.viewing) {
+            const float next = DistanceSquared(World::TileCenter(spot.tile), target);
+            if (next < distance) {
+                best = &spot;
+                distance = next;
+            }
+        }
+        if (best != nullptr) {
+            spots.push_back(*best);
         }
     }
-    script.Problem("no dry place for " + std::string(kind));
+    return spots;
 }
 
-void Shelter(Zoo& zoo, Script& script, const HabitatPlan& plan, const std::vector<TileCoord>& tiles,
-             EnclosureId id, std::string_view kind) {
+/// A point of the habitat by its shares of the half-axes: `across` from the west side (-1) to the
+/// east side (1), `back` from the main front in the south (-1) to the back (1).
+Vec2 Share(const Site& site, float across, float back) {
+    return site.middle + Vec2{across * static_cast<float>(site.plan->rx) * kTileSize,
+                              -back * static_cast<float>(site.plan->rn) * kTileSize};
+}
+
+/// Where the ground of a habitat rises (GroundDetail) and its rocks crop out.
+Vec2 Rise(const Script& script, const HabitatPlan& plan) {
+    return plan.rx <= 5 ? script.Point(plan.east - 1, plan.north)
+                        : script.Point(plan.east - plan.rx / 2, plan.north - 1);
+}
+
+Vec2 PoolCentre(const Script& script, const HabitatPlan& plan) {
+    return plan.species == "meerkat" ? script.Point(plan.east + 2, plan.north - 1)
+                                     : script.Point(plan.east + plan.rx / 3, plan.north + plan.rn / 5);
+}
+
+bool Reaches(Vec2 point, float radius, TileCoord tile) {
+    const float x = static_cast<float>(tile.x) * kTileSize;
+    const float z = static_cast<float>(tile.z) * kTileSize;
+    const float dx = point.x - std::clamp(point.x, x, x + kTileSize);
+    const float dz = point.z - std::clamp(point.z, z, z + kTileSize);
+    return dx * dx + dz * dz < radius * radius;
+}
+
+// The builder asks only about the tile under a prop's centre, so a rock set down beside the pool
+// stood half in it and a feeder leaned into the shelter's wall. Here the whole circle has to lie on
+// dry, unbuilt ground of the habitat.
+bool OnDryGround(const Zoo& zoo, EnclosureId id, Vec2 point, float radius) {
+    const TileCoord low = World::TileAt({point.x - radius, point.z - radius});
+    const TileCoord high = World::TileAt({point.x + radius, point.z + radius});
+    for (const TileCoord tile : TilesInRect(low, high)) {
+        if (Reaches(point, radius, tile) &&
+            (zoo.Habitats().At(tile) != id || zoo.Map().HasWater(tile) || zoo.Map().At(tile).building)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+float DistanceToLine(Vec2 point, Vec2 from, Vec2 to) {
+    const Vec2 along = to - from;
+    const float length = along.x * along.x + along.z * along.z;
+    const float t =
+        length > 0.0f
+            ? std::clamp(((point.x - from.x) * along.x + (point.z - from.z) * along.z) / length, 0.0f, 1.0f)
+            : 0.0f;
+    return Distance(point, from + along * t);
+}
+
+bool Plant(PropRole role) {
+    return role == PropRole::Tree || role == PropRole::Bush;
+}
+
+/// Whether a prop may stand at `point`: on dry ground, off the kept tiles, `clear` metres of open
+/// ground between it and whatever stands there already. Between two plants `spacing` counts instead,
+/// from trunk to trunk (a bush asks for six tenths of it).
+bool Fits(const Zoo& zoo, const Builder& builder, const Site& site, int def, Vec2 point, float scale,
+          float clear, float spacing = 0.0f) {
+    const Catalog& catalog = zoo.Definitions();
+    const PropDef& kind = catalog.props[static_cast<std::size_t>(def)];
+    const float radius = kind.radiusM * scale;
+    const TileCoord tile = World::TileAt(point);
+    if (site.kept.contains({tile.z, tile.x}) || !OnDryGround(zoo, site.id, point, radius + 0.1f) ||
+        builder.CheckProp(def, point) != BuildError::None) {
+        return false;
+    }
+    const float obstacleRadius = std::max(radius, kind.radiusM);
+    for (const auto& [z, x] : site.kept) {
+        if (Reaches(point, obstacleRadius + site.corridor * 0.5f, {x, z})) {
+            return false;
+        }
+    }
+    std::vector<PropId> near;
+    zoo.Objects().PropsNear(point, obstacleRadius + std::max({clear, spacing, site.corridor}) + 2.2f, near);
+    for (const PropId id : near) {
+        const Prop* other = zoo.Objects().FindProp(id);
+        if (other == nullptr) {
+            continue;
+        }
+        const PropDef& otherKind = catalog.props[static_cast<std::size_t>(other->def)];
+        const float distance = Distance(point, other->position);
+        const float edges = distance - radius - otherKind.radiusM * other->scale;
+        // Movement currently uses the unscaled catalog radius. Honour both that collision
+        // envelope and the visible scaled prop, including small enrichment items.
+        if (kind.blocksWalking && otherKind.blocksWalking &&
+            distance < obstacleRadius + otherKind.radiusM * std::max(1.0f, other->scale) + site.corridor) {
+            return false;
+        }
+        if (Plant(kind.role) && Plant(otherKind.role)) {
+            const bool trees = kind.role == PropRole::Tree && otherKind.role == PropRole::Tree;
+            if (edges < 0.2f || distance < (trees ? spacing : spacing * 0.6f)) {
+                return false;
+            }
+        } else if (edges < clear) {
+            return false;
+        }
+    }
+    return true;
+}
+
+/// Sets a prop down on the free place nearest to `target`; false when the habitat has none.
+bool Settle(Zoo& zoo, Script& script, const Site& site, std::string_view kind, Vec2 target, float clear,
+            float scale = 1.0f) {
+    const int def = zoo.Definitions().PropIndex(kind);
+    if (def < 0) {
+        script.Problem("unknown prop " + std::string(kind));
+        return false;
+    }
+    const Builder builder = zoo.FreeBuilder();
+    for (const TileCoord tile : NearFirst(site.tiles, target)) {
+        if (!Interior(zoo, tile, site.id, site.margin)) {
+            continue;
+        }
+        // Off the tile's centre where there is room, so that the furniture does not line up on the grid.
+        const Vec2 centre = World::TileCenter(tile);
+        const Vec2 loose =
+            centre + Vec2{script.Random().Range(-0.4f, 0.4f), script.Random().Range(-0.4f, 0.4f)};
+        for (const Vec2 point : {loose, centre}) {
+            if (Fits(zoo, builder, site, def, point, scale, clear)) {
+                return static_cast<bool>(
+                    script.Prop(kind, point, script.Random().Range(0.0f, kTwoPi), scale));
+            }
+        }
+    }
+    return false;
+}
+
+void Need(Zoo& zoo, Script& script, const Site& site, std::string_view kind, Vec2 target, float clear,
+          float scale = 1.0f) {
+    if (!Settle(zoo, script, site, kind, target, clear, scale)) {
+        script.Problem(std::string(site.plan->name) + ": no place for " + std::string(kind));
+    }
+}
+
+/// Puts the shelter at the back, its door to the main front; returns the tile before the door.
+std::optional<TileCoord> Shelter(Zoo& zoo, Script& script, const HabitatPlan& plan,
+                                 const std::vector<TileCoord>& tiles, EnclosureId id, std::string_view kind) {
     Builder builder = zoo.FreeBuilder();
     const int index = zoo.Definitions().BuildingIndex(kind);
     if (index < 0) {
         script.Problem("unknown building " + std::string(kind));
-        return;
+        return std::nullopt;
     }
     const BuildingDef& def = zoo.Definitions().buildings[static_cast<std::size_t>(index)];
     const Vec2 target = script.Point(plan.east - plan.rx / 2, plan.north + plan.rn / 2);
@@ -391,67 +671,151 @@ void Shelter(Zoo& zoo, Script& script, const HabitatPlan& plan, const std::vecto
         for (const TileCoord tile : TilesInRect(origin, far)) {
             inside = inside && zoo.Habitats().At(tile) == id;
         }
-        if (inside && zoo.Habitats().At(FrontTile(def, origin, Dir::South)) == id &&
+        const TileCoord front = FrontTile(def, origin, Dir::South);
+        if (inside && zoo.Habitats().At(front) == id &&
             builder.CheckBuilding(index, origin, Dir::South) == BuildError::None) {
             const TileCoord gate = zoo.Map().EntranceTile();
             script.Building(kind, origin.x - gate.x, gate.z - far.z, Dir::South);
-            return;
+            return front;
         }
     }
     script.Problem(std::string(plan.name) + ": no room for its shelter");
+    return std::nullopt;
 }
 
-void HabitatPool(Zoo& zoo, Script& script, const HabitatPlan& plan, const std::vector<TileCoord>& tiles,
-                 EnclosureId id, const SpeciesDef& species) {
+/// Digs the pool and returns its radius in metres.
+float HabitatPool(Zoo& zoo, Script& script, const Site& site, const SpeciesDef& species) {
+    const HabitatPlan& plan = *site.plan;
+    // A shallow 8 m² drinking hollow satisfies the catalog's water-area requirement;
+    // the rest of the meerkat mound stays dry and large enough for clear corridors.
+    const bool dish = plan.species == "meerkat";
+    // Flamingos stand in their water: a lagoon to wade, with a deep heart for the birds that swim.
+    const bool lagoon = plan.species == "flamingo";
     const float share = plan.species == "giraffe" ? 0.09f : species.waterAreaFraction + 0.015f;
-    const int count = static_cast<int>(std::ceil(static_cast<float>(tiles.size()) * share));
-    const Vec2 centre = script.Point(plan.east + plan.rx / 3, plan.north + plan.rn / 5);
+    const int count = dish ? 2 : static_cast<int>(std::ceil(static_cast<float>(site.tiles.size()) * share));
     std::vector<TileCoord> pool;
     Builder builder = zoo.FreeBuilder();
-    for (const TileCoord tile : NearFirst(tiles, centre)) {
-        if (Interior(zoo, tile, id, 1) && builder.CheckWater(tile) == BuildError::None) {
+    // Keep a dry bank on every side. Digging at the back fence also lowers the shared
+    // vertices of the public boardwalk and leaves a wheelchair-steep edge in its paving.
+    const auto shore = [&](TileCoord tile) { return Interior(zoo, tile, site.id, 1); };
+    for (const TileCoord tile : NearFirst(site.tiles, PoolCentre(script, plan))) {
+        // The apron of the shelter's door and the keeper's way in stay dry.
+        if (shore(tile) && !site.kept.contains({tile.z, tile.x}) &&
+            builder.CheckWater(tile) == BuildError::None) {
             pool.push_back(tile);
             if (static_cast<int>(pool.size()) == count) {
                 break;
             }
         }
     }
-    const BuildPlan result = builder.PlaceWater(pool, species.needsDeepWater ? 1.4f : 0.45f);
-    if (!result.Ok() || result.skipped > 0 || static_cast<int>(pool.size()) < count) {
+    const float depth = dish ? Builder::kMinWaterDepth : species.needsDeepWater ? 1.4f : 0.45f;
+    // Nearest first: the heart is dug before the shallows, which take its surface.
+    const std::size_t heart = lagoon ? pool.size() / 8 : pool.size();
+    const std::span<const TileCoord> all(pool);
+    BuildPlan result = builder.PlaceWater(all.first(heart), depth);
+    bool whole = result.Ok() && result.skipped == 0;
+    if (heart < pool.size()) {
+        result = builder.PlaceWater(all.subspan(heart), 0.3f);
+        whole = whole && result.Ok() && result.skipped == 0;
+    }
+    if (!whole || static_cast<int>(pool.size()) < count) {
         script.Problem(std::string(plan.name) + ": pool incomplete");
     }
+    return std::sqrt(static_cast<float>(pool.size()) * kTileSize * kTileSize / kPi);
 }
 
-void HabitatPlants(Zoo& zoo, Script& script, const HabitatPlan& plan, const HabitatStyle& style,
-                   const std::vector<TileCoord>& tiles, EnclosureId id, float density) {
-    Builder builder = zoo.FreeBuilder();
-    const Vec2 back = script.Point(plan.east - plan.rx / 3, plan.north + plan.rn);
-    const auto candidates = NearFirst(tiles, back);
-    int planted = 0;
-    for (const TileCoord tile : candidates) {
-        if (zoo.Habitats().Find(id)->stats.vegetationDensity >= density) {
-            return;
-        }
-        if (!Interior(zoo, tile, id, plan.rx <= 5 ? 1 : 2)) {
+/// Smooth noise over the tile grid, 0..1, with features some eight metres across: where it is high
+/// a grove stands, where it is low a glade.
+float Grove(TileCoord tile, std::uint32_t salt) {
+    constexpr int cell = 4;
+    const auto corner = [salt](int x, int z) {
+        return HashFloat(HashU32(static_cast<std::uint32_t>(x), static_cast<std::uint32_t>(z)), salt);
+    };
+    const auto ease = [](float t) { return t * t * (3.0f - 2.0f * t); };
+    const int x = tile.x / cell;
+    const int z = tile.z / cell;
+    const float fx = ease(static_cast<float>(tile.x % cell) / static_cast<float>(cell));
+    const float fz = ease(static_cast<float>(tile.z % cell) / static_cast<float>(cell));
+    return Lerp(Lerp(corner(x, z), corner(x + 1, z), fx), Lerp(corner(x, z + 1), corner(x + 1, z + 1), fx),
+                fz);
+}
+
+std::uint32_t Salt(const Zoo& zoo, const HabitatPlan& plan) {
+    return HashU32(static_cast<std::uint32_t>(zoo.Config().seed),
+                   static_cast<std::uint32_t>((plan.east + 1000) * 4099 + plan.north));
+}
+
+// Plants in groves with glades between them, towards the back and the rim, never in the lines from
+// the benches to the middle of the habitat: the old planting filled the tiles nearest the back one
+// by one, which stood as a block of trunks two metres apart (the pines of Bear Falls).
+void HabitatPlants(Zoo& zoo, Script& script, const Site& site, const HabitatStyle& style, float target) {
+    // A species is content anywhere within 0.15 of its figure; the lower side keeps the views open.
+    const float wanted = std::max(0.03f, target - (target > 0.4f ? 0.12f : 0.08f));
+    const HabitatPlan& plan = *site.plan;
+    // On the meerkats' mound the scrub stands along the mesh and stays under the eye; beside a
+    // lagoon the ferns take the shore.
+    const bool small = plan.rx <= 5;
+    const bool tight = site.margin < 2;
+    const std::uint32_t salt = Salt(zoo, plan);
+    struct Bed {
+        TileCoord tile;
+        float rank;
+    };
+    std::vector<Bed> beds;
+    for (const TileCoord tile : site.tiles) {
+        if (!Interior(zoo, tile, site.id, tight ? 0 : 1) || zoo.Map().HasWater(tile)) {
             continue;
         }
-        std::string_view kind = planted % 3 == 0 ? style.bush : style.tree;
-        if (plan.species == "wolf" && planted % 4 == 0) {
-            kind = "birch";
-        } else if (plan.species == "wolf" && planted % 7 == 0) {
-            kind = "pine";
-        }
-        if ((plan.species == "giraffe" || plan.species == "elephant") && planted % 8 == 0) {
-            kind = "baobab";
-        }
-        const Vec2 point = World::TileCenter(tile);
-        if (builder.CheckProp(zoo.Definitions().PropIndex(kind), point) == BuildError::None) {
-            script.Prop(kind, point, script.Random().Range(0.0f, kTwoPi), script.Random().Range(0.8f, 1.2f));
-            ++planted;
+        const Vec2 centre = World::TileCenter(tile);
+        const float across = (centre.x - site.middle.x) / (static_cast<float>(plan.rx) * kTileSize);
+        const float back = (site.middle.z - centre.z) / (static_cast<float>(plan.rn) * kTileSize);
+        const float rim = Clamp01(std::sqrt(across * across + back * back));
+        beds.push_back({tile, 0.5f * Grove(tile, salt) + 0.3f * Clamp01(0.5f + 0.5f * back) + 0.2f * rim});
+    }
+    std::stable_sort(beds.begin(), beds.end(), [](const Bed& a, const Bed& b) { return a.rank > b.rank; });
+    const Builder builder = zoo.FreeBuilder();
+    const Catalog& catalog = zoo.Definitions();
+    for (const float spacing : {3.6f, 2.6f, 2.0f}) {
+        for (const Bed& bed : beds) {
+            if (zoo.Habitats().Find(site.id)->stats.vegetationDensity >= wanted) {
+                return;
+            }
+            const std::uint32_t pick =
+                HashU32(static_cast<std::uint32_t>(bed.tile.x * 4099 + bed.tile.z), salt);
+            const std::string_view kind = style.flora[pick % style.flora.size()];
+            const int def = catalog.PropIndex(kind);
+            const Vec2 point = World::TileCenter(bed.tile) +
+                               Vec2{script.Random().Range(-0.7f, 0.7f), script.Random().Range(-0.7f, 0.7f)};
+            const float scale =
+                small ? script.Random().Range(0.6f, 0.8f) : script.Random().Range(0.8f, 1.25f);
+            const float heading = script.Random().Range(0.0f, kTwoPi);
+            bool open = false;
+            for (const Vec2 from : site.watched) {
+                open = open || DistanceToLine(point, from, site.middle) < site.sight;
+            }
+            if (def >= 0 && catalog.props[static_cast<std::size_t>(def)].role == PropRole::Tree) {
+                const bool massive = catalog.props[static_cast<std::size_t>(def)].radiusM >= kMassiveTrunkM;
+                for (const auto& [from, standOff] : site.fronts) {
+                    open = open || Distance(point, from) < kTreeFromFrontM + (massive ? standOff : 0.0f);
+                }
+            }
+            if (def < 0 || open ||
+                !Fits(zoo, builder, site, def, point, scale,
+                      small   ? 0.4f
+                      : tight ? 0.8f
+                              : 1.8f,
+                      spacing)) {
+                continue;
+            }
+            script.Prop(kind, point, heading, scale);
         }
     }
-    if (zoo.Habitats().Find(id)->stats.vegetationDensity + 0.05f < density) {
-        script.Problem(std::string(plan.name) + ": planting target not met");
+    // Short of the aim is a problem only where the residents would feel it (Animals.cpp: welfare
+    // counts a habitat as too bare beyond 0.15 under the species' figure).
+    const float density = zoo.Habitats().Find(site.id)->stats.vegetationDensity;
+    if (density < target - 0.15f) {
+        script.Problem(std::string(plan.name) + ": planting target not met (" + std::to_string(density) +
+                       " of " + std::to_string(wanted) + ")");
     }
 }
 
@@ -460,8 +824,281 @@ bool Omitted(const VisitorZooOptions& options, std::string_view species) {
            options.withoutSpecies.end();
 }
 
+/// The species a habitat is furnished for, whether or not this visit shows them.
+std::vector<std::string_view> Residents(const HabitatPlan& plan) {
+    if (plan.species == "giraffe") {
+        return {"giraffe", "zebra"};
+    }
+    return {plan.species};
+}
+
+// Feeders, troughs, rocks and the first things to do. Food and water stand in the front half, where
+// the benches look at them, two tiles and more inside the barrier and spread over a fan instead of
+// a row; rocks crop out together on the rise and at the pool's edge.
+void Furnish(Zoo& zoo, Script& script, const Site& site, const HabitatStyle& style, float poolRadius) {
+    const HabitatPlan& plan = *site.plan;
+    const bool small = plan.rx <= 5;
+    // Auto-care visits at 07:00 and 15:00. Stock at least eighteen hours of food and water so that
+    // large herds are not dependent on one small catalog feeder.
+    std::vector<std::string_view> table;
+    float water = 0.0f;
+    for (const std::string_view resident : Residents(plan)) {
+        const int index = zoo.SpeciesList().IndexOf(resident);
+        if (index < 0) {
+            continue;
+        }
+        const SpeciesDef& species = zoo.SpeciesList().All()[static_cast<std::size_t>(index)];
+        const float eaters = Eaters(species);
+        water += species.waterPerDayL * eaters;
+        // Zebras eat from racks and troughs, not from the giraffes' browse baskets.
+        const std::string_view feeder = resident == plan.species ? style.feeder : "hay_rack";
+        const int def = zoo.Definitions().PropIndex(feeder);
+        if (def < 0) {
+            script.Problem("unknown prop " + std::string(feeder));
+            continue;
+        }
+        const float capacity = zoo.Definitions().props[static_cast<std::size_t>(def)].capacity;
+        const int feeders = std::max(
+            2, static_cast<int>(std::ceil(species.foodPerDayKg * eaters * 0.75f / std::max(1.0f, capacity))));
+        table.insert(table.end(), static_cast<std::size_t>(feeders), feeder);
+    }
+    if (plan.species == "giraffe" || plan.species == "elephant") {
+        table.push_back("pellet_fruit_trough");
+    }
+    const int troughs = std::max(1, static_cast<int>(std::ceil(water * 0.75f / 180.0f)));
+    const int places = static_cast<int>(table.size()) + troughs;
+    // Where water fills the front (the lagoon), the nearest dry place can lie behind the middle,
+    // out of the benches' view: the front half is searched first.
+    Site front = site;
+    std::erase_if(front.tiles, [&site](TileCoord tile) { return World::TileCenter(tile).z < site.middle.z; });
+    std::size_t next = 0;
+    for (int i = 0; i < places; ++i) {
+        const bool trough = (i + 1) * troughs / places > i * troughs / places;
+        const float angle =
+            kPi * (1.12f + 0.76f * (static_cast<float>(i) + 0.5f) / static_cast<float>(places));
+        const float reach = (i % 2 == 0 ? 0.5f : 0.25f) + script.Random().Range(-0.04f, 0.04f);
+        const Vec2 target = Share(site, std::cos(angle) * reach, std::sin(angle) * reach);
+        const std::string_view kind = trough ? std::string_view("water_trough") : table[next];
+        if (!Settle(zoo, script, front, kind, target, site.clear)) {
+            Need(zoo, script, site, kind, target, site.clear);
+        }
+        next += trough ? 0U : 1U;
+    }
+
+    const Vec2 rise = Rise(script, plan);
+    if (small) {
+        // One outcrop leaves the small mound's drinking hollow and door approaches clear.
+        Need(zoo, script, site, style.rock, rise + Vec2{-1.5f, -1.0f}, 0.3f, 0.9f);
+    } else if (site.margin < 2) {
+        // Where the water takes half the ground, three stones on the beach and not five.
+        Need(zoo, script, site, style.rock, rise, 0.25f, 0.95f);
+        if (plan.species != "flamingo") {
+            Need(zoo, script, site, style.rock, rise + Vec2{2.4f, 0.8f}, 0.25f, 0.75f);
+            Need(zoo, script, site, style.rock, PoolCentre(script, plan) + Vec2{-poolRadius - 1.5f, 3.0f},
+                 0.25f, 0.8f);
+        }
+    } else {
+        Need(zoo, script, site, style.rock, rise, 0.25f, 1.25f);
+        Need(zoo, script, site, style.rock, rise + Vec2{2.9f, 0.9f}, 0.25f, 1.0f);
+        Need(zoo, script, site, style.rock, rise + Vec2{1.0f, -2.7f}, 0.25f, 0.8f);
+        const Vec2 pool = PoolCentre(script, plan);
+        const float rim = poolRadius + 1.5f;
+        Need(zoo, script, site, style.rock, pool + Vec2{-rim, rim * 0.4f}, 0.25f, 0.9f);
+        Need(zoo, script, site, style.rock, pool + Vec2{rim * 0.5f, rim}, 0.25f, 0.75f);
+    }
+}
+
+/// Where the i-th thing to do stands: round the middle, each a golden angle on from the last.
+Vec2 PlayPlace(const Site& site, int i) {
+    const float angle = 0.9f + static_cast<float>(i) * 2.399963f;
+    const float reach = 0.3f + 0.12f * static_cast<float>(i % 3);
+    return Share(site, std::cos(angle) * reach, std::sin(angle) * reach * 0.8f - 0.05f);
+}
+
+// Toys in turn from the species' own list until the group has what its playfulness asks for; plants
+// and rocks count a little, so this comes after them.
+void Enrich(Zoo& zoo, Script& script, const Site& site, const HabitatStyle& style) {
+    float needed = 0.0f;
+    for (const std::string_view resident : Residents(*site.plan)) {
+        const int index = zoo.SpeciesList().IndexOf(resident);
+        if (index >= 0) {
+            const SpeciesDef& species = zoo.SpeciesList().All()[static_cast<std::size_t>(index)];
+            needed = std::max(
+                needed, species.playfulness * (0.5f + 0.25f * static_cast<float>(Family(resident).size())));
+        }
+    }
+    const auto have = [&] { return zoo.Habitats().Find(site.id)->stats.enrichment; };
+    // A log pile made for a bear dwarfs a bird or a meerkat: theirs are the smallest the catalog makes.
+    const std::string_view lives = site.plan->species;
+    const float size = lives == "meerkat" || lives == "flamingo" || lives == "penguin" ? 0.7f : 1.0f;
+    // Where the ground is nearly full the last ones stand closer, and at last along the barrier.
+    Site rim = site;
+    rim.margin = std::min(site.margin, 1);
+    for (int i = 0; i < 30 && (i < 2 || have() < needed); ++i) {
+        const std::string_view toy = style.toys[static_cast<std::size_t>(i) % style.toys.size()];
+        const Vec2 place = PlayPlace(site, i);
+        if (!Settle(zoo, script, site, toy, place, site.clear * 0.75f, size) &&
+            !Settle(zoo, script, rim, toy, place, 0.4f, size)) {
+            rim.margin = 0;
+            if (!Settle(zoo, script, rim, toy, place, 0.4f, size)) {
+                break;
+            }
+        }
+    }
+    if (have() < needed * 0.95f) {
+        script.Problem(std::string(site.plan->name) + ": too little to do");
+    }
+}
+
+// Sets a family down: the adults anywhere on dry ground of their habitat, the young beside their
+// mothers and known as theirs, so that they suckle and follow. A mother's last birth is her
+// youngest's: she is not in calf again the day the zoo opens.
+void Stock(Zoo& zoo, Script& script, const Site& site, std::string_view speciesId) {
+    const int species = zoo.SpeciesList().IndexOf(speciesId);
+    if (species < 0) {
+        script.Problem("unknown species " + std::string(speciesId));
+        return;
+    }
+    const SpeciesDef& def = zoo.SpeciesList().All()[static_cast<std::size_t>(species)];
+    const Env env = zoo.MakeEnv();
+    Rng& random = script.Random();
+    std::vector<PropId> near;
+    // Birds of the shallows may be set down standing in them.
+    const float wade = def.waterAreaFraction >= 0.4f ? 0.25f * def.shoulderHeightM : 0.0f;
+    const auto free = [&](Vec2 point) {
+        const TileCoord tile = World::TileAt(point);
+        if (zoo.Habitats().At(tile) != site.id ||
+            (zoo.Map().HasWater(tile) && zoo.Map().WaterDepthAt(point) > wade)) {
+            return false;
+        }
+        zoo.Objects().PropsNear(point, 3.0f, near);
+        for (const PropId id : near) {
+            const Prop* prop = zoo.Objects().FindProp(id);
+            const PropDef& kind = zoo.Definitions().props[static_cast<std::size_t>(prop->def)];
+            if (kind.blocksWalking && Distance(point, prop->position) < kind.radiusM * prop->scale + 0.5f) {
+                return false;
+            }
+        }
+        return true;
+    };
+    std::vector<AnimalId> family;
+    for (const Resident& resident : Family(speciesId)) {
+        const AnimalId dam =
+            resident.mother >= 0 ? family[static_cast<std::size_t>(resident.mother)] : AnimalId{};
+        const Animal* mother = dam ? zoo.Fauna().Find(dam) : nullptr;
+        // By value: the next animal added moves the others in memory.
+        const Vec2 beside = mother != nullptr ? mother->position : Vec2{};
+        AnimalId id;
+        std::optional<Vec2> wading;
+        for (int attempt = 0; attempt < 60 && !id; ++attempt) {
+            Vec2 at;
+            if (mother != nullptr) {
+                const float angle = random.Range(0.0f, kTwoPi);
+                const float reach = random.Range(1.0f, 2.2f);
+                at = beside + Vec2{std::sin(angle) * reach, std::cos(angle) * reach};
+            } else {
+                const TileCoord tile = site.tiles[static_cast<std::size_t>(
+                    random.RangeInt(0, static_cast<int>(site.tiles.size()) - 1))];
+                if (!Interior(zoo, tile, site.id, 1)) {
+                    continue;
+                }
+                at = World::TileCenter(tile) + Vec2{random.Range(-0.6f, 0.6f), random.Range(-0.6f, 0.6f)};
+            }
+            if (!free(at)) {
+                continue;
+            }
+            if (zoo.Map().HasWater(World::TileAt(at)) && !family.empty() && family.front()) {
+                // An animal enters the zoo on dry ground: beside the first of its flock, and
+                // from there into the shallows.
+                wading = at;
+                at = zoo.Fauna().Find(family.front())->position;
+            } else {
+                wading.reset();
+            }
+            id = zoo.Fauna().Add(env, species, resident.sex, resident.age, at);
+        }
+        if (!id && mother != nullptr) {
+            id = zoo.Fauna().Add(env, species, resident.sex, resident.age, beside);
+        }
+        family.push_back(id);
+        if (!id) {
+            script.Problem("no room to set down a " + def.commonName);
+            continue;
+        }
+        ++script.Report().animals;
+        if (wading) {
+            Animal* wader = zoo.Fauna().Find(id);
+            wader->position = *wading;
+            wader->target = *wading;
+        }
+        if (dam) {
+            Animal* young = zoo.Fauna().Find(id);
+            young->mother = dam;
+            young->father = zoo.Fauna().Find(family.front())->sex == Sex::Male ? family.front() : AnimalId{};
+            Animal* parent = zoo.Fauna().Find(dam);
+            parent->lastBirthTick = parent->lastBirthTick == 0
+                                        ? young->bornTick
+                                        : std::max(parent->lastBirthTick, young->bornTick);
+        }
+    }
+}
+
+// A planned, unpaved service apron joins the back walk to the keeper gate. Visitors use
+// paved tiles only; staff can cross its dry stone surface. Reserve it before strip planting,
+// and leave its mouth open so it remains public ground rather than a spurious enclosure.
+void StandOffWithService(Zoo& zoo, Script& script, const Site& site, int depth) {
+    const auto expanded = PublicOutline(script, *site.plan);
+    const TileCoord inside = site.tiles.front();  // northmost row, same edge as KeeperGate
+    std::set<std::pair<int, int>> yard;
+    for (int z = inside.z - depth; z < inside.z; ++z) {
+        for (int x = inside.x; x <= inside.x + 1; ++x) {
+            yard.emplace(z, x);
+        }
+    }
+    std::vector<TileCoord> strip;
+    std::vector<TileCoord> apron;
+    for (const TileCoord tile : expanded) {
+        if (zoo.Habitats().At(tile) == site.id) {
+            continue;
+        }
+        if (yard.contains({tile.z, tile.x})) {
+            apron.push_back(tile);
+        } else {
+            strip.push_back(tile);
+        }
+    }
+    Builder builder = zoo.FreeBuilder();
+    const auto marked = builder.PlaceStandOff(strip);
+    if (!marked.Ok() || marked.skipped > 0) {
+        script.Problem(std::string(site.plan->name) + ": incomplete service strip");
+    }
+    builder.PaintTerrain(apron, Terrain::Rock);
+    std::vector<EdgeRef> rails;
+    for (const EdgeRef edge : Script::Outline(expanded)) {
+        const TileCoord a{edge.x, edge.z};
+        const TileCoord b = edge.horizontal ? TileCoord{edge.x, edge.z - 1} : TileCoord{edge.x - 1, edge.z};
+        if (!yard.contains({a.z, a.x}) && !yard.contains({b.z, b.x}) && !zoo.Map().FenceAt(edge).Exists()) {
+            rails.push_back(edge);
+        }
+    }
+    for (const TileCoord tile : apron) {
+        for (const Dir side : {Dir::East, Dir::West}) {
+            const TileCoord next = tile + Step(side);
+            if (zoo.Map().At(next).standOff) {
+                rails.push_back(EdgeOf(tile, side));
+            }
+        }
+    }
+    const auto fenced = builder.PlaceFence(rails, script.FenceKind("stand_off_rail"));
+    if (!fenced.Ok() || fenced.skipped > 0) {
+        script.Problem(std::string(site.plan->name) + ": incomplete service rails");
+    }
+}
+
 void Habitat(Zoo& zoo, Script& script, const HabitatPlan& plan, const VisitorZooOptions& options) {
-    const auto tiles = RegionTiles(script, plan);
+    Site site;
+    site.plan = &plan;
+    site.tiles = RegionTiles(script, plan);
     const HabitatStyle style = Style(plan.species);
     const int speciesIndex = zoo.SpeciesList().IndexOf(plan.species);
     if (speciesIndex < 0) {
@@ -469,71 +1106,72 @@ void Habitat(Zoo& zoo, Script& script, const HabitatPlan& plan, const VisitorZoo
         return;
     }
     const SpeciesDef& species = zoo.SpeciesList().All()[static_cast<std::size_t>(speciesIndex)];
+    for (const std::string_view resident : Residents(plan)) {
+        const int index = zoo.SpeciesList().IndexOf(resident);
+        if (index >= 0) {
+            site.corridor =
+                std::max(site.corridor,
+                         1.0f + 1.2f * zoo.SpeciesList().All()[static_cast<std::size_t>(index)].bodyRadiusM);
+        }
+    }
     Builder builder = zoo.FreeBuilder();
-    builder.PaintTerrain(tiles, style.ground);
-    const EnclosureId id = script.EncloseTiles(tiles, style.fence, std::string(plan.name));
-    if (!id) {
+    builder.PaintTerrain(site.tiles, style.ground);
+    site.id = script.EncloseTiles(site.tiles, style.fence, std::string(plan.name));
+    if (!site.id) {
         return;
     }
     const int stripDepth = StandOffDepth(plan.species);
     if (stripDepth > 0) {
         // Visitors also use the back circuit: the same clearance protects that walk.
         // Keep every habitat tile and all its provisions, moving the public edge out.
-        script.StandOffFront(tiles, stripDepth, StripCorners(script, plan));
+        StandOffWithService(zoo, script, site, stripDepth);
     } else {
-        script.ViewingFront(tiles, style.front, {Dir::South, plan.east < 0 ? Dir::East : Dir::West});
+        script.ViewingFront(site.tiles, style.front, {Dir::South, plan.east < 0 ? Dir::East : Dir::West});
     }
-    script.KeeperGate(tiles, style.fence);
-    Shelter(zoo, script, plan, tiles, id, style.shelter);
-    HabitatPool(zoo, script, plan, tiles, id, species);
-    const int e = plan.east;
-    const int n = plan.north;
-    InsideProp(zoo, script, tiles, style.feeder, script.Point(e - plan.rx / 3, n - plan.rn / 3));
-    InsideProp(zoo, script, tiles, style.feeder, script.Point(e + plan.rx / 3, n - plan.rn / 2));
-    InsideProp(zoo, script, tiles, "water_trough", script.Point(e, n - plan.rn / 2));
-    InsideProp(zoo, script, tiles, style.toy, script.Point(e - plan.rx / 2, n));
-    InsideProp(zoo, script, tiles, "ball", script.Point(e, n - plan.rn / 3));
-    if (plan.rx > 5) {
-        InsideProp(zoo, script, tiles, "fallen_log", script.Point(e - plan.rx / 2, n + 2));
-        InsideProp(zoo, script, tiles, "log_pile", script.Point(e + plan.rx / 2, n - 2));
+    script.KeeperGate(site.tiles, style.fence);
+    const bool small = plan.rx <= 5;
+    if (small || species.waterAreaFraction >= 0.3f) {
+        // Little dry ground: on a sand mound or beside a lagoon things stand closer.
+        site.margin = 1;
+        site.clear = small ? 0.5f : 1.0f;
+        site.sight = small ? 2.0f : 3.0f;
     }
-    for (int i = 0; i < (plan.rx > 5 ? 5 : 2); ++i) {
-        InsideProp(zoo, script, tiles, style.rock,
-                   script.Point(e + plan.rx / 2 + i % 2, n + plan.rn / 2 - i));
+    for (const TileCoord tile : site.tiles) {
+        site.middle = site.middle + World::TileCenter(tile);
     }
-    if (plan.species == "giraffe" || plan.species == "elephant") {
-        InsideProp(zoo, script, tiles, "hay_rack", script.Point(e, n - plan.rn / 2 - 2));
-        InsideProp(zoo, script, tiles, "pellet_fruit_trough", script.Point(e - 3, n));
+    site.middle = site.middle * (1.0f / static_cast<float>(site.tiles.size()));
+    const auto keep = [&site](TileCoord centre, int aside, int ahead) {
+        for (const TileCoord tile :
+             TilesInRect({centre.x - aside, centre.z}, {centre.x + aside, centre.z + ahead})) {
+            site.kept.emplace(tile.z, tile.x);
+        }
+    };
+    if (const auto door = Shelter(zoo, script, plan, site.tiles, site.id, style.shelter)) {
+        keep(*door, small ? 0 : 1, small ? 0 : 1);
     }
-    // Auto-care visits at 07:00 and 15:00. Stock at least eighteen hours of food
-    // and water so large herds are not dependent on one small catalog feeder.
-    const float groupSize = static_cast<float>(style.males + style.females);
-    const int feederIndex = zoo.Definitions().PropIndex(style.feeder);
-    if (feederIndex >= 0) {
-        const float capacity = zoo.Definitions().props[static_cast<std::size_t>(feederIndex)].capacity;
-        const int feeders = static_cast<int>(std::ceil(species.foodPerDayKg * groupSize * 0.75f / capacity));
-        for (int i = 2; i < feeders; ++i) {
-            InsideProp(zoo, script, tiles, style.feeder,
-                       script.Point(e - plan.rx / 2 + i * 2, n - plan.rn / 2));
+    for (const EdgeRef& gate : zoo.Habitats().Find(site.id)->gates) {
+        for (const TileCoord tile :
+             {TileCoord{gate.x, gate.z},
+              gate.horizontal ? TileCoord{gate.x, gate.z - 1} : TileCoord{gate.x - 1, gate.z}}) {
+            if (zoo.Habitats().At(tile) == site.id) {
+                keep({tile.x, tile.z - 1}, 1, 2);
+            }
         }
     }
-    const float waterNeeded = species.waterPerDayL * groupSize + (plan.species == "giraffe" ? 150.0f : 0.0f);
-    const int troughs = static_cast<int>(std::ceil(waterNeeded * 0.75f / 180.0f));
-    for (int i = 1; i < troughs; ++i) {
-        InsideProp(zoo, script, tiles, "water_trough", script.Point(e + i * 3, n - plan.rn / 3));
+    const float poolRadius = HabitatPool(zoo, script, site, species);
+    for (const ViewingSpot& spot : Lookouts(*zoo.Habitats().Find(site.id))) {
+        site.watched.push_back(World::TileCenter(spot.tile));
     }
-    HabitatPlants(zoo, script, plan, style, tiles, id, species.vegetationDensity);
-    const float enrichment =
-        species.playfulness * (0.5f + 0.25f * static_cast<float>(style.males + style.females));
-    for (int i = 0; i < 12 && zoo.Habitats().Find(id)->stats.enrichment < enrichment; ++i) {
-        InsideProp(zoo, script, tiles, style.toy, script.Point(e - 1 + i % 3, n - plan.rn / 2 + i / 3));
+    for (const ViewingSpot& spot : zoo.Habitats().Find(site.id)->viewing) {
+        site.fronts.emplace_back(World::TileCenter(spot.tile), spot.standOffM);
     }
-    if (!Omitted(options, plan.species)) {
-        script.Animals(plan.species, id, e - plan.rx, n - plan.rn, e + plan.rx, n + plan.rn, style.males,
-                       style.females);
-    }
-    if (plan.species == "giraffe" && !Omitted(options, "zebra")) {
-        script.Animals("zebra", id, e - plan.rx, n - plan.rn, e + plan.rx, n + plan.rn, 1, 5);
+    Furnish(zoo, script, site, style, poolRadius);
+    HabitatPlants(zoo, script, site, style, species.vegetationDensity);
+    Enrich(zoo, script, site, style);
+    for (const std::string_view resident : Residents(plan)) {
+        if (!Omitted(options, resident)) {
+            Stock(zoo, script, site, resident);
+        }
     }
 }
 
@@ -613,9 +1251,102 @@ void Service(Zoo& zoo, Script& script, std::string_view kind, int east, int nort
                    std::to_string(north));
 }
 
-void PublicProp(Zoo& zoo, Script& script, std::string_view kind, Vec2 position, float heading = 0.0f) {
-    if (zoo.FreeBuilder().CheckProp(zoo.Definitions().PropIndex(kind), position) == BuildError::None) {
-        script.Prop(kind, position, heading);
+bool PublicProp(Zoo& zoo, Script& script, std::string_view kind, Vec2 position, float heading = 0.0f,
+                float scale = 1.0f) {
+    return zoo.FreeBuilder().CheckProp(zoo.Definitions().PropIndex(kind), position) == BuildError::None &&
+           script.Prop(kind, position, heading, scale);
+}
+
+bool BesidePath(const World& map, TileCoord tile, int radius) {
+    for (int dz = -radius; dz <= radius; ++dz) {
+        for (int dx = -radius; dx <= radius; ++dx) {
+            const TileCoord next{tile.x + dx, tile.z + dz};
+            if (map.InBounds(next) && map.At(next).path != PathKind::None) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+std::string_view ParkTree(int east, int north, int variant) {
+    if (east > 30 && north > 105) {
+        return variant == 0 ? "bamboo_clump" : "birch";
+    }
+    if (north > 100) {
+        constexpr std::array<std::string_view, 3> trees{"spruce", "pine", "birch"};
+        return trees[static_cast<std::size_t>(variant)];
+    }
+    if ((east > 15 && north < 35) || (east < -32 && north > 75)) {
+        return variant == 0 ? "birch" : "willow";
+    }
+    if (north > 65 && east > -28 && east < 0) {
+        return "palm";
+    }
+    if (north > 20 || std::abs(east) > 28) {
+        return variant == 0 ? "baobab" : "acacia";
+    }
+    return variant == 0 ? "birch" : "oak";
+}
+
+// A bench in the sun is not sat on for long. A broad crown goes near each viewing bench: on the
+// nearest lawn behind it, or, where a paved bay lies there, on an island left in the paving as on
+// the picnic lawn (only where paving stays all round it, so that no walk is narrowed). A walk that
+// runs between two habitats' planted strips has neither, and its bench stays in the sun: what grows
+// on a strip stays below the eye.
+void ShadeTree(Zoo& zoo, Script& script, const ViewingSpot& spot) {
+    const World& map = zoo.Map();
+    const TileCoord step = Step(spot.side);
+    const TileCoord gate = map.EntranceTile();
+    const auto at = [&](int depth, int aside) {
+        return TileCoord{spot.tile.x - step.x * depth + step.z * aside,
+                         spot.tile.z - step.z * depth - step.x * aside};
+    };
+    const auto crown = [&](TileCoord tile) {
+        std::string_view kind = ParkTree(tile.x - gate.x, gate.z - tile.z, 1);
+        const int def = zoo.Definitions().PropIndex(kind);
+        if (def < 0 || zoo.Definitions().props[static_cast<std::size_t>(def)].shadeM2 < 30.0f) {
+            kind = gate.z - tile.z > 100 ? "oak" : "acacia";
+        }
+        return kind;
+    };
+    // Nearest first, and never farther than a crown throws its shade.
+    std::vector<std::pair<int, int>> places;
+    for (int depth = 1; depth <= 3; ++depth) {
+        for (const int aside : {0, -1, 1, -2, 2, -3, 3}) {
+            if (depth * depth + aside * aside <= 13) {
+                places.emplace_back(depth, aside);
+            }
+        }
+    }
+    std::ranges::stable_sort(places, {}, [](const std::pair<int, int>& place) {
+        return place.first * place.first + place.second * place.second;
+    });
+    for (const auto& [depth, aside] : places) {
+        const TileCoord tile = at(depth, aside);
+        if (!map.InBounds(tile) || zoo.Habitats().RegionAt(tile) != Region::Public || map.At(tile).building ||
+            map.At(tile).standOff || map.HasWater(tile)) {
+            continue;
+        }
+        const Vec2 point = World::TileCenter(tile);
+        if (map.At(tile).path != PathKind::None) {
+            bool paved = depth >= 2 && aside == 0;
+            for (int dz = -1; dz <= 1; ++dz) {
+                for (int dx = -1; dx <= 1; ++dx) {
+                    const TileCoord next{tile.x + dx, tile.z + dz};
+                    paved = paved && map.InBounds(next) && map.At(next).path != PathKind::None;
+                }
+            }
+            std::vector<PropId> near;
+            zoo.Objects().PropsNear(point, 1.8f, near);
+            if (!paved || !near.empty()) {
+                continue;
+            }
+            script.PathTiles({tile}, PathKind::None);
+        }
+        if (PublicProp(zoo, script, crown(tile), point, script.Random().Range(0.0f, kTwoPi), 1.15f)) {
+            return;
+        }
     }
 }
 
@@ -623,34 +1354,21 @@ void ViewingFurniture(Zoo& zoo, Script& script) {
     // Construction refreshes enclosure storage, so keep a value snapshot of the viewing places.
     const auto habitats = zoo.Habitats().All();
     for (const Enclosure& habitat : habitats) {
-        const Vec2 centre =
-            World::TileCenter({(habitat.min.x + habitat.max.x) / 2, (habitat.min.z + habitat.max.z) / 2});
         int sideNumber = 0;
-        for (const Vec2 direction : {Vec2{0.0f, 1.0f}, Vec2{-1.0f, 0.0f}, Vec2{1.0f, 0.0f}}) {
-            const Vec2 target = centre + direction * 100.0f;
-            const ViewingSpot* best = nullptr;
-            float distance = 1.0e9f;
-            for (const ViewingSpot& spot : habitat.viewing) {
-                const float next = DistanceSquared(World::TileCenter(spot.tile), target);
-                if (next < distance) {
-                    best = &spot;
-                    distance = next;
-                }
-            }
-            if (best == nullptr) {
-                continue;
-            }
-            const Vec2 toward = Direction(best->side);
-            const Vec2 point = World::TileCenter(best->tile);
+        for (const ViewingSpot& spot : Lookouts(habitat)) {
+            const Vec2 toward = Direction(spot.side);
+            const Vec2 point = World::TileCenter(spot.tile);
             const float heading = std::atan2(toward.x, toward.z);
-            script.Prop("bench", point - toward * 0.55f, heading);
-            script.Prop("lamp", point + toward * 0.65f);
             const Vec2 along{toward.z, -toward.x};
+            script.Prop("bench", point - toward * 0.55f, heading);
+            // The lamp stands at the end of the bench, not between the sitter and the animals.
+            script.Prop("lamp", point - along * 0.9f - toward * 0.55f);
             if (sideNumber == 0) {
                 script.Prop("info_board", point + along * 0.7f, heading + kPi);
             } else {
                 script.Prop("litter_bin", point + along * 0.7f, heading);
             }
+            ShadeTree(zoo, script, spot);
             ++sideNumber;
         }
     }
@@ -771,60 +1489,47 @@ void GroundDetail(Zoo& zoo, Script& script) {
             builder.PaintTerrain(script.Ellipse(plan.east, plan.north - plan.rn / 2, 6.0f, 4.0f),
                                  Terrain::Dirt);
         }
-        if (plan.rx > 5) {
-            // A low dry rise behind the front; the pool on the other lobe supplies the hollow.
-            builder.Terraform(Builder::Brush::Raise, script.Point(plan.east - plan.rx / 2, plan.north - 1),
-                              5.0f, 0.55f);
-        }
+        // A low dry rise behind the front; the pool on the other lobe supplies the hollow. The
+        // meerkats' is the mound their sentries stand on.
+        builder.Terraform(Builder::Brush::Raise, Rise(script, plan), plan.rx > 5 ? 5.0f : 4.5f,
+                          plan.rx > 5 ? 0.55f : 0.7f);
     }
 }
 
-bool BesidePath(const World& map, TileCoord tile, int radius) {
-    for (int dz = -radius; dz <= radius; ++dz) {
-        for (int dx = -radius; dx <= radius; ++dx) {
-            const TileCoord next{tile.x + dx, tile.z + dz};
-            if (map.InBounds(next) && map.At(next).path != PathKind::None) {
-                return true;
-            }
-        }
-    }
-    return false;
-}
-
-std::string_view ParkTree(int east, int north, int variant) {
-    if (east > 30 && north > 105) {
-        return variant == 0 ? "bamboo_clump" : "birch";
-    }
-    if (north > 100) {
-        constexpr std::array<std::string_view, 3> trees{"spruce", "pine", "birch"};
-        return trees[static_cast<std::size_t>(variant)];
-    }
-    if ((east > 15 && north < 35) || (east < -32 && north > 75)) {
-        return variant == 0 ? "birch" : "willow";
-    }
-    if (north > 65 && east > -28 && east < 0) {
-        return "palm";
-    }
-    if (north > 20 || std::abs(east) > 28) {
-        return variant == 0 ? "baobab" : "acacia";
-    }
-    return variant == 0 ? "birch" : "oak";
-}
-
+// Lawn trees stand in groves with open grass between them, each at its own spot and size: the old
+// planting set one on every third tile each way, which read from the walks as an orchard.
 void Parkland(Zoo& zoo, Script& script) {
     const World& map = zoo.Map();
     const TileCoord gate = map.EntranceTile();
-    for (int z = map.PropertyMin().z + 1; z < map.PropertyMax().z; z += 3) {
-        for (int x = map.PropertyMin().x + 1; x < map.PropertyMax().x; x += 3) {
+    const std::uint32_t salt = HashU32(static_cast<std::uint32_t>(zoo.Config().seed), 0x9a4b1d07u);
+    std::vector<PropId> near;
+    for (int z = map.PropertyMin().z + 1; z < map.PropertyMax().z; ++z) {
+        for (int x = map.PropertyMin().x + 1; x < map.PropertyMax().x; ++x) {
             const TileCoord tile{x, z};
             if (zoo.Habitats().RegionAt(tile) != Region::Public || map.At(tile).building ||
-                map.HasWater(tile) || BesidePath(map, tile, 1)) {
+                map.At(tile).standOff || map.HasWater(tile) || map.At(tile).terrain == Terrain::Rock ||
+                BesidePath(map, tile, 1)) {
+                continue;
+            }
+            const float grove = Grove(tile, salt);
+            if (!script.Random().Chance(grove > 0.62f ? 0.36f : grove > 0.47f ? 0.1f : 0.02f)) {
                 continue;
             }
             const int variant = script.Random().RangeInt(0, 2);
-            const Vec2 offset{script.Random().Range(-0.45f, 0.45f), script.Random().Range(-0.45f, 0.45f)};
-            PublicProp(zoo, script, ParkTree(x - gate.x, gate.z - z, variant),
-                       World::TileCenter(tile) + offset, script.Random().Range(0.0f, kTwoPi));
+            const Vec2 point = World::TileCenter(tile) +
+                               Vec2{script.Random().Range(-0.8f, 0.8f), script.Random().Range(-0.8f, 0.8f)};
+            const float heading = script.Random().Range(0.0f, kTwoPi);
+            const float scale = script.Random().Range(0.85f, 1.25f);
+            zoo.Objects().PropsNear(point, 3.4f, near);
+            bool crowded = false;
+            for (const PropId id : near) {
+                const Prop* other = zoo.Objects().FindProp(id);
+                crowded = crowded || zoo.Definitions().props[static_cast<std::size_t>(other->def)].role ==
+                                         PropRole::Tree;
+            }
+            if (!crowded) {
+                PublicProp(zoo, script, ParkTree(x - gate.x, gate.z - z, variant), point, heading, scale);
+            }
         }
     }
     for (int z = map.PropertyMin().z + 1; z < map.PropertyMax().z; ++z) {
@@ -832,7 +1537,7 @@ void Parkland(Zoo& zoo, Script& script) {
             const TileCoord tile{x, z};
             if ((x + 5 * z) % 19 != 0 || zoo.Habitats().RegionAt(tile) != Region::Public ||
                 map.At(tile).path != PathKind::None || map.At(tile).building || map.HasWater(tile) ||
-                !BesidePath(map, tile, 1)) {
+                map.At(tile).terrain == Terrain::Rock || !BesidePath(map, tile, 1)) {
                 continue;
             }
             const std::string_view kind = (x + z) % 3 == 0 ? "flower_bed" : "juniper";
