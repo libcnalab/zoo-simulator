@@ -53,9 +53,13 @@ Standing rules (from the owner, `../CLAUDE.md` and the agent's memory):
 
 - **Never push.** Commit each finished, reviewed task locally. No AI attribution lines in
   commit messages.
-- Do not modify other repositories. CNA, cna-engine, easy-gl, sharp-runtime under
-  `/rv/data/development/github.com/libcna/` are read-only: an engine defect goes into
-  `docs/UPSTREAM.md` with a remedy on the game's side.
+- Do not modify other repositories. **Since 2026-11-14 the repositories under
+  `/rv/data/development/github.com/libcna/` are under an AI policy: do not read, change or
+  build them at all.** Zoo Simulator builds from its own snapshot `~/deps/zoo-libcna/`
+  (`SNAPSHOT.txt` lists the commits; read-only; README "Building" has the configure line).
+  An engine defect goes into `docs/UPSTREAM.md` with a remedy on the game's side. The owner
+  will bring the AI policy to Zoo Simulator too, about 2026-11-28: the work should be done
+  by then.
 - Delegate substantial independent work to the Codex CLI, model **gpt-6-astra** only
   (`codex exec -m gpt-6-astra`, never the default luna), and review and integrate every
   result yourself. On 2026-11-13 the owner asked for the most parallel use possible (many

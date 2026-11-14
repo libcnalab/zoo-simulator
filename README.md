@@ -48,6 +48,26 @@ github.com/openeggbert/zoo-simulator        <- this repository
 
 Another location is given with `-DZOO_LIBCNA_ROOT=/path/to/libcna`.
 
+**On the owner's machine (since 2026-11-14)** the libcna checkouts are under an AI policy and
+are not read or built by agents working on Zoo Simulator. Zoo Simulator builds from its own
+snapshot of them, `~/deps/zoo-libcna/` (`SNAPSHOT.txt` there lists the commits; treat it as
+read-only). The derived paths are cached from the first configure, so a build directory is
+pointed at the snapshot with all of them:
+
+```bash
+D=~/deps/zoo-libcna; S=$D/cna/.sdl-prebuilt-Linux-x86_64-wayland
+cmake -S . -B build -DZOO_LIBCNA_ROOT=$D -DCNA_ENGINE_ROOT=$D/cna-engine \
+      -DZOO_SHARP_RUNTIME_ROOT=$D/sharp-runtime -DZOO_NLOHMANN_JSON_INCLUDE=$D/sharp-runtime/vendor \
+      -DZOO_GOOGLETEST_DIR=$D/sharp-runtime/vendor/googletest -DCNA_EASYGL_ROOT=$D/easy-gl \
+      -DCNA_ENGINE_CNA_DIR=$D/cna -DCNA_ENGINE_EXTENDED_DIR=$D/cna-extended \
+      -DCNA_ENGINE_SHARP_RUNTIME_DIR=$D/sharp-runtime -DCNA_SHARP_RUNTIME_ROOT=$D/sharp-runtime \
+      -DCNA_GAMER_SERVICES_SERVER_ROOT=$D/cna-gamer-services-server -DCNA_SDL_PREBUILT_ROOT=$S \
+      -DFETCHCONTENT_SOURCE_DIR_FNA3D=$D/FNA3D -DFETCHCONTENT_UPDATES_DISCONNECTED=ON \
+      -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_C_COMPILER_LAUNCHER=ccache
+```
+
+`grep github.com/libcna build/CMakeCache.txt` must then show only the FNA3D repository URL.
+
 ```bash
 cmake -S . -B build -G Ninja \
       -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_C_COMPILER_LAUNCHER=ccache
