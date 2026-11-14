@@ -18,10 +18,10 @@ the morning's crowd already spread over the park.
 |---|---|
 | Title | Visit Zoo, Continue Visit, Load Visit, Settings, Quit |
 | Walking | `W A S D` or the arrows; the mouse looks around |
-| Pace | `Shift` **switches** between walking (1.6 m/s) and running (4.4 m/s); it is not held |
+| Pace | `Shift` **switches** between walking (4.4 m/s; 1.6 until 2026-11-14) and running (8.8 m/s; 4.4 before); it is not held |
 | Looking at an animal | a card fades in: its name, species, sex and age, what it is doing |
 | `E` | read the information board one stands at (range, diet, facts, who lives here) |
-| `M` | the visitor map: every habitat by name, buildings, "You are here" |
+| `M` | the visitor map: every habitat by name, buildings, "You are here"; since 2026-11-14 the mouse is free over it and twenty places are marked (the entrance, each habitat at its main front, the gift shop, the education centre, two food courts, a restroom): a click on one takes you there. A habitat's place is the viewing place farthest to the south, passed over for a free one where people stand at the glass; a house's place is a few steps before its door |
 | `Esc` | the pause menu (Resume, Save Visit, Load Visit, Settings, Back to the Title); the mouse is released and the world stands |
 | `F5` | save the visit; the visit is also kept every two minutes for *Continue Visit* |
 | `F4` | diagnostics: visitors simulated / in range / drawn, avatars ready, sound voices |

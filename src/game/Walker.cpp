@@ -30,7 +30,9 @@ CharacterSettings Body() {
     settings.stepDown = 0.45f;
     settings.acceleration = 10.0f;
     settings.deceleration = 12.0f;
-    settings.strideLength = 0.72f;
+    // A footstep and a sway of the eyes every 1.5 m: at the fast walk of 4.4 m/s about three
+    // steps a second (with the stroll's 0.72 m it would have been six), at the run six.
+    settings.strideLength = 1.5f;
     return settings;
 }
 

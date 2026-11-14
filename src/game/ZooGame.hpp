@@ -96,6 +96,8 @@ private:
     void LookAtAnimals(float seconds);
     void OpenBoard(const zoo::Prop& board);
     void BuildVisitMap();
+    /// The places of the map one can go to straight away (VisitMap::places).
+    void AddMapPlaces(VisitMap& map) const;
     void PrintVisitFigures(const char* when) const;
 
     // Command line.

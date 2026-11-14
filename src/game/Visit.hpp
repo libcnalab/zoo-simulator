@@ -54,9 +54,17 @@ struct VisitMap {
         std::string text;
         bool habitat = false;  ///< an animal's name (bold); else a building's
     };
+    /// A place one can go to straight from the map: a habitat's front, a house's door, the gate.
+    struct Place {
+        float x = 0, z = 0;  ///< where one stands, metres
+        float yaw = 0;       ///< where one looks then (0 = +z/south, pi = north)
+        std::string name;
+        bool habitat = false;
+    };
     float minX = 0, minZ = 0, maxX = 1, maxZ = 1;
     std::vector<Shape> shapes;
     std::vector<Label> labels;
+    std::vector<Place> places;
     Vector2 you{0.0f, 0.0f};  ///< x, z
     float yaw = 0.0f;
 };
@@ -154,6 +162,8 @@ struct Visit {
     AnimalCard card;
     BoardText board;
     VisitMap map;
+    /// The place of the map clicked this frame, to be gone to (-1: none).
+    int travelTo = -1;
 
     VisitFigures figures;
 

@@ -3,8 +3,10 @@
 // enclosures (E), the map of the zoo (M).
 #include <algorithm>
 #include <cmath>
+#include <cstdio>
 #include <cstdlib>
 #include <map>
+#include <optional>
 
 #include "Hud.hpp"
 #include "ZooGame.hpp"
@@ -126,6 +128,12 @@ void ZooGame::UpdateEncounters(float seconds) {
         } else {
             BuildVisitMap();
             visit_.window = VisitWindow::Map;
+            if (Automation().Options().Automated()) {
+                std::string names;
+                for (const VisitMap::Place& place : visit_.map.places)
+                    names += (names.empty() ? "" : "; ") + place.name;
+                std::printf("zoo: map: %zu places: %s\n", visit_.map.places.size(), names.c_str());
+            }
         }
     }
     visit_.map.you = Vector2(here.x, here.z);
@@ -531,7 +539,148 @@ void ZooGame::BuildVisitMap() {
     }
     map.labels.push_back({(static_cast<float>(gate.x) + 0.5f) * zoo::kTileSize,
                           (static_cast<float>(gate.z) - 1.2f) * zoo::kTileSize, "Entrance", false});
+    AddMapPlaces(map);
     visit_.map = std::move(map);
+}
+
+void ZooGame::AddMapPlaces(VisitMap& map) const {
+    const zoo::World& world = zoo_->Map();
+    const auto standable = [&](zoo::TileCoord t) {
+        return world.InBounds(t) && world.At(t).path != zoo::PathKind::None && !world.At(t).building &&
+               !world.At(t).standOff && !world.HasWater(t);
+    };
+    // The paved tile nearest to `tile` within `reach` tiles, nearest first.
+    const auto paved = [&](zoo::TileCoord tile, int reach) -> std::optional<zoo::TileCoord> {
+        std::optional<zoo::TileCoord> best;
+        int distance = reach * reach + 1;
+        for (int dz = -reach; dz <= reach; ++dz)
+            for (int dx = -reach; dx <= reach; ++dx) {
+                const zoo::TileCoord next{tile.x + dx, tile.z + dz};
+                if (dx * dx + dz * dz < distance && standable(next)) {
+                    distance = dx * dx + dz * dz;
+                    best = next;
+                }
+            }
+        return best;
+    };
+
+    const Pose gate = EntrancePose();
+    map.places.push_back({gate.x, gate.z, gate.yaw, "Entrance", false});
+
+    // A habitat: at its main front, the viewing place farthest to the south (the side the walks
+    // come from), looking straight across the barrier; a place where people stand at the glass
+    // gives way to a free one nearby, so that one does not arrive nose to nose with a stranger.
+    std::map<std::pair<int, int>, int> crowd;
+    for (const zoo::Visitor& guest : zoo_->Guests().All()) {
+        const zoo::TileCoord tile = zoo::World::TileAt(guest.position);
+        ++crowd[{tile.x, tile.z}];
+    }
+    const auto people = [&](zoo::TileCoord tile) {
+        int count = 0;
+        for (int dz = -1; dz <= 1; ++dz)
+            for (int dx = -1; dx <= 1; ++dx)
+                if (const auto it = crowd.find({tile.x + dx, tile.z + dz}); it != crowd.end())
+                    count += it->second;
+        return count;
+    };
+    for (const zoo::Enclosure& enclosure : zoo_->Habitats().All()) {
+        if (enclosure.viewing.empty() || enclosure.name.starts_with("Enclosure "))
+            continue;
+        const zoo::Vec2 centre{
+            0.5f * static_cast<float>(enclosure.min.x + enclosure.max.x + 1) * zoo::kTileSize,
+            0.5f * static_cast<float>(enclosure.min.z + enclosure.max.z + 1) * zoo::kTileSize};
+        const zoo::ViewingSpot* best = nullptr;
+        float score = 1.0e9f;
+        for (const zoo::ViewingSpot& spot : enclosure.viewing) {
+            if (!standable(spot.tile))
+                continue;
+            const zoo::Vec2 at = zoo::World::TileCenter(spot.tile);
+            const float next = std::hypot(at.x - centre.x, at.z - (centre.z + 100.0f)) +
+                               15.0f * static_cast<float>(people(spot.tile));
+            if (next < score) {
+                score = next;
+                best = &spot;
+            }
+        }
+        if (best == nullptr)
+            continue;
+        const zoo::TileCoord toward = zoo::Step(best->side);
+        const zoo::Vec2 at = zoo::World::TileCenter(best->tile);
+        map.places.push_back({at.x, at.z,
+                              std::atan2(static_cast<float>(toward.x), static_cast<float>(toward.z)),
+                              enclosure.name, true});
+    }
+    const std::size_t habitats = map.places.size();
+
+    // Houses for visitors that stand together (a food court, the plaza) are one place, named by
+    // the most notable of them; a lone drinks or ice-cream kiosk along a walk is not a place to go
+    // to. One stands on the walk a few steps before the first door, looking at its house.
+    struct Group {
+        VisitMap::Place place;
+        int stalls = 0;
+        bool restroom = false, shop = false, education = false;
+    };
+    std::vector<Group> groups;
+    for (const zoo::Building& building : zoo_->Objects().Buildings()) {
+        if (building.def < 0)
+            continue;
+        const zoo::BuildingDef& def = zoo_->Definitions().buildings[static_cast<std::size_t>(building.def)];
+        using Role = zoo::BuildingRole;
+        if (def.role != Role::FoodStall && def.role != Role::DrinkStall && def.role != Role::Restroom &&
+            def.role != Role::GiftShop && def.role != Role::EducationCenter)
+            continue;
+        // A few steps back from the counter, out of the queue, with the house in view.
+        const zoo::TileCoord out = zoo::Step(building.facing);
+        const zoo::TileCoord front = zoo::FrontTile(def, building.origin, building.facing);
+        const auto stand = paved({front.x + 3 * out.x, front.z + 3 * out.z}, 6);
+        if (!stand)
+            continue;
+        const zoo::Vec2 at = zoo::World::TileCenter(*stand);
+        auto group = std::ranges::find_if(groups, [&](const Group& other) {
+            return std::hypot(other.place.x - at.x, other.place.z - at.z) < 30.0f;
+        });
+        if (group == groups.end()) {
+            const zoo::TileCoord size = zoo::FootprintSize(def, building.facing);
+            const float x =
+                (static_cast<float>(building.origin.x) + 0.5f * static_cast<float>(size.x)) * zoo::kTileSize;
+            const float z =
+                (static_cast<float>(building.origin.z) + 0.5f * static_cast<float>(size.z)) * zoo::kTileSize;
+            groups.push_back({{at.x, at.z, std::atan2(x - at.x, z - at.z), def.name, false}});
+            group = std::prev(groups.end());
+        }
+        group->stalls += def.role == Role::FoodStall || def.role == Role::DrinkStall ? 1 : 0;
+        group->restroom = group->restroom || def.role == Role::Restroom;
+        group->shop = group->shop || def.role == Role::GiftShop;
+        group->education = group->education || def.role == Role::EducationCenter;
+    }
+    for (Group& group : groups) {
+        if (group.education)
+            group.place.name = "Education centre";
+        else if (group.shop)
+            group.place.name = "Gift shop";
+        else if (group.stalls >= 2)
+            group.place.name = "Food court";
+        else if (group.restroom)
+            group.place.name = "Visitor restroom";
+        else
+            continue;
+        map.places.push_back(std::move(group.place));
+    }
+    // Two restrooms are told apart by the habitat nearest to each.
+    std::map<std::string, int> named;
+    for (std::size_t i = habitats; i < map.places.size(); ++i)
+        ++named[map.places[i].name];
+    for (std::size_t i = habitats; i < map.places.size(); ++i) {
+        VisitMap::Place& place = map.places[i];
+        if (named[place.name] < 2 || habitats <= 1)
+            continue;
+        const VisitMap::Place* near = nullptr;
+        for (std::size_t h = 1; h < habitats; ++h)
+            if (near == nullptr || std::hypot(map.places[h].x - place.x, map.places[h].z - place.z) <
+                                       std::hypot(near->x - place.x, near->z - place.z))
+                near = &map.places[h];
+        place.name += " by " + near->name;
+    }
 }
 
 }  // namespace zoogame

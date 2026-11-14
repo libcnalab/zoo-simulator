@@ -24,7 +24,7 @@ private:
     void Load(ui::Ui& ui, Visit& visit, const ui::Box& box);
     void Card(ui::Ui& ui, const Visit& visit);
     void Board(ui::Ui& ui, const Visit& visit);
-    void Map(ui::Ui& ui, const Visit& visit);
+    void Map(ui::Ui& ui, Visit& visit);
     void Diagnostics(ui::Ui& ui, const Visit& visit);
     void Notice(ui::Ui& ui, Visit& visit);
 

@@ -418,12 +418,21 @@ void ZooGame::UpdateVisit(double seconds) {
             visit_.request = VisitRequest::Save;
     }
     HandleVisitRequest();
+    if (const int to = std::exchange(visit_.travelTo, -1);
+        to >= 0 && to < static_cast<int>(visit_.map.places.size()) && visit_.screen == VisitScreen::Walking) {
+        const VisitMap::Place& place = visit_.map.places[static_cast<std::size_t>(to)];
+        walker_.Enter(*zoo_, {place.x, place.z}, place.yaw);
+        visit_.window = VisitWindow::None;
+        visit_.Flash(place.name, 2.5f);
+        std::printf("zoo: went to %s at %.1f, %.1f\n", place.name.c_str(), place.x, place.z);
+    }
 
     // The window lost the keyboard (Alt+Tab): the walk waits, the mouse is let go.
     if (visit_.screen == VisitScreen::Walking && !automated && !getIsActiveProperty())
         visit_.screen = VisitScreen::Paused;
     const bool walking = visit_.screen == VisitScreen::Walking;
-    const bool capture = walking && !automated;
+    // The mouse is let go while the map is open, to point at a place on it.
+    const bool capture = walking && !automated && visit_.window != VisitWindow::Map;
     if (capture != MouseCaptured())
         CaptureMouse(capture);
 
@@ -445,6 +454,9 @@ void ZooGame::UpdateVisit(double seconds) {
             }
         }
         input.run = visit_.running;
+        // Over the map the mouse points; it does not turn the head.
+        if (visit_.window == VisitWindow::Map)
+            look = Vector2(0.0f, 0.0f);
         const float turn = kTurnPerPixel * visit_.settings.sensitivity;
         input.turn = look.X * turn;
         input.tilt = look.Y * turn * (visit_.settings.invertY ? -1.0f : 1.0f);

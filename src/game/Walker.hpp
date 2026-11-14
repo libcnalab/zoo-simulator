@@ -27,8 +27,10 @@ public:
         float tilt = 0.0f;
     };
 
-    static constexpr float kWalkSpeed = 1.6f;  ///< m/s: a stroll
-    static constexpr float kRunSpeed = 4.4f;   ///< m/s: a jog
+    // The owner's choice (2026-11-14): a zoo of 320 m is crossed on foot, so the walk is what was
+    // the jog (it was a 1.6 m/s stroll) and the run twice that.
+    static constexpr float kWalkSpeed = 4.4f;  ///< m/s
+    static constexpr float kRunSpeed = 8.8f;   ///< m/s
 
     Walker();
 

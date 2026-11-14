@@ -6,6 +6,14 @@ For the next agent, who starts without this session's context. Read this file, t
 
 ## 0. Session of 2026-11-14 (live status; newest first, keep this section current)
 
+**Owner's request after that (2026-11-14), done:** the walk is 4.4 m/s (what the run was; it
+was 1.6) and the run 8.8 m/s, a stride of 1.5 m for footsteps and head sway
+(`src/game/Walker.*`); the map (`M`) frees the mouse and marks twenty places to go to at a click
+(the entrance, the fourteen habitats at their main front, preferring a viewing place without
+people at the glass, the gift shop, the education centre, two food courts, a restroom; lone
+kiosks are not places), `ZooGame::AddMapPlaces`, drawn in `VisitorHud::Map`. Tried with
+`--script` runs (hover, click, arrival, measured speeds); nobody has used it with a real mouse.
+
 **Where the session stopped (owner's request, 2026-11-14): G8 finished and committed
 (`a08e4eb`), this file updated, `main` pushed to `origin` at the owner's explicit request (the
 "never push" rule of section 1 stands otherwise). Nothing is uncommitted in the main tree.

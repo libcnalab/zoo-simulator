@@ -22,11 +22,11 @@ cd build && ./zoo-simulator
 
 | Key | |
 |---|---|
-| `W A S D`, arrows | walk |
+| `W A S D`, arrows | walk (4.4 m/s; running 8.8 m/s) |
 | Mouse | look around |
 | `Shift` | switch between walking and running (press once; it stays) |
 | `E` | read the information board you stand at |
-| `M` | visitor map |
+| `M` | visitor map; click a marked place (every habitat, the entrance, the food courts, gift shop, education centre, restroom) to go there at once |
 | `Esc` | pause menu (resume, save, load, settings); releases the mouse |
 | `F5` | save the visit |
 | `F4` | diagnostics (visitors, avatars, sound) |

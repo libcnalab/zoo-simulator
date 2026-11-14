@@ -384,7 +384,7 @@ void VisitorHud::Board(ui::Ui& ui, const Visit& visit) {
     KeyHints(ui, panel.MidX(), panel.Bottom() - 36.0f, {{"E", "Step back"}}, 1.0f);
 }
 
-void VisitorHud::Map(ui::Ui& ui, const Visit& visit) {
+void VisitorHud::Map(ui::Ui& ui, Visit& visit) {
     using Kind = VisitMap::Kind;
     const VisitMap& map = visit.map;
     const Vector2 screen = ui.Screen();
@@ -461,6 +461,35 @@ void VisitorHud::Map(ui::Ui& ui, const Visit& visit) {
                         label.habitat ? ui::Rgb(250, 244, 226, 255) : ui::Rgb(60, 50, 40, 255),
                         label.habitat);
     }
+    // Places to go to: a click on one takes you there. The one under the mouse is the nearest
+    // within reach, so that markers close together still each have their turn.
+    int hovered = -1;
+    float nearest = 13.0f * 13.0f;
+    const auto onPlan = [&](const VisitMap::Place& place) {
+        return Vector2(plan.x + (place.x - map.minX) * scale, plan.y + (place.z - map.minZ) * scale);
+    };
+    if (ui.Hovered(plan)) {
+        for (std::size_t i = 0; i < map.places.size(); ++i) {
+            const Vector2 at = onPlan(map.places[i]);
+            const float dx = at.X - ui.Mouse().X;
+            const float dy = at.Y - ui.Mouse().Y;
+            if (dx * dx + dy * dy < nearest) {
+                nearest = dx * dx + dy * dy;
+                hovered = static_cast<int>(i);
+            }
+        }
+    }
+    for (std::size_t i = 0; i < map.places.size(); ++i) {
+        const VisitMap::Place& place = map.places[i];
+        const bool lit = static_cast<int>(i) == hovered;
+        const Vector2 at = onPlan(place);
+        const float radius = (place.habitat ? 6.5f : 5.5f) + (lit ? 3.0f : 0.0f);
+        ui.Paint().Disc(at, radius + 2.0f, ui::Rgb(255, 255, 255, 235));
+        ui.Paint().Disc(at, radius, place.habitat ? ui::Rgb(34, 110, 62, 255) : ui::Rgb(38, 84, 160, 255));
+    }
+    if (hovered >= 0 && ui.Clicked(plan))
+        visit.travelTo = hovered;
+
     // You are here: a dot and, ahead of it, where you look.
     const Vector2 you(plan.x + (map.you.X - map.minX) * scale, plan.y + (map.you.Y - map.minZ) * scale);
     const Vector2 ahead(std::sin(map.yaw), std::cos(map.yaw));
@@ -469,12 +498,33 @@ void VisitorHud::Map(ui::Ui& ui, const Visit& visit) {
                         ui::Rgb(200, 40, 40, 255));
     ui.Paint().Disc(you, 7.0f, ui::Rgb(255, 255, 255, 255));
     ui.Paint().Disc(you, 5.0f, ui::Rgb(214, 40, 40, 255));
+    if (hovered >= 0) {
+        const std::string text = "Go to " + map.places[static_cast<std::size_t>(hovered)].name;
+        const float size = theme::kSmall + 1.0f;
+        const float wide = ui.Paint().TextWidth(text, size, true) + 16.0f;
+        const Vector2 at = onPlan(map.places[static_cast<std::size_t>(hovered)]);
+        const Box tip{std::clamp(std::round(at.X - 0.5f * wide), plan.x + 4.0f, plan.Right() - wide - 4.0f),
+                      at.Y - 40.0f < plan.y + 4.0f ? at.Y + 14.0f : at.Y - 40.0f, wide, 26.0f};
+        ui.Paint().Round(tip, 5.0f, ui::Rgb(38, 34, 28, 235));
+        ui.Paint().Text(text, Vector2(tip.x + 8.0f, tip.y + 4.0f), size, ui::Rgb(250, 244, 226, 255), true);
+    }
     ui.Paint().PopClip();
     const float width = ui.Paint().TextWidth("You are here", theme::kSmall, true);
     ui.Paint().Disc(Vector2(panel.x + 26.0f, panel.Bottom() - 14.0f), 5.0f, ui::Rgb(214, 40, 40, 255));
     ui.Paint().Text("You are here", Vector2(panel.x + 38.0f, panel.Bottom() - 22.0f), theme::kSmall,
                     ui::Rgb(38, 34, 28, 255), true);
-    (void)width;
+    // The legend of the places one can go to.
+    float x = panel.x + 54.0f + width;
+    ui.Paint().Disc(Vector2(x, panel.Bottom() - 14.0f), 6.0f, ui::Rgb(34, 110, 62, 255));
+    x += ui.Paint().Text("Habitat", Vector2(x + 10.0f, panel.Bottom() - 22.0f), theme::kSmall,
+                         ui::Rgb(38, 34, 28, 255)) +
+         28.0f;
+    ui.Paint().Disc(Vector2(x, panel.Bottom() - 14.0f), 5.0f, ui::Rgb(38, 84, 160, 255));
+    x += ui.Paint().Text("Building", Vector2(x + 10.0f, panel.Bottom() - 22.0f), theme::kSmall,
+                         ui::Rgb(38, 34, 28, 255)) +
+         28.0f;
+    ui.Paint().Text("Click a place to go there", Vector2(x, panel.Bottom() - 22.0f), theme::kSmall,
+                    ui::Rgb(104, 92, 74, 255));
 }
 
 void VisitorHud::Diagnostics(ui::Ui& ui, const Visit& visit) {
