@@ -430,6 +430,11 @@ void ZooGame::UpdateVisit(double seconds) {
     }
     if (play_.speed > 0 && !without_.simulation) {
         const Bench::Scope timed(bench_, Bench::Simulation);
+        // The people walk around whoever walks among them.
+        if (visit_.screen == VisitScreen::Walking)
+            zoo_->Guests().SetBystander(walker_.Position());
+        else
+            zoo_->Guests().ClearBystander();
         StepSimulation(seconds);
     }
     if (zoo_->Config().dayPace != 0 && zoo_->Time().Hour() >= kLatestHour)

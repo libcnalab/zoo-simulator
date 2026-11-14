@@ -6,6 +6,8 @@
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
+#include <string>
+#include <string_view>
 
 #include "Microsoft/Xna/Framework/BoundingFrustum.hpp"
 #include "Microsoft/Xna/Framework/BoundingSphere.hpp"
@@ -85,6 +87,17 @@ bool OnTheMove(VisitorActivity activity) {
 }  // namespace
 
 VisitorRenderer::VisitorRenderer() {
+    if (const char* pose = std::getenv("ZOO_VISITOR_POSE"); pose != nullptr) {
+        const std::string_view name(pose);
+        using Manner = Actor::Manner;
+        show_ = name == "lean"     ? Manner::Lean
+                : name == "point"  ? Manner::Point
+                : name == "camera" ? Manner::Camera
+                : name == "phone"  ? Manner::Phone
+                : name == "crouch" ? Manner::Crouch
+                                   : Manner::None;
+        showOld_ = name == "old";
+    }
     cast_.reserve(kCast);
     GrowCast();
 }
@@ -301,8 +314,22 @@ void VisitorRenderer::Update(const zoo::Zoo& zoo, float seconds, float tickFract
     const float alpha = std::clamp(tickFraction, 0.0f, 1.0f);
     for (auto& [id, actor] : actors_)
         actor.seen = false;
+    if (!censused_ && std::getenv("ZOO_VISITOR_DEBUG") != nullptr && zoo.Guests().Count() > 0) {
+        // Who is where and does what, once: for finding a scene to look at.
+        censused_ = true;
+        for (const zoo::Visitor& visitor : zoo.Guests().All())
+            std::printf("zoo: visitor %u group %u %s%s at %.2f,%.2f heading %.0f speed %.2f height %.2f\n",
+                        visitor.id.value, visitor.group, std::string(zoo::ToString(visitor.activity)).c_str(),
+                        visitor.child ? " child" : "", static_cast<double>(visitor.position.x),
+                        static_cast<double>(visitor.position.z),
+                        static_cast<double>(visitor.heading * 57.29578f), static_cast<double>(visitor.speed),
+                        static_cast<double>(visitor.heightM));
+    }
 
-    for (const zoo::Visitor& visitor : zoo.Guests().All()) {
+    const std::vector<zoo::Visitor>& all = zoo.Guests().All();
+    const double clock = (static_cast<double>(now.tick) + static_cast<double>(alpha)) * zoo::kTickSeconds;
+    for (std::size_t index = 0; index < all.size(); ++index) {
+        const zoo::Visitor& visitor = all[index];
         const auto [found, fresh] = actors_.try_emplace(visitor.id);
         Actor& actor = found->second;
         actor.seen = true;
@@ -323,6 +350,12 @@ void VisitorRenderer::Update(const zoo::Zoo& zoo, float seconds, float tickFract
             actor.phase = zoo::HashFloat(visitor.id.value, 2);
             actor.fidgetIn = 1.0f + 8.0f * zoo::HashFloat(visitor.id.value, 3);
             actor.eatTime = 4.0f * zoo::HashFloat(visitor.id.value, 4);
+            // Nobody walks like the next one: longer or shorter steps for the same pace,
+            // arms that swing or hardly move; the old take short steps and stoop.
+            const bool old = zoo::Elderly(visitor) || (showOld_ && !visitor.child);
+            actor.stride = (old ? 0.8f : 0.92f) + 0.14f * zoo::HashFloat(visitor.id.value, 5);
+            actor.swing = (old ? 0.45f : 0.65f) + 0.7f * zoo::HashFloat(visitor.id.value, 6);
+            actor.stoop = old ? 0.6f + 0.4f * zoo::HashFloat(visitor.id.value, 7) : 0.0f;
             actor.thought = visitor.thought;
             actor.thoughtTick = visitor.thoughtTick;
         }
@@ -367,8 +400,18 @@ void VisitorRenderer::Update(const zoo::Zoo& zoo, float seconds, float tickFract
         actor.eat = Ease(actor.eat, visitor.activity == VisitorActivity::Eating ? 1.0f : 0.0f, 3.0f, seconds);
         actor.read =
             Ease(actor.read, visitor.activity == VisitorActivity::Reading ? 1.0f : 0.0f, 2.5f, seconds);
+        // Who goes slowly (an old person, somebody braking or squeezing past) takes shorter
+        // steps, not the same ones in slow motion: the step goes with the root of the pace.
         const float scale = member != nullptr ? actor.heightM / member->height : 1.0f;
-        const float stride = (member != nullptr ? StrideLength(member->body, actor.run) : 1.2f) * scale;
+        const bool old = actor.stoop > 0.0f;
+        const float own = (old ? 0.8f : 0.92f) + 0.14f * zoo::HashFloat(visitor.id.value, 5);
+        if (moving) {
+            const float natural = 1.45f * std::sqrt(std::max(scale, 0.3f));
+            const float wanted = own * std::clamp(std::sqrt(pace / natural), 0.5f, 1.06f);
+            actor.stride = Ease(actor.stride, wanted, 1.2f, seconds);
+        }
+        const float stride =
+            (member != nullptr ? StrideLength(member->body, actor.run) : 1.2f) * scale * actor.stride;
         actor.phase += covered / std::max(stride, 0.2f);
         actor.phase -= std::floor(actor.phase);
         actor.baseTime += seconds;
@@ -380,8 +423,8 @@ void VisitorRenderer::Update(const zoo::Zoo& zoo, float seconds, float tickFract
                 actor.shot.reset();
                 actor.fidgetIn = 3.0f + 7.0f * zoo::HashFloat(visitor.id.value, 0x90u + actor.fidgets);
             }
-        } else if (!moving && !actor.seated && visitor.activity != VisitorActivity::Reading &&
-                   visitor.activity != VisitorActivity::Eating) {
+        } else if (!moving && !actor.seated && actor.mannerWeight < 0.05f &&
+                   visitor.activity != VisitorActivity::Reading && visitor.activity != VisitorActivity::Eating) {
             actor.fidgetIn -= seconds;
             if (actor.fidgetIn <= 0.0f) {
                 actor.shot = Fidget(actor, visitor.id, member != nullptr && member->female);
@@ -389,8 +432,187 @@ void VisitorRenderer::Update(const zoo::Zoo& zoo, float seconds, float tickFract
                 ++actor.fidgets;
             }
         }
+        if (actor.close) {
+            Carry(actor, all, index, moving, clock, seconds);
+        } else {
+            actor.weight = 0.0f;
+            actor.lookYaw = 0.0f;
+            actor.lookPitch = 0.0f;
+            actor.speak = 0.0f;
+            actor.mannerWeight = 0.0f;
+            actor.manner = Actor::Manner::None;
+        }
     }
     std::erase_if(actors_, [](const auto& entry) { return !entry.second.seen; });
+}
+
+void VisitorRenderer::Carry(Actor& actor, const std::vector<zoo::Visitor>& all, std::size_t index, bool moving,
+                            double clock, float seconds) {
+    using Manner = Actor::Manner;
+    const zoo::Visitor& visitor = all[index];
+    const std::uint32_t id = visitor.id.value;
+    const VisitorActivity activity = visitor.activity;
+    const bool standing = !moving && !actor.seated;
+    const auto wave = [&](float rate, std::uint32_t salt) {
+        return std::sin(static_cast<float>(std::fmod(clock * static_cast<double>(rate), 2.0 * kPi)) +
+                        2.0f * kPi * zoo::HashFloat(id, salt));
+    };
+    /// A stretch of time of the person's own: which one it is in, and how far into it.
+    const auto spell = [&](float length, std::uint32_t salt, float& into) {
+        const double at = clock / static_cast<double>(length) + static_cast<double>(zoo::HashFloat(id, salt));
+        const double whole = std::floor(at);
+        into = static_cast<float>(at - whole) * length;
+        return static_cast<std::uint32_t>(static_cast<std::int64_t>(whole) & 0xffffff);
+    };
+
+    // The weight on one leg, and now and then on the other; one in five stands square.
+    float side = 0.0f;
+    if (standing && activity != VisitorActivity::Reading) {
+        float into = 0.0f;
+        const std::uint32_t turn = spell(9.0f + 9.0f * zoo::HashFloat(id, 21), 22, into);
+        const float roll = zoo::HashFloat(id, 0x600u + turn);
+        side = roll < 0.4f ? -1.0f : roll < 0.8f ? 1.0f : 0.0f;
+        side *= 0.55f + 0.45f * zoo::HashFloat(id, 23);
+    }
+    actor.weight = Ease(actor.weight, side, 1.1f, seconds);
+
+    // The group: its members follow one another in the list.
+    std::size_t first = index;
+    while (first > 0 && all[first - 1].group == visitor.group)
+        --first;
+    std::size_t end = index + 1;
+    while (end < all.size() && all[end].group == visitor.group)
+        ++end;
+    const auto size = static_cast<std::uint32_t>(end - first);
+    const auto self = static_cast<std::uint32_t>(index - first);
+
+    // Talking: for some seconds one of a group speaks to another and the rest look at
+    // the speaker. Everybody works that out alike, so the heads turn to each other.
+    float yaw = 0.0f;
+    float pitch = 0.0f;
+    bool speaking = false;
+    bool listening = false;
+    if (size > 1 && activity != VisitorActivity::Reading && activity != VisitorActivity::Fleeing) {
+        constexpr double kEvery = 11.0;
+        const double at = clock / kEvery + static_cast<double>(zoo::HashFloat(visitor.group, 41));
+        const double whole = std::floor(at);
+        const auto turn = static_cast<std::uint32_t>(static_cast<std::int64_t>(whole) & 0xffffff);
+        const float into = static_cast<float>((at - whole) * kEvery);
+        if (zoo::HashFloat(visitor.group, 0x900u + turn) < 0.55f && into < 7.0f) {
+            const std::uint32_t speaker = zoo::HashU32(visitor.group, 0xa00u + turn) % size;
+            const std::uint32_t heard =
+                (speaker + 1u + zoo::HashU32(visitor.group, 0xb00u + turn) % (size - 1u)) % size;
+            const zoo::Visitor& other = all[first + (self == speaker ? heard : speaker)];
+            const zoo::Vec2 to = other.position - visitor.position;
+            const float apart = std::sqrt(to.x * to.x + to.z * to.z);
+            if (other.activity != VisitorActivity::Inside && apart > 0.2f && apart < 3.0f) {
+                const float turnTo = zoo::WrapAngle(zoo::HeadingOf(to) - actor.heading);
+                // Nobody talks over a shoulder for long; walking, one glances sideways.
+                const float most = moving ? 0.7f : 1.2f;
+                if (std::abs(turnTo) < (moving ? 1.9f : 2.3f)) {
+                    listening = true;
+                    yaw = std::clamp(turnTo, -most, most);
+                    const float seatedDrop = actor.seated ? 0.4f : 0.0f;
+                    const float theirs = other.heightM - (other.seat ? 0.4f : 0.0f);
+                    pitch = std::clamp(std::atan2(0.9f * (theirs - (visitor.heightM - seatedDrop)), apart), -0.45f,
+                                       0.4f);
+                    speaking = self == speaker && standing && activity != VisitorActivity::Eating;
+                }
+            }
+        }
+    }
+    if (!listening) {
+        // Nobody keeps its head still: the animals are followed, a waiting person looks about.
+        switch (activity) {
+            case VisitorActivity::Watching:
+                yaw = 0.2f * wave(0.31f, 24) + 0.1f * wave(0.83f, 25);
+                pitch = -0.05f + 0.05f * wave(0.27f, 26);
+                break;
+            case VisitorActivity::Idle:
+            case VisitorActivity::Queueing:
+            case VisitorActivity::Sitting:
+                yaw = 0.55f * wave(0.23f, 24) * wave(0.11f, 25);
+                pitch = 0.04f * wave(0.19f, 26);
+                break;
+            case VisitorActivity::Reading:
+            case VisitorActivity::Eating:
+                break;
+            default:
+                yaw = 0.14f * wave(0.37f, 24);
+                break;
+        }
+    }
+
+    // What the hands are busy with, for a part of every spell of some twelve to twenty seconds.
+    Manner wanted = Manner::None;
+    if (!moving && actor.gait < 0.2f && !actor.shot && !speaking) {
+        float into = 0.0f;
+        const float length = 12.0f + 8.0f * zoo::HashFloat(id, 31);
+        const std::uint32_t turn = spell(length, 32, into);
+        const float roll = zoo::HashFloat(id, 0x700u + turn);
+        float lasts = 0.0f;
+        if (activity == VisitorActivity::Watching) {
+            const bool rail = visitor.slot < 4 && !visitor.child && visitor.heightM > 1.5f;
+            bool withChild = false;
+            if (!visitor.child) {
+                for (std::size_t i = first; i < end; ++i) {
+                    const zoo::Vec2 to = all[i].position - visitor.position;
+                    withChild = withChild || (all[i].child && to.x * to.x + to.z * to.z < 1.2f * 1.2f);
+                }
+            }
+            if (visitor.child) {
+                wanted = roll < 0.35f ? Manner::Point : Manner::None;
+                lasts = 2.6f;
+            } else if (rail && roll < 0.36f) {
+                wanted = Manner::Lean;
+                lasts = 0.8f * length;
+            } else if (roll < 0.5f) {
+                wanted = Manner::Point;
+                lasts = 2.6f;
+            } else if (roll < 0.68f) {
+                wanted = Manner::Camera;
+                lasts = 5.5f;
+            } else if (withChild && roll < 0.84f) {
+                wanted = Manner::Crouch;
+                lasts = 0.6f * length;
+            }
+        } else if (activity == VisitorActivity::Idle || activity == VisitorActivity::Queueing ||
+                   activity == VisitorActivity::Sitting) {
+            if (!visitor.child && roll < 0.4f) {
+                wanted = Manner::Phone;
+                lasts = 0.7f * length;
+            }
+        }
+        if (into > lasts)
+            wanted = Manner::None;
+        if (show_ == Manner::Phone ? !visitor.child
+                                   : show_ != Manner::None && activity == VisitorActivity::Watching &&
+                                         (show_ == Manner::Point || !visitor.child))
+            wanted = show_;
+        if (wanted == Manner::Point) {
+            actor.pointYaw = 0.5f * (zoo::HashFloat(id, 0x800u + turn) - 0.5f);
+            actor.pointPitch = (visitor.child ? 0.12f : -0.08f) + 0.14f * (zoo::HashFloat(id, 0x880u + turn) - 0.5f);
+        }
+    }
+    if (actor.manner != wanted && actor.mannerWeight > 0.0f) {
+        // Out of the old one first.
+        actor.mannerWeight = Ease(actor.mannerWeight, 0.0f, moving ? 5.0f : 1.8f, seconds);
+    } else {
+        actor.manner = wanted;
+        actor.mannerWeight =
+            Ease(actor.mannerWeight, wanted == Manner::None ? 0.0f : 1.0f, wanted == Manner::Crouch ? 1.1f : 1.6f,
+                 seconds);
+    }
+    // Who holds a telephone looks at it; who points or takes a picture looks where the hand is.
+    if (actor.manner == Manner::Phone || actor.manner == Manner::Camera) {
+        yaw *= 1.0f - actor.mannerWeight;
+        pitch *= 1.0f - actor.mannerWeight;
+    } else if (actor.manner == Manner::Point) {
+        yaw += (actor.pointYaw - yaw) * actor.mannerWeight;
+    }
+    actor.lookYaw = Ease(actor.lookYaw, yaw, 1.9f, seconds);
+    actor.lookPitch = Ease(actor.lookPitch, pitch, 1.3f, seconds);
+    actor.speak = Ease(actor.speak, speaking && actor.mannerWeight < 0.05f ? 1.0f : 0.0f, 2.2f, seconds);
 }
 
 void VisitorRenderer::Pose(Actor& actor, const Member& member, float scale) {
@@ -409,9 +631,42 @@ void VisitorRenderer::Pose(Actor& actor, const Member& member, float scale) {
                 expression_ = face;
         }
     }
+    // Standing: on one leg rather than on both, and what the hands are busy with.
+    const float still = 1.0f - SmoothStep(actor.sit);
+    if (std::abs(actor.weight) > 0.001f && still > 0.0f) {
+        AvatarPose eased = pose_;
+        ApplyWeight(eased, body, actor.weight < 0.0f ? -1.0f : 1.0f);
+        Blend(pose_, eased, SmoothStep(std::abs(actor.weight)) * still);
+    }
+    const float manner = SmoothStep(actor.mannerWeight);
+    if (manner > 0.0f) {
+        switch (actor.manner) {
+            case Actor::Manner::Lean:
+                ApplyLean(pose_, body, manner * still);
+                break;
+            case Actor::Manner::Point:
+                ApplyPoint(pose_, body, actor.pointYaw, actor.pointPitch, manner);
+                break;
+            case Actor::Manner::Camera:
+                ApplyCamera(pose_, body, manner);
+                break;
+            case Actor::Manner::Phone:
+                ApplyPhone(pose_, body, manner);
+                break;
+            case Actor::Manner::Crouch: {
+                AvatarPose down = pose_;
+                ApplyCrouch(down, body);
+                Blend(pose_, down, manner * still);
+                break;
+            }
+            default:
+                break;
+        }
+    }
+    ApplyTalk(pose_, body, actor.baseTime, SmoothStep(actor.speak));
     if (actor.gait > 0.001f) {
         AvatarPose step = pose_;
-        ApplyGait(step, body, actor.phase, actor.run);
+        ApplyGait(step, body, actor.phase, actor.run, actor.stride, actor.swing);
         Blend(pose_, step, SmoothStep(actor.gait));
     }
     if (actor.sit > 0.001f) {
@@ -421,6 +676,8 @@ void VisitorRenderer::Pose(Actor& actor, const Member& member, float scale) {
     }
     ApplyEating(pose_, body, actor.eatTime, actor.eat);
     ApplyHeadDown(pose_, body, 0.32f * actor.read);
+    ApplyStoop(pose_, body, actor.stoop);
+    ApplyLook(pose_, body, actor.lookYaw, actor.lookPitch);
     ToMatrices(pose_, bones_);
 }
 

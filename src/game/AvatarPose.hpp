@@ -113,7 +113,36 @@ float StrideLength(const AvatarBody& body, float run);
 /// cycle (the left heel strikes at 0). The feet are placed on the ground and
 /// travel backwards exactly as fast as the body goes forwards, so they do
 /// not slide when the phase follows the distance covered (StrideLength).
-void ApplyGait(AvatarPose& pose, const AvatarBody& body, float phase, float run);
+/// `stride` shortens or lengthens the step (the body then covers StrideLength
+/// times `stride` in a cycle: who goes slowly takes shorter steps, not slower
+/// ones only), `swing` is how freely the arms go with it.
+void ApplyGait(AvatarPose& pose, const AvatarBody& body, float phase, float run, float stride = 1.0f,
+               float swing = 1.0f);
+
+/// Standing at ease: the weight on one leg (`side` -1: the left, 1: the right), the hip
+/// out over it, the other knee loose and its heel off the ground.
+void ApplyWeight(AvatarPose& pose, const AvatarBody& body, float side);
+
+/// Turns the head, and the neck and chest a little with it: `yaw` to the avatar's left,
+/// `pitch` upwards. On top of whatever the pose does.
+void ApplyLook(AvatarPose& pose, const AvatarBody& body, float yaw, float pitch);
+
+/// What somebody standing does with its arms and trunk. Each takes a weight 0..1 and
+/// replaces what the arms did by that much.
+/// The right arm out at something `yaw` to the left of straight ahead and `pitch` above level.
+void ApplyPoint(AvatarPose& pose, const AvatarBody& body, float yaw, float pitch, float weight);
+/// Both hands hold a telephone up before the face: taking a picture.
+void ApplyCamera(AvatarPose& pose, const AvatarBody& body, float weight);
+/// One hand holds a telephone or a map before the chest, the head bowed over it.
+void ApplyPhone(AvatarPose& pose, const AvatarBody& body, float weight);
+/// Leaning on a rail in front: the trunk forward, the forearms laid on it.
+void ApplyLean(AvatarPose& pose, const AvatarBody& body, float weight);
+/// Speaking with a hand: the right forearm up, moving with the words (`time` seconds).
+void ApplyTalk(AvatarPose& pose, const AvatarBody& body, float time, float weight);
+/// Down on the haunches (beside a child), the hands on the knees. Blend it in as a whole.
+void ApplyCrouch(AvatarPose& pose, const AvatarBody& body);
+/// An old back: bent a little, the head carried forward.
+void ApplyStoop(AvatarPose& pose, const AvatarBody& body, float weight);
 
 /// Seats a standing pose: thighs level, the hip joints `hipHeight` above the
 /// ground (avatar units), hands on the thighs.

@@ -111,8 +111,11 @@ DayStats RunDay(Zoo& zoo) {
                 distinct.erase(std::unique(distinct.begin(), distinct.end()), distinct.end());
                 seen[v.id.value] = static_cast<int>(distinct.size());
             }
-            if (v.activity == VisitorActivity::Walking || v.activity == VisitorActivity::Arriving ||
-                v.activity == VisitorActivity::Leaving) {
+            // Somebody at the end of its own route who waits for the rest of its group is not
+            // stuck: only those with a way left count.
+            if ((v.activity == VisitorActivity::Walking || v.activity == VisitorActivity::Arriving ||
+                 v.activity == VisitorActivity::Leaving) &&
+                v.routeIndex < v.route.size()) {
                 auto& entry = walking.try_emplace(v.id.value, v.position, 0).first->second;
                 if (Distance(entry.first, v.position) > 0.5f) {
                     entry = {v.position, 0};
@@ -239,11 +242,14 @@ TEST(VisitorDayTests, ADayInTheStarterZoo) {
         EXPECT_LT(day->offPath, day->arrived * 250) << "and that is where the time off the paving goes";
         EXPECT_LT(day->longestStill, 20.0f);
         EXPECT_EQ(day->arrived, day->left);
-        // Getting about is half of a visit, not all of it.
+        // Getting about is half of a visit, not all of it. (13: since walkers steer, give way
+        // and slow down among the people standing at a rail (G4, 2026-11-14), the second day's
+        // way to a viewing place takes 129 s instead of 117 s; walking and leaving were 11.7
+        // times the watching before, 12.2 times after.)
         const auto ticks = [day](VisitorActivity a) {
             return day->activityTicks[static_cast<std::size_t>(a)];
         };
-        EXPECT_GT(ticks(VisitorActivity::Watching) * 12,
+        EXPECT_GT(ticks(VisitorActivity::Watching) * 13,
                   ticks(VisitorActivity::Walking) + ticks(VisitorActivity::Leaving));
 #if !defined(__SANITIZE_ADDRESS__) && !defined(__SANITIZE_THREAD__)
         // A budget for the optimised build: an instrumented one runs several times slower

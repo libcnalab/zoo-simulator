@@ -17,6 +17,18 @@ namespace zoo {
 using namespace visitor_tuning;
 using namespace visitors_detail;
 
+bool Elderly(const Visitor& visitor) {
+    return !visitor.child && Hash01(visitor.look, 4) < kElderlyShare;
+}
+
+float PaceOf(const Visitor& visitor) {
+    if (visitor.child) {
+        return kChildSpeed;
+    }
+    const float pace = kWalkSpeed + kWalkSpeedSpread * Hash01(visitor.look, 3);
+    return Elderly(visitor) ? pace * kElderlyPace : pace;
+}
+
 namespace {
 
 const ViewingSpot& SpreadFront(const ViewSite& site) {
@@ -532,6 +544,29 @@ void Stepper::BuildFrame() {
             ++cell;
         }
     };
+    // Who is on which tile (people inside buildings are nowhere): a chain a tile, in the
+    // order of the list. Only the tiles somebody stood on are swept, not the whole map.
+    if (scr.cellHead.size() != tiles) {
+        scr.cellHead.assign(tiles, -1);
+        scr.cellUsed.clear();
+    }
+    for (const std::uint32_t tile : scr.cellUsed) {
+        scr.cellHead[tile] = -1;
+    }
+    scr.cellUsed.clear();
+    scr.cellNext.resize(list.size());
+    for (std::size_t i = list.size(); i-- > 0;) {
+        const TileCoord t = World::TileAt(list[i].position);
+        if (list[i].activity == VisitorActivity::Inside || !sites.InBounds(t)) {
+            continue;
+        }
+        const std::size_t tile = sites.TileIndex(t);
+        if (scr.cellHead[tile] < 0) {
+            scr.cellUsed.push_back(static_cast<std::uint32_t>(tile));
+        }
+        scr.cellNext[i] = scr.cellHead[tile];
+        scr.cellHead[tile] = static_cast<std::int32_t>(i);
+    }
     int service = -1;  // of the group being walked through
     for (std::size_t i = 0; i < list.size(); ++i) {
         const Visitor& v = list[i];

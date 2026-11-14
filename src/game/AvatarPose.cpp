@@ -213,45 +213,185 @@ float StrideLength(const AvatarBody& body, float run) {
     return body.Leg() * Mix(1.42f, 2.7f, run);
 }
 
-void ApplyGait(AvatarPose& pose, const AvatarBody& body, float phase, float run) {
+void ApplyGait(AvatarPose& pose, const AvatarBody& body, float phase, float run, float stride, float swing) {
     const float leg = body.Leg();
     // The share of the cycle a foot spends on the ground: more than half
     // when walking (both feet down between steps), less when running (a
     // moment of flight).
     const float duty = Mix(0.6f, 0.38f, run);
-    const float reach = duty * StrideLength(body, run) * 0.5f;
-    const float lift = leg * Mix(0.1f, 0.3f, run);
-    const float swing = std::cos(2.0f * kPi * phase);
+    const float reach = duty * StrideLength(body, run) * stride * 0.5f;
+    const float lift = leg * Mix(0.1f, 0.3f, run) * Mix(0.6f, 1.0f, std::min(stride, 1.0f));
+    const float turn = std::cos(2.0f * kPi * phase);
+    const float ease = std::clamp(stride, 0.4f, 1.1f);
 
     // The hips ride a little below straight legs, highest over the standing
-    // foot (twice a cycle), and sway towards it.
-    const float bob = leg * Mix(0.014f, 0.03f, run) * std::cos(4.0f * kPi * (phase - duty * 0.5f));
-    const float hip = leg * Mix(0.955f, 0.9f, run) + bob;
+    // foot (twice a cycle), and sway towards it. A short step needs less of all that.
+    const float bob = leg * Mix(0.014f, 0.03f, run) * ease * std::cos(4.0f * kPi * (phase - duty * 0.5f));
+    const float hip = leg * Mix(Mix(0.975f, 0.955f, ease), 0.9f, run) + bob;
     const float sway =
         leg * 0.018f * (1.0f - run) * std::sin(2.0f * kPi * (phase - duty * 0.5f) + kPi * 0.5f);
     pose.root = Vector3(sway, body.position[Root].Y + hip - (body.hipY - body.ankleY), 0.0f);
 
     // Trunk: the pelvis follows the leading leg a little, the chest leans
     // into the pace and turns the other way with the arms.
-    pose.rotation[Root] = Yaw(-0.05f * swing);
+    pose.rotation[Root] = Yaw(-0.05f * ease * turn);
     TurnInModel(pose, body, BackLower, Pitch(-Mix(0.03f, 0.2f, run)));
-    TurnInModel(pose, body, BackUpper, Yaw(Mix(0.11f, 0.2f, run) * swing));
-    TurnInModel(pose, body, Neck, Yaw(-Mix(0.06f, 0.12f, run) * swing));
+    TurnInModel(pose, body, BackUpper, Yaw(Mix(0.11f, 0.2f, run) * ease * turn));
+    TurnInModel(pose, body, Neck, Yaw(-Mix(0.06f, 0.12f, run) * ease * turn));
     TurnInModel(pose, body, Neck, Pitch(Mix(0.0f, 0.12f, run)));
 
     // Arms swing against the legs: the right arm is forward when the left heel strikes.
-    const float arm = Mix(0.36f, 0.85f, run);
+    const float arm = Mix(0.36f * ease * swing, 0.85f, run);
     const float elbow = Mix(0.18f, 1.25f, run);
-    TurnInModel(pose, body, ShoulderLeft, Pitch(-arm * swing));
-    TurnInModel(pose, body, ShoulderRight, Pitch(arm * swing));
-    TurnInModel(pose, body, ElbowLeft, Pitch(elbow + 0.28f * std::max(0.0f, -swing)));
-    TurnInModel(pose, body, ElbowRight, Pitch(elbow + 0.28f * std::max(0.0f, swing)));
+    TurnInModel(pose, body, ShoulderLeft, Pitch(-arm * turn));
+    TurnInModel(pose, body, ShoulderRight, Pitch(arm * turn));
+    TurnInModel(pose, body, ElbowLeft, Pitch(elbow + 0.28f * swing * std::max(0.0f, -turn)));
+    TurnInModel(pose, body, ElbowRight, Pitch(elbow + 0.28f * swing * std::max(0.0f, turn)));
 
     const Footfall left = FootAt(Fraction(phase), duty, reach, lift, leg);
     const Footfall right = FootAt(Fraction(phase + 0.5f), duty, reach, lift, leg);
     PoseLeg(pose, body, kLeft, SolveLeg(body.thigh, body.shin, left.forward, hip - left.lift), left.pitch);
     PoseLeg(pose, body, kRight, SolveLeg(body.thigh, body.shin, right.forward, hip - right.lift),
             right.pitch);
+}
+
+namespace {
+
+/// Brings a bone `weight` of the way to the rotation `world` in the avatar's space.
+void Bring(AvatarPose& pose, const AvatarBody& body, int bone, const Quaternion& world, float weight) {
+    SetWorldRotation(pose, body, bone, Nlerp(WorldRotation(pose, body, bone), world, weight));
+}
+
+struct Arm {
+    int shoulder, elbow, wrist;
+    float inward;  ///< the sign of a turn about the vertical that brings a raised arm across the chest
+};
+constexpr Arm kLeftArm{ShoulderLeft, ElbowLeft, WristLeft, -1.0f};
+constexpr Arm kRightArm{ShoulderRight, ElbowRight, WristRight, 1.0f};
+
+/// An arm, whatever it did: the upper arm swung `upper` forward of hanging and turned
+/// `across` towards the chest, the forearm bent `bend` further and turned `fold` across.
+void PoseArm(AvatarPose& pose, const AvatarBody& body, const Arm& arm, float upper, float across, float bend,
+             float fold, float weight) {
+    Bring(pose, body, arm.shoulder, Quaternion::Concatenate(Pitch(upper), Yaw(arm.inward * across)), weight);
+    Bring(pose, body, arm.elbow, Quaternion::Concatenate(Pitch(upper + bend), Yaw(arm.inward * fold)), weight);
+    const auto wrist = static_cast<std::size_t>(arm.wrist);
+    pose.rotation[wrist] = Nlerp(pose.rotation[wrist], Quaternion::Identity, weight);
+}
+
+}  // namespace
+
+void ApplyWeight(AvatarPose& pose, const AvatarBody& body, float side) {
+    const float leg = body.Leg();
+    const float shift = 0.05f * leg * side;
+    // The hip of the free leg hangs, the shoulders make up for it. The root turns about
+    // the ground: it is moved so that the hips end up `shift` aside and the standing
+    // hip no higher than it was.
+    const float hang = 0.07f * side;
+    pose.root = Vector3(shift + body.hipY * std::sin(hang),
+                        body.position[Root].Y - std::abs(body.position[HipRight].X * std::sin(hang)), 0.0f);
+    pose.rotation[Root] = Roll(hang);
+    TurnInModel(pose, body, BackLower, Roll(-0.06f * side));
+    TurnInModel(pose, body, BackUpper, Roll(-0.05f * side));
+    // Both feet stay where they stood: the standing leg leans in under the hip, the
+    // other is put a little forward on its toes with the knee loose.
+    const float in = std::asin(std::clamp(-shift / leg, -0.5f, 0.5f));
+    const float drop = body.hipY - body.ankleY;
+    const Leg& standing = side >= 0.0f ? kRight : kLeft;
+    const Leg& loose = side >= 0.0f ? kLeft : kRight;
+    SetWorldRotation(pose, body, standing.hip, Roll(in));
+    SetWorldRotation(pose, body, standing.knee, Roll(in));
+    SetWorldRotation(pose, body, standing.ankle, Quaternion::Identity);
+    const float much = std::abs(side);
+    const LegAngles angles =
+        SolveLeg(body.thigh, body.shin, 0.1f * leg * much, drop - (0.03f + 0.012f) * leg * much);
+    SetWorldRotation(pose, body, loose.hip, Quaternion::Concatenate(Pitch(angles.thigh), Roll(in * 1.6f)));
+    SetWorldRotation(pose, body, loose.knee,
+                     Quaternion::Concatenate(Pitch(angles.thigh - angles.knee), Roll(in * 1.6f)));
+    SetWorldRotation(pose, body, loose.ankle, Pitch(-0.38f * much));
+}
+
+void ApplyLook(AvatarPose& pose, const AvatarBody& body, float yaw, float pitch) {
+    if (yaw == 0.0f && pitch == 0.0f)
+        return;
+    TurnInModel(pose, body, BackUpper, Yaw(0.18f * yaw));
+    TurnInModel(pose, body, Neck, Quaternion::Concatenate(Pitch(0.4f * pitch), Yaw(0.37f * yaw)));
+    TurnInModel(pose, body, Head, Quaternion::Concatenate(Pitch(0.6f * pitch), Yaw(0.45f * yaw)));
+}
+
+void ApplyPoint(AvatarPose& pose, const AvatarBody& body, float yaw, float pitch, float weight) {
+    if (weight <= 0.0f)
+        return;
+    // Kept clear of the body: an arm cannot point across its own chest.
+    const float across = std::clamp(yaw, -0.7f, 0.5f);
+    PoseArm(pose, body, kRightArm, 1.38f + pitch, across, 0.14f, across, weight);
+    TurnInModel(pose, body, BackUpper, Yaw(0.12f * weight));
+}
+
+void ApplyCamera(AvatarPose& pose, const AvatarBody& body, float weight) {
+    if (weight <= 0.0f)
+        return;
+    PoseArm(pose, body, kRightArm, 0.95f, 0.45f, 1.5f, 1.0f, weight);
+    PoseArm(pose, body, kLeftArm, 0.95f, 0.45f, 1.5f, 1.0f, weight);
+    TurnInModel(pose, body, Head, Pitch(-0.06f * weight));
+}
+
+void ApplyPhone(AvatarPose& pose, const AvatarBody& body, float weight) {
+    if (weight <= 0.0f)
+        return;
+    PoseArm(pose, body, kRightArm, 0.3f, 0.2f, 1.75f, 0.9f, weight);
+    TurnInModel(pose, body, Neck, Pitch(-0.2f * weight));
+    TurnInModel(pose, body, Head, Pitch(-0.3f * weight));
+}
+
+void ApplyLean(AvatarPose& pose, const AvatarBody& body, float weight) {
+    if (weight <= 0.0f)
+        return;
+    // The hips go back as the chest comes forward, or the avatar would topple.
+    pose.root.Z += 0.11f * body.Leg() * weight;
+    TurnInModel(pose, body, BackLower, Pitch(-0.3f * weight));
+    TurnInModel(pose, body, Neck, Pitch(0.12f * weight));
+    TurnInModel(pose, body, Head, Pitch(0.12f * weight));
+    PoseArm(pose, body, kRightArm, 0.7f, 0.1f, 1.0f, 0.55f, weight);
+    PoseArm(pose, body, kLeftArm, 0.7f, 0.1f, 1.0f, 0.55f, weight);
+    for (const Leg& leg : {kLeft, kRight}) {
+        TurnInModel(pose, body, leg.hip, Pitch(-0.12f * weight));
+        TurnInModel(pose, body, leg.knee, Pitch(-0.12f * weight));
+    }
+}
+
+void ApplyTalk(AvatarPose& pose, const AvatarBody& body, float time, float weight) {
+    if (weight <= 0.0f)
+        return;
+    const float beat = std::sin(time * 5.1f) * std::sin(time * 1.3f);
+    PoseArm(pose, body, kRightArm, 0.35f + 0.1f * beat, 0.1f, 1.25f + 0.3f * beat, 0.35f - 0.3f * beat, weight);
+    TurnInModel(pose, body, Head, Pitch(0.05f * weight * std::sin(time * 3.3f)));
+}
+
+void ApplyCrouch(AvatarPose& pose, const AvatarBody& body) {
+    const float leg = body.Leg();
+    // On the balls of the feet, the seat near the heels, the knees well forward.
+    const float hip = 0.5f * leg;
+    pose.root = Vector3(0.0f, body.position[Root].Y + hip - (body.hipY - body.ankleY) + 0.045f * leg,
+                        0.05f * leg);
+    pose.rotation[Root] = Quaternion::Identity;
+    TurnInModel(pose, body, BackLower, Pitch(-0.3f));
+    TurnInModel(pose, body, BackUpper, Pitch(-0.14f));
+    TurnInModel(pose, body, Neck, Pitch(0.22f));
+    const LegAngles angles = SolveLeg(body.thigh, body.shin, -0.08f * leg, hip - 0.045f * leg);
+    for (const Leg& one : {kLeft, kRight})
+        PoseLeg(pose, body, one, angles, -0.45f);
+    PoseArm(pose, body, kRightArm, 0.9f, 0.1f, 0.55f, 0.3f, 1.0f);
+    PoseArm(pose, body, kLeftArm, 0.9f, 0.1f, 0.55f, 0.3f, 1.0f);
+}
+
+void ApplyStoop(AvatarPose& pose, const AvatarBody& body, float weight) {
+    if (weight <= 0.0f)
+        return;
+    TurnInModel(pose, body, BackLower, Pitch(-0.1f * weight));
+    TurnInModel(pose, body, BackUpper, Pitch(-0.16f * weight));
+    TurnInModel(pose, body, Neck, Pitch(0.1f * weight));
+    TurnInModel(pose, body, Head, Pitch(0.1f * weight));
 }
 
 void ApplySit(AvatarPose& pose, const AvatarBody& body, float hipHeight) {

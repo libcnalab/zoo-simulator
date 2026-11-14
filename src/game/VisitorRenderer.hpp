@@ -150,6 +150,21 @@ private:
         float fidgetIn = 3.0f;  ///< seconds until the next one, while standing
         std::uint32_t fidgets = 0;
         float eatTime = 0.0f;
+        // How it carries itself. The step is everybody's; the rest is kept up only while
+        // it is drawn as an avatar (a picture in the distance shows none of it).
+        float stride = 1.0f;  ///< the length of its step against its body's own
+        float swing = 1.0f;   ///< how freely its arms go with the step
+        float stoop = 0.0f;   ///< an old back
+        float weight = 0.0f;  ///< standing: on the left leg (-1) .. on the right (1)
+        float lookYaw = 0.0f;  ///< where the head is turned against the body, to the left
+        float lookPitch = 0.0f;
+        float speak = 0.0f;  ///< speaking with a hand
+        /// What a standing person does with its hands for a while.
+        enum class Manner : std::uint8_t { None, Lean, Point, Camera, Phone, Crouch };
+        Manner manner = Manner::None;
+        float mannerWeight = 0.0f;
+        float pointYaw = 0.0f;
+        float pointPitch = 0.0f;
     };
 
     void GrowCast();
@@ -159,6 +174,11 @@ private:
     const AvatarClip& Clip(Preset preset);
     void React(Actor& actor, zoo::VisitorId id, const Member* member, bool fresh);
     Preset Fidget(const Actor& actor, zoo::VisitorId id, bool female);
+    /// What a person near the eyes does besides its activity: where it looks, whom it
+    /// talks to, on which leg it stands, what its hands are busy with. All of it follows
+    /// from the clock and from who it is, so it is the same on every run.
+    void Carry(Actor& actor, const std::vector<zoo::Visitor>& all, std::size_t index, bool moving, double clock,
+               float seconds);
     void Pose(Actor& actor, const Member& member, float scale);
     void Capture(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, Member& member);
     void DrawShade(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
@@ -198,6 +218,11 @@ private:
     int failed_ = 0;
     bool available_ = true;
     bool reported_ = false;
+    bool censused_ = false;  ///< ZOO_VISITOR_DEBUG has printed who is where
+    /// ZOO_VISITOR_POSE (lean, point, camera, phone, crouch, old): everybody who can, does
+    /// that or is that, all the time. For looking at one pose; None and false in the game.
+    Actor::Manner show_ = Actor::Manner::None;
+    bool showOld_ = false;
     // What it costs (reported at the end of a run with ZOO_AVATAR_DEBUG set).
     std::uint64_t frames_ = 0;
     std::uint64_t drawnInAll_ = 0;

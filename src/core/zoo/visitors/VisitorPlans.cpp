@@ -142,15 +142,21 @@ bool Stepper::Route(Vec2 from, Vec2 to, std::vector<Vec2>& out) {
     return true;
 }
 
-void Stepper::Lanes(Visitor& v) {
+void Stepper::Lanes(Visitor& v, int place, int size, std::uint32_t leaderLook) {
     const std::size_t count = v.route.size();
     if (count < 2) {
         return;
     }
-    // Everybody keeps a little to one side of the route, each to its own: a crowd
-    // on a path then spreads over its width instead of walking in single file.
-    const Vec2 offset{(Hash01(v.look, 11) - 0.5f) * 2.0f * kLaneOffset,
-                      (Hash01(v.look, 12) - 0.5f) * 2.0f * kLaneOffset};
+    // Everybody keeps a little to one side of the route: a crowd on a path then spreads over
+    // its width instead of walking in single file. Somebody alone takes a lane of its own;
+    // a group takes one together and walks two abreast in it, the odd fifth in the middle.
+    Vec2 offset{(Hash01(leaderLook, 11) - 0.5f) * 2.0f, (Hash01(leaderLook, 12) - 0.5f) * 2.0f};
+    if (size <= 1) {
+        offset = offset * kLaneOffset;
+    } else {
+        const float side = place == 4 ? 0.0f : (place % 2 == 1 ? 0.5f : -0.5f) * kAbreastM;
+        offset = offset * (kLaneOffset - 0.5f * kAbreastM) + Vec2{side, side};
+    }
     const Navigator& nav = env.nav;
     std::vector<Vec2>& out = scr.points;
     out.clear();
@@ -204,10 +210,124 @@ bool Stepper::RouteGroup(Group g) {
         if (own && !Route(v.position, v.target, v.route)) {
             v.route.assign(1, v.target);
         }
-        Lanes(v);
+        Lanes(v, static_cast<int>(i - g.first), g.Size(), lead.look);
     }
-    Lanes(lead);
+    Lanes(lead, 0, g.Size(), lead.look);
     return true;
+}
+
+void Stepper::MakeRoom(Group g, Plan& plan, const Vec2* focus) {
+    const std::vector<Visitor>& list = all.visitors_;
+    const int size = g.Size();
+    int first = -1;
+    for (int k = 0; k < size; ++k) {
+        if (!plan.seated[static_cast<std::size_t>(k)]) {
+            first = k;
+            break;
+        }
+    }
+    if (first < 0) {
+        return;
+    }
+    // Where the people around stand, or will.
+    const Vec2 around = plan.place[static_cast<std::size_t>(first)];
+    std::vector<Vec2>& spots = scr.spots;
+    spots.clear();
+    for (std::size_t i = 0; i < list.size(); ++i) {
+        const Visitor& v = list[i];
+        if ((i >= g.first && i < g.end) || v.activity == VisitorActivity::Inside) {
+            continue;
+        }
+        const Vec2 spot = Travelling(v.activity) ? v.target : v.position;
+        if (DistanceSquared(spot, around) < 49.0f) {
+            spots.push_back(spot);
+        }
+    }
+    // And where the lines of the stalls stand (their first places; a line is seldom longer):
+    // nobody has its lunch in the queue.
+    for (const ServiceSite& site : scr.sites.services) {
+        if (DistanceSquared(site.door, around) > 100.0f) {
+            continue;
+        }
+        for (std::size_t i = 0; i < site.line.size() && i < kLineKeptClear; ++i) {
+            spots.push_back(site.line[i]);
+        }
+    }
+    const auto free = [&](Vec2 place) {
+        return std::none_of(spots.begin(), spots.end(),
+                            [&](Vec2 spot) { return DistanceSquared(spot, place) < kRoomM * kRoomM; });
+    };
+    const Navigator& nav = env.nav;
+    NavProfile ground = kWalker;
+    ground.pathsOnly = nav.Passable(World::TileAt(around), kWalker);
+    const float turn = kTwoPi * Hash01(list[g.first].look, 33);
+    const auto ring = [&](int n, float step) {
+        if (n == 0) {
+            return Vec2{};
+        }
+        const float angle = turn + kTwoPi * static_cast<float>((n - 1) % 8) / 8.0f;
+        return Vec2{std::sin(angle), std::cos(angle)} * (step * static_cast<float>((n - 1) / 8 + 1));
+    };
+    // (Places that fell on top of one another, pulled back from a fence or a bed, are not a
+    // shape to keep: then each finds its own.)
+    bool apart = true;
+    for (int a = 0; a < size && apart; ++a) {
+        for (int b = a + 1; b < size && apart; ++b) {
+            const std::size_t i = static_cast<std::size_t>(a);
+            const std::size_t k = static_cast<std::size_t>(b);
+            apart = plan.seated[i] || plan.seated[k] ||
+                    DistanceSquared(plan.place[i], plan.place[k]) >= kRoomM * kRoomM;
+        }
+    }
+    // Together to where there is room for everybody, as near as it is to be had...
+    for (int n = 0; apart && n <= 32; ++n) {
+        const Vec2 shift = ring(n, 0.8f);
+        bool fits = true;
+        for (int k = 0; k < size && fits; ++k) {
+            const std::size_t m = static_cast<std::size_t>(k);
+            if (plan.seated[m]) {
+                continue;
+            }
+            const Vec2 place = plan.place[m] + shift;
+            fits = free(place) && (n == 0 || (nav.Passable(World::TileAt(place), ground) &&
+                                              (k != first || nav.Walkable(around, place, ground))));
+        }
+        if (!fits) {
+            continue;
+        }
+        if (n == 0) {
+            return;
+        }
+        for (int k = 0; k < size; ++k) {
+            const std::size_t m = static_cast<std::size_t>(k);
+            if (!plan.seated[m]) {
+                plan.place[m] = plan.place[m] + shift;
+                if (focus != nullptr) {
+                    plan.face[m] = HeadingOf(*focus - plan.place[m]);
+                }
+            }
+        }
+        return;
+    }
+    // ...or each for itself.
+    for (int k = 0; k < size; ++k) {
+        const std::size_t m = static_cast<std::size_t>(k);
+        if (plan.seated[m]) {
+            continue;
+        }
+        for (int n = 0; n <= 24; ++n) {
+            const Vec2 place = plan.place[m] + ring(n, 0.6f);
+            if (free(place) && (n == 0 || (nav.Passable(World::TileAt(place), ground) &&
+                                           nav.Walkable(plan.place[m], place, ground)))) {
+                plan.place[m] = place;
+                if (focus != nullptr && n != 0) {
+                    plan.face[m] = HeadingOf(*focus - place);
+                }
+                break;
+            }
+        }
+        spots.push_back(plan.place[m]);
+    }
 }
 
 void Stepper::Start(Group g, const Plan& plan) {
@@ -571,6 +691,9 @@ bool Stepper::PlanSeats(Group g, Vec2 around, float maxDistance, Plan& plan) {
             plan.seated[m] = false;
         }
     }
+    if (standing > 0) {
+        MakeRoom(g, plan, &bench.position);
+    }
     return true;
 }
 
@@ -624,6 +747,7 @@ bool Stepper::PlanEat(Group g, const ServiceSite& site) {
         plan.slot[m] = 0;
         plan.seated[m] = false;
     }
+    MakeRoom(g, plan, nullptr);
     return Apply(g, plan);
 }
 
@@ -658,6 +782,7 @@ bool Stepper::TryBin(Group g) {
         }
         plan.face[m] = HeadingOf(best->position - plan.place[m]);
     }
+    MakeRoom(g, plan, &best->position);
     if (!Apply(g, plan)) {
         Failed(g);
     }
@@ -690,6 +815,7 @@ bool Stepper::TryRead(Group g) {
         }
         plan.face[m] = HeadingOf(best->position - plan.place[m]);
     }
+    MakeRoom(g, plan, &best->position);
     if (!Apply(g, plan)) {
         Failed(g);
     }

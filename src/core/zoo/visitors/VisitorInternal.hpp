@@ -118,7 +118,15 @@ struct Scratch {
     std::vector<Vec2> beasts;     ///< where the animals of the enclosure in question are
     std::vector<Threat> threats;  ///< dangerous animals on the loose
     std::vector<std::uint8_t> gone;
+    /// Who stands on which tile as the tick begins (walkers look there for the people in
+    /// their way): cellHead[tile] is the first of them, cellNext[visitor] the one after,
+    /// indices into Visitors::All() in ascending order, -1 at the end. cellUsed lists the
+    /// tiles that have somebody.
+    std::vector<std::int32_t> cellHead;
+    std::vector<std::int32_t> cellNext;
+    std::vector<std::uint32_t> cellUsed;
     std::vector<Vec2> points;
+    std::vector<Vec2> spots;  ///< where the people around a plan's places stand or are bound for
     std::vector<Vec2> path;
     std::vector<std::pair<float, int>> ranked;  ///< candidates of a decision, best first
     int budget = 0;                             ///< route searches left this tick
@@ -163,7 +171,7 @@ inline Vec2 ViewingPosition(const ViewingSpot& spot, int slot) {
     const Vec2 toward = ToVec(Step(spot.side));
     const Vec2 lateral{toward.z, -toward.x};
     const int column = columns[static_cast<std::size_t>(slot % 4)];
-    return World::TileCenter(spot.tile) + lateral * ((static_cast<float>(column) - 1.5f) * 0.46f) +
+    return World::TileCenter(spot.tile) + lateral * ((static_cast<float>(column) - 1.5f) * 0.5f) +
            toward * (0.66f - 0.5f * static_cast<float>(slot / 4));
 }
 
@@ -197,6 +205,15 @@ struct Stepper {
 
     // ---- VisitorActions.cpp: carrying a plan out ----------------------------------------
     void Move(Group g);
+    /// How hard the people in the way of member `self`, walking along `way`, push it to its
+    /// right ({-way.z, way.x}), -1..1; `slow` is lowered when it is about to walk into one.
+    float Dodge(std::size_t self, Group g, Vec2 way, float& slow) const;
+    /// A step from `from` to `to` crosses no fence and enters no building, water or planting.
+    bool Clear(Vec2 from, Vec2 to) const;
+    /// On the stand-off planting before a barrier, which is nobody's ground.
+    bool InPlanting(Vec2 position) const;
+    /// Watchers turn to the animals they look at.
+    void Aim(Group g);
     void GroupArrived(Group g);
     void Act(Group g);
     void ActQueue(Group g);
@@ -228,7 +245,10 @@ struct Stepper {
     void Start(Group g, const Plan& plan);
     bool RouteGroup(Group g);
     bool Route(Vec2 from, Vec2 to, std::vector<Vec2>& out);
-    void Lanes(Visitor& member);
+    void Lanes(Visitor& member, int place, int size, std::uint32_t leaderLook);
+    /// Moves the standing places of a plan off the places other people stand at or are bound for.
+    /// With a `focus` they then face it.
+    void MakeRoom(Group g, Plan& plan, const Vec2* focus);
     Vec2 Cluster(Vec2 centre, int member) const;
     void EnsureAppeal();
     std::uint32_t TakenSeats(PropId bench) const;

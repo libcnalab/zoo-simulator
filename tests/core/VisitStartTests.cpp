@@ -54,16 +54,18 @@ TEST(VisitStart, MatchesGameSequence) {
 // (2026-11-13: a group takes a bench only if at least half of it can sit; then the habitat
 // fronts: planted stand-off strips, heavy mesh, visitors spread along the fronts; those who
 // stand by a bench stay on ground they can walk to; habitats chosen by lot, a slower visit;
-// then the animals' species routines: ethogram profiles, places chosen in the habitat).
+// then the animals' species routines: ethogram profiles, places chosen in the habitat;
+// then G4: walking by steering with a pace of one's own, groups abreast, standing people on
+// ground of their own, watchers looking at the animals).
 void CheckFillHashes(std::int64_t ticks) {
     constexpr std::array<std::array<std::uint64_t, 2>, 3> shortHashes{
-        {{7218418889204295272ULL, 5740024314137548022ULL},
-         {2118643725444090450ULL, 77650624542809845ULL},
-         {18330606336054652182ULL, 6520226157608687671ULL}}};
+        {{1085343459346552820ULL, 2423916536734381269ULL},
+         {3824713083525200886ULL, 11385678439516204360ULL},
+         {1746387860539287630ULL, 1144367776643202936ULL}}};
     constexpr std::array<std::array<std::uint64_t, 2>, 3> fullHashes{
-        {{12737886390064380772ULL, 12678113340599457211ULL},
-         {16066752604157349174ULL, 14028515999086633901ULL},
-         {7696483335699664463ULL, 861112937031039971ULL}}};
+        {{12721221650076589925ULL, 13563154251682554642ULL},
+         {15436198954380397714ULL, 14050102984353408064ULL},
+         {1975919063374669059ULL, 10526684425400415800ULL}}};
     for (const std::uint64_t seed : {1ULL, 2ULL, 3ULL}) {
         Zoo zoo(testdata::GameCatalog(), testdata::GameSpecies(), VisitorZooConfig(seed));
         BuildVisitorZoo(zoo);

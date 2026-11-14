@@ -214,3 +214,21 @@ static batches, and the whole figure is still not broken down).
 What this says: the foliage costs about 0.55 million triangles a frame and 90 MB, and at
 most a millisecond of frame time on this machine. A distance form for trees would win
 both back and is the next step if the triangle count has to drop.
+
+## After the buildings and the visitors' walk (G3, G4; 2026-11-14)
+
+G3 (buildings, barriers, signs): scenery 2,177,095 -> 2,312,141 triangles, 121 -> 130 draw
+calls. `--bench --frames 300` at the entrance, three runs each, interleaved, load average 12
+to 17 (other agents): frame mean 35.1 / 24.2 / 27.4 ms before, 28.0 / 26.7 / 24.8 ms after.
+No cost measurable under that load.
+
+G4 (visitors steer, give way, walk abreast, lean, look and point): `--people 800 --hour 11
+--seed 7 --bench --frames 300`, three runs each, interleaved with a build of the commit
+before it, load average 4 to 7: frame mean **22.7 / 22.6 / 21.4 ms before, 24.2 / 27.9 /
+25.3 ms after** (44 -> 39 fps). Every pair is slower. Of the game's own parts the people pass
+went from 9.4 / 9.1 / 8.4 ms to 11.2 / 12.7 / 12.0 ms and the simulation from 1.0 to about
+1.3 ms; set against the animals' time, which G4 did not touch, the people pass is about 30 %
+dearer. Not found yet (no profiler on this machine): turning off the new pose layers
+(weight, lean, point, talk, stoop, look) gave no measurable change, so the cost is in the
+per-visitor bookkeeping of `VisitorRenderer::Update`/`Carry`, which runs for every one of
+the 800 people each frame, drawn or not. Open: run it only for the people in range.

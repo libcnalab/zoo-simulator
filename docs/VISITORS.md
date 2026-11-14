@@ -11,7 +11,9 @@ and is saved with the zoo. The game draws each visitor as a CNA avatar.
   The first member leads: the leader decides where the group goes and holds the
   group's purse; every member walks its own route to its own place at the
   destination (a slot at the fence, a seat on the bench, a place in the queue).
-  Children pay half at the gate, are shorter and a little slower.
+  Children pay half at the gate, are shorter and a little slower; one adult in
+  eight is old (`Elderly()`, from the visitor's `look`) and walks at four fifths
+  of an adult's pace. `PaceOf()` is the pace a visitor walks at on its own.
 - **Arrivals.** Each tick the gate expects
   `ExpectedArrivalsPerHour()` people per game hour: a base rate shaped over the
   day, times the zoo's *attraction* (what there is to see), the *price* (against
@@ -66,8 +68,7 @@ everybody still inside heads out. Nobody stays the night.
 
 ## Getting about
 
-Visitors walk on paths only (`NavProfile::Visitor()`), each in its own lane
-`kLaneOffset` to the side of the route. Routes come from the shared `Navigator`;
+Visitors walk on paths only (`NavProfile::Visitor()`). Routes come from the shared `Navigator`;
 at most `kPathSearchesPerTick` searches run per tick for all groups together.
 When the map changes under a route (`World::NavRevision`), the group plans
 again; a destination that can no longer be reached is given up, and a group that
@@ -79,6 +80,56 @@ benches, bins, boards, how pleasant each tile is) is derived from the world in
 Benches and picnic tables stand beside the paths: the last step from the paving
 to a seat is a straight line. Members that find no seat stand in front of the
 bench or at the ends of the table.
+
+## How they walk and stand
+
+`Stepper::Move` (`VisitorActions.cpp`) walks a group as people, not as points on
+a line:
+
+- **Pace.** A group walks at the pace of its slowest member. Everybody gains
+  speed at `kGainSpeed`, loses it at `kDropSpeed` and brakes for its place with
+  `kBrake` (v = sqrt(2 x brake x distance)), so nobody is at full stride in one
+  tick or stops dead from it. `Visitor::speed` is the ground it really covers:
+  the renderer times the steps by it.
+- **Turning.** A walker steers: it turns at `kTurnWalking` rad/s at full stride
+  and up to `kTurnOnTheSpot` faster the slower it goes, and walks where it
+  looks as long as that crosses no fence and leaves no paving (`Stepper::Clear`);
+  otherwise, and for the last `kDirectM`, straight at its waypoint. It rounds a
+  corner from `kCornerM` when the way to the next waypoint is open.
+- **Formation.** The leader walks the route; the others keep a place beside it
+  or in rows behind (`kAbreastM` apart, rows `kRowM` behind one another, two
+  abreast), each on its own lane of the route (`Stepper::Lanes`, `kLaneOffset`
+  to the side of the waypoints). The leader does not walk away from members who are still
+  catching up. A child runs up to `kChildAheadM` ahead now and then and lets the
+  others catch up.
+- **Giving way.** `Stepper::Dodge` looks `kAheadM` ahead along the tiles the next
+  steps reach (per-tile chains of who stands where, rebuilt each tick in
+  `BuildFrame`): somebody nearer to the walker's line than `kShoulderM`
+  (`kOwnShoulderM` for its own group) is walked around on the side with more
+  room; somebody going the same way is followed and only passed when nearer
+  than `kFollowM`; for people coming the other way the walker also slows, never
+  below 45 % of its pace. Within `kSettleM` of its own place it minds nobody.
+- **The player.** `Visitors::SetBystander(position)` names somebody who stands on
+  the paths and is no visitor (the game passes the walking player every frame,
+  `ClearBystander()` otherwise). Walkers go round it like round a standing
+  visitor. It is not saved and not part of `StateHash()`: a zoo that is watched
+  from within is no longer bit-identical to one that is not.
+- **Standing.** People who stand to eat, read a board or use a bin, and those
+  who find no seat, are placed by `Stepper::MakeRoom`: the group's little circle
+  is moved as a whole (rings of 0.8 m) to where every member is `kRoomM` from
+  everybody already standing or bound for a place there, and from the first
+  `kLineKeptClear` places of a stall's line; when that fails, or when the places
+  of the group fell on top of one another, each member finds its own.
+- **Watching.** Places at a fence are 0.5 m apart, the front row 0.34 m from the
+  rail. `Stepper::Aim` gives each watcher an animal of the enclosure to look at
+  (within `kAimSpread` of the straight line across the fence; mostly the one
+  its group looks at, sometimes its own; the nearer the likelier), anew every
+  `kAimSeconds` at a moment of its own, and the watcher turns to it at
+  `kAimEase` times what is left of the turn, never slower than `kAimTurn`.
+
+Because walkers now speed up, brake, turn and give way, the paces are 6 % higher
+than they were (`kWalkSpeed` 1.37, `kChildSpeed` 1.22), so that a visit takes as
+long as it did.
 
 ## The numbers
 
@@ -93,7 +144,14 @@ All in `VisitorTuning.hpp`; the more important ones:
 | `kFairPriceBase`, `kFairPriceRange` | $4, $46 | fair ticket = base + range x attraction |
 | `kPriceSensitivity` | 2.2 | arrivals fall by exp(-this x (price/fair - 1)) above the fair price |
 | `kRatingMemory` | 300 | visitors the rating remembers |
-| `kWalkSpeed` (+`kWalkSpeedSpread`), `kChildSpeed` | 1.3 (+0.25), 1.15 m/s | walking |
+| `kWalkSpeed` (+`kWalkSpeedSpread`), `kChildSpeed` | 1.37 (+0.25), 1.22 m/s | walking |
+| `kElderlyShare`, `kElderlyPace` | 0.12, 0.8 | old people: share of the adults, share of the pace |
+| `kGainSpeed`, `kDropSpeed`, `kBrake` | 2.4, 4.0, 1.2 m/s2 | speeding up, slowing down, braking for one's place |
+| `kTurnWalking`, `kTurnOnTheSpot` | 3.4, +2.6 rad/s | turning at full stride, and more at a standstill |
+| `kAheadM`, `kShoulderM`, `kOwnShoulderM`, `kFollowM` | 1.4, 0.55, 0.4, 0.5 m | whom a walker goes round |
+| `kAbreastM`, `kRowM`, `kChildAheadM` | 0.62, 0.85, 1.9 m | a group's formation |
+| `kRoomM`, `kLineKeptClear` | 0.5 m, 8 | room between people who stand; places of a queue kept free |
+| `kAimSpread`, `kAimSeconds`, `kAimEase`, `kAimTurn` | 0.5 rad, 2.5 s, 4 /s, 0.5 rad/s | a watcher's look at an animal |
 | `kHungerPerHour` .. `kTirednessPerHour` | 0.06 .. 0.09 | needs per game hour |
 | `kUrgent`, `kNotable`, `kHandyM` | 0.62, 0.4, 36 m | when a need is seen to |
 | `kWatchSeconds` (+spread) | 8 (+0..6) s | one look at an enclosure |
@@ -116,6 +174,48 @@ Limits: `Visitors::kMaxVisitors` 800, `kMaxGroupSize` 5, `kMaxLitter` 1500.
 - Animals know who watches them: `Zoo` passes `Visitors::Watching(enclosure)` to
   `Animals::SetViewers` once a second (crowds stress shy species).
 
+## How the game shows them
+
+`src/game/VisitorRenderer` draws the at most 18 nearest visitors in view as CNA
+avatars and everybody else as flat figures from sheets made at loading (see the
+comment at the top of `VisitorRenderer.hpp`). What
+makes them people is posed in `src/game/AvatarPose` and chosen in
+`VisitorRenderer::Carry`, for the avatars only; all of it follows from the
+simulation's clock and the visitor's id and group, so a lockstep run shows the
+same people doing the same things:
+
+- **Steps.** The step's length follows the pace (`ApplyGait(..., stride, swing)`:
+  stride = sqrt(pace / (1.45 sqrt(scale))) of the body's full stride, between
+  0.5 and 1.06, times the person's own 0.92..1.06 or an old person's 0.8..0.94),
+  and the phase advances by the ground covered, so feet do not slide; a slow
+  walker takes shorter, lower steps with less bob and arm swing. Arm swing is
+  the person's own (0.65..1.35; old people 0.45..1.15), old people stoop
+  (`ApplyStoop`). The phase starts from the id: neighbours are not in step.
+- **Standing.** Weight on one leg for 9 to 18 s at a time, then the other or both
+  (`ApplyWeight`); the head looks about, less while watching, more while waiting
+  (`ApplyLook`).
+- **Talking.** A group talks in spells (7 s of every 11, in 55 % of them): one
+  member speaks to another, everybody's head turns to the speaker, the speaker's
+  to the one spoken to, and a speaker who stands moves a hand (`ApplyTalk`).
+- **At the fence.** An adult in the front row leans on the rail (`ApplyLean`),
+  points at what it looks at (`ApplyPoint`), holds up a camera with both hands
+  (`ApplyCamera`) or crouches beside a child of its group (`ApplyCrouch`); a
+  child points. One of these at a time, for part of a spell of 12 to 20 s.
+- **Waiting.** Adults who stand idle, queue or sit look at a phone now and then
+  (`ApplyPhone`).
+
+The flat figures show none of this (they have one standing, one sitting and
+eight walking pictures per side). The avatar catalogue has no child bodies,
+pushchairs, bags or carried objects: children are small adults, hands hold
+nothing, and nobody is carried.
+
+`ZOO_VISITOR_DEBUG=1` prints every visitor once (id, group, activity, place,
+heading, speed, height) when the first frame with visitors is drawn: for
+finding a scene to look at. `ZOO_VISITOR_POSE=lean|point|camera|phone|crouch|old`
+makes everybody who could do that one thing do it all the time (`phone` every
+standing adult, the others the watchers at a fence, `old` gives every adult the
+old people's stoop and step): for looking at one pose, never set in the game.
+
 ## Saving
 
 `ZooSave` writes a `"visitors"` section (every visitor with its plan and route,
@@ -133,13 +233,23 @@ part of `Zoo::StateHash()`. With about 240 visitors in the starter zoo the whole
 zoo steps in about 0.1 ms a tick (release build, 2026-11-12;
 `VisitorDayTests.ADayInTheStarterZoo` fails above 1 ms).
 
-Measured in the starter zoo at a $15 ticket (the same test): 237 visitors on day
-one, 2.1 different enclosures seen per group, happiness on leaving 0.75, 304
-purchases, 17 donations, 64 pieces of litter; day two 211 visitors, happiness
-0.69. The zoo's balance went from $50,000 to about $53,300 over day one.
+Measured in the starter zoo at a $15 ticket (the same test, 2026-11-13): 240
+visitors on day one, 1.7 different enclosures seen per group, happiness on
+leaving 0.68, 254 purchases, 9 donations, 34 pieces of litter; day two 197
+visitors, happiness 0.71. The zoo's balance went from $50,000 to about $53,000
+over day one.
+
+Giving way costs a look at the people on the tiles ahead for every walker and
+tick; the chains of who stands on which tile are rebuilt each tick.
 
 ## Tests
 
+`tests/core/VisitorWalkTests.cpp` (seven cases: walkers neither snap round nor
+jolt and cover the ground their speed says, the members of a walking group are
+not inside each other and stay with their leader, watchers look at an animal
+and never away from the fence, people who stand keep apart, a sitter is on its
+seat facing out with its neighbours beside it, somebody standing on the path is
+walked around, children and old people are slower),
 `tests/core/VisitorTests.cpp` (sixteen cases: the gate's hours, the price and
 the weather, an empty zoo, determinism, groups, places at the fence and on
 seats, saving and loading, a torn-up path, a loose lion, litter and bins, the
@@ -156,4 +266,10 @@ at a seat, nobody stuck, everybody gone by night).
 - A group remembers only the last stall whose queue it gave up on.
 - The step from the paving to a seat is not checked against fences.
 - The once-an-hour limit on the "animal on the loose" alarm is not saved.
-- Visitors do not avoid each other while walking; lanes keep them apart mostly.
+- Walkers go round each other and round the player; people who stand do not
+  step aside for anybody, and a watcher who comes to a fence after somebody
+  began to eat right behind the rail may stand within arm's length of them.
+- Two walkers of a group can still be inside each other for a moment where a
+  path narrows (about 1 % of the pairs in `VisitorWalkTests`).
+- The line of a stall is laid from the map alone; people who stood there before
+  the first customer came are not moved.

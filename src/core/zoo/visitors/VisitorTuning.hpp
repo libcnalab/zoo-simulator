@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 #pragma once
 
+#include <cstddef>
 #include <cstdint>
 
 #include "zoo/sim/Calendar.hpp"
@@ -36,9 +37,12 @@ inline constexpr float kCheapBonus = 0.35f;
 inline constexpr float kRatingMemory = 300.0f;
 
 // ---- bodies ----------------------------------------------------------------------------
-inline constexpr float kWalkSpeed = 1.3f;         ///< adults: this plus up to kWalkSpeedSpread
+// What a walker does at full stride. Walking was a constant speed along a line once; since it
+// speeds up, brakes, turns and gives way (some 6 % of the way's time) the paces are that much
+// higher, so that a visit takes as long as it did.
+inline constexpr float kWalkSpeed = 1.37f;        ///< adults: this plus up to kWalkSpeedSpread
 inline constexpr float kWalkSpeedSpread = 0.25f;  ///<
-inline constexpr float kChildSpeed = 1.15f;
+inline constexpr float kChildSpeed = 1.22f;
 inline constexpr float kFleeFactor = 2.3f;
 inline constexpr float kTurnRadiansPerSecond = 5.0f;
 /// How far to the side of a route's waypoints a visitor keeps (its own lane), metres.
@@ -57,6 +61,48 @@ inline constexpr float kHandyM = 36.0f;
 /// Happiness lost per motion second for each need above kSuffering.
 inline constexpr float kSuffering = 0.82f;
 inline constexpr float kSufferingPerSecond = 0.003f;
+
+// ---- how they walk ---------------------------------------------------------------------
+/// This share of the adults is old: walks at kElderlyPace of an adult's pace.
+inline constexpr float kElderlyShare = 0.12f;
+inline constexpr float kElderlyPace = 0.8f;
+/// A walker speeds up and slows down this fast, m/s2, and brakes for its place with kBrake.
+inline constexpr float kGainSpeed = 2.4f;
+inline constexpr float kDropSpeed = 4.0f;
+inline constexpr float kBrake = 1.2f;
+/// It turns this fast at full stride and kTurnOnTheSpot faster when it stands, rad/s.
+inline constexpr float kTurnWalking = 3.4f;
+inline constexpr float kTurnOnTheSpot = 2.6f;
+/// It rounds a corner: on to the next waypoint from this far, when the way there is open...
+inline constexpr float kCornerM = 0.55f;
+/// ...and otherwise from this far; nearer than kDirectM it steps straight at its waypoint.
+inline constexpr float kReachM = 0.1f;
+inline constexpr float kDirectM = 0.4f;
+/// Nearer than this to the place it is bound for it minds nobody (the place is its own).
+inline constexpr float kSettleM = 1.0f;
+/// The people it walks around: those up to kAheadM in front of it and nearer to its line
+/// than kShoulderM (kOwnShoulderM for its own group, who walk closer).
+inline constexpr float kAheadM = 1.4f;
+inline constexpr float kShoulderM = 0.55f;
+inline constexpr float kOwnShoulderM = 0.4f;
+/// Somebody going the same way is followed, and walked around only when nearer than this.
+inline constexpr float kFollowM = 0.5f;
+/// A group walks two abreast, kAbreastM apart, in rows kRowM behind one another.
+inline constexpr float kAbreastM = 0.62f;
+inline constexpr float kRowM = 0.85f;
+/// A child runs this far ahead of its people now and then, and comes back.
+inline constexpr float kChildAheadM = 1.9f;
+/// Two people who stand (not at a fence, on a seat or in a line) keep this far apart.
+inline constexpr float kRoomM = 0.5f;
+/// ...and that far from the first so many places of a stall's line.
+inline constexpr std::size_t kLineKeptClear = 8;
+/// A watcher looks at an animal up to this far off the straight line across the fence, rad,
+/// picks another every kAimSeconds or so and turns to it at kAimEase times what is left of
+/// the turn a second, never slower than kAimTurn rad/s.
+inline constexpr float kAimSpread = 0.5f;
+inline constexpr float kAimSeconds = 2.5f;
+inline constexpr float kAimEase = 4.0f;
+inline constexpr float kAimTurn = 0.5f;
 
 // ---- what they do ----------------------------------------------------------------------
 inline constexpr float kWatchSeconds = 8.0f;  ///< plus up to kWatchSpreadSeconds

@@ -64,8 +64,12 @@ void Stepper::Cheer(Group g, float amount) {
     }
 }
 
+bool Stepper::InPlanting(Vec2 position) const {
+    return env.enclosures.RegionAt(World::TileAt(position)) == Region::StandOff;
+}
+
 void Stepper::DropLitter(Vec2 position) {
-    if (env.enclosures.RegionAt(World::TileAt(position)) == Region::StandOff ||
+    if (InPlanting(position) ||
         all.litter_.size() >= Visitors::kMaxLitter) {
         return;
     }
@@ -107,56 +111,269 @@ void Stepper::Finish(Group g) {
 void Stepper::Move(Group g) {
     std::vector<Visitor>& list = List();
     Visitor& lead = list[g.first];
-    // A group walks at the pace of its slowest.
+    const Navigator& nav = env.nav;
+    const bool fleeing = lead.activity == VisitorActivity::Fleeing;
+    // A group walks at the pace of its slowest, and its leader no faster than those who
+    // are still on their way can follow.
     float pace = 10.0f;
-    float farthest = 0.0f;
+    float lag = 0.0f;
     for (std::size_t i = g.first; i < g.end; ++i) {
         const Visitor& v = list[i];
-        pace = std::min(pace, v.child ? kChildSpeed : kWalkSpeed + kWalkSpeedSpread * Hash01(v.look, 3));
-        farthest = std::max(farthest, DistanceSquared(v.position, lead.position));
+        pace = std::min(pace, PaceOf(v));
+        if (v.routeIndex < v.route.size()) {
+            lag = std::max(lag, DistanceSquared(v.position, lead.position));
+        }
     }
-    if (lead.activity == VisitorActivity::Fleeing) {
+    if (fleeing) {
         pace *= kFleeFactor;
     }
-    const float turn = kTurnRadiansPerSecond * kTickSeconds;
+    const bool leadWalks = lead.routeIndex < lead.route.size();
+    const Vec2 leadWay = HeadingVector(lead.heading);
     const float leadLeft = Distance(lead.position, lead.target);
+    const float seconds = static_cast<float>(now) * kTickSeconds;
     bool everybody = true;
     for (std::size_t i = g.first; i < g.end; ++i) {
         Visitor& v = list[i];
-        if (v.routeIndex >= v.route.size()) {
+        const std::size_t count = v.route.size();
+        if (v.routeIndex >= count) {
             v.speed = 0.0f;
-            v.heading = TurnTowards(v.heading, v.face, turn);
+            v.heading = TurnTowards(v.heading, v.face, kTurnRadiansPerSecond * kTickSeconds);
             continue;
         }
-        float speed = pace;
-        if (i == g.first) {
-            if (farthest > 25.0f) {
-                speed *= 0.6f;  // waits for the stragglers
+        // How fast it would like to go.
+        float want = pace;
+        const int k = static_cast<int>(i - g.first);
+        if (k == 0) {
+            if (lag > 16.0f) {
+                want *= 0.6f;  // waits for the stragglers
             }
+        } else if (leadWalks && DistanceSquared(v.position, lead.position) < 36.0f) {
+            // Keeps its place: beside the leader or in a row behind it. A child runs a few
+            // steps ahead now and then and lets the others catch up.
+            float place = -kRowM * static_cast<float>(k / 2);
+            if (v.child && !fleeing) {
+                const float period = 9.0f + 6.0f * Hash01(v.look, 13);
+                const float at = seconds / period + Hash01(v.look, 14);
+                const float through = at - std::floor(at);
+                if (through < 0.35f) {
+                    place += kChildAheadM * std::sin(kPi * through / 0.35f);
+                }
+            }
+            const float along = Dot(v.position - lead.position, leadWay);
+            want *= std::clamp(1.0f + 0.9f * (place - along), 0.55f, 1.45f);
         } else {
             const float left = Distance(v.position, v.target);
-            if (left > leadLeft + 2.0f) {
-                speed *= 1.3f;  // catches up
-            } else if (left < leadLeft - 2.0f) {
-                speed *= 0.75f;
+            if (left > leadLeft + 1.5f) {
+                want *= 1.35f;  // catches up
+            } else if (left < leadLeft - 1.5f) {
+                want *= 0.75f;
             }
         }
-        const Vec2 before = v.position;
+        // Rounds the corner: on to the next waypoint as soon as the way to it is open.
         std::size_t index = v.routeIndex;
-        const bool arrived = FollowPath(v.route, index, v.position, speed * kTickSeconds);
-        v.routeIndex = static_cast<std::uint32_t>(index);
-        const Vec2 step = v.position - before;
-        const float moved = Length(step);
-        v.speed = moved / kTickSeconds;
-        if (moved > 1.0e-4f) {
-            v.heading = TurnTowards(v.heading, HeadingOf(step), turn);
+        Vec2 to = v.route[index] - v.position;
+        float distance = Length(to);
+        while (index + 1 < count && distance < kCornerM) {
+            if (distance > kReachM && !nav.Walkable(v.position, v.route[index + 1], kWalker)) {
+                break;
+            }
+            ++index;
+            to = v.route[index] - v.position;
+            distance = Length(to);
         }
-        if (!arrived) {
+        const bool last = index + 1 == count;
+        const Vec2 way = distance > 1.0e-4f ? to * (1.0f / distance) : HeadingVector(v.heading);
+        // Steers at the waypoint and around the people in the way; nobody is in the way of
+        // somebody who is nearly at its own place.
+        float slow = 1.0f;
+        Vec2 wish = way;
+        if (!last || distance > kSettleM) {
+            const float push = Dodge(i, g, way, slow);
+            wish = Normalized(way + Vec2{-way.z, way.x} * (0.9f * push), way);
+        }
+        const float wishHeading = HeadingOf(wish);
+        const float error = std::abs(WrapAngle(wishHeading - v.heading));
+        want *= slow * std::max(0.12f, std::cos(error));  // turns before it strides out
+        if (last && !fleeing) {
+            want = std::min(want, std::sqrt(2.0f * kBrake * distance) + 0.25f);  // slows to stop
+        }
+        const float gain = fleeing ? 3.0f * kGainSpeed : kGainSpeed;
+        v.speed += std::clamp(want - v.speed, -kDropSpeed * kTickSeconds, gain * kTickSeconds);
+        const float standing = 1.0f - std::min(v.speed / std::max(pace, 0.1f), 1.0f);
+        const float turn = (fleeing ? 2.0f : 1.0f) * (kTurnWalking + kTurnOnTheSpot * standing);
+        v.heading = TurnTowards(v.heading, wishHeading, turn * kTickSeconds);
+        const float stride = v.speed * kTickSeconds;
+        if (last && distance <= std::max(stride, 0.03f)) {
+            v.position = v.route[index];
+            v.speed = 0.0f;
+            index = count;
+        } else {
+            // Goes where it looks, so long as that crosses no fence and leaves no paving;
+            // otherwise, and for the last steps, straight at the waypoint as the route was laid
+            // (which may end off the paving: a seat, a place on the grass by a bench).
+            const Vec2 steered = v.position + HeadingVector(v.heading) * stride;
+            Vec2 next = distance >= kDirectM && Clear(v.position, steered)
+                            ? steered
+                            : v.position + way * std::min(stride, distance);
+            if (InPlanting(next) && !InPlanting(v.position)) {
+                // The straight line cuts the corner of a stand-off strip: round it along one
+                // axis, the longer part of the step first, or wait a tick.
+                const Vec2 alongX{next.x, v.position.z};
+                const Vec2 alongZ{v.position.x, next.z};
+                const bool xFirst = std::abs(next.x - v.position.x) >= std::abs(next.z - v.position.z);
+                const Vec2 first = xFirst ? alongX : alongZ;
+                const Vec2 second = xFirst ? alongZ : alongX;
+                next = !InPlanting(first) ? first : !InPlanting(second) ? second : v.position;
+            }
+            v.position = next;
             everybody = false;
         }
+        v.routeIndex = static_cast<std::uint32_t>(index);
     }
     if (everybody) {
         GroupArrived(g);
+    }
+}
+
+float Stepper::Dodge(std::size_t self, Group g, Vec2 way, float& slow) const {
+    const std::vector<Visitor>& list = all.visitors_;
+    const Sites& sites = scr.sites;
+    const Visitor& me = list[self];
+    const Vec2 right{-way.z, way.x};
+    const float mine = std::max(me.speed, 0.5f);
+    float push = 0.0f;
+    // `shoulder` is how near to my line somebody has to be to matter, `tie` the side I take
+    // when it is dead ahead and goes my way.
+    const auto meet = [&](Vec2 position, float heading, float speed, float shoulder, float tie,
+                          float weight) {
+        const Vec2 d = position - me.position;
+        const float along = Dot(d, way);
+        if (along < -0.3f || along > kAheadM) {
+            return;
+        }
+        const float side = Dot(d, right);
+        if (std::abs(side) >= shoulder) {
+            return;
+        }
+        const float theirs = speed > 0.0f ? speed * Dot(HeadingVector(heading), way) : 0.0f;
+        const bool with = theirs > 0.6f * mine;
+        if (with && along > kFollowM) {
+            return;  // goes my way: followed, not walked around
+        }
+        const bool oncoming = theirs < -0.3f;
+        const float near = 1.0f - std::max(along, 0.0f) / kAheadM;
+        const float away = std::abs(side) > 0.06f ? (side > 0.0f ? -1.0f : 1.0f) : (oncoming ? 1.0f : tie);
+        push += away * weight * (oncoming ? 1.5f : 1.0f) * near * (1.0f - std::abs(side) / shoulder);
+        if (!with && along > 0.0f && along < 0.7f && std::abs(side) < 0.34f) {
+            slow = std::min(slow, std::max(0.45f, along / 0.7f));  // about to walk into it
+        }
+    };
+    // The tiles its next steps and its shoulders reach.
+    const Vec2 ahead = me.position + way * kAheadM;
+    const TileCoord low = World::TileAt(
+        {std::min(me.position.x, ahead.x) - kShoulderM, std::min(me.position.z, ahead.z) - kShoulderM});
+    const TileCoord high = World::TileAt(
+        {std::max(me.position.x, ahead.x) + kShoulderM, std::max(me.position.z, ahead.z) + kShoulderM});
+    for (int z = std::max(low.z, 0); z <= std::min(high.z, sites.depth - 1); ++z) {
+        for (int x = std::max(low.x, 0); x <= std::min(high.x, sites.width - 1); ++x) {
+            const std::size_t tile = sites.TileIndex({x, z});
+            for (std::int32_t n = scr.cellHead[tile]; n >= 0; n = scr.cellNext[static_cast<std::size_t>(n)]) {
+                const std::size_t j = static_cast<std::size_t>(n);
+                if (j == self) {
+                    continue;
+                }
+                const Visitor& other = list[j];
+                const bool own = j >= g.first && j < g.end;
+                meet(other.position, other.heading, other.speed, own ? kOwnShoulderM : kShoulderM,
+                     self < j ? -1.0f : 1.0f, 1.0f);
+            }
+        }
+    }
+    if (all.hasBystander_) {
+        meet(all.bystander_, 0.0f, 0.0f, 0.75f, 1.0f, 1.6f);
+    }
+    return std::clamp(push, -1.0f, 1.0f);
+}
+
+bool Stepper::Clear(Vec2 from, Vec2 to) const {
+    const TileCoord a = World::TileAt(from);
+    const TileCoord b = World::TileAt(to);
+    if (a == b) {
+        return true;
+    }
+    const int dx = b.x - a.x;
+    const int dz = b.z - a.z;
+    if (std::abs(dx) > 1 || std::abs(dz) > 1) {
+        return false;
+    }
+    const Navigator& nav = env.nav;
+    const Dir sideX = dx > 0 ? Dir::East : Dir::West;
+    const Dir sideZ = dz > 0 ? Dir::South : Dir::North;
+    if (dz == 0) {
+        return nav.CanStep(a, sideX, kWalker);
+    }
+    if (dx == 0) {
+        return nav.CanStep(a, sideZ, kWalker);
+    }
+    // Across a corner: both ways round it must be open.
+    return nav.CanStep(a, sideX, kWalker) && nav.CanStep(a + Step(sideX), sideZ, kWalker) &&
+           nav.CanStep(a, sideZ, kWalker) && nav.CanStep(a + Step(sideZ), sideX, kWalker);
+}
+
+void Stepper::Aim(Group g) {
+    std::vector<Visitor>& list = List();
+    const Visitor& lead = list[g.first];
+    const Sites& sites = scr.sites;
+    const int view = sites.ViewIndex(lead.targetEnclosure);
+    if (view < 0) {
+        return;
+    }
+    const ViewSite& site = sites.views[static_cast<std::size_t>(view)];
+    const std::int64_t every = Ticks(kAimSeconds);
+    bool gathered = false;
+    for (std::size_t i = g.first; i < g.end; ++i) {
+        Visitor& v = list[i];
+        // Each in its own time, so that a row of people does not turn its heads as one.
+        if ((now + static_cast<std::int64_t>(HashU32(v.look, 51) % static_cast<std::uint32_t>(every))) % every != 0) {
+            continue;
+        }
+        const TileCoord tile = World::TileAt(v.target);
+        const auto spot = std::find_if(site.spots.begin(), site.spots.end(),
+                                       [&](const ViewingSpot& s) { return s.tile == tile; });
+        if (spot == site.spots.end()) {
+            continue;
+        }
+        if (!gathered) {
+            gathered = true;
+            scr.beasts.clear();
+            for (const Animal& animal : fauna.All()) {
+                if (animal.home == site.enclosure && animal.Visible() && !animal.loose) {
+                    scr.beasts.push_back(animal.position);
+                }
+            }
+        }
+        const float across = HeadingOf(ToVec(Step(spot->side)));
+        // Mostly what the group looks at together, sometimes an animal of its own; of those
+        // that can be looked at without turning away from the fence, the nearer the likelier.
+        const std::uint32_t turnOf = static_cast<std::uint32_t>(now / every);
+        const std::uint32_t who = Hash01(v.look, 52 + turnOf) < 0.6f ? lead.look : v.look;
+        float best = -1.0f;
+        float aim = across;
+        for (std::size_t b = 0; b < scr.beasts.size(); ++b) {
+            const Vec2 d = scr.beasts[b] - v.position;
+            const float off = WrapAngle(HeadingOf(d) - across);
+            const float distance = Length(d);
+            if (distance > kViewRangeM || std::abs(off) > 1.2f) {
+                continue;
+            }
+            const float score = (0.3f + Hash01(who, 53 + turnOf * 31u + static_cast<std::uint32_t>(b))) /
+                                (6.0f + distance) * (std::abs(off) > kAimSpread ? 0.4f : 1.0f);
+            if (score > best) {
+                best = score;
+                aim = across + std::clamp(off, -kAimSpread, kAimSpread);
+            }
+        }
+        v.face = WrapAngle(aim);
     }
 }
 
@@ -297,10 +514,19 @@ void Stepper::Act(Group g) {
         default:
             break;
     }
-    const float turn = kTurnRadiansPerSecond * kTickSeconds;
+    // People who look at animals follow them with their eyes, unhurried.
+    const bool watching = lead.goal == VisitorGoal::Watch;
+    if (watching) {
+        Aim(g);
+    }
     for (std::size_t i = g.first; i < g.end; ++i) {
-        list[i].speed = 0.0f;
-        list[i].heading = TurnTowards(list[i].heading, list[i].face, turn);
+        Visitor& v = list[i];
+        v.speed = 0.0f;
+        // A look that swings over eases into its place; somebody who has just walked up turns round.
+        const float turn =
+            watching ? std::clamp(kAimEase * std::abs(WrapAngle(v.face - v.heading)), kAimTurn, kTurnRadiansPerSecond)
+                     : kTurnRadiansPerSecond;
+        v.heading = TurnTowards(v.heading, v.face, turn * kTickSeconds);
     }
     if (now < lead.activityUntil) {
         return;

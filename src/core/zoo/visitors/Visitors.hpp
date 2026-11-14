@@ -166,6 +166,11 @@ struct Litter {
     bool operator==(const Litter&) const = default;
 };
 
+/// One visitor in eight is old: walks slower than the others (the pictures bend them a little).
+bool Elderly(const Visitor& visitor);
+/// How fast a visitor walks when nothing holds it up, m/s.
+float PaceOf(const Visitor& visitor);
+
 /// The visitors of a zoo: who comes, what they do, what they think of it.
 ///
 /// Deterministic: the state is the visitors, the litter, a random stream and a
@@ -231,6 +236,14 @@ public:
     /// and takes no part in StateHash().
     const VisitorPace& Pace() const { return pace_; }
     void SetPace(const VisitorPace& pace);
+    /// Somebody the visitors walk around who is not one of them: the player on foot. Like the
+    /// pace it is told from outside, not saved and no part of StateHash(); where the visitors
+    /// go because of it is.
+    void SetBystander(Vec2 position) {
+        bystander_ = position;
+        hasBystander_ = true;
+    }
+    void ClearBystander() { hasBystander_ = false; }
     /// As if the zoo had been open for hours: every group that is on its feet inside
     /// (walking, standing or at a fence; not seated, served, queueing or in a house)
     /// is set down somewhere on the public paths the gate leads to, the farther in the
@@ -263,6 +276,8 @@ private:
     Money ticketPrice_ = Dollars(15);
     bool open_ = true;
     VisitorPace pace_;
+    Vec2 bystander_;
+    bool hasBystander_ = false;
     float arrivalRemainder_ = 0.0f;
     float rating_ = 0.6f;
     float educationRating_ = 0.0f;
