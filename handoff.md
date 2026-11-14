@@ -10,9 +10,8 @@ whatever you take up (`docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `docs/V
 - **The game:** Greenhill Zoo, a first-person walk through a zoo (C++23, the simulation core in
   `src/core/zoo/`, the game on CNA / cna-engine in `src/game/`). Zoo management must not come
   back as the primary gameplay.
-- **State:** branch `main`, working tree clean, all 221 core tests pass. Three commits are
-  **not pushed** (`7ebabef` pace and map travel, `7588339` binoculars, `fb8b864` web build):
-  push only when the owner asks.
+- **State:** branch `main`, working tree clean, all 221 core tests pass, everything pushed to
+  `origin/main` (2026-11-14, at the owner's request). Push again only when the owner asks.
 - **Next step, in this order:** (1) the keepers, G5 (section 4.1); (2) plants' distance forms,
   G2b (4.3); (3) ground and water edges, G1/G1b (4.2); then 4.4 to 4.8 as time allows.
 - **Deadline:** about **2026-11-28** the owner puts Zoo Simulator under the same AI policy as
@@ -182,7 +181,6 @@ Worktree build trees point at the snapshot too; `tools/build/use-libcna-snapshot
 
 ## 6. Decisions for the owner (collect; do not block)
 
-- Push the three local commits (section 0)?
 - Licences before any distribution: rhino and elephant sources are CC BY 4.0 as published but
   their authorship is unconfirmed (`assets/ATTRIBUTION.md`); the polar bear's CC BY-SA source
   (`build-probe/model-research/polarbear-cedes-bysa/`) is unused until share-alike is decided;
