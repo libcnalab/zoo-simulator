@@ -234,6 +234,12 @@ void ZooGame::LoadGame() {
     // (the editor) there are only avatars, and no more than the budget.
     visitors_->SetFlat(!editor_ && !without_.flatPeople);
     visitors_->SetBudget(peopleBudget_ > 0 ? peopleBudget_ : editor_ ? 400 : without_.flatPeople ? 120 : 40);
+    // The ground's detail layer lies under the people's shade, so its pass comes first.
+    Renderer().AddPass(Graphics::PassPoint::AfterOpaque, "ground detail",
+                       [this](auto& device, const Graphics::Camera& camera, auto& drawn) {
+                           if (terrain_ && !without_.terrain)
+                               terrain_->DrawDetail(device, camera, Renderer().MaterialBinder(), drawn);
+                       });
     Renderer().AddPass(Graphics::PassPoint::AfterOpaque, "visitors",
                        [this](auto&, const Graphics::Camera& camera, Graphics::RenderStatistics&) {
                            if (without_.people)
@@ -254,7 +260,8 @@ void ZooGame::LoadGame() {
     const int speed = play_.speed;
     Adopt(std::move(first));
     play_.speed = speed;
-    std::printf("zoo: ground painted in %.2f s\n", terrain_->LastPaintSeconds());
+    std::printf("zoo: ground painted in %.2f s; built in %.2f s\n", terrain_->LastPaintSeconds(),
+                terrain_->LastBuildSeconds());
     std::printf("zoo: scenery: %zu triangles in %zu draw calls\n", scenery_->Triangles(),
                 scenery_->DrawCalls());
     if (bench_.on)

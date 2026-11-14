@@ -18,6 +18,8 @@
 
 #include "zoo/base/Rng.hpp"
 
+#include "GroundPaint.hpp"
+
 namespace zoogame {
 
 namespace {
@@ -382,7 +384,7 @@ void VisitorRenderer::Update(const zoo::Zoo& zoo, float seconds, float tickFract
             }
         }
         actor.shown = actor.from + (actor.to - actor.from) * alpha;
-        actor.ground = world.HeightAt(actor.shown);
+        actor.ground = DrawnGroundHeight(world, actor.shown);
         const float turn = zoo::WrapAngle(visitor.heading - actor.heading);
         const float most = (actor.seated ? 9.0f : 5.0f) * seconds;
         actor.heading = zoo::WrapAngle(actor.heading + std::clamp(turn, -most, most));

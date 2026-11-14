@@ -14,6 +14,8 @@
 
 #include "AnimalTextures.hpp"
 
+#include "GroundPaint.hpp"
+
 namespace zoogame {
 
 namespace {
@@ -332,12 +334,12 @@ void AnimalRenderer::Update(const zoo::Zoo& zoo, float seconds, float tickFracti
         // On the ground, following its slope.
         const float reach = 0.4f * def.bodyLengthM * actor.scale;
         const zoo::Vec2 along = zoo::HeadingVector(actor.heading) * reach;
-        const float front = world.HeightAt(actor.shown + along);
-        const float rear = world.HeightAt(actor.shown - along);
+        const float front = DrawnGroundHeight(world, actor.shown + along);
+        const float rear = DrawnGroundHeight(world, actor.shown - along);
         const float slope =
             LiesDown(pose) ? 0.0f : (1.0f - actor.afloat) * std::atan2(front - rear, 2.0f * reach);
         actor.pitch += (slope - actor.pitch) * std::min(1.0f, 6.0f * seconds);
-        const float bed = std::max(world.HeightAt(actor.shown), 0.5f * (front + rear));
+        const float bed = std::max(DrawnGroundHeight(world, actor.shown), 0.5f * (front + rear));
         const float surface = world.HeightAt(actor.shown) + depth;
         const float sinks = pose == AnimalPose::Float ? kind->floatDepth : kind->swimDepth;
         actor.sunk = appeared ? sinks : actor.sunk + (sinks - actor.sunk) * std::min(1.0f, 1.5f * seconds);

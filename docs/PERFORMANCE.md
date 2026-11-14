@@ -252,3 +252,14 @@ interleaved with develop, load 2.6-4.1: 68.8 / 63.4 / 70.3 fps before, 73.0 / 74
 triangles a frame 4.67 -> 3.29 million, draw calls 478 -> 516, resident 2,190 -> 2,275 MB. Without
 scenery the view runs at 147 fps and with every grove far at about 71: the rest of the scenery's
 cost is fill by overlapping alpha-tested cards more than triangles (`docs/PLANTS.md`).
+
+## After the ground (G1 to G1c, 2026-11-14)
+
+Ground painting, mip levels, meshes and the detail textures run as jobs on up to 6 threads; the
+log line is now `ground painted in X s; built in Y s`. Interleaved, three runs each, load 2 to 4:
+the whole start (`--frames 2`) went from 9.88 / 8.88 / 8.68 s to 8.90 / 8.22 / 8.07 s. At the
+entrance the ground's detail layer adds 23 draw calls and about 104,000 triangles; the frame mean
+went from 13.45 / 12.78 / 14.57 ms to 13.52 / 13.26 / 15.21 ms (slower in every pair by 0.07 to
+0.64 ms); with `--without terrain` the two builds are equal. Resident memory +60 MB.
+`DrawnGroundHeight`, called per animal, visitor and keeper every frame, costs 50 to 66 ns (180 to
+270 ns on bank tiles).

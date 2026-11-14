@@ -7,6 +7,8 @@
 #include "Microsoft/Xna/Framework/BoundingBox.hpp"
 #include "Microsoft/Xna/Framework/Ray.hpp"
 
+#include "GroundPaint.hpp"
+
 namespace zoogame {
 
 namespace {
@@ -79,7 +81,9 @@ void Walker::Rebuild(const zoo::Zoo& zoo) {
     ground.heights.resize(static_cast<std::size_t>(ground.columns) * static_cast<std::size_t>(ground.rows));
     for (int vz = 0; vz < ground.rows; ++vz) {
         for (int vx = 0; vx < ground.columns; ++vx) {
-            ground.heights[static_cast<std::size_t>(vz * ground.columns + vx)] = map.VertexHeight(vx, vz);
+            // As drawn: dry land beside a pool is not dug down to its bed.
+            ground.heights[static_cast<std::size_t>(vz * ground.columns + vx)] =
+                DrawnVertexHeight(map, vx, vz);
         }
     }
     world_.SetHeightField(std::move(ground));
@@ -179,7 +183,7 @@ void Walker::Rebuild(const zoo::Zoo& zoo) {
 
 void Walker::Enter(const zoo::Zoo& zoo, zoo::Vec2 at, float yaw, float pitch) {
     Rebuild(zoo);
-    const float ground = zoo.Map().HeightAt(at);
+    const float ground = DrawnGroundHeight(zoo.Map(), at);
     body_ = CnaEngine::Collision::CharacterController(Body(), Vector3(at.x, ground, at.z));
     body_.Teleport(world_, Vector3(at.x, ground + 0.05f, at.z));
     yaw_ = WrapAngle(yaw);

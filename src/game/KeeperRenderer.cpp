@@ -11,6 +11,7 @@
 #include "Microsoft/Xna/Framework/GamerServices/AvatarBodyType.hpp"
 #include "Microsoft/Xna/Framework/GamerServices/AvatarRendererState.hpp"
 
+#include "GroundPaint.hpp"
 #include "zoo/base/Rng.hpp"
 
 namespace zoogame {
@@ -1111,7 +1112,7 @@ void KeeperRenderer::Update(const zoo::Zoo& zoo, float seconds, float tickFracti
             }
         }
         actor.shown = actor.from + (actor.to - actor.from) * alpha;
-        actor.ground = world.HeightAt(actor.shown);
+        actor.ground = DrawnGroundHeight(world, actor.shown);  // the ground as drawn (docs/GROUND.md)
         const float turn = zoo::WrapAngle(staff.heading - actor.heading);
         const float most = 4.0f * seconds;
         actor.heading = zoo::WrapAngle(actor.heading + std::clamp(turn, -most, most));

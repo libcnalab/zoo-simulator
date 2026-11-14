@@ -10,6 +10,7 @@
 
 #include "BuildingModels.hpp"
 #include "FenceModels.hpp"
+#include "GroundPaint.hpp"
 #include "PlantModels.hpp"
 #include "PropModels.hpp"
 
@@ -180,7 +181,7 @@ std::uint64_t SceneryRenderer::ObjectHash(const zoo::World& world, const zoo::Zo
         h.Add(prop->position.z);
         h.Add(prop->heading);
         h.Add(prop->scale);
-        h.Add(world.HeightAt(prop->position));
+        h.Add(DrawnGroundHeight(world, prop->position));
     }
     for (const zoo::Building& building : objects.Buildings()) {
         if (building.def < 0 || static_cast<std::size_t>(building.def) >= catalog_.buildings.size()) {
@@ -298,7 +299,7 @@ void SceneryRenderer::BuildObjects(const zoo::World& world, const zoo::ZooObject
             static_cast<std::size_t>(prop->def) >= catalog_.props.size() || PlantDef(prop) != nullptr) {
             continue;
         }
-        const Vector3 position(prop->position.x, world.HeightAt(prop->position), prop->position.z);
+        const Vector3 position(prop->position.x, DrawnGroundHeight(world, prop->position), prop->position.z);
         model.SetTransform(Placement(position, prop->heading, prop->scale));
         BuildProp(model, catalog_.props[static_cast<std::size_t>(prop->def)], Scramble(id.value, 17u, 3u));
     }
@@ -354,7 +355,7 @@ std::uint64_t SceneryRenderer::GroveHash(const zoo::World& world, const zoo::Zoo
         h.Add(prop->position.z);
         h.Add(prop->heading);
         h.Add(prop->scale);
-        h.Add(world.HeightAt(prop->position));
+        h.Add(DrawnGroundHeight(world, prop->position));
     }
     return h.value;
 }
@@ -371,7 +372,7 @@ void SceneryRenderer::BuildGrove(const zoo::World& world, const zoo::ZooObjects&
         if (def == nullptr) {
             continue;
         }
-        const Vector3 position(prop->position.x, world.HeightAt(prop->position), prop->position.z);
+        const Vector3 position(prop->position.x, DrawnGroundHeight(world, prop->position), prop->position.z);
         const Matrix placement = Placement(position, prop->heading, prop->scale);
         const std::uint32_t seed = Scramble(id.value, 17u, 3u);
         near.SetTransform(placement);
