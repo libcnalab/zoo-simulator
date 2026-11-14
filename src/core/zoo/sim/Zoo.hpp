@@ -21,6 +21,7 @@
 #include "zoo/sim/Env.hpp"
 #include "zoo/sim/Events.hpp"
 #include "zoo/sim/WeatherSystem.hpp"
+#include "zoo/staff/Staff.hpp"
 #include "zoo/visitors/Visitors.hpp"
 #include "zoo/world/World.hpp"
 
@@ -157,6 +158,9 @@ public:
     /// The visitors: who is in the zoo, the ticket price, the gate, the rating.
     const Visitors& Guests() const { return visitors_; }
     Visitors& Guests() { return visitors_; }
+    /// The keepers, the gardener and the cleaner a visitor sees at work; none until engaged.
+    const Staff& Keepers() const { return staff_; }
+    Staff& Keepers() { return staff_; }
 
     /// The view of the zoo the subsystems step with, as of now. Events go to the
     /// zoo's own list. For queries that need one (Animals::Welfare, GroupOf, ...).
@@ -235,6 +239,7 @@ private:
     Navigator nav_;
     Animals animals_;
     Visitors visitors_;
+    Staff staff_;
     WeatherSystem weather_;
     GameTime time_;
 
@@ -264,6 +269,7 @@ struct Zoo::Parts {
     Visitors visitors;
     WeatherSystem weather;
     GameTime time;
+    Staff staff;
 };
 
 }  // namespace zoo

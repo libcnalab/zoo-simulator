@@ -1,0 +1,141 @@
+# Keepers
+
+The zoo's staff a visitor sees at work: keepers at the habitats, a gardener at the flower
+beds, a cleaner at the bins. The simulation lives in `src/core/zoo/staff/` (no CNA; part of
+`zoo_core`), is stepped by `Zoo::Step()` right after the visitors, is saved with the zoo and
+enters its state hash. The game draws each member of staff as a CNA avatar in the zoo's
+uniform, with the tools of the job (`src/game/KeeperRenderer.cpp`).
+
+There is no management in it: nobody is hired, paid, trained or tired. The crew is fixed
+when the Visitor Zoo is built (`BuildVisitorZoo` calls `Staff::Engage`) and goes about its
+rounds all day.
+
+## The crew
+
+`Staff::Engage` looks at the zoo as it stands:
+
+- **Keepers**: one for every two habitats. The habitats are paired so that the pairs are
+  as close together as can be (an exact search up to 14 habitats, nearest pairs beyond);
+  an odd one out gets a keeper of its own. Every habitat with a place to work from has a
+  keeper (`Staff::KeeperOf`).
+- **A gardener** when there are flower beds that can be stood beside (at most 24 on the
+  round, spread evenly along a walk of short hops from the entrance).
+- **A cleaner** when there are bins (at most 30 on the round, likewise).
+
+Every member has a `look` (a hash of the id) that picks the avatar playing them.
+
+## A round
+
+A member goes round their stops in order, again and again. At each stop `PlanStop` plans
+the jobs from what the stop needs and from the hour; every job (`StaffTask`) has a place
+to stand, a way to face, a duration, a visible activity (`StaffActivity`) and the way the
+member gets there (walking, carrying a bucket, pushing the wheelbarrow). Its effect on the
+zoo happens half way through the job.
+
+- **Feed and water.** Feeders below `kFeederDue` (0.6) and troughs below `kTroughDue` (0.7)
+  of their capacity are filled, the emptiest first, at most four a stop. Inside a habitat
+  the keeper stands behind the feeder as the public sees it, facing them.
+- **Public feedings.** Two a day per habitat, by diet (herbivores 9:30 and 14:00,
+  omnivores 10:00 and 14:30, insect eaters 10:30 and 16:00, carnivores 11:00 and 15:00,
+  fish eaters 11:30 and 15:30); one keeper's two habitats are kept at least 45 minutes
+  apart. A feeding due (from 9 minutes before its hour to 45 minutes after) comes before
+  the order of the round: feed is scattered near where the public stands and every feeder
+  of the habitat is topped up. The information board of the habitat says when
+  ("Keeper feeds: 11:00 and 15:00, next at 15:00"; `Staff::FeedingHours`,
+  `Staff::NextFeeding`).
+- **Routine by the hour.** Mucking out (raking, the wheelbarrow) in the morning, hosing at
+  the water's edge, fence checks with a clipboard, a breather at midday, a walk round at
+  night. A habitat dirtier than 0.25 is raked whatever the hour.
+- **Dangerous species.** Nothing in the animal model shuts the big cats or the bears in
+  their house, so a keeper never walks into a habitat where a dangerous animal lives or
+  stands (`KeepersMayEnter`): there they work from the public side of the barrier (feed
+  thrown over, the trough filled with the hose, the fence checked, the walk swept).
+- **The gardener** waters a bed every third stop, kneels and tends it with a trowel, and
+  rests now and then; **the cleaner** empties the bin and then sweeps the nearest litter
+  within 25 m, or the path beside the bin.
+
+## Where they walk and stand
+
+Staff walk on the navigator with `NavProfile::Staff()`: anywhere dry (no tile with water at
+its centre), through keeper gates, preferring paths three to one. Since G8 every keeper gate
+opens onto a dry, unpaved service apron joined to the walks (`StandOffWithService` in
+`VisitorZoo.cpp`, checked by `VisitorZooPlan.EveryKeeperGateHasADryConnectedApproach`), so
+the keepers come in the way a zoo's staff do, behind the public's backs; planted stand-off
+strips are nobody's ground and nobody walks them.
+
+A place to work is only chosen on ground no deeper in water than a boot (8 cm; the tiles
+beside a pool are dry by the map and still slope into it), inside the habitat when the
+keeper goes in, on public ground otherwise, and clear of trees and rocks. On the way a
+walker follows the rim of a tree or a rock that is in the way, never crosses a fence that is
+not a gate and never enters a dangerous species' habitat (`MayStep`). A job whose place
+cannot be reached, or whose walk takes more than twice what the route needs plus a minute,
+is done as the zoo's automatic care would have done it, and the member goes on.
+
+## Automatic care stays behind them
+
+The game's time is compressed (a game hour is thirty seconds of walking, `docs/VISITORS.md`
+"Time"): a full feeder is eaten in about 2,400 ticks, while a keeper's visible round of two
+habitats takes far longer. Keepers alone left animals hungry (hunger 1.0, 72 to 77 hours in
+need, dirt 0.93 in the earlier run's measurement), so `autoCare` stays on as the net behind
+them: what the keepers do is what a visitor sees, and nobody goes hungry when they cannot
+keep up. The tests compare a staffed zoo with an unstaffed one under automatic care: no
+animal may be worse off.
+
+## Determinism and saves
+
+`Staff::Step` steps members in ascending id; there is no random stream (variety comes from
+the stateless hashes of ids, tiles and the count of stops done); everything is plain data
+compared by `operator==` and hashed by `StateHash` (FNV-1a, floats by bit pattern). The save
+key `"staff"` holds the whole crew; a save without it opens as a zoo without staff, a damaged
+one is refused (`StaffFromJson`). A zoo without staff keeps the state hash it had.
+
+## Drawing them
+
+`KeeperRenderer` makes a cast of four avatars once (women and men in turn), random people as
+the visitors are but all in the uniform: a green polo shirt, khaki cargo trousers, boots and a
+khaki bucket hat. The uniform is written into CNA's avatar description (item and colour bytes
+as CNA's `docs/avatars.md` lays them out, and its CRC-32); if CNA refuses the result, the
+colours alone are tried, then the person's own clothes, and one log line says so.
+
+Every member is posed from the simulation: the gait of `AvatarPose` while walking, and a pose
+of its own for every job (a lean, a squat, the hands placed and the arms solved), blended in
+and out so that a rake does not turn into a bucket in the hands. The tools are coloured
+triangles built every frame for those in view (bucket, wheelbarrow, rake, broom, hose with its
+jet, clipboard, sack, trowel, watering can) and drawn in two calls for the whole crew; they
+cast no shadow, a soft patch of shade lies under each member. At most the 8 nearest within
+150 m are drawn.
+
+`--stand keeper:<id>` stands the camera on the nearest path a few metres from that member
+(`keeper:0`: the first member at a job; `keeper:0:rake`: the first raking) and prints who it is
+and what they do.
+
+## Cost
+
+The entrance bench (`--bench --frames 300`, 800 visitors), RelWithDebInfo binaries of develop
+without and with the keepers, interleaved, three runs each, 2026-11-14, load average 3.6 to 4.9:
+
+| | before | after |
+|---|---|---|
+| frame ms mean | 15.05, 14.22, 14.53 | 16.49, 14.18, 13.98 |
+| frame ms median | 14.63, 14.26, 14.45 | 15.74, 14.18, 14.10 |
+| people pass ms (visitors and keepers) | 3.41, 3.25, 3.16 | 4.85, 4.41, 4.29 |
+| simulation ms | 0.30, 0.27, 0.27 | 0.48, 0.33, 0.34 |
+| draw calls | 478, 479, 479 | 471, 471, 471 |
+| resident memory | | 2233 to 2236 MB |
+
+The keepers' avatars and tools add about 1.1 ms to the people pass and 0.05 to 0.2 ms to the
+simulation; the frame as a whole shows no cost beyond the spread of the runs (the first "after"
+run is the slowest of all six, the other two the fastest). Engine draw calls fall by 7 and
+triangles by 0.19 million because the crowd at the entrance differs (the state differs from
+the first tick on), not because of the keepers.
+
+## Open
+
+- Keepers walk through animals and visitors (no collision with either).
+- Shy animals do not keep their distance from a keeper; the animal model has no input for it
+  (a per-enclosure `Animals::SetKeeper` would be the hook).
+- The dangerous species are never entered: no mucking out of the lions' or bears' habitats,
+  because the model cannot shut the animals in their house.
+- A strip-ringed dangerous habitat may have a single place at its barrier to work from.
+- The faces of the cast are random per run; tools cast no shadow; nobody is drawn beyond
+  150 m or beyond the 8 nearest.

@@ -37,6 +37,7 @@ loudspeaker stays muted and nobody has listened to any of it.
 | Giraffe bull, cow and calf: a scanned head and neck (CC BY 4.0) on a body modelled by us, a painted reticulated coat | a giraffe's silhouette and coat instead of a lofted toy; browsing reaches the crowns | `docs/ANIMALS.md`, `evidence/giraffe-2026-11-14.jpg` |
 | Brown and polar bears with cubs from a sculpt (CC BY 4.0), rigged by us | bears with fur, claws and a bear's head instead of blobs on block feet; crude still (angular shoulders, a snarling polar bear) | `docs/ANIMALS.md`, `evidence/bears-sculpt-2026-11-14.jpg` |
 | The zoo's plan: families with young, barriers a zoo builds, believable habitats | 88 animals instead of 74, every social species with this season's young beside their mothers (lion cubs, an elephant calf in a cow group, a rhino calf, a foal, chicks, pups, joeys at foot), pairs of tigers and bears; hoofstock behind cables and timber paddock fences instead of chain-link; a sand mound with a drinking dish for the meerkats; a lagoon with a 0.3 m shelf where the flamingos wade; feeders in view, nothing in water or in another thing; plants in groves with glades and no trunk before a viewing place; a dry service apron to every keeper gate; animals stalled on their way 5.4 % -> 1.35 % of the moving ticks | `docs/VISITOR_ZOO.md` "The zoo's plan", `evidence/zoo-plan-g8-2026-11-14.jpg` |
+| Keepers, a gardener and a cleaner at work | nine people in a green polo, khaki trousers and a bucket hat go about the zoo all day: keepers fill feeders and troughs, scatter feed at two public feedings a habitat (the board says when: "Keeper feeds 10:30 and 16:00, next at 10:30"), muck out with a rake and a wheelbarrow, hose at the water's edge and check fences with a clipboard; they come in through the keeper gates over the service aprons, never wade and never enter a lion's or a bear's habitat (they work from the barrier there); the gardener kneels at the beds and waters them, the cleaner empties bins and sweeps. Automatic care stays behind them; no animal fares worse (a week: 10 against 15 animal-hours in need) | `docs/KEEPERS.md`, `evidence/keepers-g5-2026-11-14.jpg` |
 | Animals with a species' day | each species has its own shares of resting, feeding, walking and a signature activity (browse, ruminate, bathe, dust bathe, preen, sentinel, dig, filter feed, patrol, huddle), chooses its place in the habitat (shade at midday, high ground for the sentry, the group), and keeps them through a save; lions rest 70 % of the day, elephants move or feed 62 %, a meerkat sentry is posted 85 % of daylight | `docs/ANIMAL_BEHAVIOUR.md`, `evidence/animal-routines-2026-11-13.jpg` |
 
 ### Light from the sky and the ground (2026-11-13)
@@ -90,7 +91,8 @@ where an animal wades. Penguins swim and float with their own clips now, and pol
    alpha-to-coverage), cut-out leaves cast no shadow (the engine's shadow pass skips
    alpha-tested items; the crown's core casts it), and palms, ferns and hedge fences are
    still the old solid shapes.
-4. Keepers are not seen. Only penguin, polar bear, rhinoceros and elephant have swimming clips. Bear growl
+4. Keepers walk through animals and visitors, shy animals do not keep away from them, and the
+   lions' and bears' habitats are never entered (`docs/KEEPERS.md` "Open"). Only penguin, polar bear, rhinoceros and elephant have swimming clips. Bear growl
    is quiet in the mix.
 5. Loading 5.5 s, 2.4 s of it painting the ground.
 6. Animals get stuck less since the plan keeps room between blocking props (1.35 % of the

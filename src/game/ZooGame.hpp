@@ -25,6 +25,7 @@
 #include "Tools.hpp"
 #include "Visit.hpp"
 #include "VisitorHud.hpp"
+#include "KeeperRenderer.hpp"
 #include "VisitorRenderer.hpp"
 #include "Walker.hpp"
 #include "zoo/sim/Zoo.hpp"
@@ -159,6 +160,8 @@ private:
     std::unique_ptr<AnimalRenderer> animals_;
     /// Outlives the zoos: its cast of avatars takes a while to assemble.
     std::unique_ptr<VisitorRenderer> visitors_;
+    /// The staff at their work; outlives the zoos as the visitors' cast does.
+    std::unique_ptr<KeeperRenderer> keepers_;
     std::unique_ptr<Soundscape> sounds_;
     std::unique_ptr<CnaEngine::Graphics::SkyDome> sky_;
     /// The sky's and the ground's light on everything lit (--without skylight: the flat

@@ -1583,6 +1583,9 @@ ScenarioReport BuildVisitorZoo(Zoo& zoo, const VisitorZooOptions& options) {
     script.Release();
     zoo.Guests().SetTicketPrice(0);
     script.Provision();
+    // The crew a visitor sees at work (docs/KEEPERS.md). Every keeper gate opens onto a dry
+    // service apron joined to the walks (StandOffWithService), so no lane is cut for them.
+    zoo.Keepers().Engage(zoo.MakeEnv(), zoo.Fauna());
     return script.Report();
 }
 }  // namespace zoo

@@ -81,7 +81,8 @@ bool Navigator::Passable(TileCoord tile, const NavProfile& profile) const {
     if (!world_->IsProperty(tile) && (!profile.leaveProperty || value.path == PathKind::None)) {
         return false;
     }
-    if (world_->WaterDepthAt(World::TileCenter(tile)) > profile.maxWaterDepth ||
+    if ((profile.keepOffWater && world_->HasWater(tile)) ||
+        world_->WaterDepthAt(World::TileCenter(tile)) > profile.maxWaterDepth ||
         world_->TileRelief(tile) > profile.maxRelief) {
         return false;
     }

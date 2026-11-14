@@ -232,3 +232,12 @@ dearer. Not found yet (no profiler on this machine): turning off the new pose la
 (weight, lean, point, talk, stoop, look) gave no measurable change, so the cost is in the
 per-visitor bookkeeping of `VisitorRenderer::Update`/`Carry`, which runs for every one of
 the 800 people each frame, drawn or not. Open: run it only for the people in range.
+
+## After the keepers (G5; 2026-11-14)
+
+Nine members of staff are simulated and up to 8 are drawn as full CNA avatars with tools
+built on the processor each frame (`docs/KEEPERS.md` "Cost"). Entrance bench, interleaved, three
+runs each, load 3.6 to 4.9: frame ms mean 15.05 / 14.22 / 14.53 before against 16.49 / 14.18 /
+13.98 after; the people pass (visitors and keepers) 3.16 to 3.41 ms against 4.29 to 4.85 ms; the
+simulation 0.27 to 0.30 ms against 0.33 to 0.48 ms. The frame as a whole shows no cost beyond
+the spread of the runs.

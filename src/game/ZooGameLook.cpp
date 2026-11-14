@@ -2,6 +2,7 @@
 // What a visitor meets on the walk: the animal the eyes rest on, the boards at the
 // enclosures (E), the map of the zoo (M).
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
@@ -58,6 +59,12 @@ std::string MassText(float kg) {
     if (kg >= 10.0f)
         return Format("%.0f kg", static_cast<double>(kg));
     return Format("%.1f kg", static_cast<double>(kg));
+}
+
+/// A calendar hour as a clock shows it: 9.5 -> "9:30".
+std::string ClockText(float hour) {
+    const int minutes = static_cast<int>(std::lround(hour * 60.0f));
+    return Format("%d:%02d", minutes / 60, minutes % 60);
 }
 
 /// Metres from a point to the rectangle of tiles min..max.
@@ -239,6 +246,16 @@ void ZooGame::OpenBoard(const zoo::Prop& board) {
     text.rows.emplace_back("Lifespan",
                            Format("about %.0f years in human care", static_cast<double>(def.lifespanYears)));
     text.rows.emplace_back("Conservation", std::string(zoo::DisplayName(def.status)));
+    // When the keeper feeds where the public can watch (zoo::Staff, docs/KEEPERS.md).
+    const std::array<float, 2> feeding = zoo_->Keepers().FeedingHours(home->id);
+    if (feeding[0] >= 0.0f && feeding[1] >= 0.0f) {
+        std::string when = ClockText(feeding[0]) + " and " + ClockText(feeding[1]);
+        if (const std::optional<float> next = zoo_->Keepers().NextFeeding(zoo_->MakeEnv(), home->id))
+            when += ", next at " + ClockText(*next);
+        else
+            when += ", none left today";
+        text.rows.emplace_back("Keeper feeds", std::move(when));
+    }
     text.facts = def.facts;
     text.residents = "Living here: " + Names(living[chosen]);
     for (const auto& [index, names] : living) {
@@ -432,6 +449,45 @@ std::optional<ZooGame::Pose> ZooGame::StandPose(std::string_view what) const {
                 }
             }
             return Pose{at.x, at.z, std::atan2(prop.position.x - at.x, prop.position.z - at.z), 0.2f};
+        }
+    } else if (kind == "keeper") {
+        // "keeper:3" looks at the member of staff with that id, "keeper:0" at the first one
+        // who is at a job; "keeper:3:rake" only if that is what they are doing. From the
+        // nearest piece of path that is a few metres away: where a visitor would see them from.
+        for (const zoo::StaffMember& member : zoo_->Keepers().All()) {
+            const zoo::StaffTask* task = member.Task();
+            const bool atJob = member.working && task != nullptr && task->work != zoo::StaffActivity::Rest;
+            if (wanted == 0 ? !atJob : member.id.value != static_cast<std::uint32_t>(wanted))
+                continue;
+            if (!only.empty() && (task == nullptr || zoo::ToString(member.working ? task->work : member.activity) != only))
+                continue;
+            constexpr float kNearest = 4.5f;
+            constexpr int kReach = 9;  // tiles
+            const zoo::TileCoord middle = zoo::World::TileAt(member.position);
+            zoo::Vec2 at{member.position.x, member.position.z - 6.0f};
+            float best = 1.0e9f;
+            for (int dz = -kReach; dz <= kReach; ++dz) {
+                for (int dx = -kReach; dx <= kReach; ++dx) {
+                    const zoo::TileCoord tile{middle.x + dx, middle.z + dz};
+                    if (!zoo_->Map().InBounds(tile) || zoo_->Map().At(tile).path == zoo::PathKind::None)
+                        continue;
+                    const zoo::Vec2 from = centre(tile);
+                    const float distance = std::hypot(from.x - member.position.x, from.z - member.position.z);
+                    if (distance >= kNearest && distance < best) {
+                        best = distance;
+                        at = from;
+                    }
+                }
+            }
+            const float dx = member.position.x - at.x;
+            const float dz = member.position.z - at.z;
+            std::fprintf(stderr, "zoo: keeper %u (%s) %s, %.1f m away at %.1f, %.1f\n", member.id.value,
+                         std::string(zoo::DisplayName(member.role)).c_str(),
+                         std::string(zoo::Describe(member.working && task != nullptr ? task->work : member.activity))
+                             .c_str(),
+                         static_cast<double>(std::hypot(dx, dz)), static_cast<double>(member.position.x),
+                         static_cast<double>(member.position.z));
+            return Pose{at.x, at.z, std::atan2(dx, dz), std::clamp(std::atan2(0.75f, std::hypot(dx, dz)), 0.0f, 0.3f)};
         }
     }
     return std::nullopt;

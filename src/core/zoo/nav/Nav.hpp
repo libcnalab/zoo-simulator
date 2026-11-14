@@ -24,6 +24,9 @@ struct NavProfile {
     bool leaveProperty = false;
     /// Deepest water it enters, in metres at the tile centre; 0 = stays dry.
     float maxWaterDepth = 0.0f;
+    /// Never enters a tile that holds water, however shallow it is at the centre: a shore
+    /// tile's centre may be above the waterline while its pool side is ankle-deep.
+    bool keepOffWater = false;
     /// Steepest tile it walks (World::TileRelief, metres across one tile).
     float maxRelief = 1.5f;
     /// Cost factor of a tile without a path relative to a paved one (>= 1). Staff
@@ -38,14 +41,14 @@ struct NavProfile {
     static constexpr NavProfile Visitor() {
         return {.pathsOnly = true, .useEntrance = true, .leaveProperty = true, .maxRelief = 1.2f};
     }
-    /// Staff: anywhere dry, through gates, preferring paths.
+    /// Staff: anywhere dry (no tile that holds water: keepers do not wade through a
+    /// lagoon's shelf or a pond's edge), through gates, preferring paths.
     static constexpr NavProfile Staff() {
         return {.useGates = true,
                 .useEntrance = true,
                 .leaveProperty = true,
-                .maxWaterDepth = 0.3f,
-                .offPathCost = 3.0f,
-                .waterCost = 4.0f};
+                .keepOffWater = true,
+                .offPathCost = 3.0f};
     }
     /// An animal: anywhere fences let it, wading up to `wadeDepth` (swimmers: any depth).
     static constexpr NavProfile Animal(float wadeDepth, bool canSwim) {
@@ -65,8 +68,8 @@ struct NavProfile {
 /// A tile is passable for a profile when it is in bounds, carries no building,
 /// satisfies pathsOnly / leaveProperty (outside the property only path tiles are
 /// ever passable: the approach road), its water depth at the centre is within
-/// maxWaterDepth and its relief within maxRelief. An edge is passable when it
-/// has no fence, or the fence is a gate the profile may use.
+/// maxWaterDepth (keepOffWater: it holds no water at all) and its relief within maxRelief. An edge is
+/// passable when it has no fence, or the fence is a gate the profile may use.
 ///
 /// The navigator keeps scratch buffers and caches keyed by World::NavRevision();
 /// it holds no simulation state (nothing to save) and its results are a pure

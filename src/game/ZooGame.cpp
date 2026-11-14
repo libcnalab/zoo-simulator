@@ -241,6 +241,15 @@ void ZooGame::LoadGame() {
                            const Bench::Scope timed(bench_, Bench::PeoplePass);
                            visitors_->Draw(getGraphicsDeviceProperty(), camera, Renderer().Lighting());
                        });
+    // The staff are avatars too, with their tools; they are few and drawn after the crowd.
+    keepers_ = std::make_unique<KeeperRenderer>();
+    Renderer().AddPass(Graphics::PassPoint::AfterOpaque, "keepers",
+                       [this](auto&, const Graphics::Camera& camera, Graphics::RenderStatistics&) {
+                           if (without_.people)
+                               return;
+                           const Bench::Scope timed(bench_, Bench::PeoplePass);
+                           keepers_->Draw(getGraphicsDeviceProperty(), camera, Renderer().Lighting());
+                       });
 
     const int speed = play_.speed;
     Adopt(std::move(first));
@@ -366,6 +375,8 @@ void ZooGame::Adopt(std::unique_ptr<zoo::Zoo> zoo) {
     animals_->Update(*zoo_, 0.0f, 0.0f);
     visitors_->Clear();
     visitors_->Update(*zoo_, 0.0f, 0.0f);
+    keepers_->Clear();
+    keepers_->Update(*zoo_, 0.0f, 0.0f);
     tools_ = std::make_unique<WorldTools>(device, *surfaces_, *catalog_);
 
     camera_.SetMode(CameraMode::Overview, zoo_->Map());
@@ -592,6 +603,7 @@ void ZooGame::UpdateEditor(double seconds) {
     animals_->Update(*zoo_, dt * static_cast<float>(play_.speed), static_cast<float>(tickDebt_));
     visitors_->Update(*zoo_, dt * static_cast<float>(play_.speed), static_cast<float>(tickDebt_));
     visitors_->Prepare(getGraphicsDeviceProperty());
+    keepers_->Update(*zoo_, dt * static_cast<float>(play_.speed), static_cast<float>(tickDebt_));
     UpdateSky();
 }
 

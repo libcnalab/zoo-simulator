@@ -85,7 +85,7 @@ Zoo::Zoo(const Catalog& catalog, const SpeciesCatalog& species, const ZooConfig&
     : Zoo(catalog, species,
           Parts{config, World::Generate(config.world), ZooObjects{}, Finance(config.startingMoney),
                 Animals(config.seed), Visitors(config.seed), WeatherSystem(config.seed, config.climate),
-                GameTime{}}) {}
+                GameTime{}, Staff{}}) {}
 
 Zoo::Zoo(const Catalog& catalog, const SpeciesCatalog& species, Parts&& parts)
     : catalog_(catalog),
@@ -98,6 +98,7 @@ Zoo::Zoo(const Catalog& catalog, const SpeciesCatalog& species, Parts&& parts)
       nav_(world_),
       animals_(std::move(parts.animals)),
       visitors_(std::move(parts.visitors)),
+      staff_(std::move(parts.staff)),
       weather_(std::move(parts.weather)),
       time_(parts.time) {
     enclosures_.Rebuild(world_, objects_, catalog_);
@@ -153,6 +154,7 @@ void Zoo::Step() {
     Env env = MakeEnv();
     animals_.Step(env);
     visitors_.Step(env, animals_);
+    staff_.Step(env, animals_, visitors_);
     if (time_.tick % kTicksPerSecond == 0) {
         // The animals know how many people are looking at them.
         for (const Enclosure& enclosure : enclosures_.All()) {
@@ -602,6 +604,9 @@ std::uint64_t Zoo::StateHash() const {
     h.Add(time_.shift);
     h.Add(animals_.StateHash());
     h.Add(visitors_.StateHash());
+    if (!staff_.All().empty()) {
+        h.Add(staff_.StateHash());  // a zoo without staff keeps the hash it had
+    }
     h.Add(finance_.Balance());
     h.Add(finance_.Loan());
     for (const Money amount : finance_.Today().amounts) {
@@ -636,7 +641,7 @@ std::uint64_t Zoo::StateHash() const {
 bool Zoo::SameState(const Zoo& other) const {
     return config_ == other.config_ && time_ == other.time_ && world_ == other.world_ &&
            objects_ == other.objects_ && enclosures_ == other.enclosures_ && finance_ == other.finance_ &&
-           animals_ == other.animals_ && visitors_ == other.visitors_ &&
+           animals_ == other.animals_ && visitors_ == other.visitors_ && staff_ == other.staff_ &&
            weather_.State() == other.weather_.State();
 }
 

@@ -1,169 +1,176 @@
 // SPDX-License-Identifier: MIT
 #pragma once
 
+#include <array>
 #include <cstdint>
-#include <memory>
-#include <string>
+#include <optional>
 #include <string_view>
 #include <vector>
 
 #include "zoo/animals/Animals.hpp"
 #include "zoo/base/Ids.hpp"
 #include "zoo/base/Math.hpp"
-#include "zoo/base/Money.hpp"
-#include "zoo/base/Rng.hpp"
 #include "zoo/sim/Env.hpp"
 #include "zoo/visitors/Visitors.hpp"
-#include "zoo/world/World.hpp"
 
 namespace zoo {
 
-namespace staff_detail {
-struct Scratch;
-struct Stepper;
-}  // namespace staff_detail
-
-/// What a member of staff is employed to do. Names are part of the save format;
-/// append only.
+/// What a member of staff is there for. Names are part of the save format; append only.
 enum class StaffRole : std::uint8_t {
-    Keeper,    ///< fills feeders and troughs, mucks out enclosures, catches harmless runaways
-    Vet,       ///< treats sick animals, catches any animal on the loose
-    Cleaner,   ///< sweeps litter off the paths, empties the bins
-    Mechanic,  ///< mends worn fences
+    Keeper,    ///< looks after the habitats of a round: feed, water, mucking out, the fences
+    Gardener,  ///< tends the flower beds along the paths
+    Cleaner,   ///< empties the bins and sweeps the paths
     Count
 };
-std::string_view ToString(StaffRole v);     // "keeper", "vet", "cleaner", "mechanic"
-std::string_view DisplayName(StaffRole v);  // "Keeper", "Vet", "Cleaner", "Mechanic"
+std::string_view ToString(StaffRole v);     // "keeper", "gardener", "cleaner"
+std::string_view DisplayName(StaffRole v);  // "Keeper", "Gardener", "Cleaner"
 
-/// What a member of staff is doing right now (what the renderer animates).
+/// What a member of staff is seen doing (what the renderer poses and which tool it
+/// puts in the hands). Names are part of the save format; append only.
 enum class StaffActivity : std::uint8_t {
-    Idle,     ///< standing: nothing to do, or deciding
-    Walking,  ///< on the way to a job, to a place to wait, or to the staff room
-    Working,  ///< at the job: `workLeft` seconds of it remain
-    Resting,  ///< off shift: in the staff room (`inside`) or by the gate
+    Walk,        ///< on the way to the next job, hands free or a tool over the shoulder
+    Carry,       ///< walking with a full bucket
+    Push,        ///< walking behind a wheelbarrow
+    FillFeeder,  ///< bent over a feeder, tipping the bucket in
+    FillTrough,  ///< filling a water trough
+    ThrowFeed,   ///< throwing or scattering feed, across a barrier when the habitat is not entered
+    Rake,        ///< raking, mucking out
+    Hose,        ///< hosing: a deck, a pool's edge, or a trough across a barrier
+    Inspect,     ///< checking a fence: a hand on it, looking along it
+    Sweep,       ///< sweeping a path with a broom
+    EmptyBin,    ///< bent over a litter bin, taking the sack out
+    Tend,        ///< kneeling at a flower bed
+    Water,       ///< watering a flower bed from a can
+    Rest,        ///< standing, taking a breather
     Count
 };
-std::string_view ToString(StaffActivity v);  // "idle", "walking", "working", "resting"
+std::string_view ToString(StaffActivity v);  // "walk", "carry", "push", "fill_feeder", ...
+/// A few words for a visitor ("fills the feeder"); never empty.
+std::string_view Describe(StaffActivity v);
 
-/// The job a member of staff has taken on. Names are part of the save format.
-enum class StaffJob : std::uint8_t {
-    None,
-    RefillFeeder,    ///< `prop`: a feeder below its refill level, for which food exists
-    RefillTrough,    ///< `prop`: a water trough below its refill level
-    CleanEnclosure,  ///< `enclosure`: dirt above the level worth a visit
-    TreatAnimal,     ///< `animal`: sick and not yet treated
-    CatchAnimal,     ///< `animal`: on the loose
-    SweepLitter,     ///< `spot`: litter on the ground there
-    EmptyBin,        ///< `prop`: a bin that is nearly full
-    MendFence,       ///< `edge`: a fence whose condition is below the level worth a visit
-    Count
+/// One job: a place to stand, a way to face, something to be seen doing for a while.
+/// The job's effect on the zoo (a feeder filled, dirt gone) happens half way through.
+struct StaffTask {
+    StaffActivity work = StaffActivity::Rest;
+    /// How the member gets there: Walk, Carry or Push.
+    StaffActivity approach = StaffActivity::Walk;
+    Vec2 place;
+    float facing = 0.0f;
+    std::int32_t ticks = 0;
+    EnclosureId enclosure;  ///< the habitat it serves; null for work on the paths
+    PropId prop;            ///< the feeder, trough, bin or bed; null when there is none
+
+    bool operator==(const StaffTask&) const = default;
 };
-std::string_view ToString(StaffJob v);
 
-/// One employee. Everything here is saved.
+/// One stop of a round: a habitat (keepers) or a prop on the paths (a bed, a bin).
+struct StaffStop {
+    EnclosureId enclosure;
+    PropId prop;
+    /// Calendar hours of the two feedings a visitor can come to watch; negative: none.
+    std::array<float, 2> feedHours{-1.0f, -1.0f};
+    /// The calendar day on which each was last given; -1: never.
+    std::array<std::int64_t, 2> fedDay{-1, -1};
+
+    bool operator==(const StaffStop&) const = default;
+};
+
 struct StaffMember {
     StaffId id;
     StaffRole role = StaffRole::Keeper;
-    std::string name;        ///< "Anna Kovar"; chosen from the staff's own generator
-    std::uint32_t look = 0;  ///< seed of the body, face and hair the renderer gives it
+    /// Picks the body the renderer gives them (the uniform is the same for all).
+    std::uint32_t look = 0;
+    /// Gone round in order, again and again; never empty.
+    std::vector<StaffStop> round;
+    std::uint32_t stop = 0;       ///< the stop being worked at or walked to
+    std::uint32_t stopsDone = 0;  ///< how many stops were planned so far (varies the routine work)
+
+    // -- body --
     Vec2 position;
-    float heading = 0.0f;  ///< radians, 0 looks along +z (as everywhere)
-    float speed = 0.0f;    ///< m/s right now (0 when standing)
-    StaffActivity activity = StaffActivity::Idle;
-    StaffJob job = StaffJob::None;
-    // The target of the job (only the one the job names is set).
-    PropId prop;
-    EnclosureId enclosure;
-    AnimalId animal;
-    EdgeRef edge{};
-    Vec2 spot;
-    float workLeft = 0.0f;       ///< seconds of work left at the job
-    BuildingId inside;           ///< the staff room it rests in (then it is not drawn)
-    std::int64_t hiredTick = 0;  ///< when it was taken on
-    int jobsDone = 0;            ///< jobs finished since then
-    /// The route being walked (world positions, the next one first) and where it leads.
-    std::vector<Vec2> route;
-    Vec2 routeGoal;
-    std::uint32_t routeRevision = 0;  ///< World::NavRevision() + FenceRevision() it was planned for
-    float stuckSeconds = 0.0f;        ///< how long it has made no headway while walking
-    std::int64_t idleUntil = 0;       ///< tick before which it does not look for work again
+    float heading = 0.0f;  ///< radians; 0 looks along +z (see Math.hpp)
+    float speed = 0.0f;    ///< current ground speed in m/s
+    StaffActivity activity = StaffActivity::Rest;
+
+    // -- the jobs of the current stop --
+    std::vector<StaffTask> tasks;
+    std::uint32_t task = 0;  ///< index into `tasks`; == size: the stop is done
+    bool working = false;    ///< arrived at the task's place
+    /// Of the task's work once `working`; on the way, of the patience the walk still has.
+    std::int32_t ticksLeft = 0;
+    std::vector<Vec2> route;  ///< remaining waypoints while walking to the task
+    std::uint32_t routeIndex = 0;
+
+    const StaffTask* Task() const { return task < tasks.size() ? &tasks[task] : nullptr; }
 
     bool operator==(const StaffMember&) const = default;
 };
 
-/// The people who work in the zoo.
+/// The staff a visitor sees at work: a fixed crew, each with a round they go about all
+/// day. There is no management here: nobody is hired or paid, nobody tires.
 ///
-/// They replace the instant, invisible care of ZooConfig::autoCare: every job is
-/// found, walked to (NavProfile::Staff(): anywhere dry, through gates, preferring
-/// paths), worked at for a while and only then takes effect through the same
-/// calls autoCare uses (Animals::RefillFeeder, RefillTrough, Clean, Treat,
-/// Recapture; Visitors::CleanLitter; a bin's Prop::amount; World::SetFence).
+/// A keeper's round is a few habitats. At each stop the jobs are planned from what the
+/// habitat needs (feeders and troughs running low, dirt) and from the hour (mucking out
+/// in the morning, hosing and fence checks later, the two feedings a day visitors can
+/// come to). Keepers go in through the keeper gate, except where a dangerous species
+/// lives: nothing in the animal model shuts those animals in, so there the keeper never
+/// enters and works from the barrier (feed thrown over, the trough filled with the hose).
 ///
-/// Deterministic: the state is the members, a random stream and a few counters;
-/// everything else is derived from the Env each tick. A job belongs to at most
-/// one member at a time. docs/STAFF.md describes the behaviour and its numbers.
+/// Step() is deterministic: equal state and equal inputs give bit-identical results.
+/// The class has no random stream; variety comes from the stateless hashes. Members
+/// are stepped in ascending id.
 class Staff {
 public:
-    static constexpr int kMaxStaff = 80;
-    /// How many people the zoo can employ without a staff room.
-    static constexpr int kBaseCapacity = 8;
+    /// Walking speeds in m/s.
+    static constexpr float kWalkSpeed = 1.6f;
+    static constexpr float kCarrySpeed = 1.45f;
+    static constexpr float kPushSpeed = 1.35f;
+    /// A feeder below this share of its capacity is filled at the keeper's next stop; a trough likewise.
+    static constexpr float kFeederDue = 0.6f;
+    static constexpr float kTroughDue = 0.7f;
+    /// A feeding visitors can watch begins at a stop planned from this long before its
+    /// hour until this long after it (calendar hours).
+    static constexpr float kFeedingEarly = 0.15f;
+    static constexpr float kFeedingLate = 0.75f;
 
-    explicit Staff(std::uint64_t seed);
-    ~Staff();
-    Staff(Staff&&) noexcept;
-    Staff& operator=(Staff&&) noexcept;
-
-    /// A day's pay of one member, cents.
-    static Money WagePerDay(StaffRole role);
-    /// What taking somebody on costs once (advertising, clothing), cents.
-    static Money HiringCost(StaffRole role);
-
-    /// How many people the zoo can employ: kBaseCapacity plus the capacity of
-    /// every staff room (BuildingRole::StaffRoom), at most kMaxStaff.
-    int Capacity(const Env& env) const;
-    /// Takes somebody on. They appear at the spawn point outside the gate
-    /// (World::SpawnPoint) and walk in. Books HiringCost to Account::Wages.
-    /// Null when the zoo is at capacity or the money is not there.
-    StaffId Hire(Env& env, StaffRole role);
-    /// Lets somebody go at once: their job is free for others. False for an unknown id.
-    bool Fire(StaffId id);
-
-    /// Advances everybody by one tick. `world` is the same map as env.world; it
-    /// is written to only by a mechanic finishing a fence (World::SetFence).
-    /// True when a fence was mended this tick: the caller then rebuilds the
-    /// enclosures (what they hold in depends on the fences' condition).
-    bool Step(Env& env, World& world, Animals& animals, Visitors& visitors);
-    /// Books the day's wages (Account::Wages; paid even when the balance goes negative).
-    void CloseDay(Env& env);
+    /// Engages the crew for the zoo as it stands now (replacing any earlier crew): one
+    /// keeper for every two habitats, a gardener when there are flower beds to reach,
+    /// a cleaner when there are bins. Everybody starts at the first stop of their round.
+    void Engage(const Env& env, const Animals& animals);
 
     /// Ascending id.
     const std::vector<StaffMember>& All() const { return members_; }
     const StaffMember* Find(StaffId id) const;
-    int Count() const { return static_cast<int>(members_.size()); }
-    int Count(StaffRole role) const;
-    /// The wages of everybody for one day, cents.
-    Money DailyWages() const;
-    /// Jobs of a role that are waiting for somebody right now (nobody has taken
-    /// them on): what the player reads to see whether to hire. Derived, O(world).
-    int OpenJobs(const Env& env, const Animals& animals, const Visitors& visitors, StaffRole role) const;
 
-    /// Removes everybody.
-    void Clear();
+    /// Advances everybody by one tick. Fills feeders and troughs, removes dirt, empties
+    /// bins and picks up litter as the jobs are done.
+    void Step(Env& env, Animals& animals, Visitors& visitors);
 
-    /// Hash of the saved state.
+    /// The keeper who has this habitat on the round, if any.
+    const StaffMember* KeeperOf(EnclosureId enclosure) const;
+
+    /// The calendar hours of the habitat's two public feedings (negative: none).
+    std::array<float, 2> FeedingHours(EnclosureId enclosure) const;
+    /// The next public feeding of today that has not been given yet, as a calendar hour.
+    std::optional<float> NextFeeding(const Env& env, EnclosureId enclosure) const;
+
+    /// Hash over the whole saved state (FNV-1a, floats by bit pattern).
     std::uint64_t StateHash() const;
-    /// Compares the saved state.
-    bool operator==(const Staff& other) const;
+    bool operator==(const Staff& other) const = default;
 
 private:
-    friend struct StaffJsonAccess;
-    friend struct staff_detail::Stepper;
+    friend struct StaffJsonAccess;  // serialisation
 
-    std::vector<StaffMember> members_;
+    /// Chooses the member's next stop and fills `tasks` with its jobs (at least one).
+    void PlanStop(const Env& env, const Animals& animals, const Visitors& visitors,
+                  StaffMember& member) const;
+    static void Apply(Env& env, Animals& animals, Visitors& visitors, const StaffTask& task);
+
+    std::vector<StaffMember> members_;  // ascending id
     std::uint32_t nextId_ = 1;
-    Rng rng_;
-    /// Derived each tick; never saved.
-    std::unique_ptr<staff_detail::Scratch> scratch_;
 };
+
+/// May keepers walk into this habitat: nothing dangerous lives in it, and its inside can
+/// be reached on foot through a keeper gate.
+bool KeepersMayEnter(const Env& env, const Animals& animals, EnclosureId enclosure);
 
 }  // namespace zoo
