@@ -18,7 +18,7 @@ loudspeaker stays muted and nobody has listened to any of it.
 | Scenery in one cell during a visit | engine time at the entrance 11.7 -> 5.7 ms | `docs/PERFORMANCE.md` |
 | At most 18 full CNA avatars a frame | people pass at the meerkats 15.5 -> 8.0 ms | `docs/PERFORMANCE.md`, `evidence/people-*.jpg` |
 | Groups at benches | a group sits only if half of it can; the rest stand in an arc | `docs/VISITORS.md` |
-| Audio, second round | more recordings, a measured per-take mix, labelled substitutes | `assets/audio/`, `assets/ATTRIBUTION.md` |
+| Audio audit | 54 licensed recordings with a measured per-take mix and labelled substitutes; calls follow animal activity instead of a timer, day birds fade at night, crowds scale with people, steps match the walked surface, sources have no hard pan or immediate repeat, and the two fountains have their own spatial loop | `docs/AUDIO.md`, `assets/audio/`, `evidence/audio-g7-2026-11-19.jpg` |
 | Regression tests | empty habitats, information boards, save/load of a visit, wading depth | `tests/core/` |
 | Light from the sky and the ground | below | `src/game/SkyLight.*` |
 | Water with ripples | below | `src/game/Surfaces.cpp` |
@@ -91,8 +91,8 @@ where an animal wades. Penguins swim and float with their own clips now, and pol
    entrance, mostly overlapping
    alpha-tested cards (fill), which the far form does not reduce (`docs/PLANTS.md`).
 4. Keepers walk through animals and visitors, shy animals do not keep away from them, and the
-   lions' and bears' habitats are never entered (`docs/KEEPERS.md` "Open"). Only penguin, polar bear, rhinoceros and elephant have swimming clips. Bear growl
-   is quiet in the mix.
+   lions' and bears' habitats are never entered (`docs/KEEPERS.md` "Open"). Only penguin, polar
+   bear, rhinoceros and elephant have swimming clips.
 5. Loading about 8 s with the visit's fill on this machine, 1.6 s of it the ground. Banks at the
    deep pools are steep walls (the core digs pools square). The paint still ends square where a
    fence ends or meets a gate. Leaf litter under trees is missing (`docs/GROUND.md`).

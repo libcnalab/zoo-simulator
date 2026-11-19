@@ -1,0 +1,4 @@
+# args: --stand habitat:penguin; seconds: 45
+# Standing at Penguin Cove and turning once around, slowly (2992 pixels of mouse are one turn):
+# the pool, the people and the animals pass from ear to ear. The log gives the pan of each.
+60 look 2992 0 900

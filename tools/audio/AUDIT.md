@@ -9,10 +9,11 @@ Noise floor is 10 log10 of the arithmetic mean power of the quietest ceil(10%) o
 | Ogg | Duration s | True peak dBFS | LUFS | LRA LU | Quiet floor dBFS | <120 Hz % | >6 kHz % | Head ms | Tail ms | Seam Δ dB |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
 | `ambience/crowd.ogg` | 25.000000 | -2.4 | -22.8 | 5.5 | -28.13 | 5.61 | 0.47 | 0.00 | 0.00 | 1.484 |
-| `ambience/park_day.ogg` | 36.000000 | -3.5 | -23.2 | 6.7 | -30.13 | 47.44 | 2.30 | 0.00 | 0.00 | 1.736 |
+| `ambience/fountain.ogg` | 17.000000 | -2.9 | -23.0 | 1.0 | -28.28 | 0.30 | 21.07 | 0.00 | 7.62 | 1.295 |
+| `ambience/park_day.ogg` | 36.000000 | -3.6 | -23.3 | 7.1 | -33.10 | 7.14 | 4.05 | 0.00 | 0.00 | 1.774 |
 | `ambience/water.ogg` | 15.000000 | -6.5 | -23.3 | 1.4 | -29.73 | 0.32 | 5.54 | 0.00 | 0.00 | 2.591 |
 | `ambience/wind_trees.ogg` | 20.000000 | -5.1 | -22.7 | 4.9 | -34.03 | 0.00 | 57.82 | 0.00 | 0.00 | 0.879 |
-| `animals/brown_bear_growl.ogg` | 1.700000 | -3.1 | -30.9 | 0.0 | -42.05 | 0.76 | 0.40 | 3.99 | 19.82 | — |
+| `animals/brown_bear_growl.ogg` | 1.300000 | -2.9 | -27.3 | 0.0 | -50.87 | 0.29 | 0.11 | 10.98 | 37.87 | — |
 | `animals/brown_bear_huff.ogg` | 1.600000 | -2.8 | -23.8 | 0.0 | -49.03 | 0.18 | 0.39 | 9.98 | 7.62 | — |
 | `animals/brown_bear_huff_2.ogg` | 1.600000 | -3.1 | -30.1 | 0.0 | -55.00 | 0.08 | 0.15 | 27.94 | 47.53 | — |
 | `animals/camel_grunt.ogg` | 2.560000 | -2.9 | -10.3 | 0.0 | -22.40 | 0.08 | 0.07 | 4.99 | 47.71 | — |
@@ -85,7 +86,7 @@ Range across every delivered take and call name of a species; flags are strictly
 
 | Species | Minimum LUFS | Maximum LUFS | Spread LU | Over 4 LU |
 |---|---:|---:|---:|---|
-| brown_bear | -30.9 | -23.8 | 7.1 | yes |
+| brown_bear | -30.1 | -23.8 | 6.3 | yes |
 | camel | -11.0 | -10.3 | 0.7 | no |
 | elephant | -24.7 | -16.1 | 8.6 | yes |
 | flamingo | -18.8 | -17.6 | 1.2 | no |
@@ -153,4 +154,4 @@ proposals use integrated loudness, not those short-clip LRA values. The 4 LU spe
 and residual within-name variation require mix review; the proposed gains cannot equalize
 different takes within a name. Nobody listened to the files.
 
-53 files measured; 0 edge-silence flags; 8 quiet-floor review flags.
+54 files measured; 0 edge-silence flags; 8 quiet-floor review flags.

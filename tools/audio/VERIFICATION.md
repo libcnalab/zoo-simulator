@@ -14,7 +14,7 @@ All files are Vorbis, 44100 Hz. Peaks are decoded sample peaks from FFmpeg `volu
 | animals/wolf_howl.ogg | 8.400000 | 1 | -3.1 | — | — | Wolf howls.ogg | Public domain |
 | animals/wolf_howl_2.ogg | 9.800000 | 1 | -3.1 | — | — | Wolf howls.ogg | Public domain |
 | animals/wolf_howl_3.ogg | 9.700000 | 1 | -3.0 | — | — | Wolf howls.ogg | Public domain |
-| animals/brown_bear_growl.ogg | 1.700000 | 1 | -3.1 | — | — | Yellowstone sound library - Grizzly Bear vocalizations - 001.mp3 | Public domain |
+| animals/brown_bear_growl.ogg | 1.300000 | 1 | -2.9 | — | — | Yellowstone sound library - Grizzly Bear vocalizations - 001.mp3 | Public domain |
 | animals/brown_bear_huff.ogg | 1.600000 | 1 | -3.0 | — | — | Yellowstone sound library - Grizzly Bear vocalizations - 001.mp3 | Public domain |
 | animals/brown_bear_huff_2.ogg | 1.600000 | 1 | -3.1 | — | — | Yellowstone sound library - Grizzly Bear vocalizations - 001.mp3 | Public domain |
 | animals/zebra_bark.ogg | 1.590000 | 1 | -3.0 | — | — | Zebras - Grant's Zebra Braying | CC0 |
@@ -34,10 +34,11 @@ All files are Vorbis, 44100 Hz. Peaks are decoded sample peaks from FFmpeg `volu
 | footsteps/grass_3.ogg | 0.400000 | 1 | -3.0 | — | — | FOLEY_Footsteps_Grass_001.wav | CC0 |
 | footsteps/grass_4.ogg | 0.400000 | 1 | -2.9 | — | — | FOLEY_Footsteps_Grass_001.wav | CC0 |
 | footsteps/grass_5.ogg | 0.400000 | 1 | -2.9 | — | — | FOLEY_Footsteps_Grass_001.wav | CC0 |
-| ambience/park_day.ogg | 36.000000 | 2 | -4.1 | -23.09 | 1.747 dB (-26.49 joint / -25.66 rest) | UK early morning urban birdsong in Spring | CC0 |
+| ambience/park_day.ogg | 36.000000 | 2 | -3.6 | -23.1 | 1.708 dB (-26.77 joint / -26.86 rest) | UK early morning urban birdsong in Spring | CC0 |
 | ambience/crowd.ogg | 25.000000 | 1 | -2.4 | -23.12 | 1.376 dB (-21.72 joint / -22.69 rest) | Mumbling crowd - people talking background sound | CC BY 4.0 |
 | ambience/water.ogg | 15.000000 | 1 | -6.5 | -23.24 | 2.640 dB (-22.56 joint / -24.54 rest) | Water lapping on lake Pukaki,South Island,New Zealand.mp3 | CC0 |
 | ambience/wind_trees.ogg | 20.000000 | 2 | -5.0 | -23.08 | 0.881 dB (-29.89 joint / -29.01 rest) | windinleaves.wav | CC0 |
+| ambience/fountain.ogg | 17.000000 | 1 | -2.9 | -23.21 | 1.755 dB (-25.58 joint / -24.94 rest) | Fountain in toulouse.ogg | Public domain |
 | animals/giraffe_grunt.ogg | 1.400000 | 1 | -3.1 | — | — | Nocturnal humming vocalizations: adding a piece to the puzzle of giraffe vocal communication — Additional file 2 (Grunt, Fig. 1a) | CC BY 4.0 |
 | animals/penguin_bray.ogg | 5.850000 | 1 | -3.1 | — | — | The Vocal Repertoire of the African Penguin — Video S3 (ecstatic display song) | CC BY 4.0 |
 | animals/penguin_bray_2.ogg | 0.623651 | 1 | -3.0 | — | — | Vocal-individuality-cues-in-the-African-penguin-(Spheniscus-demersus)-a-source-filter-theory-srep17255-s2.oga | CC BY 4.0 |
@@ -58,4 +59,4 @@ All files are Vorbis, 44100 Hz. Peaks are decoded sample peaks from FFmpeg `volu
 | animals/elephant_rumble_3.ogg | 2.320000 | 1 | -3.0 | — | — | Visualizing Sound Emission of Elephant Vocalizations — Movie S3 (oral rumble, 25 fps) | CC BY 4.0 |
 | animals/elephant_trumpet.ogg | 1.270000 | 1 | -3.0 | — | — | Elephant voice - trumpeting.ogg | CC0 |
 
-53 files; 375 per-file assertions passed; 0 failures. Manifest, species contracts and inventory checks passed. Total audio directory: 2,468,933 bytes.
+54 files; 383 per-file assertions passed; 0 failures. Manifest, species contracts and inventory checks passed. Total audio directory: 2,635,228 bytes.

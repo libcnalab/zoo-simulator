@@ -1,4 +1,4 @@
-# Handoff: Zoo Simulator (state of 2026-11-19)
+# Handoff: Zoo Simulator (state of 2026-11-20)
 
 For the next agent, who starts without any earlier context. Read this file first, then
 `docs/REALISM.md` (progress log and the honest list of what is open), and the document of
@@ -41,7 +41,7 @@ whatever you take up (`docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `docs/V
   clearing their per-animal animation state. A two-reload run did no static or animal loading in
   either `Adopt`, ended at 3,033 MB instead of the earlier 3,120 MB software-GL sample, and its
   second reload added 9 MB. An editor zoo or any actual geometry edit still rebuilds. Audio now
-  catalogues all 53 recordings but decodes a take only on first play: its loading phase fell
+  catalogues all 54 recordings but decodes a take only on first play: its loading phase fell
   46 -> 0 MB; a 60-frame run decoded 3 recordings,
   played 4 audible voices and had no failure. The noisy whole-run sample was 2,711 MB, so do not
   claim a total-peak cut from it. Do not quote the sandbox's absolute number as a Radeon
@@ -80,8 +80,15 @@ whatever you take up (`docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `docs/V
   top-down plan and a food-court view were inspected. The changed deterministic routine history
   improves animal stalls to 0.88%, under the unchanged 1.3% limit; seed 1 now has 2,579 props
   (`docs/VISITOR_ZOO.md`, 2026-11-19).
+- The stopped G7c audio audit is recovered and finished. Calls now follow `Vocalize`, social,
+  play and documented feeding cues rather than a timer; takes do not repeat immediately, spatial
+  pan is capped at 0.60, birds fade with daylight, crowd level follows its people, and footsteps
+  are levelled by surface. A public-domain fountain loop plays at the two fountains, the park bed
+  no longer masks low animal calls, and the uncertain bear cut is a stronger measured low event
+  from the same NPS source. All 27 disk-driver captures have zero clipped samples and zero
+  immediate repeats; the dusk wolf/lion chorus peaks at -1.2 dBFS. Nobody listened: conclusions
+  are measurements and inspected spectrograms only (`docs/AUDIO.md`, 2026-11-20).
 - **Stopped mid-work when the machine restarted (uncommitted, in their worktrees; no reports):**
-  - `wt-sound`: G7c audio audit (brief `.codex-work/brief-G7c-sound-develop.md`), 28 files.
   - `wt-plants` (reused): A1 animal activity clips (brief `brief-A1-activity-clips.md`), 31 files.
   Look at each diff before going on; none is reviewed. Their earlier finished work is in develop.
 - **Deadline:** about **2026-11-28** the owner puts Zoo Simulator under the same AI policy as
@@ -186,9 +193,10 @@ this managed session's ptrace wrapper; UBSan and the entire current suite remain
 
 ### 4.5 Audio audit (G7)
 
-`.codex-work/wt-sound` (on `f77bc8f`, uncommitted), brief `brief-G7b-sound-finish.md`; it was
-comparing spectrograms of a new set. Remember nobody can listen here; the bear growl is known
-to be quiet in the mix.
+Recovered and completed on current `develop`; the implementation, per-capture measurements,
+species/source table, open limitations and inspected spectrogram sheet are in `docs/AUDIO.md`.
+The 62 audio-tool tests, 383 recording assertions, warning-clean game build and all 20 game-side
+tests pass. Nobody listened to the audio; preserve that qualification.
 
 ### 4.6 Animals
 
@@ -236,11 +244,12 @@ offscreen smoke, so the former 42 set-downs inside furniture are resolved (2026-
 ## 5. Worktrees in `.codex-work/` (git-ignored)
 
 Still holding work to take: `wt-keepers` (4.1), `wt-ground` (4.2), `wt-plants` (4.3),
-`wt-audit` (4.4), `wt-sound` (4.5). Briefs `brief-<id>.md`, reports `report-<id>.md`, logs
+`wt-audit` (4.4). Briefs `brief-<id>.md`, reports `report-<id>.md`, logs
 `log-<id>.txt` beside them.
 
 Nothing left to take (their build trees can go once the owner agrees; sizes of 2026-11-14):
-`wt-life` 598 MB (G8), `wt-built` 716 MB (G3), `wt-visitors` 715 MB (G4), `wt-cats` 251 MB (S7),
+`wt-sound` (G7c), `wt-life` 598 MB (G8), `wt-built` 716 MB (G3), `wt-visitors` 715 MB
+(G4), `wt-cats` 251 MB (S7),
 `wt-zebra` 272 MB (S10, S8), `wt-pachy` 279 MB (S6b), `wt-giraffe` 338 MB (S11b), `wt-birds`
 158 MB, `wt-behave` 349 MB, `wt-audio` 221 MB, `wt-species` 469 MB, `wt-vzoo` 360 MB,
 `wt-world` 293 MB. Kept patches: `G8.patch`, `zebra.patch`, `birds.patch`, `giraffe.patch`,

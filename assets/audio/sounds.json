@@ -64,7 +64,7 @@
         "animals/brown_bear_growl.ogg"
       ],
       "seconds": [
-        1.7
+        1.3
       ],
       "species": "brown_bear"
     },
@@ -198,6 +198,17 @@
       ],
       "seconds": [
         20.0
+      ],
+      "loop": true
+    },
+    {
+      "name": "fountain",
+      "kind": "ambience",
+      "files": [
+        "ambience/fountain.ogg"
+      ],
+      "seconds": [
+        17.0
       ],
       "loop": true
     },

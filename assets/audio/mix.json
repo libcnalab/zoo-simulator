@@ -1,5 +1,5 @@
 {
-  "note": "Written by tools/audio/audit_audio.py from measured loudness; nobody listened. gains_db: decibels applied to a call take when it is played (0 = as recorded).",
+  "note": "Written by tools/audio/audit_audio.py from measured loudness; nobody listened. gains_db: decibels applied to a call or footstep take when it is played (0 = as recorded).",
   "offset_lu": 9.0,
   "gains_db": {
     "animals/brown_bear_growl.ogg": 0.0,
@@ -35,6 +35,21 @@
     "animals/wolf_howl_2.ogg": 0.0,
     "animals/wolf_howl_3.ogg": -0.4,
     "animals/zebra_bark.ogg": 0.0,
-    "animals/zebra_whinny.ogg": -0.1
+    "animals/zebra_whinny.ogg": -0.1,
+    "footsteps/grass_1.ogg": 0.0,
+    "footsteps/grass_2.ogg": -2.9,
+    "footsteps/grass_3.ogg": -6.3,
+    "footsteps/grass_4.ogg": -2.4,
+    "footsteps/grass_5.ogg": -7.0,
+    "footsteps/gravel_1.ogg": -1.7,
+    "footsteps/gravel_2.ogg": 0.0,
+    "footsteps/gravel_3.ogg": -1.1,
+    "footsteps/gravel_4.ogg": -1.6,
+    "footsteps/gravel_5.ogg": -1.2,
+    "footsteps/paved_1.ogg": -1.9,
+    "footsteps/paved_2.ogg": 0.0,
+    "footsteps/paved_3.ogg": -2.2,
+    "footsteps/paved_4.ogg": -2.4,
+    "footsteps/paved_5.ogg": -0.4
   }
 }

@@ -5,7 +5,8 @@ import unittest
 
 import numpy as np
 
-from audit_audio import band_shares, edge_silence, loop_delta, quiet_floor, window_powers
+from audit_audio import (MIX_OFFSET_LU, band_shares, call_gains, edge_silence, loop_delta, quiet_floor,
+                         step_gains, target, window_powers)
 
 
 class AuditTests(unittest.TestCase):
@@ -55,6 +56,21 @@ class AuditTests(unittest.TestCase):
 
     def test_constant_loop_has_no_seam_delta(self):
         self.assertEqual(loop_delta(np.full((44100, 2), 0.2), 44100), 0)
+
+    def test_call_gains_only_attenuate(self):
+        loud, _ = target('lion_roar')
+        rows = [{'kind': 'call', 'name': 'lion_roar', 'file': 'a', 'lufs': loud + MIX_OFFSET_LU + 4.0},
+                {'kind': 'call', 'name': 'lion_roar', 'file': 'b', 'lufs': loud + MIX_OFFSET_LU - 6.0},
+                {'kind': 'ambience', 'name': 'water', 'file': 'c', 'lufs': -23.0}]
+        self.assertEqual(call_gains(rows), {'a': -4.0, 'b': 0.0})
+
+    def test_steps_of_a_surface_are_levelled_to_the_quietest(self):
+        rows = [{'kind': 'footstep', 'name': 'footstep_grass', 'file': 'g1', 'lufs': -27.6},
+                {'kind': 'footstep', 'name': 'footstep_grass', 'file': 'g2', 'lufs': -20.6},
+                {'kind': 'footstep', 'name': 'footstep_gravel', 'file': 'k1', 'lufs': -23.1},
+                {'kind': 'footstep', 'name': 'footstep_gravel', 'file': 'k2', 'lufs': -24.8},
+                {'kind': 'call', 'name': 'lion_roar', 'file': 'r', 'lufs': -11.7}]
+        self.assertEqual(step_gains(rows), {'g1': 0.0, 'g2': -7.0, 'k1': -1.7, 'k2': 0.0})
 
 
 if __name__ == '__main__':

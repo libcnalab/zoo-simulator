@@ -1,0 +1,7 @@
+# args: --view 217,237,178.2,0; seconds: 50
+# A walk of some 160 m north along the eastern leg of the main loop at the walking pace (4.4 m/s,
+# about 36 s): Ostrich Rise to the left, Acacia Plain and then Lion Rock to the right, ending
+# between Wolf Wood and Tiger Forest, where the body is stopped and stands for the rest.
+# For capture_runs.py (real time, SDL's disk audio driver): steps, surfaces and how the water,
+# the crowd and the calls rise and fall with distance. The first line gives the game's arguments.
+5 hold W

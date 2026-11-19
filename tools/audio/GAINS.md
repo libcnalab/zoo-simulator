@@ -6,7 +6,7 @@ Targets: lion roar, elephant trumpet and wolf howl −23 LUFS; growls/grunts/huf
 
 | Name | Measured mean LUFS | Take range LUFS | Target LUFS | Proposed gain dB | Basis |
 |---|---:|---|---:|---:|---|
-| `brown_bear_growl` | -30.90 | -30.9 to -30.9 | -31.0 | -0.10 | 8 LU below loud calls |
+| `brown_bear_growl` | -27.30 | -27.3 to -27.3 | -31.0 | -3.70 | 8 LU below loud calls |
 | `brown_bear_huff` | -25.90 | -30.1 to -23.8 | -31.0 | -5.10 | 8 LU below loud calls |
 | `camel_grunt` | -10.64 | -11.0 to -10.3 | -31.0 | -20.36 | 8 LU below loud calls |
 | `elephant_rumble` | -20.83 | -24.7 to -18.3 | -27.0 | -6.17 | low rumble, below the loud-call reference |

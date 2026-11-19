@@ -140,22 +140,42 @@ def write_gains(rows):
 MIX_OFFSET_LU = 9.0
 
 
-def write_mix(rows):
-    """The adopted mix: one gain per call file, read by the game (src/game/Soundscape.cpp).
-
-    Each take is brought to its call's target loudness (the table in GAINS.md) raised by
-    MIX_OFFSET_LU, so that a roar at its reference distance stands about 14 LU above the ambience
-    beds (-23 LUFS at 0.55). Gains only attenuate: a take quieter than its target stays as it is.
-    """
+def call_gains(rows):
+    """Per call file: decibels that bring the take to its call's target loudness (the table in
+    GAINS.md) raised by MIX_OFFSET_LU. Gains only attenuate: a quieter take stays as it is."""
     gains = {}
     for row in rows:
         if row['kind'] != 'call':
             continue
         desired, _ = target(row['name'])
         gains[row['file']] = round(min(0.0, desired + MIX_OFFSET_LU - row['lufs']), 1)
+    return gains
+
+
+def step_gains(rows):
+    """Per footstep file: decibels that bring the take down to the quietest take of its surface.
+
+    All takes are peak-normalized, which leaves up to 7 LU between the steps on one surface (grass);
+    played in turn that is one loud step among quiet ones. The game cannot amplify, so the takes
+    are levelled downwards and the surfaces keep their measured order (gravel over grass and paving).
+    """
+    quietest = {}
+    for row in rows:
+        if row['kind'] == 'footstep':
+            quietest[row['name']] = min(quietest.get(row['name'], math.inf), row['lufs'])
+    return {row['file']: round(quietest[row['name']] - row['lufs'], 1)
+            for row in rows if row['kind'] == 'footstep'}
+
+
+def write_mix(rows):
+    """The adopted mix: one gain per call and footstep file, read by the game
+    (src/game/Soundscape.cpp). With MIX_OFFSET_LU a roar at its reference distance stands about
+    14 LU above the ambience beds (-23 LUFS at 0.55)."""
+    gains = call_gains(rows) | step_gains(rows)
     record = {
         'note': 'Written by tools/audio/audit_audio.py from measured loudness; nobody listened. '
-                'gains_db: decibels applied to a call take when it is played (0 = as recorded).',
+                'gains_db: decibels applied to a call or footstep take when it is played '
+                '(0 = as recorded).',
         'offset_lu': MIX_OFFSET_LU,
         'gains_db': dict(sorted(gains.items())),
     }

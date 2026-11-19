@@ -363,7 +363,8 @@ that the old replacement overlap is gone. Both post-load screenshots were visual
 
 ## Lazy audio decoding (2026-11-19)
 
-`Soundscape` used to decode all 53 Ogg recordings in its constructor. Their PCM totals 22.71 MB,
+`Soundscape` used to decode all 53 Ogg recordings in its constructor; those files total 22.71 MB
+as PCM. The current catalog has 54, including the later fountain loop,
 but decoder and audio-backend copies made the measured loading phase add 46 MB resident. It now
 reads the manifest and mix at start and decodes each take only on its first play. The sound loading
 mark remains 220 -> 220 MB instead of 220 -> 266 MB. A 60-frame visit decoded three recordings,

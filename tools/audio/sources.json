@@ -223,13 +223,13 @@
       "file": "animals/brown_bear_growl.ogg",
       "name": "brown_bear_growl",
       "kind": "call",
-      "cut_start": 12.1,
-      "cut_end": 13.8,
+      "cut_start": 4.6,
+      "cut_end": 5.9,
       "filters": [
         "highpass=f=60"
       ],
       "channels": 1,
-      "heard": "Grizzly warning vocalization; low growl assignment is uncertain without listening",
+      "heard": "Grizzly warning vocalization: the recording's longest low event (0.3 s, strongest at 241 Hz, 62 % of its energy at 120-500 Hz, measured); the publisher names huffs, jaw-pops and low growls without saying where, so that this is a growl is uncertain without listening",
       "species": "brown_bear",
       "original_source_page": "https://www.nps.gov/media/video/view.htm?id=48C181D5-1DD8-B71B-0BE5FF0F921CAA4F"
     },
@@ -634,7 +634,8 @@
       "cut_start": 90,
       "cut_end": 130,
       "filters": [
-        "highpass=f=60",
+        "highpass=f=120",
+        "highpass=f=120",
         "loudnorm=I=-23:TP=-3:LRA=7"
       ],
       "channels": 2,
@@ -706,6 +707,28 @@
       "channels": 2,
       "crossfade_seconds": 4,
       "heard": "Wind rustling leaves; early quieter part of source, before its strongest gusts"
+    },
+    {
+      "title": "Fountain in toulouse.ogg",
+      "source_page": "https://commons.wikimedia.org/wiki/File:Fountain_in_toulouse.ogg",
+      "download_url": "https://upload.wikimedia.org/wikipedia/commons/0/0f/Fountain_in_toulouse.ogg",
+      "author": "aldor (PDSounds.org record 579; transferred to Wikimedia Commons by Fæ)",
+      "licence": "Public domain",
+      "licence_url": "",
+      "cache_file": "source-32a88c299b1bf6c4.ogg",
+      "source_sha256": "480b9da27f02b3b38e533f6a5e85e9992fc17b6139e12c5a0f999df1010b703a",
+      "file": "ambience/fountain.ogg",
+      "name": "fountain",
+      "kind": "ambience",
+      "cut_start": 24,
+      "cut_end": 44,
+      "filters": [
+        "highpass=f=100",
+        "loudnorm=I=-23:TP=-3:LRA=7"
+      ],
+      "channels": 1,
+      "crossfade_seconds": 3,
+      "heard": "A town fountain's falling water (Place de la Trinité, Toulouse), played at the zoo's fountains; steady part of the source, 24–44 s"
     },
     {
       "title": "Nocturnal humming vocalizations: adding a piece to the puzzle of giraffe vocal communication — Additional file 2 (Grunt, Fig. 1a)",

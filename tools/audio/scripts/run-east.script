@@ -1,0 +1,5 @@
+# args: --view 217,237,178.2,0; seconds: 30
+# The same way as walk-east.script at a run (8.8 m/s; Shift toggles running): steps at the
+# running rate, and the level of what is passed changing twice as fast.
+5 hold W
+8 key Shift

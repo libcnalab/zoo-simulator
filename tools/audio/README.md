@@ -78,3 +78,32 @@ The nine missing call names remain omitted; no manifest entry points to a substi
 Penguin take 1 is now a documented ecstatic-display bray excerpt, take 2 is the explicitly
 labelled old contact call, and take 3 is a separate display excerpt. Elephant rumble has three
 distinct natural recordings. See the Round 2 sections of REPORT.md and RESEARCH.md.
+
+## What the game plays: capture and measurement
+
+`docs/AUDIO.md` holds the results. None of these tools plays anything: the game runs with SDL's
+disk audio driver, which writes the samples to a file instead of a sound card.
+
+```sh
+python3 tools/audio/capture_runs.py --set after                    # every scenario, one game run each
+python3 tools/audio/capture_runs.py --set after --only entrance,walk-east
+python3 tools/audio/capture_runs.py --set before --run-dir build-probe/before-run  # another binary
+python3 tools/audio/measure_capture.py --set after                 # figures, spectrograms, SUMMARY.md
+python3 tools/audio/mix_model.py                                   # level against distance, by the model
+cd tools/audio && python3 -m unittest                              # the mix model and the measuring code
+```
+
+`capture_runs.py` starts the built game (`build/zoo-simulator`) once per scenario with
+`SDL_AUDIODRIVER=disk` and the soundscape's event log (`ZOO_SOUND_LOG`), in real time, one run at
+a time, and writes `build-probe/audio/<set>/<scenario>.{raw,log,out}` (ignored by git). The
+scenarios are the fifteen species stands, the entrance, the wolves and the entrance at several hours,
+and the walks in `scripts/*.script`, whose first line names the game's arguments and the seconds
+of sound wanted. `--run-dir DIR` runs `DIR/zoo-simulator` from DIR, beside the `assets/` and
+`data/` it is to read: a "before" binary with the recordings it shipped with.
+`measure_capture.py` reads those files (NumPy, `ffmpeg` for loudness, true peak and the
+spectrogram picture) and writes one JSON file and one PNG per capture.
+
+`mix_model.py` is the game's mix in Python: the engine's distance law, the pan limit, the carry
+of each kind of call, the murmur against the number of people, the beds against the hour.
+`test_mix_model.py` reads the constants out of `src/game/Soundscape.cpp` and fails when the two
+differ, so the tables of `docs/AUDIO.md` cannot drift from the game unnoticed.

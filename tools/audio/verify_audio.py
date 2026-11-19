@@ -74,7 +74,8 @@ def main():
             minimum, maximum = 0.15, 0.45
         if entry['kind'] == 'ambience':
             minimum, maximum = {'park_day': (30, 45), 'crowd': (20, 30),
-                                'water': (10, 20), 'wind_trees': (15, 30)}[entry['name']]
+                                'water': (10, 20), 'wind_trees': (15, 30),
+                                'fountain': (10, 20)}[entry['name']]
         assert minimum - 0.001 <= duration <= maximum + 0.001, (path, duration)
         checks += 5
         if entry['kind'] != 'ambience':
