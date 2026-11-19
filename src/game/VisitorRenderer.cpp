@@ -13,7 +13,6 @@
 #include "Microsoft/Xna/Framework/BoundingSphere.hpp"
 #include "Microsoft/Xna/Framework/GamerServices/AvatarBodyType.hpp"
 #include "Microsoft/Xna/Framework/GamerServices/AvatarRendererState.hpp"
-#include "Microsoft/Xna/Framework/Vector2.hpp"
 #include "Microsoft/Xna/Framework/Vector4.hpp"
 
 #include "zoo/base/Rng.hpp"
@@ -25,13 +24,15 @@ namespace zoogame {
 namespace {
 
 using Microsoft::Xna::Framework::BoundingSphere;
+using Microsoft::Xna::Framework::Color;
 using Microsoft::Xna::Framework::ContainmentType;
 using Microsoft::Xna::Framework::GamerServices::AvatarBodyType;
 using Microsoft::Xna::Framework::GamerServices::AvatarDescription;
 using Microsoft::Xna::Framework::GamerServices::AvatarRenderer;
 using Microsoft::Xna::Framework::GamerServices::AvatarRendererState;
+using Microsoft::Xna::Framework::Graphics::DynamicVertexBuffer;
 using Microsoft::Xna::Framework::Graphics::GraphicsDevice;
-using Microsoft::Xna::Framework::Vector2;
+using Microsoft::Xna::Framework::Graphics::VertexPositionColorTexture;
 using Microsoft::Xna::Framework::Vector4;
 using zoo::VisitorActivity;
 using zoo::VisitorThought;
@@ -86,6 +87,43 @@ bool OnTheMove(VisitorActivity activity) {
            activity == VisitorActivity::Leaving || activity == VisitorActivity::Fleeing;
 }
 
+/// Writes a vertex in place, without CNA's vector constructors (calls into the library).
+void SetVertex(VertexPositionColorTexture& vertex, float x, float y, float z, const Color& color, float u,
+               float v) {
+    vertex.Position.X = x;
+    vertex.Position.Y = y;
+    vertex.Position.Z = z;
+    vertex.Color = color;
+    vertex.TextureCoordinate.X = u;
+    vertex.TextureCoordinate.Y = v;
+}
+
+/// The next `count` vertices after the `used` ones of `list`, which grows when it has to and
+/// never shrinks (so that a frame neither allocates nor constructs vertices).
+VertexPositionColorTexture* Room(std::vector<VertexPositionColorTexture>& list, std::size_t& used,
+                                 std::size_t count) {
+    if (list.size() < used + count)
+        list.resize(std::max(used + count, 2 * list.size()));
+    VertexPositionColorTexture* first = list.data() + used;
+    used += count;
+    return first;
+}
+
+/// Puts the first `count` vertices of `list` into `buffer` (made, or made larger, when it has to
+/// be) and sets it on the device.
+void Upload(GraphicsDevice& device, std::unique_ptr<DynamicVertexBuffer>& buffer,
+            const std::vector<VertexPositionColorTexture>& list, std::size_t count) {
+    namespace Xna = Microsoft::Xna::Framework::Graphics;
+    const std::size_t had = buffer == nullptr ? 0 : static_cast<std::size_t>(buffer->getVertexCountProperty());
+    if (had < count) {
+        const std::size_t capacity = std::max({count, 2 * had, std::size_t{4096}});
+        buffer = std::make_unique<DynamicVertexBuffer>(device, VertexPositionColorTexture::getVertexDeclarationStatic(),
+                                                       static_cast<int>(capacity), Xna::BufferUsage::WriteOnly);
+    }
+    buffer->SetData(list.data(), 0, static_cast<int>(count), Xna::SetDataOptions::Discard);
+    device.SetVertexBuffer(buffer.get());
+}
+
 }  // namespace
 
 VisitorRenderer::VisitorRenderer() {
@@ -109,10 +147,10 @@ VisitorRenderer::~VisitorRenderer() {
         const double frames = static_cast<double>(frames_);
         std::printf(
             "zoo: visitors: %d of the cast ready; a frame drew %.1f people, %.1f of them as avatars; posing "
-            "%.3f ms, drawing avatars %.3f ms, flat people %.3f ms\n",
+            "%.3f ms, drawing avatars %.3f ms, flat people %.3f ms, choosing %.3f ms, shade %.3f ms\n",
             ready_, static_cast<double>(drawnInAll_) / frames, static_cast<double>(closeInAll_) / frames,
-            poseSeconds_ * 1000.0 / frames,
-            drawSeconds_ * 1000.0 / frames, flatSeconds_ * 1000.0 / frames);
+            poseSeconds_ * 1000.0 / frames, drawSeconds_ * 1000.0 / frames, flatSeconds_ * 1000.0 / frames,
+            chooseSeconds_ * 1000.0 / frames, shadeSeconds_ * 1000.0 / frames);
     }
 }
 
@@ -779,6 +817,7 @@ void VisitorRenderer::Draw(GraphicsDevice& device, const CnaEngine::Graphics::Ca
         }
         return feet;
     };
+    const auto chosen = std::chrono::steady_clock::now();
     inView_.clear();
     far_.clear();
     shades_.clear();
@@ -790,12 +829,14 @@ void VisitorRenderer::Draw(GraphicsDevice& device, const CnaEngine::Graphics::Ca
         if (member == nullptr)
             continue;
         const Vector3 feet = standing(actor);
-        const Vector3 away = feet - eye;
-        const float distance = away.X * away.X + away.Y * away.Y + away.Z * away.Z;
+        const float awayX = feet.X - eye.X;
+        const float awayY = feet.Y - eye.Y;
+        const float awayZ = feet.Z - eye.Z;
+        const float distance = awayX * awayX + awayY * awayY + awayZ * awayZ;
         if (distance > kFarthest * kFarthest)
             continue;
         ++inRange_;
-        if (frustum.Contains(BoundingSphere(feet + Vector3(0.0f, 0.9f, 0.0f), 1.4f)) ==
+        if (frustum.Contains(BoundingSphere(Vector3(feet.X, feet.Y + 0.9f, feet.Z), 1.4f)) ==
             ContainmentType::Disjoint)
             continue;
         ++inViewCount_;
@@ -805,7 +846,7 @@ void VisitorRenderer::Draw(GraphicsDevice& device, const CnaEngine::Graphics::Ca
         if (flat_ && distance > limit * limit)
             far_.push_back(Far{member, &actor, feet});
         else
-            inView_.emplace_back(distance, &actor);
+            inView_.push_back(Near{distance, &actor, feet});
     }
     // An avatar is some forty draws of its own (0.45 ms on the machine this was measured on,
     // docs/PERFORMANCE.md): a crowd at a fence is drawn as avatars only in its nearest rows,
@@ -813,15 +854,15 @@ void VisitorRenderer::Draw(GraphicsDevice& device, const CnaEngine::Graphics::Ca
     // nearer, so that two people at the same distance do not swap every frame.
     const std::size_t avatars = flat_ ? std::min(budget_, kAvatars) : budget_;
     if (inView_.size() > avatars) {
-        const auto rank = [](const std::pair<float, Actor*>& one) {
-            return one.second->wasAvatar ? one.first * 0.8f : one.first;
+        const auto rank = [](const Near& one) {
+            return one.actor->wasAvatar ? one.distance * 0.8f : one.distance;
         };
         std::nth_element(inView_.begin(), inView_.begin() + static_cast<std::ptrdiff_t>(avatars), inView_.end(),
-                         [&](const auto& a, const auto& b) { return rank(a) < rank(b); });
+                         [&](const Near& a, const Near& b) { return rank(a) < rank(b); });
         if (flat_) {
             for (std::size_t i = avatars; i < inView_.size(); ++i) {
-                const Actor& actor = *inView_[i].second;
-                far_.push_back(Far{Playing(actor), &actor, standing(actor)});
+                const Actor& actor = *inView_[i].actor;
+                far_.push_back(Far{Playing(actor), &actor, inView_[i].feet});
             }
         }
         inView_.resize(avatars);
@@ -830,16 +871,19 @@ void VisitorRenderer::Draw(GraphicsDevice& device, const CnaEngine::Graphics::Ca
     std::erase_if(far_, [](const Far& one) { return one.member->sheet == nullptr; });
     for (const Far& one : far_)
         shades_.push_back(one.feet);
-    for (const auto& [distance, seen] : inView_)
-        shades_.push_back(standing(*seen));
+    for (const Near& one : inView_)
+        shades_.push_back(one.feet);
 
+    const auto shaded = std::chrono::steady_clock::now();
+    chooseSeconds_ += std::chrono::duration<double>(shaded - chosen).count();
     DrawShade(device, camera, lighting);
+    shadeSeconds_ += std::chrono::duration<double>(std::chrono::steady_clock::now() - shaded).count();
 
-    for (const auto& [distance, seen] : inView_) {
-        Actor& actor = *seen;
+    for (const Near& one : inView_) {
+        Actor& actor = *one.actor;
         actor.close = true;
         const Member* member = Playing(actor);
-        const Vector3 feet = standing(actor);
+        const Vector3& feet = one.feet;
         const float scale = actor.heightM / member->height;
         const auto before = std::chrono::steady_clock::now();
         Pose(actor, *member, scale);
@@ -931,25 +975,40 @@ void VisitorRenderer::DrawShade(GraphicsDevice& device, const CnaEngine::Graphic
     const float strength = (0.22f + 0.33f * bright) / (1.0f + 0.25f * low);
     const Color tint(strength, strength, strength, strength);
     const Vector3 eye = camera.Position();
-    quads_.clear();
+    // The patch is the rectangle middle -/+ along * reach -/+ across * 0.34, in plain floats
+    // (the same operations in the same order as with CNA's vectors, which are library calls).
+    // `along` and `across` lie flat: their Y is 0, so the patch is level at the feet + 3.5 cm.
+    const float alongX = along.X * reach;
+    const float alongZ = along.Z * reach;
+    const float acrossX = across.X * 0.34f;
+    const float acrossZ = across.Z * 0.34f;
+    const float shift = reach - 0.3f;
+    std::size_t used = 0;
     for (const Vector3& feet : shades_) {
         const float dx = feet.X - eye.X;
         const float dz = feet.Z - eye.Z;
         if (dx * dx + dz * dz > kShadeFarthest * kShadeFarthest)
             continue;
-        const Vector3 middle = feet + Vector3(0.0f, 0.035f, 0.0f) + along * (reach - 0.3f);
-        const Vector3 a = middle - along * reach - across * 0.34f;
-        const Vector3 b = middle + along * reach - across * 0.34f;
-        const Vector3 c = middle + along * reach + across * 0.34f;
-        const Vector3 d = middle - along * reach + across * 0.34f;
-        quads_.emplace_back(a, tint, Vector2(0.0f, 0.0f));
-        quads_.emplace_back(b, tint, Vector2(1.0f, 0.0f));
-        quads_.emplace_back(c, tint, Vector2(1.0f, 1.0f));
-        quads_.emplace_back(a, tint, Vector2(0.0f, 0.0f));
-        quads_.emplace_back(c, tint, Vector2(1.0f, 1.0f));
-        quads_.emplace_back(d, tint, Vector2(0.0f, 1.0f));
+        const float middleX = feet.X + along.X * shift;
+        const float middleZ = feet.Z + along.Z * shift;
+        const float y = feet.Y + 0.035f;
+        const float aX = middleX - alongX - acrossX;
+        const float aZ = middleZ - alongZ - acrossZ;
+        const float bX = middleX + alongX - acrossX;
+        const float bZ = middleZ + alongZ - acrossZ;
+        const float cX = middleX + alongX + acrossX;
+        const float cZ = middleZ + alongZ + acrossZ;
+        const float dX = middleX - alongX + acrossX;
+        const float dZ = middleZ - alongZ + acrossZ;
+        VertexPositionColorTexture* v = Room(quads_, used, 6);
+        SetVertex(v[0], aX, y, aZ, tint, 0.0f, 0.0f);
+        SetVertex(v[1], bX, y, bZ, tint, 1.0f, 0.0f);
+        SetVertex(v[2], cX, y, cZ, tint, 1.0f, 1.0f);
+        SetVertex(v[3], aX, y, aZ, tint, 0.0f, 0.0f);
+        SetVertex(v[4], cX, y, cZ, tint, 1.0f, 1.0f);
+        SetVertex(v[5], dX, y, dZ, tint, 0.0f, 1.0f);
     }
-    if (quads_.empty())
+    if (used == 0)
         return;
     const DeviceState restore(device);
     device.setBlendStateProperty(Xna::BlendState::AlphaBlend);
@@ -960,8 +1019,9 @@ void VisitorRenderer::DrawShade(GraphicsDevice& device, const CnaEngine::Graphic
     shadeEffect_->setViewProperty(camera.View());
     shadeEffect_->setProjectionProperty(camera.Projection());
     shadeEffect_->Apply();
-    device.DrawUserPrimitives(Xna::PrimitiveType::TriangleList, quads_.data(), 0,
-                              static_cast<int>(quads_.size() / 3));
+    Upload(device, shadeBuffer_, quads_, used);
+    device.DrawPrimitives(Xna::PrimitiveType::TriangleList, 0, static_cast<int>(used / 3));
+    device.SetVertexBuffer(nullptr);
 }
 
 void VisitorRenderer::DrawFlat(GraphicsDevice& device, const CnaEngine::Graphics::Camera& camera,
@@ -976,7 +1036,7 @@ void VisitorRenderer::DrawFlat(GraphicsDevice& device, const CnaEngine::Graphics
         flatEffect_->setAlphaFunctionProperty(Xna::CompareFunction::Greater);
         flatEffect_->setReferenceAlphaProperty(96);
     }
-    // One sheet after another: each is one draw call.
+    // One sheet after another: each is one draw call, all from one buffer written once.
     std::sort(far_.begin(), far_.end(), [](const Far& a, const Far& b) { return a.member < b.member; });
     const Vector3 eye = camera.Position();
     const Vector3 sun = lighting.lightColor * 0.9f;
@@ -992,25 +1052,36 @@ void VisitorRenderer::DrawFlat(GraphicsDevice& device, const CnaEngine::Graphics
     flatEffect_->setViewProperty(camera.View());
     flatEffect_->setProjectionProperty(camera.Projection());
 
+    // Plain floats below: the same operations in the same order as with CNA's vectors (whose
+    // constructors and operators are calls into the library), so the pictures stand exactly
+    // where they did.
+    const float lightScale = 1.0f / (kSheetAmbient + 0.45f * kSheetLight);
     std::size_t at = 0;
+    std::size_t used = 0;
+    runs_.clear();
     while (at < far_.size()) {
         const Member& member = *far_[at].member;
-        quads_.clear();
+        const std::size_t first = used;
         for (; at < far_.size() && far_[at].member == &member; ++at) {
             const Actor& actor = *far_[at].actor;
             const Vector3& feet = far_[at].feet;
             // The rectangle stands upright and turns about its foot to face the eye.
-            Vector3 toEye(eye.X - feet.X, 0.0f, eye.Z - feet.Z);
-            const float apart = std::sqrt(toEye.X * toEye.X + toEye.Z * toEye.Z);
+            float toEyeX = eye.X - feet.X;
+            float toEyeZ = eye.Z - feet.Z;
+            const float apart = std::sqrt(toEyeX * toEyeX + toEyeZ * toEyeZ);
             if (apart < 0.01f)
                 continue;
-            toEye = toEye * (1.0f / apart);
-            const Vector3 right = Vector3::Cross(toEye * -1.0f, Vector3(0.0f, 1.0f, 0.0f));
+            const float inverse = 1.0f / apart;
+            toEyeX = toEyeX * inverse;
+            toEyeZ = toEyeZ * inverse;
+            // Across the view, to the right: the cross product of -toEye and up, which is level.
+            const float rightX = toEyeZ;
+            const float rightZ = -toEyeX;
             // Which picture: the side the eye is on, as the avatar itself would see it
             // (drawn, it is turned by heading + pi about the vertical).
             const float turn = -(actor.heading + kPi);
-            const float localX = toEye.X * std::cos(turn) + toEye.Z * std::sin(turn);
-            const float localZ = -toEye.X * std::sin(turn) + toEye.Z * std::cos(turn);
+            const float localX = toEyeX * std::cos(turn) + toEyeZ * std::sin(turn);
+            const float localZ = -toEyeX * std::sin(turn) + toEyeZ * std::cos(turn);
             const float angle = std::atan2(localX, -localZ);
             int side = static_cast<int>(std::lround(angle / (2.0f * kPi) * kSheetSides));
             side = ((side % kSheetSides) + kSheetSides) % kSheetSides;
@@ -1024,35 +1095,43 @@ void VisitorRenderer::DrawFlat(GraphicsDevice& device, const CnaEngine::Graphics
             const float halfWide = 0.5f * member.cellWide * scale;
             const float tall = member.cellTall * scale;
             // The sun on the side one sees, or on the far one.
-            const float facing = -(toEye.X * lighting.lightDirection.X + toEye.Z * lighting.lightDirection.Z);
+            const float facing = -(toEyeX * lighting.lightDirection.X + toEyeZ * lighting.lightDirection.Z);
             const float lit = 0.38f + 0.30f * std::clamp(facing, -1.0f, 1.0f);
-            const Vector3 light = (ambient + sun * lit) * (1.0f / (kSheetAmbient + 0.45f * kSheetLight));
-            const Color tint(std::min(light.X, 1.0f), std::min(light.Y, 1.0f), std::min(light.Z, 1.0f), 1.0f);
+            const float lightX = (ambient.X + sun.X * lit) * lightScale;
+            const float lightY = (ambient.Y + sun.Y * lit) * lightScale;
+            const float lightZ = (ambient.Z + sun.Z * lit) * lightScale;
+            const Color tint(std::min(lightX, 1.0f), std::min(lightY, 1.0f), std::min(lightZ, 1.0f), 1.0f);
 
             // Half a texel in from the picture's edge: its neighbours do not show.
             const float u0 = (static_cast<float>(pose * kCellWide) + 0.5f) / (kSheetPoses * kCellWide);
             const float u1 = (static_cast<float>((pose + 1) * kCellWide) - 0.5f) / (kSheetPoses * kCellWide);
             const float v0 = (static_cast<float>(side * kCellTall) + 0.5f) / (kSheetSides * kCellTall);
             const float v1 = (static_cast<float>((side + 1) * kCellTall) - 0.5f) / (kSheetSides * kCellTall);
-            const Vector3 up(0.0f, tall, 0.0f);
-            const Vector3 a = feet - right * halfWide + up;
-            const Vector3 b = feet + right * halfWide + up;
-            const Vector3 c = feet + right * halfWide;
-            const Vector3 d = feet - right * halfWide;
-            quads_.emplace_back(a, tint, Vector2(u0, v0));
-            quads_.emplace_back(b, tint, Vector2(u1, v0));
-            quads_.emplace_back(c, tint, Vector2(u1, v1));
-            quads_.emplace_back(a, tint, Vector2(u0, v0));
-            quads_.emplace_back(c, tint, Vector2(u1, v1));
-            quads_.emplace_back(d, tint, Vector2(u0, v1));
+            const float leftX = feet.X - rightX * halfWide;
+            const float leftZ = feet.Z - rightZ * halfWide;
+            const float otherX = feet.X + rightX * halfWide;
+            const float otherZ = feet.Z + rightZ * halfWide;
+            const float top = feet.Y + tall;
+            VertexPositionColorTexture* v = Room(quads_, used, 6);
+            SetVertex(v[0], leftX, top, leftZ, tint, u0, v0);
+            SetVertex(v[1], otherX, top, otherZ, tint, u1, v0);
+            SetVertex(v[2], otherX, feet.Y, otherZ, tint, u1, v1);
+            SetVertex(v[3], leftX, top, leftZ, tint, u0, v0);
+            SetVertex(v[4], otherX, feet.Y, otherZ, tint, u1, v1);
+            SetVertex(v[5], leftX, feet.Y, leftZ, tint, u0, v1);
         }
-        if (quads_.empty())
-            continue;
-        flatEffect_->setTextureProperty(member.sheet.get());
-        flatEffect_->Apply();
-        device.DrawUserPrimitives(Xna::PrimitiveType::TriangleList, quads_.data(), 0,
-                                  static_cast<int>(quads_.size() / 3));
+        if (used > first)
+            runs_.push_back(Run{&member, static_cast<int>(first), static_cast<int>(used - first)});
     }
+    if (runs_.empty())
+        return;
+    Upload(device, flatBuffer_, quads_, used);
+    for (const Run& run : runs_) {
+        flatEffect_->setTextureProperty(run.member->sheet.get());
+        flatEffect_->Apply();
+        device.DrawPrimitives(Xna::PrimitiveType::TriangleList, run.first, run.count / 3);
+    }
+    device.SetVertexBuffer(nullptr);
 }
 
 std::optional<Vector3> VisitorRenderer::PositionOf(zoo::VisitorId id) const {

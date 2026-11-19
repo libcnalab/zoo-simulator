@@ -257,6 +257,28 @@ over day one.
 Giving way costs a look at the people on the tiles ahead for every walker and
 tick; the chains of who stands on which tile are rebuilt each tick.
 
+### Visitors' frame cost (P1, 2026-11-19)
+
+The old rendering path recomputed a visible person's feet as many as three times in one frame.
+It also called `DrawUserPrimitives` once for the shared shadow and once for every cast member
+whose sprite sheet was visible (usually about thirty calls). CNA made, filled and deleted a GPU
+buffer and its vertex array for each call.
+
+The visible-person selection now carries the already computed feet through avatar ranking,
+shadow collection and posing. Shadows and flat people each retain a dynamic vertex buffer. All
+flat vertices are uploaded once, then the texture runs are drawn from their offsets in that
+buffer. This does not change simulation, avatar selection, poses, sprite sides, lighting or
+geometry. A standalone comparison of the old vector expressions with the new scalar writes
+matched all 44,571,410 coordinates bit for bit. An entrance screenshot with 155 people drawn was
+inspected, the 18 game-side Walker/texture tests pass, and an AddressSanitizer entrance run with
+the full crowd is clean.
+
+The saved historical before/after binaries could not provide a trustworthy new frame-time result:
+the current offscreen renderer ran them at 2.6 fps with 310 ms in its software driver, unlike the
+historical GPU measurements in `docs/PERFORMANCE.md`. The result claimed here is therefore
+structural: about thirty temporary buffers and all repeated feet calculations are gone, not a
+particular fps increase.
+
 ## Tests
 
 `tests/core/VisitorWalkTests.cpp` (seven cases: walkers neither snap round nor

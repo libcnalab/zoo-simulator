@@ -14,6 +14,7 @@
 
 #include "Microsoft/Xna/Framework/Graphics/AlphaTestEffect.hpp"
 #include "Microsoft/Xna/Framework/Graphics/BasicEffect.hpp"
+#include "Microsoft/Xna/Framework/Graphics/DynamicVertexBuffer.hpp"
 #include "Microsoft/Xna/Framework/Graphics/GraphicsDevice.hpp"
 #include "Microsoft/Xna/Framework/Graphics/RenderTarget2D.hpp"
 #include "Microsoft/Xna/Framework/Graphics/Texture2D.hpp"
@@ -201,8 +202,14 @@ private:
     std::size_t budget_ = 400;
     bool flat_ = false;
     std::size_t drawnFlat_ = 0;
-    std::vector<std::pair<float, Actor*>> inView_;
-    /// Of those in view: who is drawn flat, and where everybody drawn stands.
+    /// Of those in view: who may be drawn as an avatar (squared distance from the eye, and where
+    /// it stands, worked out once a frame), who is drawn flat, and where everybody drawn stands.
+    struct Near {
+        float distance;
+        Actor* actor;
+        Vector3 feet;
+    };
+    std::vector<Near> inView_;
     struct Far {
         const Member* member;
         const Actor* actor;
@@ -210,7 +217,22 @@ private:
     };
     std::vector<Far> far_;
     std::vector<Vector3> shades_;
+    /// The vertices of the shade and of the flat people. It only grows: its vertices are written
+    /// in place each frame (CNA's vector constructors and operators are calls into the library,
+    /// a dozen and more a vertex).
     std::vector<Microsoft::Xna::Framework::Graphics::VertexPositionColorTexture> quads_;
+    /// Where the shade and the flat people are drawn from, written once a frame each. The former
+    /// DrawUserPrimitives calls made CNA create, fill and delete a buffer and its vertex array:
+    /// one for the shade and about thirty for the cast members in view.
+    std::unique_ptr<Microsoft::Xna::Framework::Graphics::DynamicVertexBuffer> shadeBuffer_;
+    std::unique_ptr<Microsoft::Xna::Framework::Graphics::DynamicVertexBuffer> flatBuffer_;
+    /// The flat people of one member of the cast: vertices [first, first + count) of flatBuffer_.
+    struct Run {
+        const Member* member;
+        int first;
+        int count;
+    };
+    std::vector<Run> runs_;
     std::unique_ptr<Microsoft::Xna::Framework::Graphics::AlphaTestEffect> flatEffect_;
     std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> shadeEffect_;
     std::unique_ptr<Microsoft::Xna::Framework::Graphics::Texture2D> shadeTexture_;
@@ -227,6 +249,8 @@ private:
     std::uint64_t frames_ = 0;
     std::uint64_t drawnInAll_ = 0;
     std::size_t closeInAll_ = 0;
+    double chooseSeconds_ = 0.0;  ///< finding who is in view, and who of them is drawn how
+    double shadeSeconds_ = 0.0;
     double poseSeconds_ = 0.0;
     double drawSeconds_ = 0.0;
     double flatSeconds_ = 0.0;

@@ -229,7 +229,19 @@ went from 9.4 / 9.1 / 8.4 ms to 11.2 / 12.7 / 12.0 ms and the simulation from 1.
 dearer. Not found yet (no profiler on this machine): turning off the new pose layers
 (weight, lean, point, talk, stoop, look) gave no measurable change, so the cost is in the
 per-visitor bookkeeping of `VisitorRenderer::Update`/`Carry`, which runs for every one of
-the 800 people each frame, drawn or not. Open: run it only for the people in range.
+the 800 people each frame, drawn or not.
+
+The P1 audit on 2026-11-19 disproved that last attribution. The separately timed `people` update
+is small; samples and the renderer's own counters put almost all of `people pass` in CNA avatar
+drawing, followed by flat people. Flat figures formerly used `DrawUserPrimitives` once per visible
+cast member (about thirty temporary buffers and uploads a frame), plus another for the shared
+shadow, and recomputed a person's feet up to three times. They now reuse the first feet result and
+two retained dynamic buffers, uploading all flat vertices together. A 44,571,410-coordinate probe
+matched the old geometry bit for bit; entrance and lion screenshots, 18 game-side tests and a
+current AddressSanitizer crowd smoke pass. No new GPU frame-time number is claimed: today's
+offscreen environment took 310 ms in its software driver for the preserved baseline binary, so
+the new result is the removed buffer churn rather than an unreliable fps comparison. See
+`docs/VISITORS.md`.
 
 ## After the keepers (G5; 2026-11-14)
 

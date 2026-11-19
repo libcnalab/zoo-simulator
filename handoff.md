@@ -54,9 +54,14 @@ whatever you take up (`docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `docs/V
   shadows), and the 18 game-side tests pass; no frame-time saving is claimed because animals
   were already under 1 ms. A current AddressSanitizer lion-view smoke also passes
   (`docs/PERFORMANCE.md`, 2026-11-19).
+- The stopped P1 visitor-cost work was recovered and reviewed. Visible feet are computed once,
+  flat people are uploaded together into one retained dynamic buffer, and their shared shadow uses
+  another; this removes about thirty temporary CNA buffers a frame without changing a coordinate.
+  The 44,571,410-coordinate probe, entrance/lion screenshots, 18 game-side tests and an ASan
+  full-crowd smoke pass. Do not claim an fps result: the current offscreen baseline spent 310 ms
+  in its software driver (`docs/VISITORS.md`, `docs/PERFORMANCE.md`, 2026-11-19).
 - **Stopped mid-work when the machine restarted (uncommitted, in their worktrees; no reports):**
   - `wt-sound`: G7c audio audit (brief `.codex-work/brief-G7c-sound-develop.md`), 28 files.
-  - `wt-visitors`: P1 visitors' frame cost (brief `brief-P1-visitor-cost.md`), 2 files.
   - `wt-life`: G8d plan details (brief `brief-G8d-plan-details.md`: ferns in the lagoon's
     water, 2 m walks, a tree inside a barrier, the meerkat stand on the gate), 6 files. Its Red
     Dune rail finding was fixed on develop on 2026-11-19 and the walker test is active again.
