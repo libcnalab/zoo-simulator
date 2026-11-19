@@ -19,6 +19,8 @@ namespace zoogame {
 /// resource inside the model-owned texture wrapper, releasing the unused original.
 /// Otherwise returns separate variants, which the caller keeps alive as long as
 /// the view. The model must outlive the view as usual.
+/// Atlases larger than 1024 texels on either side start at their 1K mip: at the game's
+/// output size the extra level is not visible, while its decoded pixels are expensive.
 std::vector<std::unique_ptr<Microsoft::Xna::Framework::Graphics::Texture2D>> GiveMipmaps(
     CnaEngine::Graphics::ModelView& view);
 

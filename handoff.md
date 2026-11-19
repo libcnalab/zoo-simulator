@@ -23,11 +23,12 @@ whatever you take up (`docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `docs/V
   `--frames`; no long runs under gdb. At most 2 subagents (owner's last word).
 - **The owner's complaint: the game takes about 2.5 GB of RAM.** Memory is now measured by kind
   (`docs/RELIABILITY.md`): in this no-GPU sandbox the identical software-GL run fell 3,873 ->
-  3,381 MB after unused original animal textures and level-zero recovery shadows were released.
-  The lion image is pixel-identical and focused tests cover the ownership rules. The under-1-GB
-  target is not met. Decoded animal level-zero images alone are 420 MB (368 MB unique); reduce the
-  deliberately oversized 2K atlases next, then measure audio, the 4096 shadow map and dual plant
-  groves. Do not quote the sandbox's absolute number as a Radeon measurement.
+  3,381 -> 2,870 MB after unused original animal textures and level-zero recovery shadows were
+  released, then oversized animal atlases were capped at their 1K mip. That is 1,003 MB (25.9%)
+  below the original run. Lion ownership output is pixel-identical; four representative 2K/1K
+  viewer comparisons show no visible loss at 720p, and focused tests cover both ownership and the
+  cap. The under-1-GB target is not met. Measure audio, the 4096 shadow map and dual plant groves
+  next. Do not quote the sandbox's absolute number as a Radeon measurement.
 - **Stopped mid-work when the machine restarted (uncommitted, in their worktrees; no reports):**
   - `wt-sound`: G7c audio audit (brief `.codex-work/brief-G7c-sound-develop.md`), 28 files.
   - `wt-visitors`: P1 visitors' frame cost (brief `brief-P1-visitor-cost.md`), 2 files.

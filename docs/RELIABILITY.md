@@ -435,13 +435,18 @@ On desktop Linux, resources made during loading also omit CNA's CPU context-reco
 is restored before runtime textures and automated screenshots are made. Animal imports temporarily
 retain their source pixels just long enough to make the role-aware mipmaps.
 
-The identical memory script now reports 3,381 MB: 2,548 MB heap, 705 MB anonymous and 127 MB file
-mappings, a reduction of **492 MB (12.7%)**. The `StartMark` immediately after animals fell from
-3,475 to 3,096 MB. The lion viewer's RGB screenshot is pixel-for-pixel unchanged. Four focused
-tests cover ownership, repeated use, colour/data filtering and alpha coverage. This is a real cut,
-but it does not meet the under-1-GB target; the decoded level-zero animal images alone total 420 MB
-(368 MB unique), before their mip levels and renderer copies. Reducing the deliberately oversized
-2K atlases is next.
+The first correction reports 3,381 MB: 2,548 MB heap, 705 MB anonymous and 127 MB file mappings,
+a reduction of **492 MB (12.7%)**. Animal atlases whose long edge exceeds 1,024 texels now begin
+at the 1K mip, made with the same sRGB/linear and alpha-coverage rules as the rest of the chain.
+The identical script after that cap reports 2,870 MB: 2,373 MB heap, 368 MB anonymous and 127 MB
+file mappings. That is another 511 MB, and **1,003 MB (25.9%)** below the original run. The
+`StartMark` immediately after animals fell from 3,475 through 3,096 to 2,467 MB.
+
+The lion viewer's ownership screenshot is pixel-for-pixel unchanged. Side-by-side elephant,
+giraffe, brown-bear and zebra viewer screenshots show no visible loss from the 1K cap at 720p;
+the giraffe is pixel-identical. Five focused tests cover ownership, repeated use, colour/data
+filtering, alpha coverage and the oversized-atlas cap. This is a real cut, but it does not meet
+the under-1-GB target. Audio, the 4096 shadow map and dual plant groves remain to be measured.
 
 ## The bench
 

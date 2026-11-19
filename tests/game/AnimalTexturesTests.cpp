@@ -81,6 +81,30 @@ TEST(AnimalTextures, SharedColourAndNormalMapKeepDistinctFiltering) {
     EXPECT_EQ(Level(*source, 0, 2, 2), image.Bytes());
 }
 
+TEST(AnimalTextures, OversizedAtlasStartsAtOneK) {
+    Xna::GraphicsDevice device;
+    const Graphics::Image image(2048, 1024, Color(23, 71, 149, 255));
+    auto source = Graphics::UploadTexture(device, image, {}, false);
+    Graphics::Material material;
+    material.baseTexture = source.get();
+    material.colorTexturesAreSrgb = true;
+    std::array materials{&material};
+
+    auto variants = GiveMaterialMipmaps(materials);
+    EXPECT_TRUE(variants.empty());
+    EXPECT_EQ(material.baseTexture, source.get());
+    EXPECT_EQ(source->getWidthProperty(), 1024);
+    EXPECT_EQ(source->getHeightProperty(), 512);
+    EXPECT_EQ(source->getLevelCountProperty(), 11);
+    const auto level = Level(*source, 0, 1024, 512);
+    ASSERT_EQ(level.size(), static_cast<std::size_t>(1024 * 512 * 4));
+    EXPECT_EQ((std::array<std::uint8_t, 4>{level[0], level[1], level[2], level[3]}),
+              (std::array<std::uint8_t, 4>{23, 71, 149, 255}));
+    EXPECT_EQ((std::array<std::uint8_t, 4>{level[level.size() - 4], level[level.size() - 3],
+                                          level[level.size() - 2], level[level.size() - 1]}),
+              (std::array<std::uint8_t, 4>{23, 71, 149, 255}));
+}
+
 TEST(AnimalTextures, ReleasesRendererRetainedByContentManagerRecord) {
     Xna::GraphicsDevice device;
     const auto image = Pattern();

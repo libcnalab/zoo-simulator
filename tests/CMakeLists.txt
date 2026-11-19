@@ -27,7 +27,14 @@ if(ZOO_BUILD_GAME AND TARGET CnaEngine::Core)
     target_link_libraries(zoo_game_tests PRIVATE Zoo::Core zoo_warnings CnaEngine::Graphics GTest::gtest_main)
     target_include_directories(zoo_game_tests PRIVATE "${CMAKE_SOURCE_DIR}/src/game" "${CMAKE_CURRENT_SOURCE_DIR}/core")
     target_compile_definitions(zoo_game_tests PRIVATE ZOO_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
-    gtest_discover_tests(zoo_game_tests DISCOVERY_TIMEOUT 60)
+    if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+        # Texture tests create a GraphicsDevice. Keep them runnable on headless builders instead
+        # of relying on a parent shell to have selected SDL's offscreen video backend.
+        gtest_discover_tests(zoo_game_tests DISCOVERY_TIMEOUT 60
+                            PROPERTIES ENVIRONMENT "SDL_VIDEODRIVER=offscreen")
+    else()
+        gtest_discover_tests(zoo_game_tests DISCOVERY_TIMEOUT 60)
+    endif()
 endif()
 
 # The procedural animation maths of the asset pipeline is pure numpy and tested without Blender.

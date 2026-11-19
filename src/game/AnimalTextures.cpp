@@ -17,6 +17,7 @@ namespace zoogame {
 namespace {
 
 namespace Xna = Microsoft::Xna::Framework::Graphics;
+constexpr int kMaxAnimalTextureSide = 1024;
 
 std::unique_ptr<Xna::Texture2D> Mipmapped(const Xna::Texture2D& texture, bool srgb,
                                           std::optional<int> alphaTestReference) {
@@ -33,6 +34,16 @@ std::unique_ptr<Xna::Texture2D> Mipmapped(const Xna::Texture2D& texture, bool sr
     // Hair cards (glTF MASK) keep their full-size coverage in every level; plain averages
     // would fade the strands until a lion's mane thins out with distance.
     options.alphaTestReference = alphaTestReference;
+    // Several imported atlases are 2K despite an animal occupying only a fraction of a
+    // 720p frame. Their decoded level zero alone cost 210 MB more than the 1K versions.
+    // Downsample with the same colour-space and alpha-coverage rules used for later mips.
+    const double coverage = alphaTestReference ? CnaEngine::Graphics::AlphaTestCoverage(image, *alphaTestReference)
+                                               : 0.0;
+    while (std::max(image.Width(), image.Height()) > kMaxAnimalTextureSide) {
+        image = alphaTestReference
+                    ? CnaEngine::Graphics::DownsampleForAlphaTest(image, *alphaTestReference, coverage, options)
+                    : CnaEngine::Graphics::Downsample(image, options);
+    }
     return CnaEngine::Graphics::UploadTexture(*device, image, options, true);
 }
 

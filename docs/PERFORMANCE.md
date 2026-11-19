@@ -264,7 +264,7 @@ went from 13.45 / 12.78 / 14.57 ms to 13.52 / 13.26 / 15.21 ms (slower in every 
 `DrawnGroundHeight`, called per animal, visitor and keeper every frame, costs 50 to 66 ns (180 to
 270 ns on bank tiles).
 
-## Animal texture ownership (2026-11-19)
+## Animal texture memory (2026-11-19)
 
 The animal renderer made mipmapped copies of every imported texture but kept the original
 single-level GPU texture and its CPU recovery pixels through the content manager. It now replaces
@@ -277,5 +277,10 @@ resources, restoring recovery before runtime capture textures are made.
 result is not a Radeon measurement; the same-machine reduction is 492 MB (12.7%). Immediately
 after animal load,
 `StartMark` fell 3,475 -> 3,096 MB. A lion viewer image before and after is pixel-identical.
-The remaining decoded animal level-zero images total 420 MB (368 MB unique); 2K atlases are the
-next memory target.
+
+Atlases larger than 1,024 texels on either side now start at their 1K mip, generated with the same
+role-aware colour and alpha rules. The same script then reports 2,870 MB resident, 2,373 MB heap,
+368 MB anonymous and 127 MB mapped files: another 511 MB and **1,003 MB (25.9%)** below the
+original. The animal `StartMark` is 2,467 MB. Elephant, giraffe, brown-bear and zebra viewer pairs
+show no visible loss at 720p (the giraffe pair is pixel-identical). Audio, the 4096 shadow map and
+dual plant groves are the next memory targets.
