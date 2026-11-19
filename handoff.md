@@ -181,8 +181,12 @@ to be quiet in the mix.
 
 No dry moat or ha-ha in the catalog; 48 paved tiles on 2 m walks (a zoo's side path is
 2.5 to 3 m); a slender tree may stand 1 m inside a barrier behind a strip (Elephant Valley);
-area per animal is an estimate, not EAZA/AZA figures; `--stand habitat:meerkat` can pick the
-keeper gate's mesh.
+area per animal is an estimate, not EAZA/AZA figures.
+
+`--stand habitat:<species>` now rejects keeper gates and buildings in the sight line. The
+meerkat view moved from `(177.0, 263.2)`, looking through mesh into the shelter wall, to
+`(169.2, 269.0)`, with an unobstructed animal in the centre; the before/after offscreen images
+were inspected and the 18 game-side Walker/texture tests passed (2026-11-19).
 
 ## 5. Worktrees in `.codex-work/` (git-ignored)
 

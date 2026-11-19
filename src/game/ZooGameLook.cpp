@@ -308,6 +308,15 @@ std::optional<ZooGame::Pose> ZooGame::StandPose(std::string_view what) const {
                 const float sx = to.x - from.x;
                 const float sz = to.z - from.z;
                 const float length2 = std::max(sx * sx + sz * sz, 1.0e-4f);
+                const int samples = std::max(
+                    1, static_cast<int>(std::ceil(std::sqrt(length2) / (0.25f * zoo::kTileSize))));
+                for (int sample = 1; sample < samples; ++sample) {
+                    const float along = static_cast<float>(sample) / static_cast<float>(samples);
+                    const zoo::TileCoord tile = zoo::World::TileAt(
+                        {from.x + along * sx, from.z + along * sz});
+                    if (zoo_->Map().InBounds(tile) && zoo_->Map().At(tile).building)
+                        return true;
+                }
                 for (const zoo::Prop& prop : zoo_->Objects().Props()) {
                     if (prop.def < 0)
                         continue;
@@ -369,9 +378,19 @@ std::optional<ZooGame::Pose> ZooGame::StandPose(std::string_view what) const {
                      zoo_->SpeciesList().All()[static_cast<std::size_t>(animal.species)].id != only))
                     continue;
                 for (const zoo::ViewingSpot& spot : enclosure.viewing) {
+                    // A transparent keeper gate is technically a view, but not a public
+                    // viewing front: its close mesh fills the picture and often frames the
+                    // service side of a shelter. Find the containment barrier beyond any
+                    // planted stand-off and leave service gates to the keepers.
+                    const zoo::TileCoord toward = zoo::Step(spot.side);
+                    zoo::TileCoord inside = spot.tile + toward;
+                    while (zoo_->Map().InBounds(inside) && zoo_->Map().At(inside).standOff)
+                        inside = inside + toward;
+                    if (!zoo_->Map().InBounds(inside) ||
+                        zoo_->Map().FenceOn(inside, zoo::Opposite(spot.side)).gate)
+                        continue;
                     // Where somebody stands to look: a short step back from the fence (0.8 m),
                     // not with the nose between its bars.
-                    const zoo::TileCoord toward = zoo::Step(spot.side);
                     const zoo::Vec2 middle = centre(spot.tile);
                     // At a rail before a stand-off one comes right up to it.
                     const float forward = spot.standOffM > 0.0f ? 0.5f : 0.2f;

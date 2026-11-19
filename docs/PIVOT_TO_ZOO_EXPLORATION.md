@@ -171,7 +171,8 @@ SDL_AUDIODRIVER=dummy xvfb-run -a -s "-screen 0 1280x720x24" ./zoo-simulator \
 ```
 
 `--stand habitat:<species>` stands at the fence of that species' habitat where an animal is best
-seen (squarely through one fence, some six metres off, nobody in front) and lists how many
+seen (squarely through one non-service barrier, some six metres off, with no person, prop or
+building in the sight line) and lists how many
 animals of each habitat are outdoors; `--stand habitat:N[:species]` takes the N-th habitat with
 an animal to be seen; `--stand board:N`
 at an information board; `--view x,z,yaw,pitch` anywhere; `--hour` starts the visit at another

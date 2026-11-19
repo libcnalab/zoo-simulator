@@ -86,8 +86,7 @@ where an animal wades. Penguins swim and float with their own clips now, and pol
 2. Habitat fronts: the catalog has no dry moat or ha-ha; 48 paved tiles are still on a walk
    only 2 m wide. Behind a planted strip a slender tree may stand a metre inside the barrier,
    in the view (Elephant Valley); a zoo keeps trees farther from a fence, but moving them all
-   back leaves Rhino Hollow and Red Dune too bare for their species. `--stand habitat:meerkat`
-   may pick the keeper gate's mesh.
+   back leaves Rhino Hollow and Red Dune too bare for their species.
 3. Plants: cut-out edges far away are aliased (no alpha-to-coverage, no MSAA); reeds and tall
    grass are modelled but no catalog prop uses them; the plan stands some ferns in the flamingo
    lagoon's water; the scenery still costs about 7 ms at the entrance, mostly overlapping
