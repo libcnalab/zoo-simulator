@@ -268,6 +268,33 @@ void ExpectFronts(const Zoo& zoo) {
     }
     EXPECT_GT(marked, 0);
     EXPECT_EQ(planted, marked);
+    // A planted strip is intentionally impassable public separation. Every side that public
+    // ground touches must have the low rail; that includes the planted sides of a service apron,
+    // while its mouth towards ordinary public ground remains open.
+    int publicEdges = 0;
+    for (int z = 0; z < zoo.Map().Depth(); ++z) {
+        for (int x = 0; x < zoo.Map().Width(); ++x) {
+            const TileCoord publicTile{x, z};
+            if (zoo.Habitats().RegionAt(publicTile) != Region::Public) {
+                continue;
+            }
+            for (const Dir side : {Dir::North, Dir::East, Dir::South, Dir::West}) {
+                const TileCoord stripTile = publicTile + Step(side);
+                if (!zoo.Map().InBounds(stripTile) ||
+                    zoo.Habitats().RegionAt(stripTile) != Region::StandOff) {
+                    continue;
+                }
+                ++publicEdges;
+                const FenceDef* rail =
+                    zoo.Definitions().FenceByKind(zoo.Map().FenceOn(publicTile, side).kind);
+                ASSERT_NE(rail, nullptr) << publicTile.x << ',' << publicTile.z << " towards " << stripTile.x
+                                         << ',' << stripTile.z;
+                EXPECT_EQ(rail->id, "stand_off_rail") << publicTile.x << ',' << publicTile.z << " towards "
+                                                      << stripTile.x << ',' << stripTile.z;
+            }
+        }
+    }
+    EXPECT_GT(publicEdges, 0);
     std::cout << "STRIPS seed=" << zoo.Config().seed << " tiles=" << marked << " props=" << planted << '\n';
 }
 

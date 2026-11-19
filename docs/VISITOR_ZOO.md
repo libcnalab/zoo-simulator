@@ -61,7 +61,7 @@ The six habitats with strips also have them beside their back circuits: the publ
 approach the same animals from behind at a smaller distance. Square dilation of the curved,
 rasterised footprints keeps at least the stated clearance even at corners; some sightlines
 cross more tiles. Straight portions of both principal fronts have exactly the tabulated depth.
-There are 1,015 explicitly marked strip tiles in both tested seeds, with one low, seeded shrub
+There are 999 explicitly marked strip tiles in both tested seeds, with one low, seeded shrub
 or rock per tile: biome-specific bushes at scale 0.7
 (1.26 m high, the Builder's minimum scale) and occasional rock accents at 1.05 m.
 The planting is added after the animal groups and habitat plants, preserving their seeded
@@ -262,6 +262,13 @@ wide runs through the strip from the back walk to the keeper gate and is railed 
 planting, so that no keeper walks through planting and the lead's "remove the planting before
 the gate" is not needed (`EveryKeeperGateHasADryConnectedApproach`: the tile outside each gate
 is walkable, not stand-off, not water, and joined to the entrance).
+The rail is derived from the completed regions rather than only the expanded habitat outline:
+every edge where public ground (including an apron) meets a planted strip is closed. This matters
+at the irregular north corner of Red Dune, where one internal apron-to-strip edge used to be open.
+The core checks the invariant for both plan seeds, and
+`Walker.NoHabitatAndNoPlantedStripIsEnteredFromAnySide` physically runs at all 1,498 public
+barrier edges. The repaired service side is shown in
+`docs/evidence/red-dune-service-rail-2026-11-19.jpg`.
 
 **Other checks:** `NothingStandsInWaterOrInAnotherThing`, `NoPlantOnAPathOrBeforeABench`,
 `BenchesStandInShade`, `HoofstockStandsBehindCablesAndRails`, `FoodAndWaterStandInsideAndInView`,
@@ -274,12 +281,12 @@ Golden hashes of `tests/core/VisitStartTests.cpp`, recorded again for the plan:
 
 | Fill ticks | Seed | At fill | Later |
 |---:|---:|---:|---:|
-| 600 | 1 | 8084451664473059021 | 15350546524547536688 |
-| 600 | 2 | 12502581844747594763 | 6321072166536655050 |
-| 600 | 3 | 8882478193998727763 | 8100464436183252426 |
-| 6000 | 1 | 3859391498775618031 | 3849792363143076085 |
-| 6000 | 2 | 14232732834896138538 | 437268082544250170 |
-| 6000 | 3 | 5952713734558093167 | 4913324520738712304 |
+| 600 | 1 | 871655477591760662 | 5426723001344948179 |
+| 600 | 2 | 6797973331389073337 | 999669602913906128 |
+| 600 | 3 | 2512727153020556612 | 7882047625171313972 |
+| 6000 | 1 | 4159785897068755441 | 4511323438739479105 |
+| 6000 | 2 | 3754155978618199905 | 6636035651677993416 |
+| 6000 | 3 | 13028581689996681604 | 10135411276919199006 |
 
 ## The zoo as the game visits it
 

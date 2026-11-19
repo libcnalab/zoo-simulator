@@ -15,7 +15,8 @@ whatever you take up (`docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `docs/V
   develop this session: keepers G5 (`e22d473`), animals' routes kept off props (`00e269f`),
   reliability audit part 1 with a save/load defect fixed (`7010638`), plants G2c (`f8d0adf`),
   ground and water edges G1c (`6985b10`), and the audit's walker corrections, start-up marks and
-  `zoo_game_tests` (last commit). 245 core tests and 12 walker tests pass.
+  `zoo_game_tests` (last commit). The current complete suite has 265 active tests and 21 intended
+  disabled measurement/diagnostic tests; all active tests pass, including 13 walker tests.
 - **The owner restarted the machine at about 20:00:** game instances of the lead and four
   subagents took 99 % of the GPU. The CPU lock covered builds, tests and benches but **not game
   runs**. New rule: **only one rendering `zoo-simulator` on the machine at a time**, every game
@@ -45,15 +46,14 @@ whatever you take up (`docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `docs/V
   played 4 audible voices and had no failure. The noisy whole-run sample was 2,711 MB, so do not
   claim a total-peak cut from it. Do not quote the sandbox's absolute number as a Radeon
   measurement.
-  The complete suite after these changes is 264 active tests passed, with 22 long-running
+  The complete suite after these changes is 265 active tests passed, with 21 long-running
   measurement/diagnostic tests disabled as intended.
 - **Stopped mid-work when the machine restarted (uncommitted, in their worktrees; no reports):**
   - `wt-sound`: G7c audio audit (brief `.codex-work/brief-G7c-sound-develop.md`), 28 files.
   - `wt-visitors`: P1 visitors' frame cost (brief `brief-P1-visitor-cost.md`), 2 files.
   - `wt-life`: G8d plan details (brief `brief-G8d-plan-details.md`: ferns in the lagoon's
-    water, 2 m walks, a tree inside a barrier, the meerkat stand on the gate; plus **a strip at
-    Red Dune without a rail towards public ground**, found by the walker test that is now
-    `DISABLED_` in `tests/game/WalkerTests.cpp`: re-enable it with the fix), 6 files.
+    water, 2 m walks, a tree inside a barrier, the meerkat stand on the gate), 6 files. Its Red
+    Dune rail finding was fixed on develop on 2026-11-19 and the walker test is active again.
   - `wt-plants` (reused): A1 animal activity clips (brief `brief-A1-activity-clips.md`), 31 files.
   Look at each diff before going on; none is reviewed. Their earlier finished work is in develop.
 - **Deadline:** about **2026-11-28** the owner puts Zoo Simulator under the same AI policy as

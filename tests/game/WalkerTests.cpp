@@ -400,11 +400,7 @@ TEST(Walker, EveryPathTheVisitorsUseIsWalkedFromTileToTile) {
 
 // Each edge between public ground and a habitat or a planted strip carries a barrier, and
 // the body run at it (straight, then along it into the corners on both hands) stays outside.
-// DISABLED on develop 2026-11-14: it finds a real defect of the plan, not of the walker: at Red
-// Dune a planted stand-off strip has no rail towards public ground (tile 65, 57), and the body
-// walks into it at about (131.2, 116.1). Re-enable when the plan rails every strip (G8d,
-// handoff.md).
-TEST(Walker, DISABLED_NoHabitatAndNoPlantedStripIsEnteredFromAnySide) {
+TEST(Walker, NoHabitatAndNoPlantedStripIsEnteredFromAnySide) {
     const zoo::Zoo& zoo = Greenhill();
     const World& map = zoo.Map();
     Walker walker;

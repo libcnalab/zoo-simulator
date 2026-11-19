@@ -8,10 +8,12 @@ tests (`AnimalBirthCapacityTests`, `ZooSaveDamageTests`, `VisitStartCostTests`,
 `ZooGameLook.cpp` and `ZooGameVisit.cpp`, and `tools/bench/`; after the ground task also
 corrections 1 and 2 of `Walker.cpp`, `StartMark` in `ZooGame.cpp`, the model timing of
 `AnimalRenderer.cpp` and the `zoo_game_tests` target with `tests/game/` (it links
-`GroundPaint.cpp` now: the walker stands on the drawn ground). On develop 12 walker tests pass;
+`GroundPaint.cpp` now: the walker stands on the drawn ground). On develop 13 walker tests pass;
 `StandsOnTheGroundWhereTheVisitBeginsAndWalksAtAStroll` was shortened for the brisker pace (the
-body ran into the forecourt's fountain), and `NoHabitatAndNoPlantedStripIsEnteredFromAnySide` is
-disabled: it found a plan defect (a strip at Red Dune without a rail towards public ground).
+body ran into the forecourt's fountain). On 2026-11-19
+`NoHabitatAndNoPlantedStripIsEnteredFromAnySide` was re-enabled after its real plan defect was
+fixed: every actual edge from public ground to planting is railed, including Red Dune's irregular
+service-apron corner.
 The sanitizer runs described below were made in the audit's tree, not on develop.
 
 **Found while merging:** `SaveLoadInTheMiddleOfTheVisit` failed on develop for seed 2: 100 steps
@@ -292,7 +294,7 @@ Release 31 s, and under ASan, UBSan and the leak check: 12 of 12, no report.
 | Asked | Result |
 |---|---|
 | Every path tile the visitors use can be walked, tile to tile | 4,962 tiles, 9,922 steps between neighbours, none closed to the player; feet never more than 0.33 mm off the ground; the steepest path tile rises 5.7 cm |
-| No habitat and no planted strip can be entered, from any side, walking or running, straight or at 45 degrees along the barrier | 1,490 barrier edges of six kinds (wire mesh 93, tall mesh 51, glass 201, high glass 171, heavy mesh 228, stand-off rail 746), 8 of them gates: held everywhere; the fastest frame anywhere 4.40 m/s (the running speed) |
+| No habitat and no planted strip can be entered, from any side, walking or running, straight or at 45 degrees along the barrier | 1,498 barrier edges (wire mesh 93, tall mesh 51, glass 201, cable 2, high glass 171, heavy mesh 228, stand-off rail 748, paddock rail 2, tall cable 2), 14 of them gates: no trespass; the fastest frame was 8.80 m/s |
 | Keepers' gates stay shut | 14 gates, 8 with public ground before them: none passed |
 | Buildings are solid from all sides | 41 buildings, 28 reachable on public ground, 424 runs at them from 16 directions: no body inside (beyond the 5.2 cm a round body cuts a square corner by design) |
 | The furniture of a viewing place cannot be squeezed into | 42 groups of bench, lamp, board or bin; 495 runs: caught 0 |

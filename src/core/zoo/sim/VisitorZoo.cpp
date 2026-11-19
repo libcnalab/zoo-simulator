@@ -1074,18 +1074,20 @@ void StandOffWithService(Zoo& zoo, Script& script, const Site& site, int depth) 
     }
     builder.PaintTerrain(apron, Terrain::Rock);
     std::vector<EdgeRef> rails;
-    for (const EdgeRef edge : Script::Outline(expanded)) {
-        const TileCoord a{edge.x, edge.z};
-        const TileCoord b = edge.horizontal ? TileCoord{edge.x, edge.z - 1} : TileCoord{edge.x - 1, edge.z};
-        if (!yard.contains({a.z, a.x}) && !yard.contains({b.z, b.x}) && !zoo.Map().FenceAt(edge).Exists()) {
-            rails.push_back(edge);
+    // Work from what was actually placed, not the expanded outline: an irregular habitat can
+    // leave an apron touching the strip inside that outline. Every such public-to-strip edge
+    // needs the low rail, while the apron remains open to ordinary public ground.
+    for (const TileCoord tile : strip) {
+        if (!zoo.Map().At(tile).standOff) {
+            continue;
         }
-    }
-    for (const TileCoord tile : apron) {
-        for (const Dir side : {Dir::East, Dir::West}) {
+        for (const Dir side : {Dir::North, Dir::East, Dir::South, Dir::West}) {
             const TileCoord next = tile + Step(side);
-            if (zoo.Map().At(next).standOff) {
-                rails.push_back(EdgeOf(tile, side));
+            if (zoo.Map().InBounds(next) && zoo.Habitats().RegionAt(next) == Region::Public) {
+                const EdgeRef edge = EdgeOf(tile, side);
+                if (!zoo.Map().FenceAt(edge).Exists()) {
+                    rails.push_back(edge);
+                }
             }
         }
     }
