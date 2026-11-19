@@ -14,7 +14,17 @@ body ran into the forecourt's fountain). On 2026-11-19
 `NoHabitatAndNoPlantedStripIsEnteredFromAnySide` was re-enabled after its real plan defect was
 fixed: every actual edge from public ground to planting is railed, including Red Dune's irregular
 service-apron corner.
-The sanitizer runs described below were made in the audit's tree, not on develop.
+The historical sanitizer runs described below were made in the audit's tree. A current-develop
+AddressSanitizer pass was added on 2026-11-19: the existing root `build-asan/` was rebuilt as
+Debug with `ZOO_SANITIZE=address`; 30 targeted birth/life, animal-stall, damaged-save and Walker
+tests passed in 626.21 s. This included all five `ZooSaveDamageTests` (the broad wrong-type
+mutation took 536.98 s), all thirteen Walker tests and the 12,000-step Visitor Zoo stall test.
+A real offscreen game run, `--stand habitat:meerkat --ticks 3000 --frames 3`, also completed
+cleanly with 88 animals and 624 visitors. Both used
+`ASAN_OPTIONS=detect_leaks=0:abort_on_error=1:halt_on_error=1`. A separate minimal game run with
+`detect_leaks=1` could not produce a leak verdict in this managed session: LeakSanitizer stopped
+itself with `LeakSanitizer does not work under ptrace`. UBSan and the entire current suite were
+not rerun; do not read this targeted ASan pass as either of those claims.
 
 **Found while merging:** `SaveLoadInTheMiddleOfTheVisit` failed on develop for seed 2: 100 steps
 after a load the zoo was no longer the saved one. The number of people watching each habitat,

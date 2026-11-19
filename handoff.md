@@ -137,7 +137,7 @@ collision floor still at the simulation's height in `Walker.cpp`), plants (`docs
 open: far cut-out edges aliased, reeds unused, fill cost of alpha-tested cards). The new first
 priority is memory (section 0).
 
-### 4.4 Reliability audit (G6b): merged, see `docs/RELIABILITY.md` top; left: re-run the sanitizers on develop
+### 4.4 Reliability audit (G6b): merged, see `docs/RELIABILITY.md` top
 
 `.codex-work/wt-audit` (on `f77bc8f`, uncommitted; it has a 4 GB ASan tree), brief
 `brief-G6b-audit-finish.md`; it was correcting `docs/RELIABILITY.md` and running save-damage
@@ -148,6 +148,13 @@ The stopped wall probe was rerun directly at the gift shop's west wall. At the b
 valid centre, the 0.3 m camera near plane cut away a quarter of the wall at a 75-degree view;
 0.1 m keeps the whole wall visible. The before/after contact pictures and a normal lion view
 were inspected offscreen (2026-11-19).
+
+Root `build-asan/` was rebuilt on current `develop` (Debug, AddressSanitizer). A targeted 30-test
+set covering births/life, the 12,000-step stall regression, every damaged-save test and all
+thirteen Walker tests passed in 626.21 s; `--stand habitat:meerkat --ticks 3000 --frames 3`
+also completed cleanly with 88 animals and 624 visitors. Leak detection itself cannot run under
+this managed session's ptrace wrapper; UBSan and the entire current suite remain unrerun
+(2026-11-19).
 
 ### 4.5 Audio audit (G7)
 
