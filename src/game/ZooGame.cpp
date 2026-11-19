@@ -12,6 +12,7 @@
 
 #include "Saves.hpp"
 #include "SunShadows.hpp"
+#include "StaticScene.hpp"
 #include "zoo/sim/Scenario.hpp"
 #include "zoo/sim/ZooSave.hpp"
 
@@ -395,39 +396,52 @@ void ZooGame::ShowLoading(std::string_view what, float done) {
 
 void ZooGame::Adopt(std::unique_ptr<zoo::Zoo> zoo) {
     auto& device = getGraphicsDeviceProperty();
+    const bool keepStatic = !editor_ && zoo_ && terrain_ && scenery_ &&
+                            SameStaticScene(zoo_->Map(), zoo_->Objects(), zoo->Map(), zoo->Objects());
 #if defined(__linux__) && !defined(__ANDROID__)
-    // A load rebuilds all static renderers too. They do not need CPU recovery shadows, whether
-    // this is the first zoo or a saved zoo opened later in the visit.
+    // Static uploads do not need CPU recovery shadows, whether they are built for this zoo or
+    // retained from an unchanged visit. Animal imports enable recovery only while reading pixels.
     device.SetContextRecoveryEnabled(false);
 #endif
-    // What draws the old zoo goes before the zoo it refers to.
+    // Stateful actors and tools go before the zoo they refer to. Ground and scenery contain
+    // their own uploaded geometry and may outlive it when the new zoo's static scene is identical.
     tools_.reset();
     if (sounds_)
         sounds_->Reset();
-    animals_.reset();
-    scenery_.reset();
-    terrain_.reset();
+    if (animals_)
+        animals_->Clear();
+    if (!keepStatic) {
+        scenery_.reset();
+        terrain_.reset();
+    }
     zoo_ = std::move(zoo);
     zoo_->DrainEvents(events_);
     events_.clear();
     tickDebt_ = 0.0;
     autosaveMonth_ = zoo_->Time().Day() / zoo::kDaysPerMonth;
 
-    terrain_ = std::make_unique<TerrainRenderer>(device, *surfaces_);
-    terrain_->Build(zoo_->Map());
-    // A visit cannot reshape or repaint its world. Keep only the uploaded textures and meshes;
-    // the editor retains the per-chunk CPU images and signatures needed for incremental edits.
-    if (!editor_)
-        terrain_->DiscardEditCache();
+    if (!keepStatic) {
+        terrain_ = std::make_unique<TerrainRenderer>(device, *surfaces_);
+        terrain_->Build(zoo_->Map());
+        // A visit cannot reshape or repaint its world. Keep only the uploaded textures and meshes;
+        // the editor retains the per-chunk CPU images and signatures needed for incremental edits.
+        if (!editor_)
+            terrain_->DiscardEditCache();
+    } else {
+        std::printf("zoo: static scene unchanged; keeping ground and scenery\n");
+    }
     StartMark(bench_.on, "ground");
     // Nothing is built during a visit: the whole zoo is one cell there (a quarter of the draw
     // calls of the editor's small cells, which an edit rebuilds quickly).
-    scenery_ = std::make_unique<SceneryRenderer>(
-        device, *surfaces_, *catalog_,
-        editor_ ? SceneryRenderer::kEditCellTiles : std::max(zoo_->Map().Width(), zoo_->Map().Depth()));
-    scenery_->Update(zoo_->Map(), zoo_->Objects(), -1);
+    if (!keepStatic) {
+        scenery_ = std::make_unique<SceneryRenderer>(
+            device, *surfaces_, *catalog_,
+            editor_ ? SceneryRenderer::kEditCellTiles : std::max(zoo_->Map().Width(), zoo_->Map().Depth()));
+        scenery_->Update(zoo_->Map(), zoo_->Objects(), -1);
+    }
     StartMark(bench_.on, "scenery");
-    animals_ = std::make_unique<AnimalRenderer>(getContentProperty(), *species_);
+    if (!animals_)
+        animals_ = std::make_unique<AnimalRenderer>(getContentProperty(), *species_);
     animals_->Update(*zoo_, 0.0f, 0.0f);
     StartMark(bench_.on, "animals");
     visitors_->Clear();

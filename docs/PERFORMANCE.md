@@ -308,10 +308,24 @@ the editor sample stayed 1,175 -> 1,174 MB. The latest whole-run peak is 2,682 M
 the preceding run and therefore within heap variation. A zebra view remains visually correct.
 
 The save/load script also reached two reloads and its final screenshot without a renderer fault.
-It exposed a separate open issue: software GL retains/defer-releases old static GPU resources
-during an in-place load, reaching about 3.1 GB and making the first terrain rebuild take 107 s.
-Every `Adopt` now disables CPU context-recovery shadows during its static rebuild, but that did
-not remove this driver/resource-lifetime spike; do not count it as fixed.
+It exposed a separate issue: rebuilding an unchanged visit made software GL retain/defer-release
+the old static GPU resources while replacements were uploaded, and the run reached about 3.1 GB.
+The old `StartMark` interval labelled "ground" also included all frames since startup, so its
+reported 107 s was not solely terrain construction.
+
+An in-place visit load now compares the fields that determine the static scene: tile and vertex
+geometry, fence kind and gate state, and each building's and prop's drawn identity and transform.
+Simulation-only values such as fence/building condition, sales counts and feeder contents are
+deliberately ignored. When that scene is identical, `Adopt` keeps the existing ground and scenery
+uploads. Animal actors are cleared so a loaded animal cannot interpolate from its former position,
+but the expensive species models and textures are retained. A different map or any actual static
+edit still rebuilds normally; editor loads always rebuild so their incremental caches remain valid.
+
+In the two-reload software-GL check, both retained-scene paths recorded 0.00 s for ground,
+scenery and animals. RSS was 3,023 MB after the first load and 3,032 MB after the second, and the
+run ended at 3,033 MB versus 3,120 MB in the earlier longer script. The absolute peaks are not a
+matched GPU measurement, but the eliminated uploads and the 9 MB second-load growth demonstrate
+that the old replacement overlap is gone. Both post-load screenshots were visually correct.
 
 ## Lazy audio decoding (2026-11-19)
 

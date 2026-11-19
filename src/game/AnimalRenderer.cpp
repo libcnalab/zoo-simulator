@@ -113,6 +113,12 @@ AnimalRenderer::AnimalRenderer(Microsoft::Xna::Framework::Content::ContentManage
 
 AnimalRenderer::~AnimalRenderer() = default;
 
+void AnimalRenderer::Clear() {
+    actors_.clear();
+    tick_ = -1;
+    drawn_ = 0;
+}
+
 const AnimalRenderer::Kind* AnimalRenderer::Load(const std::string& model) {
     if (const auto found = kinds_.find(model); found != kinds_.end())
         return found->second.get();

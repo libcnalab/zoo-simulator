@@ -44,6 +44,8 @@ public:
     /// 0 while paused); `tickFraction` is how far the game is into the next
     /// simulation step (0..1).
     void Update(const zoo::Zoo& zoo, float seconds, float tickFraction);
+    /// For a newly adopted zoo, forget the old actors but retain the expensive species models.
+    void Clear();
     void Submit(CnaEngine::App::Frame& frame) const;
 
     /// Where the animal's body is drawn (its feet); nothing for an animal
