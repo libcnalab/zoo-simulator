@@ -144,6 +144,11 @@ priority is memory (section 0).
 tests. Take its tests and document if sound; add the known ASan smoke (the game ran clean once:
 `--stand habitat:lion --frames 30` in `build-asan`).
 
+The stopped wall probe was rerun directly at the gift shop's west wall. At the body's closest
+valid centre, the 0.3 m camera near plane cut away a quarter of the wall at a 75-degree view;
+0.1 m keeps the whole wall visible. The before/after contact pictures and a normal lion view
+were inspected offscreen (2026-11-19).
+
 ### 4.5 Audio audit (G7)
 
 `.codex-work/wt-sound` (on `f77bc8f`, uncommitted), brief `brief-G7b-sound-finish.md`; it was

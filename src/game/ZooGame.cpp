@@ -34,7 +34,7 @@ App::GameOptions MakeOptions() {
     options.title = "Zoo Simulator";
     options.application = "zoo-simulator";
     options.fieldOfViewDegrees = 50.0f;
-    options.nearPlane = 0.3f;
+    options.nearPlane = 0.1f;
     options.farPlane = 3000.0f;
     return options;
 }

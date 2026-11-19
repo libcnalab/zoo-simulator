@@ -346,14 +346,14 @@ body's 0.28 m radius. A zero-tick `--stand habitat:<species>` smoke of all fourt
 reported exactly the same set-down and final coordinates to 0.1 m; the former 42 furniture
 overlaps therefore no longer rely on the controller pushing the body out (2026-11-19).
 
+The camera near plane is 0.1 m now (was 0.3 m). At the valid closest centre of the body to the
+gift shop's west wall (`--view 181.97,301,75,0`), the old plane cut away the left quarter of
+the wall and exposed the space beyond it; the same offscreen contact picture after the change
+is wall across the full frame. A normal `--stand habitat:lion` picture showed no depth fighting
+or other visible projection regression (2026-11-19).
+
 ### What is still open in the walk
 
-- **The near plane at a wall.** The camera's near plane is 0.3 m (`ZooGame.cpp:36`) with a
-  field of view of 58 degrees; the eye of a body of radius 0.28 m pressed against a wall is
-  0.28 m from it, and less to the side when the player looks along the wall. By this arithmetic
-  a wall can be looked through from close by. **Not verified by a picture**: the probe
-  (`build-probe/wall.script`, the gift shop's west wall, five headings) was stopped by the
-  wrap-up. If the pictures show it: a near plane of 0.1 m.
 - `Walker::Update` rebuilds its collision world when objects or fences change (their revision
   counters), not when the ground or the water is edited. The visit changes neither, so nothing
   is stale today; a mode that sculpts the ground while the player walks (the editor has its own
