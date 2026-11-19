@@ -294,9 +294,12 @@ class BipedTests(unittest.TestCase):
             self.assertLessEqual(manifest["triangles"], budgets[species][1])
             self.assertEqual(manifest["texture"], 1024)
             clips = {clip["name"]: clip for clip in manifest["clips"]}
+            # Activity clips beside the standard eight: tests/test_activity_clips.py.
+            activity = {"penguin": {"preen"}, "flamingo": {"preen"}, "ostrich": {"dust_bathe"}}
             self.assertEqual(set(clips),
                              {"idle", "walk", "trot", "eat", "drink", "rest", "sleep", "vocalize"}
-                             | ({"swim", "float"} if species == "penguin" else set()))
+                             | ({"swim", "float"} if species == "penguin" else set())
+                             | activity.get(species, set()))
             self.assertAlmostEqual(clips["walk"]["speed"], data["walkSpeed"],
                                    delta=.1 * data["walkSpeed"])
             self.assertGreaterEqual(clips["trot"]["speed"], 2 * clips["walk"]["speed"])

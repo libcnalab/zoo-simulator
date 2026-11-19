@@ -1,0 +1,202 @@
+# SPDX-License-Identifier: MIT
+"""The activity clips beside the standard eight (zoogen/activity.py): the meerkat's sentry duty
+and digging, preening birds, dust-bathing ostrich and elephants. What each must show, and that
+the manifests map the species routines' activities to clips the models really carry.
+
+    python3 -m unittest discover -s tools/animals/tests
+"""
+import json
+import os
+import sys
+import unittest
+from pathlib import Path
+
+import numpy as np
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+from test_clips import make_solver  # noqa: E402
+from zoogen import quadruped  # noqa: E402
+from zoogen.activity import held  # noqa: E402
+
+ROOT = Path(__file__).resolve().parents[3]
+# Activity names as the save format writes them (src/core/zoo/animals/Animals.cpp).
+ACTIVITIES = {"idle", "wander", "forage", "eat", "drink", "rest", "sleep", "play", "socialize",
+              "vocalize", "pace", "shelter", "break_out", "loose", "crated", "browse", "ruminate",
+              "bathe", "dust_bathe", "preen", "sentinel", "dig", "filter_feed", "patrol", "huddle"}
+# The clips a still animal may play (AnimalRenderer's still poses).
+STILL_CLIPS = {"idle", "eat", "drink", "rest", "sleep", "sentry", "dig", "preen", "dust_bathe"}
+EXPECTED = {
+    "meerkat": {"sentinel": "sentry", "dig": "dig"},
+    "penguin": {"preen": "preen"},
+    "penguin_juvenile": {"preen": "preen"},
+    "flamingo": {"huddle": "rest", "preen": "preen"},
+    "ostrich": {"dust_bathe": "dust_bathe"},
+    "elephant": {"dust_bathe": "dust_bathe"},
+    "elephant_female": {"dust_bathe": "dust_bathe"},
+    "elephant_juvenile": {"dust_bathe": "dust_bathe"},
+}
+
+
+def clips_of(species):
+    spec, solver = make_solver(species)
+    return spec, solver, {clip.name: clip for clip in spec.clips(solver)}
+
+
+def posed_skin(solver, world, data):
+    points = np.zeros_like(data["vertices"])
+    for index, name in enumerate(data["bone_names"].tolist()):
+        rotation = world[name][:3, :3] @ solver.rest[name][:3, :3].T
+        points += data["weights"][:, index, None] * (
+            (data["vertices"] - solver.head[name]) @ rotation.T + world[name][:3, 3])
+    return points
+
+
+class HeldKeyTests(unittest.TestCase):
+    def test_holds_eases_and_wraps(self):
+        keys = [(0.0, 0.0), (0.5, 10.0, .1)]
+        self.assertEqual(held(0.2, keys), 0.0)
+        self.assertEqual(held(0.39, keys), 0.0)
+        self.assertAlmostEqual(held(0.45, keys), 5.0)
+        self.assertEqual(held(0.7, keys), 10.0)
+        self.assertAlmostEqual(held(0.97, keys), 5.0)       # back to the first key over .06
+        self.assertAlmostEqual(held(0.0, keys), held(1.0 - 1e-12, keys), places=6)
+        self.assertTrue(np.allclose(held(0.45, [(0.0, (0, 2)), (0.5, (10, 4), .1)]), (5, 3)))
+
+
+class ManifestTests(unittest.TestCase):
+    def test_activity_clips_name_known_activities_and_existing_clips(self):
+        for species, expected in EXPECTED.items():
+            spec, _, clips = clips_of(species)
+            mapping = spec.meta["activity_clips"]
+            self.assertEqual(mapping, expected, species)
+            manifest = json.loads((ROOT / "assets/animals" / (species + ".json")).read_text())
+            self.assertEqual(manifest["meta"]["activity_clips"], expected, species)
+            exported = {clip["name"]: clip for clip in manifest["clips"]}
+            for activity, clip in mapping.items():
+                self.assertIn(activity, ACTIVITIES, species)
+                self.assertIn(clip, STILL_CLIPS, species)
+                self.assertIn(clip, clips, species)
+                self.assertIn(clip, exported, species)
+                self.assertEqual(exported[clip]["speed"], 0, species)
+                self.assertTrue(exported[clip]["loop"], species)
+
+
+class MeerkatTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.spec, cls.solver, cls.clips = clips_of("meerkat")
+
+    def test_sentry_stands_tall_on_planted_feet_and_the_tail(self):
+        solver, spec = self.solver, self.spec
+        idle_head = max(solver.solve(self.clips["idle"].pose(u / 12))["head"][2, 3] for u in range(12))
+        yaws = []
+        for index in range(36):
+            world = solver.solve(self.clips["sentry"].pose(index / 36))
+            for key in ("HL", "HR"):
+                toe = world[spec.rig.legs[key].toes][:3, 3]
+                self.assertTrue(np.allclose(toe[[1, 2]], solver.toe_base(key)[[1, 2]], atol=1e-6))
+            tip = solver.point(world, "tail4", np.array([-.332, 0, .062]))
+            self.assertAlmostEqual(float(tip[2]), .003, places=5)
+            pelvis, shoulder = world["hips"][:3, 3], world["chest"][:3, 3]
+            self.assertGreater(float(shoulder[2] - pelvis[2]), .13)
+            self.assertLess(abs(float(shoulder[0] - pelvis[0])), .03)
+            # Taller than the sitting idle: up on the hind feet, not on the haunches.
+            self.assertGreater(world["head"][2, 3], idle_head + .04)
+            muzzle = solver.point(world, "jaw", solver.tail["jaw"]) - world["head"][:3, 3]
+            yaws.append(np.degrees(np.arctan2(muzzle[1], muzzle[0])))
+        # The watch turns to both sides.
+        self.assertGreater(max(yaws), 35)
+        self.assertLess(min(yaws), -35)
+
+    def test_dig_scratches_with_the_fore_paws_nose_low(self):
+        solver, spec = self.solver, self.spec
+        lifted = {"FL": 0, "FR": 0}
+        travel = {"FL": [], "FR": []}
+        for index in range(90):
+            pose = self.clips["dig"].pose(index / 90)
+            world = solver.solve(pose)
+            for key in ("HL", "HR"):
+                self.assertAlmostEqual(world[spec.rig.legs[key].toes][2, 3], solver.toe_base(key)[2])
+            for key in lifted:
+                toe = world[spec.rig.legs[key].toes][:3, 3]
+                lifted[key] += toe[2] > solver.toe_base(key)[2] + .01
+                travel[key].append(toe[0])
+            self.assertLess(quadruped.muzzle(solver, pose)[2], .10)
+        for key in lifted:
+            self.assertGreater(lifted[key], 10, key)
+            self.assertGreater(np.ptp(travel[key]), .04, key)
+
+
+class PreenTests(unittest.TestCase):
+    def test_bill_works_on_the_plumage(self):
+        # Moments when the bird holds a preening posture, and how close the bill tip must be
+        # to the body's skin (the scan's feathers): it touches, it does not stand off.
+        moments = {"penguin": (.15, .25, .47, .73, .8), "penguin_juvenile": (.15, .47, .8),
+                   "flamingo": (.15, .35, .55, .75)}
+        for species, phases in moments.items():
+            spec, solver, clips = clips_of(species)
+            data = spec.sculpt
+            names = data["bone_names"].tolist()
+            head = data["weights"][:, [i for i, n in enumerate(names)
+                                       if n.startswith(("neck", "head", "jaw"))]].sum(axis=1) > .3
+            for phase in phases:
+                pose = clips["preen"].pose(phase)
+                world = solver.solve(pose)
+                tip = quadruped.muzzle(solver, pose)
+                body = posed_skin(solver, world, data)[~head]
+                distance = np.linalg.norm(body - tip, axis=1).min()
+                self.assertLess(distance, .035 * spec.meta["shoulder_height_m"] / .65 if species != "flamingo"
+                                else .03, f"{species} at {phase}")
+                for key, leg in spec.rig.legs.items():
+                    self.assertAlmostEqual(world[leg.toes][2, 3], solver.toe_base(key)[2], places=6)
+
+    def test_preening_starts_and_ends_upright(self):
+        for species in ("penguin", "flamingo"):
+            _, solver, clips = clips_of(species)
+            start = solver.solve(clips["preen"].pose(0))
+            idle = solver.solve(clips["idle"].pose(0)) if species == "penguin" else None
+            if idle is not None:
+                self.assertTrue(np.allclose(start["head"][:3, 3], idle["head"][:3, 3], atol=.01))
+            self.assertGreater(start["head"][2, 3], .8 * solver.head["head"][2])
+
+
+class DustBatheTests(unittest.TestCase):
+    def test_ostrich_sits_and_sweeps_the_ground_on_both_sides(self):
+        spec, solver, clips = clips_of("ostrich")
+        rest = solver.solve(clips["rest"].pose(0))
+        sides = []
+        for index in range(60):
+            pose = clips["dust_bathe"].pose(index / 60)
+            world = solver.solve(pose)
+            self.assertAlmostEqual(world["hips"][2, 3], rest["hips"][2, 3], places=6)
+            tip = quadruped.muzzle(solver, pose)
+            self.assertGreater(tip[2], .03)
+            if tip[2] < .2:
+                sides.append(np.sign(tip[1]))
+        self.assertIn(1, sides)
+        self.assertIn(-1, sides)
+
+    def test_elephants_gather_and_throw_over_the_head(self):
+        for species in ("elephant", "elephant_female", "elephant_juvenile"):
+            spec, solver, clips = clips_of(species)
+            height = spec.meta["shoulder_height_m"]
+            clip = clips["dust_bathe"]
+            lowest, tossed = 1.0, {1: 0, -1: 0}
+            for index in range(64):
+                world = solver.solve(clip.pose(index / 64))
+                tip = solver.point(world, "trunk10", solver.tail["trunk10"])
+                lowest = min(lowest, tip[2] / height)
+                if tip[2] > world["head"][2, 3]:
+                    tossed[int(np.sign(tip[1]))] += 1
+                if index % 8 == 0:
+                    points = posed_skin(solver, world, spec.sculpt)
+                    self.assertGreaterEqual(points[:, 2].min(), -.02, f"{species} at {index}")
+            self.assertLess(lowest, .06, species)
+            self.assertGreater(tossed[1], 2, species)
+            self.assertGreater(tossed[-1], 2, species)
+
+
+if __name__ == "__main__":
+    unittest.main()

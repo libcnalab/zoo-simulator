@@ -23,8 +23,13 @@
 
 namespace zoogame {
 
-/// What an animal's body shows: one clip of its model each.
-enum class AnimalPose : std::uint8_t { Idle, Walk, Trot, Eat, Drink, Rest, Sleep, Vocalize, Swim, Float, Count };
+/// What an animal's body shows: one clip of its model each. The last four are activity clips
+/// that only some models have (`sentry`, `dig`, `preen`, `dust_bathe`), played where the model's
+/// sidecar maps an activity to them (`meta.activity_clips`).
+enum class AnimalPose : std::uint8_t {
+    Idle, Walk, Trot, Eat, Drink, Rest, Sleep, Vocalize, Swim, Float, Sentry, Dig, Preen,
+    DustBathe, Count
+};
 
 /// Draws the zoo's animals: one skinned model per species (assets/animals,
 /// loaded when the first animal of the species appears), one animator per

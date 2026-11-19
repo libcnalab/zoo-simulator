@@ -103,11 +103,31 @@
       "loop": false,
       "name": "vocalize",
       "speed": 0.0
+    },
+    {
+      "duration": 9.0,
+      "events": [],
+      "frames": 271,
+      "loop": true,
+      "name": "sentry",
+      "speed": 0.0
+    },
+    {
+      "duration": 3.0,
+      "events": [],
+      "frames": 91,
+      "loop": true,
+      "name": "dig",
+      "speed": 0.0
     }
   ],
   "generator": "tools/animals (zoogen)",
   "license": "MIT",
   "meta": {
+    "activity_clips": {
+      "dig": "dig",
+      "sentinel": "sentry"
+    },
     "body_length_m": 0.35,
     "common_name": "Meerkat",
     "roughness": 0.91,

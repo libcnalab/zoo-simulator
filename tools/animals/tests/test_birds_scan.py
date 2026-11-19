@@ -64,7 +64,8 @@ class BirdScanTests(unittest.TestCase):
             self.assertLessEqual(manifest['triangles'], limit)
             self.assertEqual(manifest['license'], 'CC-BY-4.0')
             self.assertEqual(manifest['meta'], spec.meta)
-            expected = STANDARD | {'swim', 'float'} if name.startswith('penguin') else STANDARD
+            # Both preen (an activity clip, tests/test_activity_clips.py); penguins also swim.
+            expected = STANDARD | {'preen'} | ({'swim', 'float'} if name.startswith('penguin') else set())
             self.assertEqual(set(clips), expected)
             exported = {clip['name']: clip for clip in manifest['clips']}
             self.assertEqual(set(exported), expected)

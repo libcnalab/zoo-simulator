@@ -4,12 +4,120 @@ import math
 
 import numpy as np
 
+from zoogen import activity
 from zoogen import noise as nz
 from zoogen import quadruped as quad
 from zoogen.geom import Part, R
-from zoogen.rig import Pose
+from zoogen.rig import Clip, Pose
 from zoogen.anatomy import chain, leg_bones
 from zoogen.wild_quadruped import make_wild_quadruped
+
+
+TAIL_TIP = np.array([-.332, 0, .062])
+
+
+def _tail_prop(solver, body_pose, low=60.0, high=140.0, floor=.003):
+    """The tail1 pitch at which the tail tip rests on the ground under a still upright body:
+    the third leg of the tripod a standing meerkat leans on."""
+    for _ in range(22):
+        mid = (low + high) * .5
+        body_pose.rot.pop("tail1", None)
+        body_pose.r("tail1", ry=mid)
+        height = solver.point(solver.solve(body_pose), "tail4", TAIL_TIP)[2]
+        if height < floor:
+            low = mid
+        else:
+            high = mid
+    body_pose.rot.pop("tail1", None)
+    return (low + high) * .5
+
+
+# Sentry duty: where the guard looks (head yaw, head pitch: - up), in quick turns and long
+# holds, one sky check for raptors; the chest follows a third of each turn.
+SENTRY_LOOKS = [(0.00, (0.0, 0.0)), (0.10, (48.0, -4.0), .04), (0.30, (12.0, 2.0), .04),
+                (0.40, (-50.0, -2.0), .05), (0.58, (-20.0, -32.0), .05),
+                (0.70, (-20.0, -4.0), .04), (0.80, (25.0, 0.0), .05)]
+
+
+def _sentry_body(solver):
+    """Standing tall on the hind feet: legs nearly straight, back hollowed, fore paws hanging
+    in front of the chest."""
+    p = Pose()
+    p.r("hips", ry=-86.0)
+    p.move("hips", dz=.010)
+    for key in ("HL", "HR"):
+        target = solver.toe_base(key)
+        target[0] = -.090
+        p.plant(key, target, pole=(1, 0, 0))
+    p.r("spine2", ry=-3.0)
+    p.r("chest", ry=-3.0)
+    for side in ("L", "R"):
+        p.r("scapula." + side, ry=48.0)
+        p.r("upper_arm." + side, ry=30.0)
+        p.r("forearm." + side, ry=-14.0)
+        p.r("hand." + side, ry=40.0)
+    return p
+
+
+def _sentry_clip(solver):
+    """`sentry`: the meerkat on guard, upright on its hind feet with the tail as a prop, the
+    head turning in quick moves and holding to watch, once tipped up to the sky."""
+    tail_angle = _tail_prop(solver, _sentry_body(solver))
+
+    def pose(u):
+        look = activity.held(u, SENTRY_LOOKS)
+        p = _sentry_body(solver)
+        p.r("tail1", ry=tail_angle)
+        p.r("spine2", rx=.15 * look[0])
+        p.r("chest", rx=.15 * look[0])
+        p.r("neck1", ry=56.0)
+        p.r("neck2", ry=22.0)
+        p.r("head", ry=8.0 + look[1], rz=.7 * look[0])
+        # Breathing: the chest swells a little; the stance itself does not move.
+        p.r("chest", ry=.8 * math.sin(4.0 * math.tau * u))
+        return p
+    return Clip("sentry", 9.0, pose)
+
+
+def _dig_clip(solver):
+    """`dig`: crouched over a hole, the fore paws scratching in turn, the nose low; once a
+    loop the paws pause and the nose goes into the hole."""
+    strokes = 7
+    base_front = {key: solver.toe_base(key) for key in ("FL", "FR")}
+
+    def pose(u):
+        p = Pose()
+        # Pause: the last fifth of the loop the paws rest and the head goes down.
+        work = 1.0 - activity.held(u, [(0.0, 0.0), (0.78, 1.0, .06), (0.96, 0.0, .04)])
+        sniff = 1.0 - work
+        p.move("hips", dz=-.030 - .006 * sniff)
+        p.r("hips", ry=14.0 + 3.0 * sniff, rx=1.5 * work * math.sin(strokes * math.tau * u))
+        for key in ("HL", "HR"):
+            target = solver.toe_base(key)
+            target[1] += (.006 if key == "HL" else -.006)
+            p.plant(key, target)
+        for key, offset in (("FL", 0.0), ("FR", .5)):
+            phase = (strokes * u + offset) % 1.0
+            # Power stroke on the ground backwards under the chest, then up and forward again.
+            if phase < .55:
+                s = phase / .55
+                dx = .028 - .056 * s
+                dz = 0.0
+            else:
+                s = (phase - .55) / .45
+                dx = -.028 + .056 * s
+                dz = .022 * math.sin(math.pi * s)
+            target = base_front[key] + [.018 + work * dx, 0, work * dz]
+            # The paw flexes back as it lifts, claws trailing.
+            p.plant(key, target, foot_pitch=-25.0 * work * dz / .022)
+        p.r("chest", ry=6.0)
+        p.r("neck1", ry=22.0 + 10.0 * sniff)
+        p.r("neck2", ry=10.0 + 6.0 * sniff)
+        p.r("head", ry=20.0 + 8.0 * sniff + 3.0 * work * math.sin(2 * strokes * math.tau * u))
+        for i, bone in enumerate(("tail1", "tail2", "tail3", "tail4")):
+            p.r(bone, ry=-6.0 + 2.0 * i, rz=4.0 * math.sin(math.tau * u - .5 * i))
+        return p
+    return Clip("dig", 3.0, pose)
 
 
 def _tail(spec):
@@ -122,18 +230,7 @@ def make_spec():
 
             # The body and tail do not move vertically while scanning, so solve once.
             prop_pose = Pose().r("hips", ry=-82.0).move("hips", dz=-.065)
-            tip = np.array([-.332, 0, .062])
-            low, high = 90.0, 120.0
-            for _ in range(22):
-                mid = (low + high) * .5
-                prop_pose.rot.pop("tail1", None)
-                prop_pose.r("tail1", ry=mid)
-                height = solver.point(solver.solve(prop_pose), "tail4", tip)[2]
-                if height < .003:
-                    low = mid
-                else:
-                    high = mid
-            tail_angle = (low + high) * .5
+            tail_angle = _tail_prop(solver, prop_pose, 90.0, 120.0)
 
             def upright(u):
                 a = 2.0 * math.pi * u
@@ -156,7 +253,10 @@ def make_spec():
                 return p
 
             clip.pose = upright
-        return generated
+        return generated + [_sentry_clip(solver), _dig_clip(solver)]
 
     spec.clips = sentinel
+    # The game's clips for two still activities (AnimalRenderer): the guard on duty stands
+    # tall on its hind feet; a forager digs with its fore paws.
+    spec.meta["activity_clips"] = {"sentinel": "sentry", "dig": "dig"}
     return spec

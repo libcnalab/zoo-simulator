@@ -29,7 +29,9 @@ def make_spec(juvenile=False):
             'spot_layout': 'juvenile_unspotted' if juvenile else 'adult_01',
             'swim': {'clip': 'swim', 'depth_m': .45 * scale, 'speed': 1.5 * scale},
             'float': {'clip': 'float', 'depth_m': .25 * scale, 'speed': .12 * scale},
-            'water_origin_convention': 'Set asset origin to water surface minus depth_m; clip speed is metres/second'}
+            'water_origin_convention': 'Set asset origin to water surface minus depth_m; clip speed is metres/second',
+            # The game's clip for a still activity (AnimalRenderer).
+            'activity_clips': {'preen': 'preen'}}
     if juvenile:
         meta.update(variant_of='penguin', variant='juvenile', relative_height=scale)
     def coat(context):

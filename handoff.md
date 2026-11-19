@@ -88,9 +88,13 @@ whatever you take up (`docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `docs/V
   from the same NPS source. All 27 disk-driver captures have zero clipped samples and zero
   immediate repeats; the dusk wolf/lion chorus peaks at -1.2 dBFS. Nobody listened: conclusions
   are measurements and inspected spectrograms only (`docs/AUDIO.md`, 2026-11-20).
-- **Stopped mid-work when the machine restarted (uncommitted, in their worktrees; no reports):**
-  - `wt-plants` (reused): A1 animal activity clips (brief `brief-A1-activity-clips.md`), 31 files.
-  Look at each diff before going on; none is reviewed. Their earlier finished work is in develop.
+- The stopped A1 activity-clip work is recovered, regenerated and reviewed. Meerkats now stand
+  sentry and dig; penguins and flamingos preen; ostriches and elephants dust-bathe. Eight model
+  variants carry the new clips and manifest mappings. The 100 pipeline tests and 20 game-side
+  tests pass, all viewer and habitat evidence was opened, and the two stale stopped-worktree GLBs
+  were replaced by byte-identical fresh exports (`docs/ANIMALS.md`, 2026-11-20).
+- **No stopped work remains to recover.** The old detached worktrees are retained until the owner
+  approves deleting their build trees.
 - **Deadline:** about **2026-11-28** the owner puts Zoo Simulator under the same AI policy as
   the libcna repositories; the work should be done by then.
 
@@ -205,7 +209,10 @@ tests pass. Nobody listened to the audio; preserve that qualification.
   `python3 -m unittest discover -s tools/animals/tests`, about 10 minutes).
 - No juvenile model for meerkat, ostrich, wolf, camel, kangaroo, flamingo (drawn as scaled
   adults); the brown/polar bear cub models exist but are unused (bears live as pairs).
-- No clips for preen, dust bathe, dig, sentry duty (they stand in `idle`).
+- Dedicated clips now cover meerkat sentry/dig, penguin and flamingo preening, and ostrich and
+  elephant dust-bathing. Still represented by the closest standard pose: filter feeding,
+  rumination, shallow wallowing, penguin huddling, lion social contact and zebra watch; the exact
+  table and honest visual limitations are in `docs/ANIMALS.md`.
 - Blocking-prop pockets are now rejected by `ClearPlace`: every routine destination needs two
   body-wide exit segments clear of fences, water and blocking props. Seed 1 fell from 4,183 of
   280,044 stalled moving ticks (1.49 %) to 2,994 of 270,133 (1.11 %), with no continuous stall
@@ -243,12 +250,11 @@ offscreen smoke, so the former 42 set-downs inside furniture are resolved (2026-
 
 ## 5. Worktrees in `.codex-work/` (git-ignored)
 
-Still holding work to take: `wt-keepers` (4.1), `wt-ground` (4.2), `wt-plants` (4.3),
-`wt-audit` (4.4). Briefs `brief-<id>.md`, reports `report-<id>.md`, logs
-`log-<id>.txt` beside them.
+Still holding work to take: **none**. Briefs `brief-<id>.md`, reports `report-<id>.md`, logs
+`log-<id>.txt` beside the retained worktrees are historical records.
 
 Nothing left to take (their build trees can go once the owner agrees; sizes of 2026-11-14):
-`wt-sound` (G7c), `wt-life` 598 MB (G8), `wt-built` 716 MB (G3), `wt-visitors` 715 MB
+`wt-plants` (A1), `wt-sound` (G7c), `wt-life` 598 MB (G8), `wt-built` 716 MB (G3), `wt-visitors` 715 MB
 (G4), `wt-cats` 251 MB (S7),
 `wt-zebra` 272 MB (S10, S8), `wt-pachy` 279 MB (S6b), `wt-giraffe` 338 MB (S11b), `wt-birds`
 158 MB, `wt-behave` 349 MB, `wt-audio` 221 MB, `wt-species` 469 MB, `wt-vzoo` 360 MB,

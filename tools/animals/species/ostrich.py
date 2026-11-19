@@ -6,10 +6,11 @@ head. The horizontal trunk rides at 1.25 m; the four-segment bare neck rises in
 an S. Flight feathers are painted on folded wings, never individual meshes.
 """
 import math
+from functools import partial
 
 import numpy as np
 
-from zoogen import biped, noise as nz
+from zoogen import activity, biped, noise as nz
 from zoogen.geom import Bone, Part, R, Spec
 from zoogen.quadruped import bisect_effort, muzzle
 from zoogen.rig import Clip, Rig
@@ -113,6 +114,43 @@ def _sitting(solver, asleep):
     return pose
 
 
+# Dust bathing: [neck yaw (+ to the left), neck laid low (0 the sitting bird's upright neck,
+# 1 along the ground), body roll (+ leans onto the left side), wing lift, wing shaking].
+DUST_BATHE = [
+    (0.00, (0, 0, 0, 0, 0)),
+    (0.08, (55, 1, 9, 22, 1), .08),
+    (0.30, (20, .85, 5, 18, .6), .05),
+    (0.40, (-55, 1, -9, 22, 1), .08),
+    (0.60, (0, .35, 0, 48, 1), .07),
+    (0.78, (0, .2, 0, 30, .4), .05),
+    (0.86, (0, 0, 0, 0, 0), .08),
+]
+NECK_LAID = [-35, -60, -35, -10]
+
+
+def _dust_bathe(solver, sitting, phase):
+    """`dust_bathe`: sitting in a dry hollow, the bird rocks from side to side, lays its neck
+    along the ground and sweeps it to throw sand over its flank, and shakes its loosened wings."""
+    angle = math.tau * phase
+    yaw, low, roll, lift, shake = activity.held(phase, DUST_BATHE)
+    pose = biped.copy_pose(sitting)
+    pose.r("hips", rx=-roll)
+    neutral = [math.degrees(math.atan2(b[2] - a[2], b[0] - a[0])) for a, b in zip(NECK, NECK[1:])]
+    biped.sagittal_profile(solver, pose, solver.rig.neck,
+                           [a + (b - a) * low for a, b in zip(neutral, NECK_LAID)])
+    biped.sagittal_profile(solver, pose, ["head"], [-1 - 9 * low])
+    # The neck swings about the upright through its base, sweeping the sand while it is low.
+    sweep = yaw + 12 * low * math.sin(6 * angle)
+    activity.turn_about_vertical(solver, pose, "neck1", sweep)
+    pose.r("head", rz=-.3 * sweep)
+    for side, sign in (("L", 1), ("R", -1)):
+        # The wing bone points back along the flank: turning it about the upright swings the
+        # folded wing out from the body, pitching it raises its tip; shaking rattles both.
+        flutter = 9 * shake * math.sin(24 * angle + sign)
+        pose.r("wing." + side, rz=-sign * (lift + flutter), ry=.35 * lift + 5 * shake * math.sin(12 * angle))
+    return pose
+
+
 def _clips(solver):
     clips = [biped.gait_clip(solver, biped.Stride("walk", 1.2, .8, .64, .13,
                    bob=.012, nod=1.2)),
@@ -140,6 +178,7 @@ def _clips(solver):
                     result.r("wing." + side, rx=sign * (25 + 4 * math.sin(angle)))
             return result
         clips.append(Clip(name, 4, pose))
+    clips.append(Clip("dust_bathe", 10, partial(_dust_bathe, solver, postures["rest"])))
     return clips
 
 
@@ -149,5 +188,5 @@ def make_spec():
                 target_tris=14000, smooth_iters=4, rig=rig, clips=_clips, key_all_locations=True,
                 meta={"common_name": "Common ostrich", "scientific_name": "Struthio camelus",
                       "shoulder_height_m": 2.4, "body_length_m": 2.1, "sex": "male", "roughness": .93,
-                      # The game's clip for a still activity: an ostrich dust-bathes sitting down.
-                      "activity_clips": {"dust_bathe": "rest"}})
+                      # The game's clip for a still activity (AnimalRenderer).
+                      "activity_clips": {"dust_bathe": "dust_bathe"}})

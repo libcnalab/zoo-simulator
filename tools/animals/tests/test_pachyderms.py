@@ -15,6 +15,11 @@ SPECIES = ['rhino', 'rhino_juvenile', 'elephant', 'elephant_female', 'elephant_j
 CLIPS = {'idle', 'walk', 'trot', 'eat', 'drink', 'rest', 'sleep', 'vocalize', 'swim'}
 
 
+def clip_set(species):
+    """The elephants also dust-bathe (an activity clip, tests/test_activity_clips.py)."""
+    return CLIPS | ({'dust_bathe'} if species.startswith('elephant') else set())
+
+
 def world_translation(document, node, translation):
     """Joint channels are parent-local; include the exported root's rest rotation."""
     point = np.array(translation, dtype=float)
@@ -54,7 +59,7 @@ class PachydermTests(unittest.TestCase):
 
     def test_complete_clip_sets_and_speeds(self):
         for species, _, clips in self.cases:
-            self.assertEqual({clip.name for clip in clips}, CLIPS, species)
+            self.assertEqual({clip.name for clip in clips}, clip_set(species), species)
             for clip in clips:
                 self.assertGreater(clip.duration, 0)
                 self.assertEqual(clip.speed > 0, clip.name in ('walk', 'trot', 'swim'))
@@ -204,7 +209,7 @@ class PachydermTests(unittest.TestCase):
             self.assertIn('normalTexture', mat)
             self.assertIn('occlusionTexture', mat)
             self.assertEqual(mat['pbrMetallicRoughness'].get('metallicFactor'), 0)
-            self.assertEqual({a['name'] for a in doc['animations']}, CLIPS)
+            self.assertEqual({a['name'] for a in doc['animations']}, clip_set(species))
             self.assertLessEqual(len(doc['skins'][0]['joints']), 64)
             triangles = 0
             for mesh in doc['meshes']:

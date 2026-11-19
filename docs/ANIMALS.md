@@ -49,7 +49,8 @@ python3 -m unittest discover -s tools/animals/tests
 
 Each has the same eight clips, which the game picks from what the animal is doing: `idle`,
 `walk`, `trot` (the fast gait, a hop for the kangaroo), `eat`, `drink`, `rest`, `sleep`,
-`vocalize`. 9,000 to 34,000 triangles, 18 to 46 bones, a coat painted by the species file. The first-generation models (the last two rows) are stylised, not photorealistic; what each is weak at is listed in
+`vocalize`; some have activity clips beside them (`sentry`, `dig`, `preen`, `dust_bathe`,
+below). 9,000 to 34,000 triangles, 18 to 46 bones, a coat painted by the species file. The first-generation models (the last two rows) are stylised, not photorealistic; what each is weak at is listed in
 [`PIVOT_TO_ZOO_EXPLORATION.md`](PIVOT_TO_ZOO_EXPLORATION.md).
 
 ### Big cats from a sculpt (2026-11-13)
@@ -262,6 +263,68 @@ there is no flamingo chick.
 A species without a model would be left out of the Visitor Zoo by the game (its habitat built
 and standing empty).
 
+### Activity clips (begun 2026-11-14, verified 2026-11-20)
+
+The species routines (`ANIMAL_BEHAVIOUR.md`) give animals signature activities beyond the eight
+standard clips. Until now these stood in `idle` while the information panel said "Preening".
+Five species have clips of their own for them now, made in the pipeline
+(`tools/animals/zoogen/activity.py`: keyed postures that hold and move, as an animal does):
+
+| Model | Clip | Activity | What it shows |
+|---|---|---|---|
+| `meerkat` | `sentry` (9 s) | `sentinel` | up on the hind feet, legs nearly straight, tail as a prop, fore paws hanging; the head turns in quick moves and holds, to both sides and once up to the sky |
+| `meerkat` | `dig` (3 s) | `dig` | crouched, rump up, the fore paws scratching in turn (7 strokes each), nose low; once a loop the paws rest and the nose goes into the hole |
+| `penguin`, `penguin_juvenile` | `preen` (8 s) | `preen` | the head turned right round, the bill working the back feathers behind a lifted flipper, then the breast, then the other side |
+| `flamingo` | `preen` (10 s) | `preen` | on both legs, the long neck laid back over the body: the bill combs the left wing, the back, the right wing and the rump, the worked wing lifted a little |
+| `ostrich` | `dust_bathe` (10 s) | `dust_bathe` | sitting (the `rest` posture), rocking onto one side, the neck laid along the ground sweeping sand to each side, the loosened wings lifted and shaken |
+| `elephant`, `elephant_female`, `elephant_juvenile` | `dust_bathe` (16 s) | `dust_bathe` | a fore foot scrapes the earth loose, the trunk gathers it at the ground and throws it up over the forehead, once to each side, the ears flapping |
+
+Coverage of every species routine's nonstandard or signature action is below. “Default” means
+the model has no dedicated clip and the renderer deliberately uses the nearest standard pose.
+
+| Species | Routine action | Clip played now | What a visitor would expect |
+|---|---|---|---|
+| Brown bear | hot-weather `bathe` | `rest` (default) | a shallow wallow or splash; still missing |
+| Camel | `ruminate` | `rest` (manifest) | standing or lying with slow chewing; chewing is missing |
+| Elephant | `dust_bathe`; hot-weather `bathe` | `dust_bathe`; `rest` (default) | scrape, gather and toss dust; a wet mud toss remains a resting pose |
+| Flamingo | `preen`; `filter_feed`; `huddle` | `preen`; `eat` (default); `rest` (manifest) | grooming is dedicated; feeding should sweep the inverted bill; huddling uses the one-leg rest |
+| Giraffe | `browse`; `ruminate` | raised `eat` (manifest); `idle` (default) | browsing reaches foliage; chewing the cud is missing |
+| Kangaroo | social rest | ordinary `rest` / `idle` | a close resting mob; no paired interaction clip |
+| Lion | social contact | `idle` (default) | rubbing or nuzzling; still missing |
+| Meerkat | `sentinel`; `dig` | `sentry`; `dig` | upright scanning with tail support; alternating fore-paw scratches |
+| Ostrich | `dust_bathe` | `dust_bathe` | sitting, wing shaking and neck sweeps |
+| Penguin | `preen`; `huddle` | `preen`; `idle` (default) | grooming is dedicated; a tight upright huddle has no separate clip |
+| Polar bear | `bathe` | `rest` (default) | shallow splashing or rolling; still missing |
+| Rhinoceros | `bathe` | `rest` (default) | wallowing; still missing |
+| Tiger | `bathe` | `rest` (default) | lying or splashing in shallow water; splashing is missing |
+| Wolf | `patrol` | `walk` / `trot` while moving, `idle` when stopped | the existing gait already shows the boundary patrol |
+| Zebra | `sentinel` | `idle` (default) | a head-up watch; the existing idle is already head-up |
+
+The manifest maps an activity to a clip (`meta.activity_clips`, activity names as the save
+format writes them); `AnimalRenderer` plays the clip where the model has it and keeps its
+default otherwise (`dig` and `filter_feed` play `eat`, `bathe` plays `rest`, the rest `idle`).
+The bill and muzzle postures were fitted numerically against the models' own skin: a preening
+bill tip lies on the plumage, 0.5 to 3 cm out from the scan's surface, at the held moments
+(`tests/test_activity_clips.py`). Every clip that existed before is bit for bit the same pose
+(compared bone by bone against the previous pipeline); the meerkat's `idle` remains the
+sitting-up watch it always was.
+
+Not made: preening for the ostrich (its routine never preens), the zebra's head-up watch (its
+`sentinel` plays `idle`, which is already head-up), `filter_feed`, `browse` for the giraffe
+beyond its `eat`, `ruminate` chewing, `bathe` wallowing, `huddle` beyond the flamingo's one leg.
+What is weak: no sand or dust is thrown (the game has no particles for it), the elephant's toss
+reaches above the forehead rather than over the back (ten trunk joints at most 48 degrees each),
+the flamingo's bill and neck are buried in the wing when it preens there, as a real one's are, so
+from some sides the bird simply looks headless for a moment.
+
+All listed viewer phases and the final evidence sheet were opened after integration on current
+`develop` (`evidence/animal-clips-a1-2026-11-14.jpg`). In the Visitor Zoo at 09:00 after 600
+ticks, the state listing contained a meerkat sentinel, a digging meerkat, eight preening
+flamingos and four dust-bathing elephants; at 13:00 after 6,000 ticks it contained two preening
+penguins. The corresponding habitat pictures were opened. No ostrich happened to be dust-bathing
+in 28 sampled endpoint states across several hours, ticks and seeds, so that clip was verified in
+the viewer and by the pipeline geometry test, not observed during a habitat routine.
+
 ### What the game does with a model
 
 - **Females and young.** Beside `<id>.glb` the game looks for `<id>_female.glb` and
@@ -280,6 +343,10 @@ and standing empty).
   clip. Seen at Penguin Cove:
   `evidence/penguin-floating-2026-11-13.jpg` (a resting penguin on the pool: the head above
   the water, the body under it; a real one floats a little higher).
+- **Activity clips.** A still animal plays the clip its model's `meta.activity_clips` names
+  for its activity (`sentinel` -> `sentry`, `preen` -> `preen`, ...; see above), provided the
+  model has that clip; it changes into and out of `sentry` and `dust_bathe` with the slower
+  0.9 s blend of lying down.
 - **Textures.** CNA imports glTF images with one level (its warning GLTF-206), so the game
   builds the mip chain itself when it loads a model (`src/game/AnimalTextures.cpp`). The renderer
   also takes a normal map and an occlusion-roughness-metallic map when a model has them and its

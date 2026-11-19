@@ -5,7 +5,7 @@ from functools import partial
 
 import numpy as np
 
-from . import quadruped as quad
+from . import activity, quadruped as quad
 from .rig import Clip, Pose, rot_y, smooth
 
 LATERAL = {'HL': 0.0, 'FL': .25, 'HR': .5, 'FR': .75}
@@ -120,6 +120,55 @@ def elephant_feed(solver, data, angles_down, angles_up, drink, phase):
     return pose
 
 
+# Dust bathing, one toss to each side: [trunk down (0..1, scooping at the ground before the
+# fore feet), trunk tossed (0..1, curled up over the forehead and to one side), side (+1 the
+# left), fore foot scuffing loose earth (+1 the left, -1 the right)]. The side changes only
+# while the trunk hangs at rest; toss and return are slow enough that no joint of the bull's
+# trunk moves faster than 5 m/s.
+DUST_BATHE = [
+    (0.00, (0, 0, -1, 0), .16),
+    (0.02, (0, 0, 1, 0), .02),
+    (0.10, (1, 0, 1, 1), .08),
+    (0.20, (1, 0, 1, 0), .04),
+    (0.33, (0, 1, 1, 0), .13),
+    (0.50, (0, 0, 1, 0), .16),
+    (0.52, (0, 0, -1, 0), .02),
+    (0.60, (1, 0, -1, -1), .08),
+    (0.70, (1, 0, -1, 0), .04),
+    (0.83, (0, 1, -1, 0), .13),
+]
+# The toss, per trunk joint from the face to the tip, fitted so that the tip ends above the
+# forehead and to one side for bull, cow and calf: pitch (- raises) and sideways bend (degrees).
+TOSS_PITCH = np.linspace(-48, -4, 10)
+TOSS_BEND = np.linspace(35, -48, 10)
+TRUNK_IDLE = np.array([0, 0, 0, 0, 1, 2, 4, 7, 9, 12], dtype=float)
+
+
+def elephant_dust_bathe(solver, data, angles_scoop, phase):
+    """`dust_bathe`: the elephant loosens the earth with a fore foot, gathers it with the trunk
+    and throws it up over its head, once to each side, the ears flapping."""
+    height = data['height']
+    down, toss, side, scuff = activity.held(phase, DUST_BATHE)
+    pose = quad.stand(solver, Pose()).move('hips', dz=-.025 * height * (1 + down))
+    for key, sign in (('FL', 1), ('FR', -1)):
+        amount = max(0.0, sign * scuff)
+        if amount > 0:
+            # Scraping strokes: forward, down and back along the ground, lifted to return.
+            u = (phase * 10) % 1.0
+            target = solver.toe_base(key)
+            target[0] += amount * .09 * height * math.cos(math.tau * u)
+            target[2] += amount * .03 * height * max(0.0, math.sin(math.tau * u))
+            pose.plant(key, target)
+    pitch = TRUNK_IDLE + (angles_scoop - TRUNK_IDLE) * down + (TOSS_PITCH - TRUNK_IDLE) * toss
+    # Scooping: the tip works sideways at the ground.
+    scoop = 2.5 * down * math.sin(8 * math.tau * phase)
+    for i in range(10):
+        pose.r('trunk' + str(i + 1), ry=pitch[i], rz=scoop * math.sin(i * .4) + side * toss * TOSS_BEND[i])
+    pose.r('head', ry=-9 * toss, rz=5 * side * toss)
+    ears_tail(pose, solver, phase, True, .5 + 1.2 * toss)
+    return pose
+
+
 def lateral_sleep(solver, data, phase):
     pose = Pose().r('hips', rx=88)
     for side in ('.L', '.R'):
@@ -223,6 +272,12 @@ def clips(solver, data):
         result += [Clip('rest', rest.duration, partial(rhino_rest, solver, data, rest)),
                    Clip('sleep', 12, partial(lateral_sleep, solver, data))]
     result.append(Clip('vocalize', 3, partial(call_pose, solver, data), loop=False, events=[(.3, 'call')]))
+    if elephant:
+        # Dust is gathered a little above the ground, where the curled tip clears it.
+        scoop = down.copy()
+        scoop[2] = .08 * height / 3.2 + .05
+        angles_scoop = trunk_to(solver, base, scoop, [0] * 10)
+        result.append(Clip('dust_bathe', 16, partial(elephant_dust_bathe, solver, data, angles_scoop)))
     return result
 
 

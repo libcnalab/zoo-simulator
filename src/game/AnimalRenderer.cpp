@@ -31,7 +31,8 @@ namespace Xna = Microsoft::Xna::Framework::Graphics;
 constexpr float kPi = 3.14159265f;
 
 constexpr std::array<const char*, static_cast<std::size_t>(AnimalPose::Count)> kClipNames = {
-    "idle", "walk", "trot", "eat", "drink", "rest", "sleep", "vocalize", "swim", "float"};
+    "idle", "walk", "trot", "eat", "drink", "rest", "sleep", "vocalize", "swim", "float",
+    "sentry", "dig", "preen", "dust_bathe"};
 
 /// Up to this share of its growing time an animal is drawn with the model of the young.
 constexpr float kJuvenileShare = 0.5f;
@@ -64,7 +65,14 @@ bool LiesDown(AnimalPose pose) {
     return pose == AnimalPose::Rest || pose == AnimalPose::Sleep;
 }
 
+/// A posture the body takes slowly: lying down, sitting down to dust-bathe, or rising on the
+/// hind feet.
+bool SettlesSlowly(AnimalPose pose) {
+    return LiesDown(pose) || pose == AnimalPose::DustBathe || pose == AnimalPose::Sentry;
+}
+
 using ShownPoses = std::array<AnimalPose, static_cast<std::size_t>(zoo::AnimalActivity::Count)>;
+using PoseClips = std::array<const Animation::AnimationClip*, static_cast<std::size_t>(AnimalPose::Count)>;
 
 /// What a still animal plays for each activity when its model says nothing else. Activities
 /// without a clip of their own are shown by the nearest posture the standard clips have.
@@ -88,9 +96,10 @@ ShownPoses DefaultShownPoses() {
     return shown;
 }
 
-/// `meta.activity_clips` of a model's sidecar: {"huddle": "rest", ...}, activity names as the
-/// save format writes them, clip names as the models carry them. Unknown names are left out.
-void ReadActivityClips(const nlohmann::json& clips, ShownPoses& shown) {
+/// `meta.activity_clips` of a model's sidecar: {"huddle": "rest", "preen": "preen", ...}, activity
+/// names as the save format writes them, clip names as the models carry them. Unknown names, and
+/// clips the model does not have, are left out.
+void ReadActivityClips(const nlohmann::json& clips, const PoseClips& present, ShownPoses& shown) {
     for (std::size_t activity = 0; activity < shown.size(); ++activity) {
         const std::string name{zoo::ToString(static_cast<zoo::AnimalActivity>(activity))};
         const auto found = clips.find(name);
@@ -98,9 +107,11 @@ void ReadActivityClips(const nlohmann::json& clips, ShownPoses& shown) {
             continue;
         const std::string clip = found->get<std::string>();
         // Only the still clips: a gait or a water clip would be played in place.
-        for (const AnimalPose pose : {AnimalPose::Idle, AnimalPose::Eat, AnimalPose::Drink, AnimalPose::Rest,
-                                      AnimalPose::Sleep}) {
-            if (clip == kClipNames[static_cast<std::size_t>(pose)])
+        for (const AnimalPose pose :
+             {AnimalPose::Idle, AnimalPose::Eat, AnimalPose::Drink, AnimalPose::Rest, AnimalPose::Sleep,
+              AnimalPose::Sentry, AnimalPose::Dig, AnimalPose::Preen, AnimalPose::DustBathe}) {
+            const auto index = static_cast<std::size_t>(pose);
+            if (clip == kClipNames[index] && present[index] != nullptr)
                 shown[activity] = pose;
         }
     }
@@ -200,7 +211,7 @@ const AnimalRenderer::Kind* AnimalRenderer::Load(const std::string& model) {
         if (const auto still = meta.find("float"); still != meta.end() && still->is_object())
             kind->floatDepth = still->value("depth_m", kind->floatDepth);
         if (const auto shown = meta.find("activity_clips"); shown != meta.end() && shown->is_object())
-            ReadActivityClips(*shown, kind->shown);
+            ReadActivityClips(*shown, kind->pose, kind->shown);
     } catch (const std::exception& error) {
         std::printf("zoo: animals: %s.json: %s\n", model.c_str(), error.what());
     }
@@ -349,7 +360,8 @@ void AnimalRenderer::Update(const zoo::Zoo& zoo, float seconds, float tickFracti
             options.speed = std::clamp(animal.speed / std::max(gait, 0.05f), 0.4f, 2.2f);
         }
         if (pose != actor.pose) {
-            options.fadeSeconds = fresh ? 0.0f : LiesDown(pose) || LiesDown(actor.pose) ? 0.9f : 0.35f;
+            const bool slow = SettlesSlowly(pose) || SettlesSlowly(actor.pose);
+            options.fadeSeconds = fresh ? 0.0f : slow ? 0.9f : 0.35f;
             options.restart = pose == AnimalPose::Vocalize;
             if (pose == AnimalPose::Vocalize)
                 actor.called = true;

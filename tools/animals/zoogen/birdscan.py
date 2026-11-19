@@ -5,11 +5,12 @@ Animal coordinates are metres, +X forward, +Y left, +Z up. Source data is loaded
 without pickle. All source conversion occurs in prepare_bird through Blender.
 """
 import math
+from functools import partial
 from pathlib import Path
 
 import numpy as np
 
-from . import biped, geom, noise as nz, sculpt
+from . import activity, biped, geom, noise as nz, sculpt
 from .geom import Bone
 from .rig import Clip, Pose, Rig, rot_z
 
@@ -296,6 +297,40 @@ def penguin_pose(solver, name, phase):
     return pose
 
 
+# Preening: [chest yaw, neck yaw, head yaw, neck pitch, head pitch, head roll, left flipper,
+# right flipper, nibbling], degrees (+ yaw turns left, + pitch bends down, + flipper lifts it
+# away from the body; nibbling 0..1). The bird turns its head right round (the chest takes a
+# share of the turn, so that the one neck bone is not wrung) and works the back feathers behind
+# the left flipper, then the breast, then the right side, between short upright pauses. The
+# postures were fitted so that the bill tip lies on the scan's plumage (about 1 cm out).
+PENGUIN_PREEN = [
+    (0.00, (0, 0, 0, 0, 0, 0, 0, 0, 0)),
+    (0.08, (40, 70, 64, 43, 68, 9, 22, 0, 1), .08),
+    (0.30, (34, 64, 60, 40, 64, 6, 30, 0, 1), .04),
+    (0.38, (0, 0, 0, 0, 0, 0, 0, 0, 0), .07),
+    (0.44, (0, 0, 0, 32, 70, 0, 10, 10, 1), .06),
+    (0.56, (0, 0, 0, 0, 0, 0, 0, 0, 0), .06),
+    (0.64, (-40, -70, -64, 43, 68, -9, 0, 22, 1), .08),
+    (0.86, (-34, -64, -60, 40, 64, -6, 0, 30, 1), .04),
+]
+
+
+def penguin_preen(solver, phase):
+    """`preen`: standing, the head turned back over the shoulder with the bill working
+    through the back feathers behind a lifted flipper, then the breast, then the other side."""
+    angle = math.tau * phase
+    chest, neck, head, neck_pitch, head_pitch, roll, left, right, work = activity.held(phase, PENGUIN_PREEN)
+    pose = biped.standing(solver)
+    pose.r('chest', rz=chest, ry=.3 * neck_pitch)
+    pose.r('neck1', rz=neck, ry=neck_pitch)
+    pose.r('head', rz=head, ry=head_pitch + activity.nibble(phase, 24, 6 * work),
+           rx=roll + 4 * work * math.sin(12 * angle))
+    for side, sign, lift in [('L', 1, left), ('R', -1, right)]:
+        pose.r('flipper1.' + side, rx=sign * (6 + lift))
+        pose.r('flipper2.' + side, rx=sign * .2 * lift)
+    return pose
+
+
 def penguin_clips(solver):
     scale = solver.rig.extra['scale']
     clips = [biped.gait_clip(solver, biped.Stride('walk', .5 * scale, .40, .64, .025 * scale,
@@ -311,6 +346,7 @@ def penguin_clips(solver):
         if name in ('swim', 'float'):
             clip.contact_keys = []
         clips.append(clip)
+    clips.append(Clip('preen', 8, partial(penguin_preen, solver)))
     return clips
 
 
@@ -335,6 +371,40 @@ def flamingo_feeding(solver, effort):
     angles = [a + (b-a)*effort for a, b in zip(start, end)]
     biped.sagittal_profile(solver, pose, solver.rig.neck, angles)
     biped.sagittal_profile(solver, pose, ['head'], [-155])
+    return pose
+
+
+FLAMINGO_TUCK = [35, 65, 95, 125, 155, 185, 215, 240, 300, 330, 350]
+# Preening: [neck yaw, tuck (0 the standing S, 1 the head laid back on the body), head pitch
+# (absolute, -36 as in the rest pose), head yaw, head roll, left wing, right wing, nibbling].
+# Fitted so that the bill tip lies on the plumage, about 1.5 cm out from the sculpt's skin: the
+# coverts of the left wing, the middle of the back, the right wing, the rump.
+FLAMINGO_PREEN = [
+    (0.00, (0, 0, -36, 0, 0, 0, 0, 0)),
+    (0.08, (66, .83, -9, 0, 55, 14, 0, 1), .08),
+    (0.30, (-2, .35, -71, 0, 5, 0, 0, 1), .07),
+    (0.46, (-66, .83, -9, 0, -55, 0, 14, 1), .08),
+    (0.68, (-5, 1, -148, 0, 0, 0, 0, 1), .07),
+    (0.86, (0, 0, -36, 0, 0, 0, 0, 0), .08),
+]
+
+
+def flamingo_preen(solver, phase):
+    """`preen`: standing on both legs, the long neck laid back over the body, the bill combing
+    the left wing, the back, the right wing and the rump in turn, the wing it works lifted a
+    little from the body."""
+    angle = math.tau * phase
+    yaw, tuck, head, head_yaw, roll, left, right, work = activity.held(phase, FLAMINGO_PREEN)
+    pose = biped.standing(solver)
+    neutral = [math.degrees(math.atan2(*(b-a)[[2, 0]])) for a, b in zip(FLAMINGO_NECK, FLAMINGO_NECK[1:])]
+    biped.sagittal_profile(solver, pose, solver.rig.neck,
+                           [a + (b-a) * tuck for a, b in zip(neutral, FLAMINGO_TUCK)])
+    biped.sagittal_profile(solver, pose, ['head'], [head])
+    activity.turn_about_vertical(solver, pose, 'neck1', yaw)
+    pose.r('head', rz=head_yaw, rx=roll, ry=activity.nibble(phase, 30, 8 * work))
+    pose.r('neck10', rz=3 * work * math.sin(15 * angle))
+    for side, sign, lift in [('L', 1, left), ('R', -1, right)]:
+        pose.r('wing.' + side, rx=sign * lift)
     return pose
 
 
@@ -379,6 +449,7 @@ def flamingo_clips(solver):
                 result.r('head', rz=32 * math.sin(2 * angle))
             return result
         clips.append(Clip(name, 5, pose))
+    clips.append(Clip('preen', 10, partial(flamingo_preen, solver)))
     return clips
 
 
