@@ -147,7 +147,7 @@ were run again after every later change.
 | people-0 | `--people 0 --frames 40` | | | stopped while it ran |
 
 Each of the seven builds the zoo, fills it with 6,000 steps (800 visitors, 74 animals), paints
-the ground, loads the 28 avatars and 53 recordings, draws its frames and leaves through the
+the ground, loads the 28 avatars, catalogues 53 recordings, draws its frames and leaves through the
 normal end of the game: all of the start and of an ordinary frame at four places, with nothing
 reported. start-5 was run before the corrections, the other six after them.
 
@@ -472,7 +472,16 @@ screenshot without a renderer failure, although the 180 s software-rendering lim
 frame 277 before its Quit click. It also exposed an unresolved reload spike: old static GPU
 resources remain resident while replacements are built, reaching about 3.1 GB; the first terrain
 rebuild took 107 s. Static context-recovery copies are now disabled around every `Adopt`, not only
-the initial load, but the spike remains and is not claimed as fixed. Audio is the next target.
+the initial load, but the spike remains and is not claimed as fixed.
+
+Audio files are now decoded on first use instead of all 53 during `Soundscape` construction. The
+library contains 22.71 MB of decoded PCM (12.79 MB ambience, 9.42 MB calls and 0.50 MB footsteps),
+while the decoder/backend made the eager sound phase cost 46 MB resident. Its loading mark now
+stays at 220 MB before and after sounds. In a 60-frame visit, three recordings were decoded and
+four voices were audible (the crowd recording feeds two positioned voices), with no failures.
+Animal takes and footstep surfaces remain unloaded until selected. The whole-run sampler read
+2,711 MB in this run, higher than the prior 2,682 MB through heap variance, so no total-peak
+reduction is claimed from that noisy number.
 
 ## The bench
 

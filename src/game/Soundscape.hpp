@@ -24,6 +24,7 @@ namespace zoogame {
 /// The recordings come from assets/audio/sounds.json (their origins and licences:
 /// assets/audio/SOURCES.md). A sound the library lacks is simply not played, and
 /// without a library or an audio device the zoo is silent; nothing fails.
+/// The manifest is read at start, but each Ogg is decoded only when first played.
 class Soundscape {
 public:
     /// What the soundscape needs to know of the visitor each frame.
@@ -47,6 +48,12 @@ public:
 
 private:
     using Sound = Microsoft::Xna::Framework::Audio::SoundEffect;
+    struct Recording {
+        std::filesystem::path path;
+        std::unique_ptr<Sound> sound;
+        float gain = 1.0f;
+        bool attempted = false;
+    };
     /// A loop that follows something in the world (the nearest water, a group of people).
     struct Follower {
         CnaEngine::Audio::VoiceId voice = 0;
@@ -55,8 +62,9 @@ private:
         bool placed = false;
     };
 
-    void Load(const std::filesystem::path& directory);
-    const Sound* Pick(std::string_view name);
+    void LoadLibrary(const std::filesystem::path& directory);
+    bool Decode(Recording& recording);
+    const Recording* Pick(std::string_view name);
     float Chance();
     void StartBeds();
     void Follow(Follower& follower, std::string_view sound, std::string_view category, const Vector3* target,
@@ -68,9 +76,7 @@ private:
     void Step(const zoo::Zoo& zoo, const Visitor& visitor);
 
     // The recordings outlive the voices that play them: they are declared first.
-    std::unordered_map<std::string, std::vector<std::unique_ptr<Sound>>> library_;
-    /// The mix (assets/audio/mix.json): how loud a take of a call plays, 1 = as recorded.
-    std::unordered_map<const Sound*, float> gains_;
+    std::unordered_map<std::string, std::vector<Recording>> library_;
     CnaEngine::Audio::SoundSystem system_{20};
     SoundFigures figures_;
     std::uint32_t seed_ = 0x9E3779B9u;

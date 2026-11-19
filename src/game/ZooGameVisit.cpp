@@ -381,10 +381,10 @@ void ZooGame::PrintVisitFigures(const char* when) const {
         visitors_->Failed(), zoo_->Fauna().All().size(), animals_->Drawn());
     const SoundFigures& sound = sounds_->Figures();
     std::printf(
-        "zoo: visit %s: sound %s, %d recordings (%d failed), %d voices (%d heard), %d steps, %d calls, last "
-        "\"%s\"\n",
-        when, sound.device ? "plays" : "has no device", sound.files, sound.failed, sound.voices,
-        sound.audible, sound.steps, sound.calls, sound.lastCall.c_str());
+        "zoo: visit %s: sound %s, %d recordings (%d decoded, %d failed), %d voices (%d heard), %d steps, "
+        "%d calls, last \"%s\"\n",
+        when, sound.device ? "plays" : "has no device", sound.files, sound.loaded, sound.failed,
+        sound.voices, sound.audible, sound.steps, sound.calls, sound.lastCall.c_str());
     if (visit_.card.shown > 0.0f || !visit_.prompt.empty() || visit_.window != VisitWindow::None)
         std::printf("zoo: visit %s: looking at \"%s, %s\" (%s); E: \"%s\"; window %d\n", when,
                     visit_.card.shown > 0.0f ? visit_.card.name.c_str() : "",

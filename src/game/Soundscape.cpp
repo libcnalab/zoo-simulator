@@ -72,7 +72,7 @@ Vector3 On(const zoo::Zoo& zoo, zoo::Vec2 at, float above) {
 }  // namespace
 
 Soundscape::Soundscape(const std::filesystem::path& assets) {
-    Load(assets / "audio");
+    LoadLibrary(assets / "audio");
     figures_.device = system_.State() == Audio::AudioState::Ready;
     system_.SetCategoryVolume("ambience", 0.55f);
     system_.SetCategoryVolume("people", 0.6f);
@@ -85,7 +85,7 @@ Soundscape::~Soundscape() {
     system_.StopAll();
 }
 
-void Soundscape::Load(const std::filesystem::path& directory) {
+void Soundscape::LoadLibrary(const std::filesystem::path& directory) {
     std::ifstream file(directory / "sounds.json");
     if (!file) {
         std::printf("zoo: sound: there is no %s: the zoo is silent\n",
@@ -125,24 +125,42 @@ void Soundscape::Load(const std::filesystem::path& directory) {
                 continue;
             const std::string relative = item.get<std::string>();
             const std::filesystem::path path = directory / relative;
-            try {
-                library_[name].push_back(std::make_unique<Sound>(path.string()));
-                ++figures_.files;
-                if (gains && gains->contains(relative) && (*gains)[relative].is_number()) {
-                    const float decibels = std::clamp((*gains)[relative].get<float>(), -40.0f, 0.0f);
-                    gains_[library_[name].back().get()] = std::pow(10.0f, decibels / 20.0f);
-                    ++mixed;
-                }
-            } catch (const std::exception& error) {
+            std::error_code fileError;
+            if (!std::filesystem::is_regular_file(path, fileError)) {
                 ++figures_.failed;
-                // Without an audio device every file fails the same way: say it once.
                 if (figures_.failed == 1)
-                    std::printf("zoo: sound: %s: %s\n", path.string().c_str(), error.what());
+                    std::printf("zoo: sound: %s: file not found\n", path.string().c_str());
+                continue;
             }
+            Recording recording;
+            recording.path = path;
+            if (gains && gains->contains(relative) && (*gains)[relative].is_number()) {
+                const float decibels = std::clamp((*gains)[relative].get<float>(), -40.0f, 0.0f);
+                recording.gain = std::pow(10.0f, decibels / 20.0f);
+                ++mixed;
+            }
+            library_[name].push_back(std::move(recording));
+            ++figures_.files;
         }
     }
-    std::printf("zoo: sound: %d recordings under %zu names, %d failed; the mix sets %d of them\n", figures_.files,
-                library_.size(), figures_.failed, mixed);
+    std::printf("zoo: sound: %d recordings under %zu names, %d failed; the mix sets %d of them; decoded on use\n",
+                figures_.files, library_.size(), figures_.failed, mixed);
+}
+
+bool Soundscape::Decode(Recording& recording) {
+    if (recording.attempted)
+        return recording.sound != nullptr;
+    recording.attempted = true;
+    try {
+        recording.sound = std::make_unique<Sound>(recording.path.string());
+        ++figures_.loaded;
+    } catch (const std::exception& error) {
+        ++figures_.failed;
+        // Without an audio device every file fails the same way: say it once.
+        if (figures_.failed == 1)
+            std::printf("zoo: sound: %s: %s\n", recording.path.string().c_str(), error.what());
+    }
+    return recording.sound != nullptr;
 }
 
 float Soundscape::Chance() {
@@ -152,13 +170,19 @@ float Soundscape::Chance() {
     return static_cast<float>(seed_ >> 8) / 16777216.0f;
 }
 
-const Soundscape::Sound* Soundscape::Pick(std::string_view name) {
+const Soundscape::Recording* Soundscape::Pick(std::string_view name) {
     const auto found = library_.find(std::string(name));
     if (found == library_.end() || found->second.empty())
         return nullptr;
-    const auto count = static_cast<float>(found->second.size());
-    const auto index = std::min(static_cast<std::size_t>(Chance() * count), found->second.size() - 1);
-    return found->second[index].get();
+    auto& recordings = found->second;
+    const auto count = static_cast<float>(recordings.size());
+    const auto first = std::min(static_cast<std::size_t>(Chance() * count), recordings.size() - 1);
+    for (std::size_t offset = 0; offset < recordings.size(); ++offset) {
+        Recording& recording = recordings[(first + offset) % recordings.size()];
+        if (Decode(recording))
+            return &recording;
+    }
+    return nullptr;
 }
 
 void Soundscape::SetVolume(float volume) {
@@ -181,10 +205,10 @@ void Soundscape::Reset() {
 
 void Soundscape::StartBeds() {
     beds_ = true;
-    if (const Sound* air = Pick("park_day"))
-        system_.Play(*air, {.category = "ambience", .volume = 1.0f, .loop = true, .priority = 3});
-    if (const Sound* leaves = Pick("wind_trees"))
-        system_.Play(*leaves, {.category = "ambience", .volume = 0.45f, .loop = true, .priority = 2});
+    if (const Recording* air = Pick("park_day"))
+        system_.Play(*air->sound, {.category = "ambience", .volume = 1.0f, .loop = true, .priority = 3});
+    if (const Recording* leaves = Pick("wind_trees"))
+        system_.Play(*leaves->sound, {.category = "ambience", .volume = 0.45f, .loop = true, .priority = 2});
 }
 
 void Soundscape::Follow(Follower& follower, std::string_view sound, std::string_view category,
@@ -205,16 +229,16 @@ void Soundscape::Follow(Follower& follower, std::string_view sound, std::string_
     if (follower.voice == 0) {
         if (wanted <= 0.0f)
             return;
-        const Sound* loop = Pick(sound);
+        const Recording* loop = Pick(sound);
         if (!loop)
             return;
-        follower.voice = system_.Play(*loop, {.category = std::string(category),
-                                              .volume = follower.volume,
-                                              .pitch = pitch,
-                                              .loop = true,
-                                              .position = follower.position,
-                                              .falloff = falloff,
-                                              .priority = 1});
+        follower.voice = system_.Play(*loop->sound, {.category = std::string(category),
+                                                     .volume = follower.volume,
+                                                     .pitch = pitch,
+                                                     .loop = true,
+                                                     .position = follower.position,
+                                                     .falloff = falloff,
+                                                     .priority = 1});
         return;
     }
     system_.SetPosition(follower.voice, follower.position);
@@ -324,17 +348,16 @@ void Soundscape::Call(const zoo::Zoo& zoo, const zoo::Animal& animal, const Vect
     }
     if (!chosen)
         return;
-    const Sound* sound = Pick(*chosen);
-    if (!sound)
-        return;
     const Vector3 mouth = On(zoo, animal.position, std::max(0.3f, def.shoulderHeightM));
     const float away = Vector3::Distance(mouth, ears);
     if (away > chosenReach)
         return;
-    const auto gain = gains_.find(sound);
-    system_.Play(*sound,
+    const Recording* sound = Pick(*chosen);
+    if (!sound)
+        return;
+    system_.Play(*sound->sound,
                  {.category = "animals",
-                  .volume = gain != gains_.end() ? gain->second : 1.0f,
+                  .volume = sound->gain,
                   .pitch = (Chance() - 0.5f) * 0.1f,
                   .position = mouth,
                   .falloff = {.reference = chosenReach * 0.07f, .radius = chosenReach, .rolloff = 0.85f},
@@ -393,14 +416,14 @@ void Soundscape::Step(const zoo::Zoo& zoo, const Visitor& visitor) {
     const zoo::TileCoord tile = zoo::World::TileAt(visitor.feet);
     if (!zoo.Map().InBounds(tile))
         return;
-    const Sound* step = Pick(Surface(zoo.Map().At(tile)));
+    const Recording* step = Pick(Surface(zoo.Map().At(tile)));
     if (!step)
         return;
-    system_.Play(*step, {.category = "footsteps",
-                         .volume = visitor.running ? 1.0f : 0.7f,
-                         .pitch = (Chance() - 0.5f) * 0.16f,
-                         .pan = (figures_.steps % 2 == 0 ? -0.08f : 0.08f),
-                         .priority = 2});
+    system_.Play(*step->sound, {.category = "footsteps",
+                                .volume = visitor.running ? 1.0f : 0.7f,
+                                .pitch = (Chance() - 0.5f) * 0.16f,
+                                .pan = (figures_.steps % 2 == 0 ? -0.08f : 0.08f),
+                                .priority = 2});
     ++figures_.steps;
 }
 

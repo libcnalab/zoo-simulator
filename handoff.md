@@ -35,8 +35,11 @@ whatever you take up (`docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `docs/V
   875 -> 826 MB (49 MB resident), the latest whole-run sample is 2,682 MB, and editor memory is
   unchanged. An in-place save reload still spikes to about 3.1 GB because old software-GL static
   resources remain resident while replacements are built; context-recovery is disabled for every
-  rebuild but this spike is **not fixed**. Measure audio next. Do not quote the sandbox's absolute
-  number as a Radeon measurement.
+  rebuild but this spike is **not fixed**. Audio now catalogues all 53 recordings but decodes a
+  take only on first play: its loading phase fell 46 -> 0 MB; a 60-frame run decoded 3 recordings,
+  played 4 audible voices and had no failure. The noisy whole-run sample was 2,711 MB, so do not
+  claim a total-peak cut from it. Do not quote the sandbox's absolute number as a Radeon
+  measurement.
 - **Stopped mid-work when the machine restarted (uncommitted, in their worktrees; no reports):**
   - `wt-sound`: G7c audio audit (brief `.codex-work/brief-G7c-sound-develop.md`), 28 files.
   - `wt-visitors`: P1 visitors' frame cost (brief `brief-P1-visitor-cost.md`), 2 files.

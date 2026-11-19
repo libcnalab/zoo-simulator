@@ -311,5 +311,15 @@ The save/load script also reached two reloads and its final screenshot without a
 It exposed a separate open issue: software GL retains/defer-releases old static GPU resources
 during an in-place load, reaching about 3.1 GB and making the first terrain rebuild take 107 s.
 Every `Adopt` now disables CPU context-recovery shadows during its static rebuild, but that did
-not remove this driver/resource-lifetime spike; do not count it as fixed. Audio is the next
-measured target.
+not remove this driver/resource-lifetime spike; do not count it as fixed.
+
+## Lazy audio decoding (2026-11-19)
+
+`Soundscape` used to decode all 53 Ogg recordings in its constructor. Their PCM totals 22.71 MB,
+but decoder and audio-backend copies made the measured loading phase add 46 MB resident. It now
+reads the manifest and mix at start and decodes each take only on its first play. The sound loading
+mark remains 220 -> 220 MB instead of 220 -> 266 MB. A 60-frame visit decoded three recordings,
+kept four voices audible (one crowd take is positioned twice), and reported no failure. Calls and
+footstep surfaces therefore cost nothing until selected. The full-run sample moved 2,682 ->
+2,711 MB in this run, opposite to the isolated phase because heap sampling varies; it is not used
+as evidence of a regression or a saving.

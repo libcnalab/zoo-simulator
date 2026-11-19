@@ -107,7 +107,8 @@ struct VisitSettings {
 /// a scripted run: nobody listens there, so it has to say what it plays).
 struct SoundFigures {
     bool device = false;   ///< an audio device plays
-    int files = 0;         ///< recordings loaded
+    int files = 0;         ///< recordings found in the library
+    int loaded = 0;        ///< recordings decoded after they were first needed
     int failed = 0;        ///< recordings of the library that could not be loaded
     int voices = 0;        ///< sounds going on (heard or waiting for a voice)
     int audible = 0;       ///< of them heard now
