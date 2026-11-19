@@ -559,6 +559,32 @@ bool OnDryGround(const Zoo& zoo, EnclosureId id, Vec2 point, float radius) {
     return true;
 }
 
+// A pool lowers the four corners of every water tile, which the eight surrounding tiles share.
+// Their ground slopes under the water surface even though their tile itself is not marked water.
+bool BedReaches(const World& map, TileCoord tile) {
+    for (int dz = -1; dz <= 1; ++dz) {
+        for (int dx = -1; dx <= 1; ++dx) {
+            if (map.HasWater({tile.x + dx, tile.z + dz})) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+/// Whether a land plant of `radius` stands entirely above the bank the pool did not dig into.
+/// The catalog has no water plant, so this rule applies to every tree and bush.
+bool AboveTheBank(const World& map, Vec2 point, float radius) {
+    const TileCoord low = World::TileAt({point.x - radius, point.z - radius});
+    const TileCoord high = World::TileAt({point.x + radius, point.z + radius});
+    for (const TileCoord tile : TilesInRect(low, high)) {
+        if (Reaches(point, radius, tile) && BedReaches(map, tile)) {
+            return false;
+        }
+    }
+    return true;
+}
+
 float DistanceToLine(Vec2 point, Vec2 from, Vec2 to) {
     const Vec2 along = to - from;
     const float length = along.x * along.x + along.z * along.z;
@@ -583,6 +609,7 @@ bool Fits(const Zoo& zoo, const Builder& builder, const Site& site, int def, Vec
     const float radius = kind.radiusM * scale;
     const TileCoord tile = World::TileAt(point);
     if (site.kept.contains({tile.z, tile.x}) || !OnDryGround(zoo, site.id, point, radius + 0.1f) ||
+        (Plant(kind.role) && !AboveTheBank(zoo.Map(), point, radius + 0.1f)) ||
         builder.CheckProp(def, point) != BuildError::None) {
         return false;
     }
@@ -763,7 +790,7 @@ void HabitatPlants(Zoo& zoo, Script& script, const Site& site, const HabitatStyl
     };
     std::vector<Bed> beds;
     for (const TileCoord tile : site.tiles) {
-        if (!Interior(zoo, tile, site.id, tight ? 0 : 1) || zoo.Map().HasWater(tile)) {
+        if (!Interior(zoo, tile, site.id, tight ? 0 : 1) || BedReaches(zoo.Map(), tile)) {
             continue;
         }
         const Vec2 centre = World::TileCenter(tile);

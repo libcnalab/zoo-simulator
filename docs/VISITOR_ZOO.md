@@ -240,16 +240,19 @@ inside each keeper gate are kept clear.
 plus 1 m apart, so that no pocket forms that an animal walks into and not out of
 (`BlockingPropsLeaveAnAdultWidthPlusOneMetre`). `ClearPlace` also rejects a routine destination
 unless an animal has two body-wide, prop-free ways out of it. The seed-1 stall probe of
-`docs/ANIMAL_BEHAVIOUR.md` now counts 2,994 stalled of 270,133 moving ticks (1.11 %; 1.49 %
-before pocket rejection, 5.4 % on the old plan), with no continuous stall of 300 ticks. This
-is enforced by `AnimalMovementTests.VisitorZooAnimalsDoNotRemainStalledInPropPockets`.
+`docs/ANIMAL_BEHAVIOUR.md` now counts 2,688 stalled of 248,322 moving ticks (1.08 %; 1.49 %
+before pocket rejection, 5.4 % on the old plan), with the longest continuous stall 110 ticks.
+An animal that makes no progress now tries a sidestep after one second rather than 1.5 seconds.
+This is enforced by `AnimalMovementTests.VisitorZooAnimalsDoNotRemainStalledInPropPockets`.
 
 **Planting.** Plants stand in groves with glades between them (smooth noise some eight metres
 across), towards the back and the rim, in passes 3.6, 2.6 and 2.0 m apart, never in the lines
 from the three benches to the habitat's middle (3 m to either side, 2 m on the mound), never
 within 5 m of any viewing place, and a massive trunk (a metre and more: baobab, bamboo clump)
 not within 5 m behind the barrier either: a baobab beyond the giraffes' strip filled a quarter
-of the view from their rail. Each habitat has a mix of kinds (Bear Falls: pine, spruce, oak,
+of the view from their rail. A land plant's whole circle also keeps off a water tile and the
+eight surrounding tiles whose shared corners the pool bed lowers; ferns no longer stand in the
+flamingo lagoon, while planting remains on its dry bank. Each habitat has a mix of kinds (Bear Falls: pine, spruce, oak,
 birch, juniper instead of a block of pines two metres apart). The aim is the species'
 vegetation figure less 0.08 (0.12 above 0.4), which keeps views open; falling short is reported
 as a problem only below the welfare band (figure − 0.15, `Animals.cpp`). Lawn trees in the
@@ -270,7 +273,8 @@ The core checks the invariant for both plan seeds, and
 barrier edges. The repaired service side is shown in
 `docs/evidence/red-dune-service-rail-2026-11-19.jpg`.
 
-**Other checks:** `NothingStandsInWaterOrInAnotherThing`, `NoPlantOnAPathOrBeforeABench`,
+**Other checks:** `NothingStandsInWaterOrInAnotherThing`, `NoLandPlantInOrBesideWater`,
+`NoPlantOnAPathOrBeforeABench`,
 `BenchesStandInShade`, `HoofstockStandsBehindCablesAndRails`, `FoodAndWaterStandInsideAndInView`,
 `MeerkatsHaveADishAndTheLagoonIsShallow`, `TreesStandApartInGroves`,
 `FamiliesWithTheirYoungOnTheOpeningDay`, `FamiliesAreWholeWhenTheVisitBegins`.

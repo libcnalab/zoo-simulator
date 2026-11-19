@@ -26,14 +26,14 @@ inline constexpr float kAdultSpeedScale = 1.0f;               // speed fraction 
 inline constexpr float kYoungSpeedScale = 0.6f;               // speed fraction at birth size
 inline constexpr float kWadingShoulderFraction = 0.6f;        // shoulder height fraction
 // A wading bird chooses water that leaves its body clear: up to the joint of its legs.
-inline constexpr float kWaderStandingFraction = 0.3f;         // height fraction
-inline constexpr float kWaypointArrivalM = 0.05f;             // metres from route waypoint
-inline constexpr float kRouteBrakingFactor = 1.0f;            // conservative braking speed equation factor
-inline constexpr float kArrivalPauseSeconds = 2.0f;           // motion seconds after arrival
-inline constexpr int kPathExpansionLimit = 6000;              // navigation nodes per route
-inline constexpr int kPathCallsPerStep = 8;                   // A* searches per simulation tick
-inline constexpr float kFenceBodyClearanceM = 0.1f;           // metres from fence edge
-inline constexpr float kObstacleClearanceM = 0.05f;           // metres from blocking prop
+inline constexpr float kWaderStandingFraction = 0.3f;  // height fraction
+inline constexpr float kWaypointArrivalM = 0.05f;      // metres from route waypoint
+inline constexpr float kRouteBrakingFactor = 1.0f;     // conservative braking speed equation factor
+inline constexpr float kArrivalPauseSeconds = 2.0f;    // motion seconds after arrival
+inline constexpr int kPathExpansionLimit = 6000;       // navigation nodes per route
+inline constexpr int kPathCallsPerStep = 8;            // A* searches per simulation tick
+inline constexpr float kFenceBodyClearanceM = 0.1f;    // metres from fence edge
+inline constexpr float kObstacleClearanceM = 0.05f;    // metres from blocking prop
 inline constexpr float kEdibleFreshnessDays = 0.0f;    // game days after filled; actual life is food-specific
 inline constexpr float kWelfareAlertThreshold = 0.4f;  // welfare fraction
 inline constexpr float kWelfareSmoothing = 0.5f;       // fraction applied per welfare refresh
@@ -141,7 +141,8 @@ inline constexpr float kHeadOnFraction = 0.3f;
 inline constexpr float kIntrusionToleranceM2 = 1.0e-5f;
 /// An animal that came no nearer to its waypoint than this, metres, for kStallTicks is stalled.
 inline constexpr float kStallProgressM = 0.02f;
-inline constexpr std::int32_t kStallTicks = 30;
+/// One second at the simulation's 20 Hz: try the next sidestep promptly instead of waiting 1.5 s.
+inline constexpr std::int32_t kStallTicks = 20;
 /// Stalled this near to the waypoint (plus the body radius), metres, counts as arrived.
 inline constexpr float kStallArriveM = 1.0f;
 /// How far outside a blocking prop's clearance a waypoint planned onto it is moved, metres.

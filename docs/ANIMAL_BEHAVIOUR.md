@@ -492,6 +492,12 @@ from the Release build, visitor zoo, seed 1, after the visit's fill.
   stalled of 270,133 moving ticks (1.11 %), with no continuous stall of 300 ticks. The probe
   is now the active regression `AnimalMovementTests.VisitorZooAnimalsDoNotRemainStalledInPropPockets`
   (`tests/core/AnimalStallTests.cpp`): below 1.3 % and every continuous stall below 300 ticks.
+  **Pool-bank planting and prompt recovery (2026-11-19):** keeping land plants off the sloping
+  ground dug around every pool changed the prop layout and exposed a 1.34 % result, with two
+  giraffes contributing 975 stalled ticks and one continuous stall lasting 289 ticks. An animal
+  now tries its next deterministic sidestep after 20 ticks (one second) without progress, rather
+  than after 30. The same probe measures 2,688 of 248,322 moving ticks (1.08 %), and the longest
+  continuous stall is 110 ticks. The regression limits were not relaxed.
 - **Golden hashes** of `tests/core/VisitStartTests.cpp` re-recorded for the routines.
 - Pictures: `docs/evidence/animal-routines-2026-11-13.jpg` (lions resting in the shade at
   midday; penguins standing together, one swimming; flamingos at the lagoon after the wader

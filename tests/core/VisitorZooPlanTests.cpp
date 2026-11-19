@@ -554,6 +554,43 @@ TEST_P(VisitorZooPlan, NothingStandsInWaterOrInAnotherThing) {
     }
 }
 
+// A water tile's bed lowers the four corners which it shares with the eight surrounding tiles.
+// The game draws water over that sloping ground, and the catalog has no water plant: no tree or
+// bush may reach a tile whose ground the pool has dug into.
+TEST_P(VisitorZooPlan, NoLandPlantInOrBesideWater) {
+    const World& map = zoo_.Map();
+    const auto dug = [&map](TileCoord tile) {
+        for (int dz = -1; dz <= 1; ++dz) {
+            for (int dx = -1; dx <= 1; ++dx) {
+                if (map.HasWater({tile.x + dx, tile.z + dz})) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    };
+    int beside = 0;
+    for (const Prop& prop : zoo_.Objects().Props()) {
+        const PropDef& kind = KindOf(zoo_, prop);
+        if (!IsPlant(kind)) {
+            continue;
+        }
+        const float radius = kind.radiusM * prop.scale;
+        const TileCoord low = World::TileAt({prop.position.x - radius, prop.position.z - radius});
+        const TileCoord high = World::TileAt({prop.position.x + radius, prop.position.z + radius});
+        for (const TileCoord tile : TilesInRect(low, high)) {
+            EXPECT_FALSE(Touches(prop.position, radius, tile) && dug(tile))
+                << kind.id << " at " << prop.position.x << ',' << prop.position.z << " reaches " << tile.x
+                << ',' << tile.z;
+        }
+        const TileCoord at = World::TileAt(prop.position);
+        const bool bank =
+            dug({at.x - 1, at.z}) || dug({at.x + 1, at.z}) || dug({at.x, at.z - 1}) || dug({at.x, at.z + 1});
+        beside += bank ? 1 : 0;
+    }
+    EXPECT_GT(beside, 0) << "the plan should retain planting on dry banks near water";
+}
+
 TEST_P(VisitorZooPlan, NoPlantOnAPathOrBeforeABench) {
     for (const Prop& prop : zoo_.Objects().Props()) {
         const PropDef& kind = KindOf(zoo_, prop);

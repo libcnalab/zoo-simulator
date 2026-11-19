@@ -61,16 +61,17 @@ TEST(VisitStart, MatchesGameSequence) {
 // ground of their own, watchers looking at the animals; 2026-11-14, G8: the zoo's plan, families
 // with young, new barriers, furnishing and planting; then G5: the keepers, the gardener and
 // the cleaner at work, in the state hash; staff keep off water; then animals' waypoints moved
-// off blocking props; 2026-11-19: routine places must have two body-wide exits around props).
+// off blocking props; 2026-11-19: routine places must have two body-wide exits around props;
+// land plants keep off the sloping ground dug by pools).
 void CheckFillHashes(std::int64_t ticks) {
     constexpr std::array<std::array<std::uint64_t, 2>, 3> shortHashes{
-        {{1173662147128443964ULL, 1107570031909649352ULL},
-         {15301235302407781538ULL, 13293934419046741291ULL},
-         {17490139635704472405ULL, 13711515227528670270ULL}}};
+        {{11121956012711822291ULL, 7341835299615724846ULL},
+         {2694001544966187318ULL, 9631050139300686266ULL},
+         {8295665108216201928ULL, 13814911998897835051ULL}}};
     constexpr std::array<std::array<std::uint64_t, 2>, 3> fullHashes{
-        {{15002375887675690109ULL, 956791120809914890ULL},
-         {17411301327768550611ULL, 2140826802330461614ULL},
-         {5077741855506602639ULL, 2769422873823982524ULL}}};
+        {{15073418355668381535ULL, 15685040859363069919ULL},
+         {3590161922533172802ULL, 7347964437982220049ULL},
+         {2589101765461888294ULL, 16858452237370850997ULL}}};
     for (const std::uint64_t seed : {1ULL, 2ULL, 3ULL}) {
         Zoo zoo(testdata::GameCatalog(), testdata::GameSpecies(), VisitorZooConfig(seed));
         BuildVisitorZoo(zoo);
@@ -141,7 +142,8 @@ TEST(VisitStart, EmptyFillStillSetsCalendarAndPace) {
 // nobody, and sending people home during a visit takes whole groups, the farthest first.
 TEST(VisitStart, CrowdSettingLimitsAndSendsWholeGroupsHome) {
     const auto filled = [](int most) {
-        auto zoo = std::make_unique<Zoo>(testdata::GameCatalog(), testdata::GameSpecies(), VisitorZooConfig(1));
+        auto zoo =
+            std::make_unique<Zoo>(testdata::GameCatalog(), testdata::GameSpecies(), VisitorZooConfig(1));
         BuildVisitorZoo(*zoo);
         VisitStartOptions options;
         const float share = static_cast<float>(most) / static_cast<float>(options.pace.most);

@@ -14,8 +14,9 @@ namespace zoo {
 namespace {
 
 // Tile navigation cannot see blocking props. After waypoints themselves were moved off props,
-// seed 1 still spent 1.49 % of its moving ticks stalled; routine places with two clear exits
-// reduce that to 1.11 % and prevent a single long-lived pocket from hiding in the total.
+// seed 1 still spent 1.49 % of its moving ticks stalled; routine places with two clear exits and
+// trying a sidestep after one second reduce that to 1.08 % and prevent a long-lived pocket from
+// hiding in the total.
 TEST(AnimalMovementTests, VisitorZooAnimalsDoNotRemainStalledInPropPockets) {
     Zoo zoo(testdata::GameCatalog(), testdata::GameSpecies(), VisitorZooConfig(1));
     BuildVisitorZoo(zoo);

@@ -46,7 +46,7 @@ whatever you take up (`docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `docs/V
   played 4 audible voices and had no failure. The noisy whole-run sample was 2,711 MB, so do not
   claim a total-peak cut from it. Do not quote the sandbox's absolute number as a Radeon
   measurement.
-  The complete suite after these changes is 265 active tests passed, with 21 long-running
+  The complete suite after these changes is 267 active tests passed, with 21 long-running
   measurement/diagnostic tests disabled as intended.
 - Animal models are now submitted only when a generous body-and-shadow sphere intersects the
   main camera. The count fell from 88 everywhere to entrance 72, lion 7, meerkat 17, penguin 15
@@ -60,11 +60,16 @@ whatever you take up (`docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `docs/V
   The 44,571,410-coordinate probe, entrance/lion screenshots, 18 game-side tests and an ASan
   full-crowd smoke pass. Do not claim an fps result: the current offscreen baseline spent 310 ms
   in its software driver (`docs/VISITORS.md`, `docs/PERFORMANCE.md`, 2026-11-19).
+- Land plants now keep their whole circle off water and the eight neighbouring tiles whose shared
+  corners a pool lowers. Both plan seeds pass the new invariant and the inspected flamingo view has
+  clean water with planting retained on dry banks. Faster one-second obstacle recovery offsets the
+  changed prop layout: animal stalls are 1.08% (longest 110 ticks), not the regressed 1.34% / 289.
+  The plan tests and both fill-hash lengths pass (`docs/VISITOR_ZOO.md`, 2026-11-19).
 - **Stopped mid-work when the machine restarted (uncommitted, in their worktrees; no reports):**
   - `wt-sound`: G7c audio audit (brief `.codex-work/brief-G7c-sound-develop.md`), 28 files.
-  - `wt-life`: G8d plan details (brief `brief-G8d-plan-details.md`: ferns in the lagoon's
-    water, 2 m walks, a tree inside a barrier, the meerkat stand on the gate), 6 files. Its Red
-    Dune rail finding was fixed on develop on 2026-11-19 and the walker test is active again.
+  - `wt-life`: G8d plan details (brief `brief-G8d-plan-details.md`: 2 m walks and a tree inside a
+    barrier remain), 6 files. Its Red Dune rail, meerkat stand and water-plant findings were fixed
+    on develop on 2026-11-19; do not reapply those parts of its old diff.
   - `wt-plants` (reused): A1 animal activity clips (brief `brief-A1-activity-clips.md`), 31 files.
   Look at each diff before going on; none is reviewed. Their earlier finished work is in develop.
 - **Deadline:** about **2026-11-28** the owner puts Zoo Simulator under the same AI policy as
