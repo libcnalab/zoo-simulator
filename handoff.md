@@ -188,6 +188,11 @@ meerkat view moved from `(177.0, 263.2)`, looking through mesh into the shelter 
 `(169.2, 269.0)`, with an unobstructed animal in the centre; the before/after offscreen images
 were inspected and the 18 game-side Walker/texture tests passed (2026-11-19).
 
+The same command also rejects positions overlapping the exact solid radii used by `Walker`,
+including its 0.28 m body radius and furniture which simulation visitors may pass through.
+All fourteen species kept identical requested/final coordinates to 0.1 m in a zero-tick
+offscreen smoke, so the former 42 set-downs inside furniture are resolved (2026-11-19).
+
 ## 5. Worktrees in `.codex-work/` (git-ignored)
 
 Still holding work to take: `wt-keepers` (4.1), `wt-ground` (4.2), `wt-plants` (4.3),

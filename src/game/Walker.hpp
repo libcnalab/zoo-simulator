@@ -31,6 +31,7 @@ public:
     // the jog (it was a 1.6 m/s stroll) and the run twice that.
     static constexpr float kWalkSpeed = 4.4f;  ///< m/s
     static constexpr float kRunSpeed = 8.8f;   ///< m/s
+    static constexpr float kBodyRadius = 0.28f;
 
     Walker();
 
@@ -73,5 +74,9 @@ private:
     float headBob_ = 0.012f;
     bool stepped_ = false;
 };
+
+/// Radius of the solid part of a prop for somebody walking, including furniture
+/// which the simulation's visitors may pass through but the player's body may not.
+float PlayerPropRadius(const zoo::PropDef& def);
 
 }  // namespace zoogame

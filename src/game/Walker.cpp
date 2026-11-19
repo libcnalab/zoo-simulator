@@ -25,7 +25,7 @@ constexpr float kMaxPitch = 1.35f;
 
 CharacterSettings Body() {
     CharacterSettings settings;
-    settings.radius = 0.28f;
+    settings.radius = Walker::kBodyRadius;
     settings.height = 1.75f;
     settings.eyeHeight = 1.62f;
     // No ledges: the ground is a height field (a facet steeper than a body climbs rises two
@@ -66,8 +66,9 @@ float WrapAngle(float a) {
     return a;
 }
 
-/// What a person bumps into of a prop that the simulation lets its walkers pass.
-float PlayerRadius(const zoo::PropDef& def) {
+}  // namespace
+
+float PlayerPropRadius(const zoo::PropDef& def) {
     if (def.blocksWalking)
         return def.radiusM;
     switch (def.role) {
@@ -83,8 +84,6 @@ float PlayerRadius(const zoo::PropDef& def) {
             return 0.0f;  // flower beds are stepped over
     }
 }
-
-}  // namespace
 
 Walker::Walker() : world_(4.0f), body_(Body()) {}
 
@@ -177,7 +176,7 @@ void Walker::Rebuild(const zoo::Zoo& zoo) {
 
     for (const zoo::Prop& prop : zoo.Objects().Props()) {
         const zoo::PropDef& def = catalog.props[static_cast<std::size_t>(prop.def)];
-        const float radius = PlayerRadius(def) * (def.blocksWalking ? prop.scale : 1.0f);
+        const float radius = PlayerPropRadius(def) * (def.blocksWalking ? prop.scale : 1.0f);
         if (radius <= 0.0f)
             continue;
         const float floor = map.HeightAt(prop.position);

@@ -340,6 +340,12 @@ The guard's price: the contacts of the body are asked once more after every sub-
 aimless-walk test (36,000 frames) took 477 ms before and 609 ms after: about 13 -> 17
 microseconds a frame, 0.04 % of a 9 ms frame.
 
+The scripted habitat viewpoints now use the same solid radii as `Walker` before choosing a
+place, including the otherwise simulation-passable benches, bins, lamps and boards, plus the
+body's 0.28 m radius. A zero-tick `--stand habitat:<species>` smoke of all fourteen habitats
+reported exactly the same set-down and final coordinates to 0.1 m; the former 42 furniture
+overlaps therefore no longer rely on the controller pushing the body out (2026-11-19).
+
 ### What is still open in the walk
 
 - **The near plane at a wall.** The camera's near plane is 0.3 m (`ZooGame.cpp:36`) with a
@@ -348,9 +354,6 @@ microseconds a frame, 0.04 % of a 9 ms frame.
   a wall can be looked through from close by. **Not verified by a picture**: the probe
   (`build-probe/wall.script`, the gift shop's west wall, five headings) was stopped by the
   wrap-up. If the pictures show it: a near plane of 0.1 m.
-- `--stand habitat:<name>` can set the player down inside a bench (42 of the test's set-downs
-  landed in furniture; the body is pushed out or walks out, correction 2 lets it). Only the
-  command-line option does this, the visit's own start does not.
 - `Walker::Update` rebuilds its collision world when objects or fences change (their revision
   counters), not when the ground or the water is edited. The visit changes neither, so nothing
   is stale today; a mode that sculpts the ground while the player walks (the editor has its own

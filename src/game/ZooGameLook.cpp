@@ -396,6 +396,20 @@ std::optional<ZooGame::Pose> ZooGame::StandPose(std::string_view what) const {
                     const float forward = spot.standOffM > 0.0f ? 0.5f : 0.2f;
                     const zoo::Vec2 at{middle.x + forward * static_cast<float>(toward.x),
                                        middle.z + forward * static_cast<float>(toward.z)};
+                    const bool occupied =
+                        std::ranges::any_of(zoo_->Objects().Props(), [&](const zoo::Prop& prop) {
+                            if (prop.def < 0)
+                                return false;
+                            const zoo::PropDef& def =
+                                zoo_->Definitions().props[static_cast<std::size_t>(prop.def)];
+                            const float solid =
+                                PlayerPropRadius(def) * (def.blocksWalking ? prop.scale : 1.0f);
+                            const float clear = solid + Walker::kBodyRadius;
+                            return solid > 0.0f &&
+                                   zoo::DistanceSquared(at, prop.position) < clear * clear;
+                        });
+                    if (occupied)
+                        continue;
                     const float dx = animal.position.x - at.x;
                     const float dz = animal.position.z - at.z;
                     const float sight = std::max(spot.visibility, 0.2f);
