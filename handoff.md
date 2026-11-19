@@ -31,7 +31,11 @@ whatever you take up (`docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `docs/V
   96 MB, four zoo views show no visible loss, and the latest whole-run sample is 2,687 MB. The
   dual plant far forms are about 74-75 MB but buy about 1 ms/frame, so normal visits keep them;
   full-detail diagnostic mode now omits that unused second form. The under-1-GB target is not
-  met. The ground phase (about 555 MB) and audio are next. Do not quote the sandbox's absolute
+  met. Visitor terrain now discards its 100 MB logical CPU edit cache; the ground mark fell
+  875 -> 826 MB (49 MB resident), the latest whole-run sample is 2,682 MB, and editor memory is
+  unchanged. An in-place save reload still spikes to about 3.1 GB because old software-GL static
+  resources remain resident while replacements are built; context-recovery is disabled for every
+  rebuild but this spike is **not fixed**. Measure audio next. Do not quote the sandbox's absolute
   number as a Radeon measurement.
 - **Stopped mid-work when the machine restarted (uncommitted, in their worktrees; no reports):**
   - `wt-sound`: G7c audio audit (brief `.codex-work/brief-G7c-sound-develop.md`), 28 files.

@@ -10,6 +10,10 @@
 #include <mutex>
 #include <thread>
 
+#if defined(__GLIBC__)
+#include <malloc.h>
+#endif
+
 #include "CnaEngine/Core/Noise.hpp"
 #include "CnaEngine/Graphics/VertexLayouts.hpp"
 #include "Microsoft/Xna/Framework/BoundingBox.hpp"
@@ -627,6 +631,7 @@ TerrainRenderer::~TerrainRenderer() = default;
 
 void TerrainRenderer::Build(const zoo::World& world) {
     const auto started = std::chrono::steady_clock::now();
+    editCacheDiscarded_ = false;
     chunksX_ = world.ChunksX();
     chunksZ_ = world.ChunksZ();
     fenceRevision_ = world.FenceRevision();
@@ -783,13 +788,27 @@ void TerrainRenderer::Build(const zoo::World& world) {
     buildSeconds_ = std::chrono::duration<double>(std::chrono::steady_clock::now() - started).count();
 }
 
+void TerrainRenderer::DiscardEditCache() {
+    for (auto& chunk : chunks_) {
+        chunk->image = Image();
+        std::vector<std::uint32_t>().swap(chunk->signatures);
+    }
+    editCacheDiscarded_ = true;
+#if defined(__GLIBC__)
+    // The hundred one-megabyte images otherwise remain as free pages in glibc's arenas.
+    (void)malloc_trim(0);
+#endif
+}
+
 void TerrainRenderer::Update(const zoo::World& world, int maxChunks) {
+    // Surfaces animates its water by changing the ripples' texture.
+    water_.normalTexture = surfaces_.Water().normalTexture;
+    if (editCacheDiscarded_)
+        return;
     if (world.ChunksX() != chunksX_ || world.ChunksZ() != chunksZ_) {
         Build(world);
         return;
     }
-    // Surfaces animates its water by changing the ripples' texture.
-    water_.normalTexture = surfaces_.Water().normalTexture;
     if (world.FenceRevision() != fenceRevision_) {
         // Fences wear the ground beside them, and they do not touch a chunk's revision.
         fenceRevision_ = world.FenceRevision();

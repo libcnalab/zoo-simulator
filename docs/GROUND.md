@@ -16,6 +16,9 @@ Tasks G1 (2026-11-13), G1b and G1c (2026-11-14). Code: `src/game/GroundPaint.{hp
   bond with a border course of setts), boardwalk planks; building foundations; bark mulch on
   planted stand-offs; ground worn bare along fences and wider at gates, a soil verge along
   paths, stones kicked off gravel paths; bare rock where the ground is steep.
+  The editor retains the CPU image and tile signatures so it can repaint changed chunks.
+  A read-only visitor zoo discards that 100 MB edit cache after upload; animated water keeps
+  updating, while a later load builds a fresh renderer and cache before discarding it again.
 - **Soft, irregular borders.** Kinds of ground and paths are spread over the tiles with a
   quadratic B-spline (a field that is smooth across tile sides), then pushed about by noise;
   the winner takes the colour over a narrow soft edge. No border follows a tile's side.

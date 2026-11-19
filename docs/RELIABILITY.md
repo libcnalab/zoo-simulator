@@ -459,7 +459,20 @@ The dual plant forms were then isolated with `ZOO_PLANTS_FULL_DETAIL=1`. With th
 batches omitted, the scenery phase adds 295 MB (874 -> 1,169 MB), against 369 MB (875 -> 1,244 MB)
 normally: about 74-75 MB belongs to the far forms. They remain in a normal visit because their
 measured rendering benefit is about 1 ms per frame. The diagnostic full-detail mode now avoids
-building resources it never submits. Ground and audio remain the next memory targets.
+building resources it never submits.
+
+Visitor terrain now discards its CPU edit cache after upload: 100 one-megabyte chunk images plus
+tile signatures that only the editor can use. Water animation remains live; editor memory is
+unchanged. With glibc's free arenas trimmed, the ground `StartMark` fell from 875 to 826 MB, a
+conservative **49 MB resident**. The whole-run sampler read 2,682 MB (only 5 MB below the prior
+run, within heap variation), and a zebra screenshot remains visually correct.
+
+The existing 400-frame save/load script reached both reloads, saved again and made its final
+screenshot without a renderer failure, although the 180 s software-rendering limit stopped it at
+frame 277 before its Quit click. It also exposed an unresolved reload spike: old static GPU
+resources remain resident while replacements are built, reaching about 3.1 GB; the first terrain
+rebuild took 107 s. Static context-recovery copies are now disabled around every `Adopt`, not only
+the initial load, but the spike remains and is not claimed as fixed. Audio is the next target.
 
 ## The bench
 

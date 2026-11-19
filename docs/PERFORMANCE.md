@@ -295,5 +295,21 @@ lion, zebra and flamingo screenshot pairs show no visible loss at 720p.
 The dual plant groves were isolated as well: normal loading adds 369 MB for scenery (875 ->
 1,244 MB), while full-detail mode without its unused far batches adds 295 MB (874 -> 1,169 MB).
 The far forms therefore cost about 74-75 MB. Normal visits retain them because they previously
-bought about 1 ms per frame; `ZOO_PLANTS_FULL_DETAIL=1` now correctly skips them. Ground and audio
-are the next memory targets.
+bought about 1 ms per frame; `ZOO_PLANTS_FULL_DETAIL=1` now correctly skips them.
+
+## Ground edit-cache memory (2026-11-19)
+
+A visit cannot repaint terrain, but its 100 chunks retained their 512 x 512 RGBA CPU paint images
+and tile signatures for the editor's incremental update path. Visitor renderers now discard that
+100 MB logical cache after upload; animated water still advances, and the editor keeps its cache.
+On glibc the release is followed by `malloc_trim`, because otherwise the empty arenas remained in
+RSS. The matched ground loading mark fell from 875 to 826 MB, a conservative **49 MB resident**;
+the editor sample stayed 1,175 -> 1,174 MB. The latest whole-run peak is 2,682 MB, only 5 MB below
+the preceding run and therefore within heap variation. A zebra view remains visually correct.
+
+The save/load script also reached two reloads and its final screenshot without a renderer fault.
+It exposed a separate open issue: software GL retains/defer-releases old static GPU resources
+during an in-place load, reaching about 3.1 GB and making the first terrain rebuild take 107 s.
+Every `Adopt` now disables CPU context-recovery shadows during its static rebuild, but that did
+not remove this driver/resource-lifetime spike; do not count it as fixed. Audio is the next
+measured target.

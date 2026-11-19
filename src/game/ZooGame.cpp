@@ -297,11 +297,6 @@ void ZooGame::LoadGame() {
     StartMark(bench_.on, "visitors' renderer");
     const int speed = play_.speed;
     Adopt(std::move(first));
-#if defined(__linux__) && !defined(__ANDROID__)
-    // Resources made during loading no longer need their recovery shadows. New runtime
-    // textures (including automated screenshots) do: CNA's capture path reads their pixels.
-    device.SetContextRecoveryEnabled(true);
-#endif
     play_.speed = speed;
     std::printf("zoo: ground painted in %.2f s; built in %.2f s\n", terrain_->LastPaintSeconds(),
                 terrain_->LastBuildSeconds());
@@ -400,6 +395,11 @@ void ZooGame::ShowLoading(std::string_view what, float done) {
 
 void ZooGame::Adopt(std::unique_ptr<zoo::Zoo> zoo) {
     auto& device = getGraphicsDeviceProperty();
+#if defined(__linux__) && !defined(__ANDROID__)
+    // A load rebuilds all static renderers too. They do not need CPU recovery shadows, whether
+    // this is the first zoo or a saved zoo opened later in the visit.
+    device.SetContextRecoveryEnabled(false);
+#endif
     // What draws the old zoo goes before the zoo it refers to.
     tools_.reset();
     if (sounds_)
@@ -415,6 +415,10 @@ void ZooGame::Adopt(std::unique_ptr<zoo::Zoo> zoo) {
 
     terrain_ = std::make_unique<TerrainRenderer>(device, *surfaces_);
     terrain_->Build(zoo_->Map());
+    // A visit cannot reshape or repaint its world. Keep only the uploaded textures and meshes;
+    // the editor retains the per-chunk CPU images and signatures needed for incremental edits.
+    if (!editor_)
+        terrain_->DiscardEditCache();
     StartMark(bench_.on, "ground");
     // Nothing is built during a visit: the whole zoo is one cell there (a quarter of the draw
     // calls of the editor's small cells, which an edit rebuilds quickly).
@@ -432,6 +436,10 @@ void ZooGame::Adopt(std::unique_ptr<zoo::Zoo> zoo) {
     keepers_->Update(*zoo_, 0.0f, 0.0f);
     tools_ = std::make_unique<WorldTools>(device, *surfaces_, *catalog_);
     StartMark(bench_.on, "visitors and tools");
+#if defined(__linux__) && !defined(__ANDROID__)
+    // Runtime textures, including automated screenshots, do need readable source pixels.
+    device.SetContextRecoveryEnabled(true);
+#endif
 
     camera_.SetMode(CameraMode::Overview, zoo_->Map());
     const zoo::Vec2 entrance = zoo::World::TileCenter(zoo_->Map().EntranceTile());
