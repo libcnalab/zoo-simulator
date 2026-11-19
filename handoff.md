@@ -48,6 +48,12 @@ whatever you take up (`docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `docs/V
   measurement.
   The complete suite after these changes is 265 active tests passed, with 21 long-running
   measurement/diagnostic tests disabled as intended.
+- Animal models are now submitted only when a generous body-and-shadow sphere intersects the
+  main camera. The count fell from 88 everywhere to entrance 72, lion 7, meerkat 17, penguin 15
+  and giraffe 46. All five screenshots were inspected (including edge bodies and the tallest
+  shadows), and the 18 game-side tests pass; no frame-time saving is claimed because animals
+  were already under 1 ms. A current AddressSanitizer lion-view smoke also passes
+  (`docs/PERFORMANCE.md`, 2026-11-19).
 - **Stopped mid-work when the machine restarted (uncommitted, in their worktrees; no reports):**
   - `wt-sound`: G7c audio audit (brief `.codex-work/brief-G7c-sound-develop.md`), 28 files.
   - `wt-visitors`: P1 visitors' frame cost (brief `brief-P1-visitor-cost.md`), 2 files.

@@ -14,6 +14,9 @@
 #include "CnaEngine/App/AssetDirectory.hpp"
 #include "CnaEngine/Enhanced/ModelImport.hpp"
 
+#include "Microsoft/Xna/Framework/BoundingFrustum.hpp"
+#include "Microsoft/Xna/Framework/BoundingSphere.hpp"
+
 #include "AnimalTextures.hpp"
 
 #include "GroundPaint.hpp"
@@ -261,8 +264,6 @@ void AnimalRenderer::Update(const zoo::Zoo& zoo, float seconds, float tickFracti
     const float alpha = std::clamp(tickFraction, 0.0f, 1.0f);
     for (auto& [id, actor] : actors_)
         actor->seen = false;
-    drawn_ = 0;
-
     for (const zoo::Animal& animal : zoo.Fauna().All()) {
         if (animal.species < 0 || animal.species >= static_cast<int>(looks_.size()))
             continue;
@@ -289,10 +290,16 @@ void AnimalRenderer::Update(const zoo::Zoo& zoo, float seconds, float tickFracti
         actor.visible = visible;
         if (!visible)
             continue;
-        ++drawn_;
         const float femaleShare = female && look.female != nullptr ? look.female->relativeHeight : 1.0f;
-        const float standing = def.shoulderHeightM * femaleShare * zoo::BodyScale(animal, def, now);
+        const float bodyScale = zoo::BodyScale(animal, def, now);
+        const float standing = def.shoulderHeightM * femaleShare * bodyScale;
         actor.scale = standing / kind->shoulderHeight;
+        actor.standing = standing;
+        const float length = def.bodyLengthM * bodyScale;
+        // Half the body's diagonal, plus enough for a tall animal's morning shadow. This is
+        // deliberately generous: submitting a marginal animal is cheap; losing its visible
+        // nose or shadow at a screen edge is not.
+        actor.bounds = 0.5f * std::hypot(length, standing) + standing;
 
         // Where it stands: between the last two places the simulation gave it.
         if (appeared) {
@@ -379,10 +386,20 @@ void AnimalRenderer::Update(const zoo::Zoo& zoo, float seconds, float tickFracti
     std::erase_if(actors_, [](const auto& entry) { return !entry.second->seen; });
 }
 
-void AnimalRenderer::Submit(CnaEngine::App::Frame& frame) const {
+void AnimalRenderer::Submit(CnaEngine::App::Frame& frame, const CnaEngine::Graphics::Camera& camera) const {
+    using Microsoft::Xna::Framework::BoundingSphere;
+    using Microsoft::Xna::Framework::ContainmentType;
+    const auto& frustum = camera.Frustum();
+    drawn_ = 0;
     for (const auto& [id, actor] : actors_) {
-        if (actor->visible)
-            frame.Add(*actor->kind->view, actor->world, &actor->animator.SkinPalette());
+        if (!actor->visible)
+            continue;
+        const Vector3 feet = actor->world.getTranslationProperty();
+        const BoundingSphere bounds(feet + Vector3(0.0f, 0.5f * actor->standing, 0.0f), actor->bounds);
+        if (frustum.Contains(bounds) == ContainmentType::Disjoint)
+            continue;
+        frame.Add(*actor->kind->view, actor->world, &actor->animator.SkinPalette());
+        ++drawn_;
     }
 }
 

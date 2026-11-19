@@ -12,6 +12,7 @@
 
 #include "CnaEngine/Animation/Animator.hpp"
 #include "CnaEngine/App/EngineGame.hpp"
+#include "CnaEngine/Graphics/Camera.hpp"
 #include "CnaEngine/Graphics/ModelView.hpp"
 
 #include "Microsoft/Xna/Framework/Content/ContentManager.hpp"
@@ -33,7 +34,8 @@ enum class AnimalPose : std::uint8_t { Idle, Walk, Trot, Eat, Drink, Rest, Sleep
 /// them the one model serves all. An animal in water deeper than it can
 /// stand in floats at the surface, with the model's `swim` clip if it has one. The simulation moves animals twenty times a second; between its
 /// steps the bodies glide, turn at a believable rate, and their gaits play at
-/// the pace of the ground they cover, so the feet do not slide.
+/// the pace of the ground they cover, so the feet do not slide. Bodies wholly
+/// outside the camera are not submitted to either render pass.
 class AnimalRenderer {
 public:
     AnimalRenderer(Microsoft::Xna::Framework::Content::ContentManager& content,
@@ -46,11 +48,12 @@ public:
     void Update(const zoo::Zoo& zoo, float seconds, float tickFraction);
     /// For a newly adopted zoo, forget the old actors but retain the expensive species models.
     void Clear();
-    void Submit(CnaEngine::App::Frame& frame) const;
+    void Submit(CnaEngine::App::Frame& frame, const CnaEngine::Graphics::Camera& camera) const;
 
-    /// Where the animal's body is drawn (its feet); nothing for an animal
-    /// that is not drawn (unknown, crated, inside a shelter).
+    /// Where the animal's body stands (its feet); nothing for an animal without
+    /// a body in the world (unknown, crated, inside a shelter).
     std::optional<Vector3> PositionOf(zoo::AnimalId id) const;
+    /// Bodies submitted for the last frame, after camera culling.
     std::size_t Drawn() const { return drawn_; }
     /// Species drawn with a stand-in because their own model does not exist yet.
     const std::vector<std::string>& StandIns() const { return standIns_; }
@@ -91,6 +94,8 @@ private:
         float heading = 0.0f;
         float pitch = 0.0f;
         float scale = 1.0f;
+        float standing = 1.0f;  ///< height in the world, for conservative camera culling
+        float bounds = 2.0f;    ///< body and the shadow it may cast, metres from its middle
         float afloat = 0.0f;  ///< 0 standing on the ground .. 1 floating at the surface
         float sunk = 0.0f;    ///< how deep it lies in the water now, model metres (Kind::swimDepth)
         Matrix world;
@@ -120,7 +125,7 @@ private:
     std::unordered_map<zoo::AnimalId, std::unique_ptr<Actor>> actors_;
     std::vector<std::string> standIns_;
     std::int64_t tick_ = -1;
-    std::size_t drawn_ = 0;
+    mutable std::size_t drawn_ = 0;
 };
 
 }  // namespace zoogame

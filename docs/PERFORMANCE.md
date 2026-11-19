@@ -178,8 +178,6 @@ with vertex colours for each pattern would need the engine's PBR binder to take 
   zoo's 1,063,415 scenery triangles (`--bench` prints the tally by kind); they have no simpler
   form for the distance yet.
 - **Shadows**: about 1.8 ms at the entrance (262 draw calls, 520,000 triangles).
-- **Animals** are submitted wherever they are: 1.19 million triangles a frame at the entrance
-  for animals nobody can see from there. Cheap on this GPU (under 1 ms) but free to remove.
 - **Loading**: 5.5 s now (see below); the ground painting (about 2.2 s on the worker threads)
   is the largest part left.
 - **Memory**: about 1.05 GB resident; the avatar cast is about 180 MB of it.
@@ -263,6 +261,30 @@ went from 13.45 / 12.78 / 14.57 ms to 13.52 / 13.26 / 15.21 ms (slower in every 
 0.64 ms); with `--without terrain` the two builds are equal. Resident memory +60 MB.
 `DrawnGroundHeight`, called per animal, visitor and keeper every frame, costs 50 to 66 ns (180 to
 270 ns on bank tiles).
+
+## Animal camera culling (2026-11-19)
+
+`AnimalRenderer` used to submit every outdoor animal to the frame, irrespective of the main
+camera. The entrance therefore sent all 88 current animals through both engine passes, including
+models in habitats behind the camera. Submission now rejects a body only when a conservative
+bounding sphere is wholly outside the camera frustum. The sphere contains half the actual
+length/height diagonal and another full standing height for animation and a morning shadow;
+simulation and animation still update every animal as before.
+
+Short deterministic offscreen runs reported the following submitted bodies (all were 88 before):
+
+| view | submitted |
+|---|---:|
+| entrance, looking through much of the zoo | 72 |
+| Lion Rock | 7 |
+| Meerkat Lookout | 17 |
+| Penguin Cove | 15 |
+| Acacia Plain / giraffes | 46 |
+
+All five 1280x720 screenshots were opened. The local animals, bodies at the edges and shadows
+remain present, including the giraffes (the tallest culling case). This is a submission-count
+result, not a frame-time claim: animals were already under 1 ms on this GPU. The 18 game-side
+Walker/texture tests also pass, as does a current AddressSanitizer lion-view game smoke.
 
 ## Animal texture memory (2026-11-19)
 
