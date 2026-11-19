@@ -493,6 +493,10 @@ struct Site {
 /// the view from the giraffes' rail. A slender trunk carries its crown above the eye.
 constexpr float kTreeFromFrontM = 5.0f;
 constexpr float kMassiveTrunkM = 1.0f;
+/// Animals.cpp treats vegetation more than this far under the species figure as too bare. Trees
+/// are set back from a barrier only while planting retains a small margin inside that welfare band.
+constexpr float kCoverBand = 0.15f;
+constexpr float kCoverMargin = 0.02f;
 
 /// The places of a habitat that get a bench, the outermost viewing place to the south, to the west
 /// and to the east.
@@ -802,46 +806,69 @@ void HabitatPlants(Zoo& zoo, Script& script, const Site& site, const HabitatStyl
     std::stable_sort(beds.begin(), beds.end(), [](const Bed& a, const Bed& b) { return a.rank > b.rank; });
     const Builder builder = zoo.FreeBuilder();
     const Catalog& catalog = zoo.Definitions();
-    for (const float spacing : {3.6f, 2.6f, 2.0f}) {
-        for (const Bed& bed : beds) {
-            if (zoo.Habitats().Find(site.id)->stats.vegetationDensity >= wanted) {
-                return;
-            }
-            const std::uint32_t pick =
-                HashU32(static_cast<std::uint32_t>(bed.tile.x * 4099 + bed.tile.z), salt);
-            const std::string_view kind = style.flora[pick % style.flora.size()];
-            const int def = catalog.PropIndex(kind);
-            const Vec2 point = World::TileCenter(bed.tile) +
-                               Vec2{script.Random().Range(-0.7f, 0.7f), script.Random().Range(-0.7f, 0.7f)};
-            const float scale =
-                small ? script.Random().Range(0.6f, 0.8f) : script.Random().Range(0.8f, 1.25f);
-            const float heading = script.Random().Range(0.0f, kTwoPi);
-            bool open = false;
-            for (const Vec2 from : site.watched) {
-                open = open || DistanceToLine(point, from, site.middle) < site.sight;
-            }
-            if (def >= 0 && catalog.props[static_cast<std::size_t>(def)].role == PropRole::Tree) {
-                const bool massive = catalog.props[static_cast<std::size_t>(def)].radiusM >= kMassiveTrunkM;
-                for (const auto& [from, standOff] : site.fronts) {
-                    open = open || Distance(point, from) < kTreeFromFrontM + (massive ? standOff : 0.0f);
+    const auto density = [&] { return zoo.Habitats().Find(site.id)->stats.vegetationDensity; };
+    // First keep every trunk behind the depth of the planted strip, not only massive trees. A
+    // slender acacia a metre inside Elephant Valley's cable still put its crown in the view.
+    const auto plant = [&](bool setBack) {
+        std::vector<PropId> placed;
+        for (const float spacing : {3.6f, 2.6f, 2.0f}) {
+            for (const Bed& bed : beds) {
+                if (density() >= wanted) {
+                    return placed;
+                }
+                const std::uint32_t pick =
+                    HashU32(static_cast<std::uint32_t>(bed.tile.x * 4099 + bed.tile.z), salt);
+                const std::string_view kind = style.flora[pick % style.flora.size()];
+                const int def = catalog.PropIndex(kind);
+                const Vec2 point = World::TileCenter(bed.tile) + Vec2{script.Random().Range(-0.7f, 0.7f),
+                                                                      script.Random().Range(-0.7f, 0.7f)};
+                const float scale =
+                    small ? script.Random().Range(0.6f, 0.8f) : script.Random().Range(0.8f, 1.25f);
+                const float heading = script.Random().Range(0.0f, kTwoPi);
+                bool open = false;
+                for (const Vec2 from : site.watched) {
+                    open = open || DistanceToLine(point, from, site.middle) < site.sight;
+                }
+                if (def >= 0 && catalog.props[static_cast<std::size_t>(def)].role == PropRole::Tree) {
+                    const bool massive =
+                        catalog.props[static_cast<std::size_t>(def)].radiusM >= kMassiveTrunkM;
+                    for (const auto& [from, standOff] : site.fronts) {
+                        open = open || Distance(point, from) <
+                                           kTreeFromFrontM + (massive || setBack ? standOff : 0.0f);
+                    }
+                }
+                if (def < 0 || open ||
+                    !Fits(zoo, builder, site, def, point, scale,
+                          small   ? 0.4f
+                          : tight ? 0.8f
+                                  : 1.8f,
+                          spacing)) {
+                    continue;
+                }
+                if (const PropId id = script.Prop(kind, point, heading, scale)) {
+                    placed.push_back(id);
                 }
             }
-            if (def < 0 || open ||
-                !Fits(zoo, builder, site, def, point, scale,
-                      small   ? 0.4f
-                      : tight ? 0.8f
-                              : 1.8f,
-                      spacing)) {
-                continue;
-            }
-            script.Prop(kind, point, heading, scale);
         }
+        return placed;
+    };
+    // Where the set-back would cross the residents' welfare band, take this attempt up and plant
+    // again with only massive trunks kept behind the strip. This preserves cover in the two small
+    // habitats with long fronts (Rhino Hollow and Red Dune) without hard-coding their names.
+    const std::vector<PropId> setBack = plant(true);
+    if (density() < target - kCoverBand + kCoverMargin) {
+        Builder remover = zoo.FreeBuilder();
+        for (const PropId id : setBack) {
+            if (remover.RemoveProp(id).Ok()) {
+                --script.Report().props;
+            }
+        }
+        plant(false);
     }
     // Short of the aim is a problem only where the residents would feel it (Animals.cpp: welfare
     // counts a habitat as too bare beyond 0.15 under the species' figure).
-    const float density = zoo.Habitats().Find(site.id)->stats.vegetationDensity;
-    if (density < target - 0.15f) {
-        script.Problem(std::string(plan.name) + ": planting target not met (" + std::to_string(density) +
+    if (density() < target - kCoverBand) {
+        script.Problem(std::string(plan.name) + ": planting target not met (" + std::to_string(density()) +
                        " of " + std::to_string(wanted) + ")");
     }
 }

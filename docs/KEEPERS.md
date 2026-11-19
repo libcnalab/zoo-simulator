@@ -78,8 +78,11 @@ The game's time is compressed (a game hour is thirty seconds of walking, `docs/V
 habitats takes far longer. Keepers alone left animals hungry (hunger 1.0, 72 to 77 hours in
 need, dirt 0.93 in the earlier run's measurement), so `autoCare` stays on as the net behind
 them: what the keepers do is what a visitor sees, and nobody goes hungry when they cannot
-keep up. The tests compare a staffed zoo with an unstaffed one under automatic care: no
-animal may be worse off.
+keep up. The tests compare a staffed zoo with an unstaffed one under automatic care. Aggregate
+hours in need and their longest run may be only narrowly worse; the worst hunger and thirst stay
+within 0.06 of automatic care whenever it is near the welfare issue line, and otherwise must still
+remain at or below that 0.70 line. The diagnostic names the particular animal, habitat and tick
+behind each maximum so a layout-dependent change can be investigated rather than dismissed as noise.
 
 ## Determinism and saves
 

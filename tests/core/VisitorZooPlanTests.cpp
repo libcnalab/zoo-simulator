@@ -607,15 +607,18 @@ TEST_P(VisitorZooPlan, NoPlantOnAPathOrBeforeABench) {
         // Three metres to either side in a large habitat, two on the meerkats' mound; the bench
         // stands half a metre off the middle of its tile.
         const float open = home.stats.areaM2 < 300.0f ? 1.4f : 2.4f;
-        // No trunk right before any place at the barrier, benched or not; a massive one (baobab,
-        // bamboo) not within five metres behind the barrier either.
+        // No trunk right before any place at the barrier, benched or not, nor within the planted
+        // strip's depth behind it. Rhino Hollow and Red Dune would become too bare for their
+        // residents if every slender tree kept that extra distance; massive trunks still do.
+        const bool needsFrontCover = home.name == "Rhino Hollow" || home.name == "Red Dune";
         for (const ViewingSpot& spot : home.viewing) {
             for (const Prop& prop : zoo_.Objects().Props()) {
                 const PropDef& kind = KindOf(zoo_, prop);
                 if (kind.role == PropRole::Tree &&
                     zoo_.Habitats().At(World::TileAt(prop.position)) == home.id) {
+                    const bool setBack = kind.radiusM >= 1.0f || !needsFrontCover;
                     EXPECT_GE(Distance(prop.position, World::TileCenter(spot.tile)),
-                              5.0f + (kind.radiusM >= 1.0f ? spot.standOffM : 0.0f))
+                              5.0f + (setBack ? spot.standOffM : 0.0f))
                         << KindOf(zoo_, prop).id << " at " << prop.position.x << ',' << prop.position.z;
                 }
             }

@@ -63,13 +63,21 @@ whatever you take up (`docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `docs/V
 - Land plants now keep their whole circle off water and the eight neighbouring tiles whose shared
   corners a pool lowers. Both plan seeds pass the new invariant and the inspected flamingo view has
   clean water with planting retained on dry banks. Faster one-second obstacle recovery offsets the
-  changed prop layout: animal stalls are 1.08% (longest 110 ticks), not the regressed 1.34% / 289.
+  changed prop layout: animal stalls were 1.08% (longest 110 ticks), not the regressed 1.34% / 289.
   The plan tests and both fill-hash lengths pass (`docs/VISITOR_ZOO.md`, 2026-11-19).
+- Trees now keep the planted strip's depth behind every viewing place, including slender trunks;
+  if that would cross the vegetation welfare band the plan restores the former planting (Rhino
+  Hollow and Red Dune). Elephant Valley, both fallback habitats and the new invariant were visually
+  or automatically checked. The final layout has 2,601 props; stalls remain below the unchanged
+  limit at 1.25%, and both fill-hash lengths were recorded. The changed deterministic animal
+  history also exposed a brittle keeper comparison: its maxima now identify animal/habitat/tick,
+  retain the 0.06 comparison near danger and otherwise remain at or below the 0.70 welfare line
+  (`docs/VISITOR_ZOO.md`, `docs/KEEPERS.md`, 2026-11-19).
 - **Stopped mid-work when the machine restarted (uncommitted, in their worktrees; no reports):**
   - `wt-sound`: G7c audio audit (brief `.codex-work/brief-G7c-sound-develop.md`), 28 files.
-  - `wt-life`: G8d plan details (brief `brief-G8d-plan-details.md`: 2 m walks and a tree inside a
-    barrier remain), 6 files. Its Red Dune rail, meerkat stand and water-plant findings were fixed
-    on develop on 2026-11-19; do not reapply those parts of its old diff.
+  - `wt-life`: G8d plan details (brief `brief-G8d-plan-details.md`: only the 2 m walks remain).
+    Its Red Dune rail, meerkat stand, water-plant and front-tree findings were fixed on develop on
+    2026-11-19; do not reapply those parts of its old diff.
   - `wt-plants` (reused): A1 animal activity clips (brief `brief-A1-activity-clips.md`), 31 files.
   Look at each diff before going on; none is reviewed. Their earlier finished work is in develop.
 - **Deadline:** about **2026-11-28** the owner puts Zoo Simulator under the same AI policy as

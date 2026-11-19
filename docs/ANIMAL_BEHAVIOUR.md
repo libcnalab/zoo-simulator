@@ -498,6 +498,9 @@ from the Release build, visitor zoo, seed 1, after the visit's fill.
   now tries its next deterministic sidestep after 20 ticks (one second) without progress, rather
   than after 30. The same probe measures 2,688 of 248,322 moving ticks (1.08 %), and the longest
   continuous stall is 110 ticks. The regression limits were not relaxed.
+  **Trees set back from habitat fronts (2026-11-19):** the final planting layout changes the
+  deterministic routes again; the current result is 3,377 of 269,165 moving ticks (1.25 %), with
+  every continuous stall still below 300 ticks and the same 1.3 % regression limit.
 - **Golden hashes** of `tests/core/VisitStartTests.cpp` re-recorded for the routines.
 - Pictures: `docs/evidence/animal-routines-2026-11-13.jpg` (lions resting in the shade at
   midday; penguins standing together, one swimming; flamingos at the lagoon after the wader
