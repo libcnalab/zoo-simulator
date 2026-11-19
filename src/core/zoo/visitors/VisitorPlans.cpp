@@ -109,12 +109,25 @@ bool Stepper::Route(Vec2 from, Vec2 to, std::vector<Vec2>& out) {
     bool hop = false;
     bool tail = false;
     if (const TileCoord tile = World::TileAt(from); !nav.Passable(tile, kWalker)) {
-        // Off the paving (on a bench, say): step onto it first.
+        // Off the paving at a bench: leave by the same path access that made the seat
+        // usable. A generic nearest-path search can pick the far side of a lawn from a
+        // member standing at the outer end of a picnic table.
         const auto near = nav.NearestPassable(tile, kWalker, 4);
         if (!near) {
             return false;
         }
         start = World::TileCenter(*near);
+        float nearestBench = 3.5f * 3.5f;
+        for (const SeatSite& bench : scr.sites.benches) {
+            const float distance = DistanceSquared(from, bench.position);
+            NavProfile ground = kWalker;
+            ground.pathsOnly = false;
+            if (distance < nearestBench && DistanceSquared(start, bench.position) >= 3.5f * 3.5f &&
+                nav.Walkable(from, bench.access, ground)) {
+                start = bench.access;
+                nearestBench = distance;
+            }
+        }
         hop = true;
     }
     if (const TileCoord tile = World::TileAt(to); !nav.Passable(tile, kWalker)) {

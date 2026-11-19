@@ -79,7 +79,11 @@ benches, bins, boards, how pleasant each tile is) is derived from the world in
 
 Benches and picnic tables stand beside the paths: the last step from the paving
 to a seat is a straight line. Members that find no seat stand in front of the
-bench or at the ends of the table.
+bench or at the ends of the table. When they leave, people within 3.5 m of a
+bench use that bench's recorded path access when a generic nearest-path search
+would carry them more than 3.5 m from it. Choosing the unrelated path once sent
+a person from the outer end of a picnic table across 19 ticks of open lawn
+(`VisitorDayTests.ADayInTheStarterZoo`, 2026-11-19).
 
 ## How they walk and stand
 

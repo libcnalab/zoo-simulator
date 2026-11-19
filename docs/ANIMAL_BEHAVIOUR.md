@@ -469,8 +469,8 @@ from the Release build, visitor zoo, seed 1, after the visit's fill.
   budgets above count such ticks as walking. Also changed by this task and part of it: an
   animal crowded by a companion stops instead of squeezing past slowly. The remedy belongs in
   navigation (tiles a blocking prop fills are not passable for animals, places inside pockets
-  are not chosen), with this count as its regression test; the probe is kept in
-  `.codex-work/probe-stall-ZzProbeTests.cpp`.
+  are not chosen), with this count as its regression test. The original diagnostic was
+  `.codex-work/probe-stall-ZzProbeTests.cpp`; its active replacement is described below.
   **Measured again on the reworked plan (2026-11-14, `docs/VISITOR_ZOO.md` "The zoo's plan"),
   which keeps the largest resident's width plus 1 m between blocking props:** 3,686 of 273,800
   moving ticks (1.35 %); the tiger's pocket is gone, the only animal above 300 ticks is a wolf
@@ -484,10 +484,14 @@ from the Release build, visitor zoo, seed 1, after the visit's fill.
   `KeepWaypointsOffProps` (`AnimalMovement.cpp`) moves every waypoint but the goal that lies
   within a blocking prop's clearance out to its rim (straight out, else to either side of the
   way), or drops it when the way from the one before to the one after is open. The probe
-  then: 4,183 of 280,044 (1.49 %), the giraffe 392 ticks. The count is a regression test now,
-  `AnimalStall.AnimalsOnTheirWayGetThere` (a visit's fill, then 6,000 ticks: under 2 % of
-  all moving ticks, no animal that walks 1,000 ticks or more above 15 % of its own; 1.17 %
-  measured).
+  then: 4,183 of 280,044 (1.49 %), the giraffe 392 ticks.
+  **Pocket places rejected (2026-11-19):** `ClearPlace` now requires two body-wide exits from
+  a routine destination, checking the whole short exit segment against fences, water and
+  blocking props. This keeps a geometrically clear point between props from becoming a
+  one-way pocket the tile navigator cannot understand. The same seed-1 visit measured 2,994
+  stalled of 270,133 moving ticks (1.11 %), with no continuous stall of 300 ticks. The probe
+  is now the active regression `AnimalMovementTests.VisitorZooAnimalsDoNotRemainStalledInPropPockets`
+  (`tests/core/AnimalStallTests.cpp`): below 1.3 % and every continuous stall below 300 ticks.
 - **Golden hashes** of `tests/core/VisitStartTests.cpp` re-recorded for the routines.
 - Pictures: `docs/evidence/animal-routines-2026-11-13.jpg` (lions resting in the shade at
   midday; penguins standing together, one swimming; flamingos at the lagoon after the wader

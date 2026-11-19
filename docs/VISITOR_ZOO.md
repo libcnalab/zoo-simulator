@@ -238,11 +238,11 @@ inside each keeper gate are kept clear.
 
 **Room to walk.** Blocking props keep the largest resident's collision width (1.2 × body radius)
 plus 1 m apart, so that no pocket forms that an animal walks into and not out of
-(`BlockingPropsLeaveAnAdultWidthPlusOneMetre`). The stall probe of `docs/ANIMAL_BEHAVIOUR.md`
-("In the game", seed 1, 6,000 ticks after the visit's fill) counted 3,686 stalled of 273,800
-moving ticks (1.35 %; 5.4 % on the old plan, 3.0 % before the species routines). The tiger
-pinned in the bamboo is gone; the only animal above 300 stalled ticks is a wolf (820 ticks,
-longest run 687, at 195.7, 64.0).
+(`BlockingPropsLeaveAnAdultWidthPlusOneMetre`). `ClearPlace` also rejects a routine destination
+unless an animal has two body-wide, prop-free ways out of it. The seed-1 stall probe of
+`docs/ANIMAL_BEHAVIOUR.md` now counts 2,994 stalled of 270,133 moving ticks (1.11 %; 1.49 %
+before pocket rejection, 5.4 % on the old plan), with no continuous stall of 300 ticks. This
+is enforced by `AnimalMovementTests.VisitorZooAnimalsDoNotRemainStalledInPropPockets`.
 
 **Planting.** Plants stand in groves with glades between them (smooth noise some eight metres
 across), towards the back and the rim, in passes 3.6, 2.6 and 2.0 m apart, never in the lines
@@ -281,12 +281,12 @@ Golden hashes of `tests/core/VisitStartTests.cpp`, recorded again for the plan:
 
 | Fill ticks | Seed | At fill | Later |
 |---:|---:|---:|---:|
-| 600 | 1 | 871655477591760662 | 5426723001344948179 |
-| 600 | 2 | 6797973331389073337 | 999669602913906128 |
-| 600 | 3 | 2512727153020556612 | 7882047625171313972 |
-| 6000 | 1 | 4159785897068755441 | 4511323438739479105 |
-| 6000 | 2 | 3754155978618199905 | 6636035651677993416 |
-| 6000 | 3 | 13028581689996681604 | 10135411276919199006 |
+| 600 | 1 | 1173662147128443964 | 1107570031909649352 |
+| 600 | 2 | 15301235302407781538 | 13293934419046741291 |
+| 600 | 3 | 17490139635704472405 | 13711515227528670270 |
+| 6000 | 1 | 15002375887675690109 | 956791120809914890 |
+| 6000 | 2 | 17411301327768550611 | 2140826802330461614 |
+| 6000 | 3 | 5077741855506602639 | 2769422873823982524 |
 
 ## The zoo as the game visits it
 

@@ -2,7 +2,8 @@
 #include <gtest/gtest.h>
 
 #include <algorithm>
-#include <cstdio>
+#include <cstdint>
+#include <iostream>
 #include <map>
 
 #include "TestData.hpp"
@@ -12,41 +13,48 @@
 namespace zoo {
 namespace {
 
-// Animals on their way get somewhere: in the Visitor Zoo, filled for a visit, an animal that
-// walks is rarely held up by trees, rocks and its companions. The navigator plans through tile
-// centres and knows nothing of props; a waypoint planned onto a rock made a giraffe stand still
-// for 43 % of its walking (2026-11-14, before the waypoints were moved off props). Measured
-// after: 1.17 % of all moving ticks stalled here; in a longer probe 2.10 % before and 1.49 %
-// after, the worst animal 8 % of its own.
-TEST(AnimalStall, AnimalsOnTheirWayGetThere) {
+// Tile navigation cannot see blocking props. After waypoints themselves were moved off props,
+// seed 1 still spent 1.49 % of its moving ticks stalled; routine places with two clear exits
+// reduce that to 1.11 % and prevent a single long-lived pocket from hiding in the total.
+TEST(AnimalMovementTests, VisitorZooAnimalsDoNotRemainStalledInPropPockets) {
     Zoo zoo(testdata::GameCatalog(), testdata::GameSpecies(), VisitorZooConfig(1));
     BuildVisitorZoo(zoo);
     FillForVisit(zoo, VisitStartOptions{}, [](float) {});
-    std::map<std::uint32_t, int> stalled;
-    std::map<std::uint32_t, int> moving;
-    for (int tick = 0; tick < 6000; ++tick) {
+
+    constexpr int kWarmupTicks = 6000;
+    for (int tick = 0; tick < kWarmupTicks; ++tick) {
+        zoo.Step();
+    }
+
+    constexpr int kMeasuredTicks = 6000;
+    std::map<std::uint32_t, int> stalledRun;
+    std::map<std::uint32_t, int> longestStall;
+    int stalledTicks = 0;
+    int movingTicks = 0;
+    for (int tick = 0; tick < kMeasuredTicks; ++tick) {
         zoo.Step();
         for (const Animal& animal : zoo.Fauna().All()) {
-            if (!animal.InWorld() || animal.shelter || !animal.moving) {
+            if (!animal.InWorld() || animal.shelter) {
                 continue;
             }
-            ++moving[animal.id.value];
-            stalled[animal.id.value] += animal.speed < 0.05f ? 1 : 0;
+            const bool moving = animal.moving;
+            const bool stalled = moving && animal.speed < 0.05f;
+            stalledTicks += stalled ? 1 : 0;
+            movingTicks += moving ? 1 : 0;
+            stalledRun[animal.id.value] = stalled ? stalledRun[animal.id.value] + 1 : 0;
+            longestStall[animal.id.value] =
+                std::max(longestStall[animal.id.value], stalledRun[animal.id.value]);
         }
     }
-    int allStalled = 0;
-    int allMoving = 0;
-    for (const auto& [id, ticks] : moving) {
-        allStalled += stalled[id];
-        allMoving += ticks;
-        if (ticks >= 1000) {
-            EXPECT_LT(static_cast<float>(stalled[id]) / static_cast<float>(ticks), 0.15f) << "animal " << id;
-        }
+
+    ASSERT_GT(movingTicks, 0);
+    std::cout << "STALL " << stalledTicks << " of " << movingTicks << " moving ticks ("
+              << 100.0 * static_cast<double>(stalledTicks) / static_cast<double>(movingTicks) << " %)\n";
+    EXPECT_LT(stalledTicks * 1000, movingTicks * 13)
+        << stalledTicks << " stalled ticks of " << movingTicks << " moving ticks";
+    for (const auto& [id, ticks] : longestStall) {
+        EXPECT_LT(ticks, 300) << "animal " << id;
     }
-    ASSERT_GT(allMoving, 0);
-    const float share = static_cast<float>(allStalled) / static_cast<float>(allMoving);
-    std::printf("STALL %d of %d moving ticks (%.2f %%)\n", allStalled, allMoving, 100.0 * share);
-    EXPECT_LT(share, 0.02f);
 }
 
 }  // namespace

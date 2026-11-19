@@ -158,11 +158,16 @@ to be quiet in the mix.
 - No juvenile model for meerkat, ostrich, wolf, camel, kangaroo, flamingo (drawn as scaled
   adults); the brown/polar bear cub models exist but are unused (bears live as pairs).
 - No clips for preen, dust bathe, dig, sentry duty (they stand in `idle`).
-- Animals still stall where blocking props make pockets: 1.35 % of moving ticks (one wolf 820
-  of 6,000 ticks). The navigator is tile-based and knows no props. Remedy: tiles a blocking prop
-  fills impassable for animals, or `RoutinePlace`/`ClearPlace` (`AnimalHabitat.cpp`) rejecting
-  pocket places; then turn `.codex-work/probe-stall-ZzProbeTests.cpp` into a regression test
-  (copy to `tests/core/`, run with `--gtest_filter='ZzProbe.*' --gtest_also_run_disabled_tests`).
+- Blocking-prop pockets are now rejected by `ClearPlace`: every routine destination needs two
+  body-wide exit segments clear of fences, water and blocking props. Seed 1 fell from 4,183 of
+  280,044 stalled moving ticks (1.49 %) to 2,994 of 270,133 (1.11 %), with no continuous stall
+  of 300 ticks. The former probe is the active regression
+  `AnimalMovementTests.VisitorZooAnimalsDoNotRemainStalledInPropPockets` in
+  `tests/core/AnimalStallTests.cpp` (2026-11-19).
+- The changed animal positions exposed a visitor leaving a picnic table by an unrelated path
+  across 19 ticks of lawn. When a generic nearest-path search would carry somebody more than
+  3.5 m from a nearby bench, `Stepper::Route` now uses that bench's recorded path access;
+  `VisitorDayTests.ADayInTheStarterZoo` is back to zero astray visitor-ticks (2026-11-19).
 
 ### 4.7 Performance
 

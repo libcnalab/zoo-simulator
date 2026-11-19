@@ -61,16 +61,16 @@ TEST(VisitStart, MatchesGameSequence) {
 // ground of their own, watchers looking at the animals; 2026-11-14, G8: the zoo's plan, families
 // with young, new barriers, furnishing and planting; then G5: the keepers, the gardener and
 // the cleaner at work, in the state hash; staff keep off water; then animals' waypoints moved
-// off blocking props).
+// off blocking props; 2026-11-19: routine places must have two body-wide exits around props).
 void CheckFillHashes(std::int64_t ticks) {
     constexpr std::array<std::array<std::uint64_t, 2>, 3> shortHashes{
-        {{871655477591760662ULL, 5426723001344948179ULL},
-         {6797973331389073337ULL, 999669602913906128ULL},
-         {2512727153020556612ULL, 7882047625171313972ULL}}};
+        {{1173662147128443964ULL, 1107570031909649352ULL},
+         {15301235302407781538ULL, 13293934419046741291ULL},
+         {17490139635704472405ULL, 13711515227528670270ULL}}};
     constexpr std::array<std::array<std::uint64_t, 2>, 3> fullHashes{
-        {{4159785897068755441ULL, 4511323438739479105ULL},
-         {3754155978618199905ULL, 6636035651677993416ULL},
-         {13028581689996681604ULL, 10135411276919199006ULL}}};
+        {{15002375887675690109ULL, 956791120809914890ULL},
+         {17411301327768550611ULL, 2140826802330461614ULL},
+         {5077741855506602639ULL, 2769422873823982524ULL}}};
     for (const std::uint64_t seed : {1ULL, 2ULL, 3ULL}) {
         Zoo zoo(testdata::GameCatalog(), testdata::GameSpecies(), VisitorZooConfig(seed));
         BuildVisitorZoo(zoo);

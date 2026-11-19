@@ -12,6 +12,14 @@
 namespace zoo::animal_internal {
 namespace {
 
+float DistanceToSegmentSquared(Vec2 point, Vec2 from, Vec2 to) {
+    const Vec2 segment = to - from;
+    const float lengthSquared = LengthSquared(segment);
+    const float along =
+        lengthSquared > 0.0f ? std::clamp(Dot(point - from, segment) / lengthSquared, 0.0f, 1.0f) : 0.0f;
+    return DistanceSquared(point, from + segment * along);
+}
+
 bool ClearPlace(Vec2 point, const Animal& animal, const SpeciesDef& species, const Enclosure& enclosure,
                 const Env& env, std::span<const Animal> animals, std::span<const std::size_t> neighbors,
                 std::vector<PropId>& props) {
@@ -46,6 +54,36 @@ bool ClearPlace(Vec2 point, const Animal& animal, const SpeciesDef& species, con
         if (def.blocksWalking && DistanceSquared(point, prop->position) < apart * apart) {
             return false;
         }
+    }
+    // A clear point can still be a pocket between rocks, trees and a fence. The tile
+    // navigator cannot see props, so retain only places with at least two body-wide ways
+    // out; local obstacle avoidance can then approach and leave without repeatedly stalling.
+    int exits = 0;
+    for (Dir side : sides) {
+        const TileCoord offset = Step(side);
+        const Vec2 exit =
+            point + Vec2{static_cast<float>(offset.x), static_cast<float>(offset.z)} * (radius + 1.0f);
+        if (env.enclosures.At(exit) != enclosure.id ||
+            !env.nav.Walkable(point, exit, NavProfile::Animal(wade, species.canSwim))) {
+            continue;
+        }
+        bool open = true;
+        for (PropId id : props) {
+            const Prop* prop = std::as_const(env.objects).FindProp(id);
+            if (prop == nullptr || prop->def < 0) {
+                continue;
+            }
+            const PropDef& def = env.catalog.props[static_cast<std::size_t>(prop->def)];
+            const float apart = radius + def.radiusM + 0.1f;
+            if (def.blocksWalking && DistanceToSegmentSquared(prop->position, point, exit) < apart * apart) {
+                open = false;
+                break;
+            }
+        }
+        exits += open ? 1 : 0;
+    }
+    if (exits < 2) {
+        return false;
     }
     for (std::size_t index : neighbors) {
         const Animal& other = animals[index];
