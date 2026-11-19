@@ -282,5 +282,13 @@ Atlases larger than 1,024 texels on either side now start at their 1K mip, gener
 role-aware colour and alpha rules. The same script then reports 2,870 MB resident, 2,373 MB heap,
 368 MB anonymous and 127 MB mapped files: another 511 MB and **1,003 MB (25.9%)** below the
 original. The animal `StartMark` is 2,467 MB. Elephant, giraffe, brown-bear and zebra viewer pairs
-show no visible loss at 720p (the giraffe pair is pixel-identical). Audio, the 4096 shadow map and
-dual plant groves are the next memory targets.
+show no visible loss at 720p (the giraffe pair is pixel-identical).
+
+## Shadow-map memory (2026-11-19)
+
+The visit's 90 m-radius sun-shadow map is 2K rather than 4K. It still resolves less than 9 cm per
+texel over the 180 m span. The matched start phase with/without shadows measures 413/266 MB at 4K
+and 317/266 MB at 2K, so the smaller render targets save **96 MB**. The latest whole-run peak was
+2,687 MB; its extra change includes heap variance and is not attributed to the map. Entrance,
+lion, zebra and flamingo screenshot pairs show no visible loss at 720p. Audio and dual plant
+groves are the next memory targets.

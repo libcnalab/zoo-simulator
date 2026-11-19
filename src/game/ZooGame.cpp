@@ -254,8 +254,10 @@ void ZooGame::LoadGame() {
     if (!without_.skyLight)
         skyLight_ = std::make_unique<SkyLight>(device);
     clock_.latitudeDegrees = 48.0;
+    // Across the 180 m span, 2K still resolves less than 9 cm per shadow texel at 720p.
+    // Four representative views show no visible loss; the former 4K targets cost 96 MB more.
     if (!without_.shadows)
-        (void)EnableSunShadows(*this, {.size = 4096, .radius = 90.0f, .ahead = 0.7f});
+        (void)EnableSunShadows(*this, {.size = 2048, .radius = 90.0f, .ahead = 0.7f});
     StartMark(bench_.on, "sky, sky light, shadows");
 
     // Visitors are CNA avatars, which belong to its gamer services. Avatars

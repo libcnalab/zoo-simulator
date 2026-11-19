@@ -446,7 +446,15 @@ The lion viewer's ownership screenshot is pixel-for-pixel unchanged. Side-by-sid
 giraffe, brown-bear and zebra viewer screenshots show no visible loss from the 1K cap at 720p;
 the giraffe is pixel-identical. Five focused tests cover ownership, repeated use, colour/data
 filtering, alpha coverage and the oversized-atlas cap. This is a real cut, but it does not meet
-the under-1-GB target. Audio, the 4096 shadow map and dual plant groves remain to be measured.
+the under-1-GB target.
+
+The visit's shadow map is now 2,048 rather than 4,096 texels. Across its 180 m span that still
+resolves less than 9 cm per texel at the game's 720p output. In matched `StartMark` phases, adding
+the shadows raised resident memory from 266 to 413 MB at 4K and from 266 to 317 MB at 2K: a
+directly attributable **96 MB reduction**. The whole-run sampler reported 2,687 MB in the new run;
+heap variation makes the phase delta the conservative number. Entrance, lion, zebra and flamingo
+screenshots were reviewed side by side and show no visible shadow-quality loss. Audio and dual
+plant groves remain to be measured.
 
 ## The bench
 

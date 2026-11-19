@@ -27,8 +27,10 @@ whatever you take up (`docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `docs/V
   released, then oversized animal atlases were capped at their 1K mip. That is 1,003 MB (25.9%)
   below the original run. Lion ownership output is pixel-identical; four representative 2K/1K
   viewer comparisons show no visible loss at 720p, and focused tests cover both ownership and the
-  cap. The under-1-GB target is not met. Measure audio, the 4096 shadow map and dual plant groves
-  next. Do not quote the sandbox's absolute number as a Radeon measurement.
+  cap. The visit's shadow map is now 2K instead of 4K: its matched loading phase saves another
+  96 MB, four zoo views show no visible loss, and the latest whole-run sample is 2,687 MB. The
+  under-1-GB target is not met. Measure audio and dual plant groves next. Do not quote the
+  sandbox's absolute number as a Radeon measurement.
 - **Stopped mid-work when the machine restarted (uncommitted, in their worktrees; no reports):**
   - `wt-sound`: G7c audio audit (brief `.codex-work/brief-G7c-sound-develop.md`), 28 files.
   - `wt-visitors`: P1 visitors' frame cost (brief `brief-P1-visitor-cost.md`), 2 files.
