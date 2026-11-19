@@ -453,8 +453,13 @@ resolves less than 9 cm per texel at the game's 720p output. In matched `StartMa
 the shadows raised resident memory from 266 to 413 MB at 4K and from 266 to 317 MB at 2K: a
 directly attributable **96 MB reduction**. The whole-run sampler reported 2,687 MB in the new run;
 heap variation makes the phase delta the conservative number. Entrance, lion, zebra and flamingo
-screenshots were reviewed side by side and show no visible shadow-quality loss. Audio and dual
-plant groves remain to be measured.
+screenshots were reviewed side by side and show no visible shadow-quality loss.
+
+The dual plant forms were then isolated with `ZOO_PLANTS_FULL_DETAIL=1`. With the unused far
+batches omitted, the scenery phase adds 295 MB (874 -> 1,169 MB), against 369 MB (875 -> 1,244 MB)
+normally: about 74-75 MB belongs to the far forms. They remain in a normal visit because their
+measured rendering benefit is about 1 ms per frame. The diagnostic full-detail mode now avoids
+building resources it never submits. Ground and audio remain the next memory targets.
 
 ## The bench
 

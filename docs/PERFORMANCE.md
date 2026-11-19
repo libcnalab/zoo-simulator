@@ -290,5 +290,10 @@ The visit's 90 m-radius sun-shadow map is 2K rather than 4K. It still resolves l
 texel over the 180 m span. The matched start phase with/without shadows measures 413/266 MB at 4K
 and 317/266 MB at 2K, so the smaller render targets save **96 MB**. The latest whole-run peak was
 2,687 MB; its extra change includes heap variance and is not attributed to the map. Entrance,
-lion, zebra and flamingo screenshot pairs show no visible loss at 720p. Audio and dual plant
-groves are the next memory targets.
+lion, zebra and flamingo screenshot pairs show no visible loss at 720p.
+
+The dual plant groves were isolated as well: normal loading adds 369 MB for scenery (875 ->
+1,244 MB), while full-detail mode without its unused far batches adds 295 MB (874 -> 1,169 MB).
+The far forms therefore cost about 74-75 MB. Normal visits retain them because they previously
+bought about 1 ms per frame; `ZOO_PLANTS_FULL_DETAIL=1` now correctly skips them. Ground and audio
+are the next memory targets.

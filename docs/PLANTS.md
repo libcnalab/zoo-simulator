@@ -59,7 +59,8 @@ than 56 m from the eye and near again when some of it is nearer than 48 m (hyste
 does not flip it). At 50 m one pixel is about 7 cm.
 
 `ZOO_PLANTS_FULL_DETAIL=1` in the environment draws every grove near: for comparing the two
-forms from one viewpoint.
+forms from one viewpoint. It does not build the unused far batches, so the comparison no longer
+pays for a second plant zoo that it never submits.
 
 ### Does it pop?
 
@@ -109,6 +110,12 @@ is faster, by 6 to 18 %; on this shared GPU single runs move by 10 % and more, s
 147 fps (6.8 ms): the scenery still costs some 7 ms here, and drawing every grove far only
 brings 3.11 million triangles and about 71 fps, so what is left is fill (alpha-tested cards over
 one another) as much as triangles.
+
+Re-measured 2026-11-19 after static recovery copies were removed: the normal loading marks rose
+from 875 MB after ground to 1,244 MB after scenery. Full-detail mode with its unused far batches
+skipped rose from 874 to 1,169 MB. The dual far batches therefore account for about **74-75 MB**.
+They remain in the normal visit because the measured benefit above is about 1 ms per frame; a
+streaming replacement would need to rebuild procedural plants without causing a visible hitch.
 
 How the grove size was chosen (the same binary with the size from the environment; frames a
 second, runs of different rounds): 80 tiles offset by half a grove (the earlier run's choice)

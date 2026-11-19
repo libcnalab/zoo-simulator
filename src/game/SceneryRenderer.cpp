@@ -377,17 +377,23 @@ void SceneryRenderer::BuildGrove(const zoo::World& world, const zoo::ZooObjects&
         const std::uint32_t seed = Scramble(id.value, 17u, 3u);
         near.SetTransform(placement);
         BuildPlant(near, *def, seed, PlantDetail::Near);
-        far.SetTransform(placement);
-        BuildPlant(far, *def, seed, PlantDetail::Far);
+        if (!fullDetail_) {
+            far.SetTransform(placement);
+            BuildPlant(far, *def, seed, PlantDetail::Far);
+        }
         heights += position.Y;
         ++count;
     }
     grove.ground = count > 0 ? heights / static_cast<float>(count) : 0.0f;
     grove.near.Build(device_, surfaces_, near);
+    // The comparison mode never submits the far form; avoid making an unused second zoo.
+    grove.far.Clear();
+    if (fullDetail_) {
+        return;
+    }
     // The far form in the palette's two materials, whatever grows here.
     CnaEngine::Graphics::MeshData solid, cards;
     palette_.Merge(far, solid, cards);
-    grove.far.Clear();
     grove.far.Add(device_, solid, palette_.Solid());
     grove.far.Add(device_, cards, palette_.Cards());
 }
