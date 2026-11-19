@@ -420,16 +420,28 @@ the rest of the start (painting the ground, the models) is the larger part and i
 
 ## Memory
 
-**Not measured in this audit.** `tools/bench/memory.sh` is written for it: it runs the game
-without a window and without sound, samples `/proc/<pid>/smaps` of the game process twice a
-second and prints the largest sample by kind of mapping (heap, anonymous, files, driver),
-then the same with one part left out at a time. Its first version sampled `timeout` instead of
-the game; that is corrected (it follows `pgrep -P`), **and the corrected script has not been run
-once**, so it is untested. `StartMark` gives the second view (resident memory after each phase).
+Measured 2026-11-19 with `tools/bench/memory.sh 2 --bench --lockstep`. This sandbox exposes no
+`/dev/dri`, so Mesa used software OpenGL; the absolute figures are higher than the owner's Radeon
+figures, but every comparison below is the same binary and setup. The script's corrected child-PID
+sampling works. Before the texture correction, its largest sample was 3,873 MB resident: 3,037 MB
+heap, 708 MB anonymous and 127 MB file mappings. The editor's starter zoo used 1,436 MB, isolating
+the Visitor Zoo's animal models as the largest addition.
 
-Found by reading, not measured: the terrain keeps the CPU images of its painted chunks for the
-whole visit (about 100 MB by their sizes), although a visit never repaints them; freeing them
-after the upload, in a visit only, is the first thing to try for the 1.4 GB.
+Animal mip generation used to retain both the imported one-level texture and a new full mip chain.
+`AnimalTextures` now replaces an unambiguously used model-owned texture in place and explicitly
+disposes the `ContentManager` representative that otherwise kept the old renderer alive. It still
+makes distinct chains when one image is used with different colour spaces or alpha-test rules.
+On desktop Linux, resources made during loading also omit CNA's CPU context-recovery copy; recovery
+is restored before runtime textures and automated screenshots are made. Animal imports temporarily
+retain their source pixels just long enough to make the role-aware mipmaps.
+
+The identical memory script now reports 3,381 MB: 2,548 MB heap, 705 MB anonymous and 127 MB file
+mappings, a reduction of **492 MB (12.7%)**. The `StartMark` immediately after animals fell from
+3,475 to 3,096 MB. The lion viewer's RGB screenshot is pixel-for-pixel unchanged. Four focused
+tests cover ownership, repeated use, colour/data filtering and alpha coverage. This is a real cut,
+but it does not meet the under-1-GB target; the decoded level-zero animal images alone total 420 MB
+(368 MB unique), before their mip levels and renderer copies. Reducing the deliberately oversized
+2K atlases is next.
 
 ## The bench
 

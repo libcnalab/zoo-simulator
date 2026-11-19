@@ -69,7 +69,13 @@ bool Parse(std::string_view text, T& out) {
 
 }  // namespace
 
-ZooGame::ZooGame() : EngineGame(MakeOptions()) {}
+ZooGame::ZooGame() : EngineGame(MakeOptions()) {
+#if defined(__linux__) && !defined(__ANDROID__)
+    // A desktop GL context is not torn down while the game is in the background. Keeping a
+    // second CPU copy of every uploaded texture for context recovery costs hundreds of MB.
+    getGraphicsDeviceProperty().SetContextRecoveryEnabled(false);
+#endif
+}
 
 ZooGame::~ZooGame() {
     if (!editor_ && zoo_ && visitors_ && (Automation().Options().Automated() || script_))
@@ -289,6 +295,11 @@ void ZooGame::LoadGame() {
     StartMark(bench_.on, "visitors' renderer");
     const int speed = play_.speed;
     Adopt(std::move(first));
+#if defined(__linux__) && !defined(__ANDROID__)
+    // Resources made during loading no longer need their recovery shadows. New runtime
+    // textures (including automated screenshots) do: CNA's capture path reads their pixels.
+    device.SetContextRecoveryEnabled(true);
+#endif
     play_.speed = speed;
     std::printf("zoo: ground painted in %.2f s; built in %.2f s\n", terrain_->LastPaintSeconds(),
                 terrain_->LastBuildSeconds());

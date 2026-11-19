@@ -42,7 +42,11 @@ namespace {
 
 class Probe final : public App::EngineGame {
 public:
-    Probe() : EngineGame(MakeOptions()) {}
+    Probe() : EngineGame(MakeOptions()) {
+#if defined(__linux__) && !defined(__ANDROID__)
+        getGraphicsDeviceProperty().SetContextRecoveryEnabled(false);
+#endif
+    }
 
 protected:
     static App::GameOptions MakeOptions() {
@@ -85,10 +89,27 @@ protected:
         lighting.lightColor = Vector3(2.5f, 2.4f, 2.2f);
         lighting.ambientColor = Vector3(0.35f, 0.38f, 0.45f);
 
-        model_ = std::make_unique<Xna::Model>(getContentProperty().Load<Xna::Model>("animals/" + animal_));
+#if defined(__linux__) && !defined(__ANDROID__)
+        device.SetContextRecoveryEnabled(true);
+#endif
+        try {
+            model_ = std::make_unique<Xna::Model>(getContentProperty().Load<Xna::Model>("animals/" + animal_));
+        } catch (...) {
+#if defined(__linux__) && !defined(__ANDROID__)
+            device.SetContextRecoveryEnabled(false);
+#endif
+            throw;
+        }
         view_ = std::make_unique<Graphics::ModelView>(*model_, Enhanced::PbrMaterialFromEffect);
+#if defined(__linux__) && !defined(__ANDROID__)
+        device.SetContextRecoveryEnabled(false);
+#endif
         textures_ = zoogame::GiveMipmaps(*view_);
-        std::printf("zoo: viewer: %zu texture(s) given mip levels\n", textures_.size());
+#if defined(__linux__) && !defined(__ANDROID__)
+        // Automated screenshots are read through a CPU shadow in CNA.
+        device.SetContextRecoveryEnabled(true);
+#endif
+        std::printf("zoo: viewer: mip levels ready, %zu separate filtering variant(s)\n", textures_.size());
         for (const Graphics::ModelPart& part : view_->Parts()) {
             const Graphics::Material& material = part.material.material;
             std::printf("zoo: viewer: part %s: base %s, normal map %s, occlusion/roughness/metal %s, tangents %s\n",

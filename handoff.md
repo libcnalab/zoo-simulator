@@ -1,4 +1,4 @@
-# Handoff: Zoo Simulator (state of 2026-11-14, evening)
+# Handoff: Zoo Simulator (state of 2026-11-19)
 
 For the next agent, who starts without any earlier context. Read this file first, then
 `docs/REALISM.md` (progress log and the honest list of what is open), and the document of
@@ -21,11 +21,13 @@ whatever you take up (`docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `docs/V
   runs**. New rule: **only one rendering `zoo-simulator` on the machine at a time**, every game
   run under the same lock (`flock .codex-work/cpu.lock`), always with `timeout` and a short
   `--frames`; no long runs under gdb. At most 2 subagents (owner's last word).
-- **The owner's complaint: the game takes about 2.5 GB of RAM** (benches showed 2.2-2.3 GB
-  resident all day). Never measured by kind. Do this first: measure memory by kind
-  (`tools/bench/memory.sh` from the audit), then cut the biggest items (CPU copies of meshes and
-  textures kept after upload, uncompressed/oversized animal textures, generated mipmaps, audio
-  decoded to PCM, the 4096 shadow map, plant groves built twice). Aim under 1 GB, measured.
+- **The owner's complaint: the game takes about 2.5 GB of RAM.** Memory is now measured by kind
+  (`docs/RELIABILITY.md`): in this no-GPU sandbox the identical software-GL run fell 3,873 ->
+  3,381 MB after unused original animal textures and level-zero recovery shadows were released.
+  The lion image is pixel-identical and focused tests cover the ownership rules. The under-1-GB
+  target is not met. Decoded animal level-zero images alone are 420 MB (368 MB unique); reduce the
+  deliberately oversized 2K atlases next, then measure audio, the 4096 shadow map and dual plant
+  groves. Do not quote the sandbox's absolute number as a Radeon measurement.
 - **Stopped mid-work when the machine restarted (uncommitted, in their worktrees; no reports):**
   - `wt-sound`: G7c audio audit (brief `.codex-work/brief-G7c-sound-develop.md`), 28 files.
   - `wt-visitors`: P1 visitors' frame cost (brief `brief-P1-visitor-cost.md`), 2 files.

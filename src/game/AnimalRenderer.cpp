@@ -123,14 +123,26 @@ const AnimalRenderer::Kind* AnimalRenderer::Load(const std::string& model) {
     auto kind = std::make_unique<Kind>();
     kind->shown = DefaultShownPoses();
     const auto started = std::chrono::steady_clock::now();
+#if defined(__linux__) && !defined(__ANDROID__)
+    // Imported animal textures need their level-zero pixels once below to make role-aware
+    // mipmaps. Temporarily retain those pixels while the model is imported; mipmapped
+    // replacements are uploaded after recovery is disabled again and do not keep that copy.
+    content_.getGraphicsDeviceInternal().SetContextRecoveryEnabled(true);
+#endif
     try {
         kind->model = std::make_unique<Xna::Model>(content_.Load<Xna::Model>("animals/" + model));
     } catch (const std::exception& error) {
+#if defined(__linux__) && !defined(__ANDROID__)
+        content_.getGraphicsDeviceInternal().SetContextRecoveryEnabled(false);
+#endif
         std::printf("zoo: animals: %s: %s\n", model.c_str(), error.what());
         return nullptr;
     }
     kind->view = std::make_unique<Graphics::ModelView>(*kind->model, Enhanced::PbrMaterialFromEffect);
     const auto loaded = std::chrono::steady_clock::now();
+#if defined(__linux__) && !defined(__ANDROID__)
+    content_.getGraphicsDeviceInternal().SetContextRecoveryEnabled(false);
+#endif
     kind->textures = GiveMipmaps(*kind->view);
     if (std::getenv("ZOO_LOAD_TIMING") != nullptr) {
         std::printf("zoo: model: %s load/view %.3f s, mipmaps %.3f s\n", model.c_str(),

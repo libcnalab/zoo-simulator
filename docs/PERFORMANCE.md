@@ -263,3 +263,19 @@ went from 13.45 / 12.78 / 14.57 ms to 13.52 / 13.26 / 15.21 ms (slower in every 
 0.64 ms); with `--without terrain` the two builds are equal. Resident memory +60 MB.
 `DrawnGroundHeight`, called per animal, visitor and keeper every frame, costs 50 to 66 ns (180 to
 270 ns on bank tiles).
+
+## Animal texture ownership (2026-11-19)
+
+The animal renderer made mipmapped copies of every imported texture but kept the original
+single-level GPU texture and its CPU recovery pixels through the content manager. It now replaces
+single-purpose textures in their model-owned wrapper and disposes the content manager's retained
+old renderer. Desktop Linux also omits level-zero CPU recovery shadows while loading static
+resources, restoring recovery before runtime capture textures are made.
+
+`tools/bench/memory.sh 2 --bench --lockstep`, software OpenGL because this sandbox has no
+`/dev/dri`: largest sampled resident set 3,873 -> 3,381 MB, heap 3,037 -> 2,548 MB. The absolute
+result is not a Radeon measurement; the same-machine reduction is 492 MB (12.7%). Immediately
+after animal load,
+`StartMark` fell 3,475 -> 3,096 MB. A lion viewer image before and after is pixel-identical.
+The remaining decoded animal level-zero images total 420 MB (368 MB unique); 2K atlases are the
+next memory target.
