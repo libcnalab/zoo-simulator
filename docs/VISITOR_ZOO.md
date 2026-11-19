@@ -28,9 +28,9 @@ combine elliptical lobes. Every habitat has a keeper gate, shelter, stocked feed
 enrichment, a public information board and benches. Planting concentrates behind the open
 viewing ground, with woods between habitats and around the perimeter.
 
-The seed-1 zoo contains **88 animals in 14 habitats, 41 buildings and 2,508 props** when
+The seed-1 zoo contains **88 animals in 14 habitats, 41 buildings and 2,579 props** when
 every species is included (74 animals and 2,817 props before the plan's rework of
-2026-11-14, below). The farthest public path tile is **77.6 m** walking distance
+2026-11-14, below). The farthest public path tile is **75.1 m** walking distance
 from a visitor facility. `VisitorZooTests.DISABLED_PrintPlan` prints these measurements. Families
 are written out in "The zoo's plan" below. **S** = south; **W/E** = west/east.
 The principal fronts face south and the zoo's centre. The habitat footprints are unchanged:
@@ -220,9 +220,14 @@ dish at the builder's minimum depth instead of a pool, one outcrop, and the scru
 shelf round it: 74 of its 103 water tiles are under 0.45 m. A dry bank stays between the water
 and every fence: digging at the back fence lowered vertices shared with the boardwalk and left
 a wheelchair-steep edge in its paving (`WalksAreWideAndLevel` allows 5 %; the steepest paved
-tile is 2.8 % in seed 1, 2.7 % in seed 2). The same test counts path widths: 48 paved tiles
-(not boardwalk) are still on a walk only one tile, 2 m, wide, under the 2.5 to 3 m of a zoo's
-side path; most of the paving is 6 m and wider.
+tile is 2.8 % in seed 1, 2.7 % in seed 2). The same test counts path widths: only 3 paved tiles
+(not boardwalk) remain on a walk one tile, 2 m, wide, down from 48; most paving is 6 m and wider.
+Facility approaches are laid 4 m wide only after every building has chosen its site, so widening
+does not push a later kiosk away or lengthen access (the farthest facility walk is 75.1 m, under
+the 85 m limit). Paved shade-tree islands keep a two-tile ring, dead raster teeth are removed, and
+a one-tile run gains a parallel row only when the whole row is unobstructed public lawn. The three
+constrained remnants are printed by `WalksAreWideAndLevel`; widening them would open a habitat
+front or require moving an enclosure.
 Flamingos stand and feed in the shallows (`FlamingosUseTheShallowShelfDuringAVisit`; the stall
 probe counted 11 of 12 in the shallows after 6,000 ticks; seen in the game).
 
@@ -240,7 +245,7 @@ inside each keeper gate are kept clear.
 plus 1 m apart, so that no pocket forms that an animal walks into and not out of
 (`BlockingPropsLeaveAnAdultWidthPlusOneMetre`). `ClearPlace` also rejects a routine destination
 unless an animal has two body-wide, prop-free ways out of it. The seed-1 stall probe of
-`docs/ANIMAL_BEHAVIOUR.md` now counts 3,377 stalled of 269,165 moving ticks (1.25 %; 1.49 %
+`docs/ANIMAL_BEHAVIOUR.md` now counts 2,324 stalled of 263,930 moving ticks (0.88 %; 1.49 %
 before pocket rejection, 5.4 % on the old plan), with no continuous stall reaching 300 ticks.
 An animal that makes no progress tries a sidestep after one second rather than 1.5 seconds. This
 is enforced by `AnimalMovementTests.VisitorZooAnimalsDoNotRemainStalledInPropPockets`.
@@ -287,18 +292,18 @@ Golden hashes of `tests/core/VisitStartTests.cpp`, recorded again for the plan:
 
 | Fill ticks | Seed | At fill | Later |
 |---:|---:|---:|---:|
-| 600 | 1 | 1173662147128443964 | 1107570031909649352 |
-| 600 | 2 | 15301235302407781538 | 13293934419046741291 |
-| 600 | 3 | 17490139635704472405 | 13711515227528670270 |
-| 6000 | 1 | 15002375887675690109 | 956791120809914890 |
-| 6000 | 2 | 17411301327768550611 | 2140826802330461614 |
-| 6000 | 3 | 5077741855506602639 | 2769422873823982524 |
+| 600 | 1 | 5140635079675569092 | 6462817975072606623 |
+| 600 | 2 | 9583703148097783252 | 1719533382041994960 |
+| 600 | 3 | 8809160853858151918 | 1061726801659542092 |
+| 6000 | 1 | 8783487089822227632 | 14295707183868165875 |
+| 6000 | 2 | 12279120077690340155 | 4912492944997834037 |
+| 6000 | 3 | 12571352418107358502 | 8568775068721366616 |
 
 ## The zoo as the game visits it
 
 The game builds this scenario without any species that has no model in `assets/animals/`
 (`withoutSpecies`); such a habitat would stand finished but empty. Since 2026-11-12 all fifteen
-species have one, so a seed-1 visit has all **74 animals in fourteen habitats**.
+species have one, so a seed-1 visit has all **88 animals in fourteen habitats**.
 
 The ice-cream kiosk formerly in the narrow Elephant Valley/Kangaroo gap is relocated
 near entrance coordinates `(-5,18)`, facing north, to keep refreshment access around the wider

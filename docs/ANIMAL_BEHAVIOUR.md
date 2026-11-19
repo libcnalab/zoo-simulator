@@ -501,6 +501,9 @@ from the Release build, visitor zoo, seed 1, after the visit's fill.
   **Trees set back from habitat fronts (2026-11-19):** the final planting layout changes the
   deterministic routes again; the current result is 3,377 of 269,165 moving ticks (1.25 %), with
   every continuous stall still below 300 ticks and the same 1.3 % regression limit.
+  **Public walks widened (2026-11-19):** changing the later construction stream changes the
+  deterministic routines once more; the current result is 2,324 of 263,930 moving ticks (0.88 %),
+  with every continuous stall below 300 ticks and the same 1.3 % regression limit.
 - **Golden hashes** of `tests/core/VisitStartTests.cpp` re-recorded for the routines.
 - Pictures: `docs/evidence/animal-routines-2026-11-13.jpg` (lions resting in the shade at
   midday; penguins standing together, one swimming; flamingos at the lagoon after the wader

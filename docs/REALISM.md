@@ -83,13 +83,12 @@ where an animal wades. Penguins swim and float with their own clips now, and pol
    ruff reads as a grey comb, the mane's cards show close up). Meerkat pups, ostrich chicks, wolf
    pups, camel and kangaroo young and flamingo juveniles have no juvenile model and are drawn as
    scaled adults.
-2. Habitat fronts: the catalog has no dry moat or ha-ha; 48 paved tiles are still on a walk
-   only 2 m wide. Trees now keep the planted strip's depth behind the barrier except where that
-   would cross the species' vegetation welfare band (Rhino Hollow and Red Dune retain slender
-   front trees; their massive trunks are still set back).
+2. Habitat fronts: the catalog has no dry moat or ha-ha. Trees keep the planted strip's depth
+   behind the barrier except where that would cross the species' vegetation welfare band (Rhino
+   Hollow and Red Dune retain slender front trees; their massive trunks are still set back).
 3. Plants: cut-out edges far away are aliased (no alpha-to-coverage, no MSAA); reeds and tall
-   grass are modelled but no catalog prop uses them; the plan stands some ferns in the flamingo
-   lagoon's water; the scenery still costs about 7 ms at the entrance, mostly overlapping
+   grass are modelled but no catalog prop uses them; the scenery still costs about 7 ms at the
+   entrance, mostly overlapping
    alpha-tested cards (fill), which the far form does not reduce (`docs/PLANTS.md`).
 4. Keepers walk through animals and visitors, shy animals do not keep away from them, and the
    lions' and bears' habitats are never entered (`docs/KEEPERS.md` "Open"). Only penguin, polar bear, rhinoceros and elephant have swimming clips. Bear growl

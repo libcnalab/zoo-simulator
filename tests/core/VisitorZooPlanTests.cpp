@@ -891,8 +891,8 @@ TEST(VisitorZooPlanTests, DISABLED_MovementAndFamilyDistances) {
 
 INSTANTIATE_TEST_SUITE_P(Seeds, VisitorZooPlan, testing::Values(1ULL, 2ULL));
 
-// Slopes include every paved tile. Widths are diagnostic: raster corners and furniture
-// islands can have a one-tile axial run even when the through route is wider.
+// Slopes include every paved tile. A tile whose axial runs are both one tile lies on a walk 2 m
+// wide, under the 2.5 to 3 m of a zoo's side path.
 TEST_P(VisitorZooPlan, WalksAreWideAndLevel) {
     const World& map = zoo_.Map();
     const auto paved = [&](int x, int z) {
@@ -909,6 +909,7 @@ TEST_P(VisitorZooPlan, WalksAreWideAndLevel) {
         return length;
     };
     std::map<int, int> widths;
+    std::vector<TileCoord> narrowTiles;
     int narrow = 0;
     float steepest = 0.0f;
     for (int z = 0; z < map.Depth(); ++z) {
@@ -921,6 +922,7 @@ TEST_P(VisitorZooPlan, WalksAreWideAndLevel) {
             ++widths[std::min(width, 6)];
             if (width < 2 && map.At(tile).path != PathKind::Boardwalk) {
                 ++narrow;
+                narrowTiles.push_back(tile);
             }
             steepest = std::max(steepest, map.TileRelief(tile) / kTileSize);
             EXPECT_LE(map.TileRelief(tile) / kTileSize, 0.05f) << x << ',' << z;
@@ -931,8 +933,16 @@ TEST_P(VisitorZooPlan, WalksAreWideAndLevel) {
     for (const auto& [width, count] : widths) {
         std::cout << ' ' << width * 2 << "m:" << count;
     }
+    std::cout << " narrow at";
+    for (const TileCoord tile : narrowTiles) {
+        std::cout << ' ' << tile.x << ',' << tile.z;
+    }
     std::cout << std::endl;
     EXPECT_LE(steepest, 0.05f);
+    // One-tile ways to kiosk doors, paving around bench islands and dead-end raster teeth are all
+    // under a zoo side path's useful width. A few constrained viewing or between-habitat tips may
+    // remain where widening would open a new habitat front or require moving a whole enclosure.
+    EXPECT_LE(narrow, 3);
 }
 
 // A week on the calendar with the gates shut: nobody dies, the young are still young and still fed.

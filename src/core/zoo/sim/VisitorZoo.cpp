@@ -1259,7 +1259,13 @@ void StripPlants(Zoo& zoo, Script& script) {
     }
 }
 
-void Service(Zoo& zoo, Script& script, std::string_view kind, int east, int north, Dir facing) {
+struct ServiceApron {
+    TileCoord low;
+    TileCoord high;
+};
+
+void Service(Zoo& zoo, Script& script, std::vector<ServiceApron>& wideAprons, std::string_view kind, int east,
+             int north, Dir facing) {
     Builder builder = zoo.FreeBuilder();
     const int index = zoo.Definitions().BuildingIndex(kind);
     if (index < 0) {
@@ -1287,6 +1293,38 @@ void Service(Zoo& zoo, Script& script, std::string_view kind, int east, int nort
             continue;
         }
         const TileCoord gate = zoo.Map().EntranceTile();
+        // Remember a two-tile-wide way straight out of the door, but lay it only after every
+        // facility has selected its site. Otherwise an early widened apron displaces a later kiosk.
+        const TileCoord ahead = Step(facing);
+        TileCoord joins = *path;
+        for (int step = 0; step <= 8; ++step) {
+            const TileCoord tile{front.x + ahead.x * step, front.z + ahead.z * step};
+            if (!zoo.Map().InBounds(tile) || zoo.Habitats().RegionAt(tile) != Region::Public ||
+                zoo.Map().At(tile).building) {
+                break;
+            }
+            if (zoo.Map().At(tile).path != PathKind::None) {
+                joins = tile;
+                break;
+            }
+            if (builder.CheckPath(tile, PathKind::Cobblestone) != BuildError::None) {
+                break;
+            }
+        }
+        TileCoord low{std::min(front.x, joins.x), std::min(front.z, joins.z)};
+        TileCoord high{std::max(front.x, joins.x), std::max(front.z, joins.z)};
+        const auto widen = [](int& from, int& to, int towards) {
+            if (from == to) {
+                (towards > 0 ? to : from) += towards;
+            }
+        };
+        if (ahead.x == 0) {
+            widen(low.z, high.z, ahead.z);
+            widen(low.x, high.x, front.x < far.x ? 1 : -1);
+        } else {
+            widen(low.x, high.x, ahead.x);
+            widen(low.z, high.z, front.z < far.z ? 1 : -1);
+        }
         if (!script.Building(kind, origin.x - gate.x, gate.z - far.z, facing)) {
             return;
         }
@@ -1298,6 +1336,7 @@ void Service(Zoo& zoo, Script& script, std::string_view kind, int east, int nort
             }
         }
         script.PathTiles(apron, PathKind::Cobblestone);
+        wideAprons.push_back({low, high});
         if (!zoo.Routes().Reachable(gate, front, NavProfile::Visitor())) {
             script.Problem(std::string(kind) + ": door is unreachable");
         }
@@ -1305,6 +1344,21 @@ void Service(Zoo& zoo, Script& script, std::string_view kind, int east, int nort
     }
     script.Problem("no public site for " + std::string(kind) + " at " + std::to_string(east) + "," +
                    std::to_string(north));
+}
+
+void WidenServiceAprons(Zoo& zoo, Script& script, const std::vector<ServiceApron>& aprons) {
+    Builder builder = zoo.FreeBuilder();
+    std::vector<TileCoord> paving;
+    for (const ServiceApron& apron : aprons) {
+        for (const TileCoord tile : TilesInRect(apron.low, apron.high)) {
+            if (zoo.Habitats().RegionAt(tile) == Region::Public &&
+                zoo.Map().At(tile).path == PathKind::None && !zoo.Map().At(tile).building &&
+                builder.CheckPath(tile, PathKind::Cobblestone) == BuildError::None) {
+                paving.push_back(tile);
+            }
+        }
+    }
+    script.PathTiles(paving, PathKind::Cobblestone);
 }
 
 bool PublicProp(Zoo& zoo, Script& script, std::string_view kind, Vec2 position, float heading = 0.0f,
@@ -1343,6 +1397,26 @@ std::string_view ParkTree(int east, int north, int variant) {
         return variant == 0 ? "baobab" : "acacia";
     }
     return variant == 0 ? "birch" : "oak";
+}
+
+/// Public lawn a walk may be widened onto: nothing built, planted or standing there, and no
+/// barrier or strip beside it, so the paving cannot open a new viewing place.
+bool OpenLawn(Zoo& zoo, TileCoord tile) {
+    const World& map = zoo.Map();
+    if (!map.InBounds(tile) || zoo.Habitats().RegionAt(tile) != Region::Public || map.At(tile).building ||
+        map.At(tile).standOff || map.HasWater(tile) ||
+        zoo.FreeBuilder().CheckPath(tile, PathKind::Gravel) != BuildError::None) {
+        return false;
+    }
+    for (const Dir side : {Dir::North, Dir::East, Dir::South, Dir::West}) {
+        const TileCoord next = tile + Step(side);
+        if (!map.InBounds(next) || zoo.Habitats().RegionAt(next) != Region::Public || map.At(next).standOff) {
+            return false;
+        }
+    }
+    std::vector<PropId> near;
+    zoo.Objects().PropsNear(World::TileCenter(tile), 1.5f, near);
+    return near.empty();
 }
 
 // A bench in the sun is not sat on for long. A broad crown goes near each viewing bench: on the
@@ -1386,11 +1460,24 @@ void ShadeTree(Zoo& zoo, Script& script, const ViewingSpot& spot) {
         }
         const Vec2 point = World::TileCenter(tile);
         if (map.At(tile).path != PathKind::None) {
+            // Keep two tiles of paving around the tree island. Lay a second row on open lawn where
+            // possible; otherwise leave this candidate paved and try another shade-tree place.
             bool paved = depth >= 2 && aside == 0;
-            for (int dz = -1; dz <= 1; ++dz) {
-                for (int dx = -1; dx <= 1; ++dx) {
+            std::vector<TileCoord> ring;
+            for (int dz = -2; dz <= 2 && paved; ++dz) {
+                for (int dx = -2; dx <= 2 && paved; ++dx) {
                     const TileCoord next{tile.x + dx, tile.z + dz};
-                    paved = paved && map.InBounds(next) && map.At(next).path != PathKind::None;
+                    const bool corner = std::abs(dx) == 2 && std::abs(dz) == 2;
+                    if (!map.InBounds(next) || (dx == 0 && dz == 0) || corner) {
+                        paved = paved && map.InBounds(next);
+                        continue;
+                    }
+                    if (map.At(next).path != PathKind::None) {
+                        continue;
+                    }
+                    paved = std::abs(dx) == 2 || std::abs(dz) == 2;
+                    paved = paved && OpenLawn(zoo, next);
+                    ring.push_back(next);
                 }
             }
             std::vector<PropId> near;
@@ -1398,6 +1485,7 @@ void ShadeTree(Zoo& zoo, Script& script, const ViewingSpot& spot) {
             if (!paved || !near.empty()) {
                 continue;
             }
+            script.PathTiles(ring, map.At(tile).path);
             script.PathTiles({tile}, PathKind::None);
         }
         if (PublicProp(zoo, script, crown(tile), point, script.Random().Range(0.0f, kTwoPi), 1.15f)) {
@@ -1430,42 +1518,146 @@ void ViewingFurniture(Zoo& zoo, Script& script) {
     }
 }
 
+// Rasterised curves leave single paved teeth at their edges. A paving tile that leads nowhere
+// reads as a 2 m stub; tiles beside a barrier, strip or building remain as viewing places or doors.
+void TrimTeeth(Zoo& zoo, Script& script) {
+    const World& map = zoo.Map();
+    const TileCoord gate = map.EntranceTile();
+    std::set<std::pair<int, int>> doors;
+    for (const Building& building : zoo.Objects().Buildings()) {
+        const BuildingDef& def = zoo.Definitions().buildings[static_cast<std::size_t>(building.def)];
+        const TileCoord door = FrontTile(def, building.origin, building.facing);
+        doors.emplace(door.z, door.x);
+    }
+    for (int round = 0; round < 3; ++round) {
+        std::vector<TileCoord> teeth;
+        for (int z = map.PropertyMin().z; z <= map.PropertyMax().z; ++z) {
+            for (int x = map.PropertyMin().x; x <= map.PropertyMax().x; ++x) {
+                const TileCoord tile{x, z};
+                if (map.At(tile).path == PathKind::None || tile == gate || doors.contains({tile.z, tile.x})) {
+                    continue;
+                }
+                int paved = 0;
+                bool kept = false;
+                for (const Dir side : {Dir::North, Dir::East, Dir::South, Dir::West}) {
+                    const TileCoord next = tile + Step(side);
+                    if (!map.InBounds(next) || next == gate || map.At(next).standOff ||
+                        zoo.Habitats().RegionAt(next) != Region::Public) {
+                        kept = true;
+                        break;
+                    }
+                    paved += map.At(next).path != PathKind::None ? 1 : 0;
+                }
+                if (!kept && paved <= 1) {
+                    teeth.push_back(tile);
+                }
+            }
+        }
+        if (teeth.empty()) {
+            return;
+        }
+        script.PathTiles(teeth, PathKind::None);
+    }
+}
+
+// Widen a one-tile corridor along its whole run when a parallel row is unobstructed public lawn.
+// OpenLawn rejects strips and habitat edges, so constrained viewing teeth remain where widening
+// would create a new front or require moving an enclosure.
+void WidenThinWalks(Zoo& zoo, Script& script) {
+    const World& map = zoo.Map();
+    const auto paved = [&map](TileCoord tile) {
+        return map.InBounds(tile) && map.At(tile).path != PathKind::None;
+    };
+    for (int z = map.PropertyMin().z; z <= map.PropertyMax().z; ++z) {
+        for (int x = map.PropertyMin().x; x <= map.PropertyMax().x; ++x) {
+            const TileCoord tile{x, z};
+            if (!paved(tile) || map.At(tile).path == PathKind::Boardwalk) {
+                continue;
+            }
+            const bool horizontal = paved({x - 1, z}) || paved({x + 1, z});
+            const bool vertical = paved({x, z - 1}) || paved({x, z + 1});
+            if (horizontal == vertical) {
+                continue;
+            }
+            std::vector<TileCoord> run{tile};
+            if (vertical) {
+                for (int dz : {-1, 1}) {
+                    for (int step = 1;; ++step) {
+                        const TileCoord along{x, z + dz * step};
+                        if (!paved(along) || paved({along.x - 1, along.z}) || paved({along.x + 1, along.z})) {
+                            break;
+                        }
+                        run.push_back(along);
+                    }
+                }
+            } else {
+                for (int dx : {-1, 1}) {
+                    for (int step = 1;; ++step) {
+                        const TileCoord along{x + dx * step, z};
+                        if (!paved(along) || paved({along.x, along.z - 1}) || paved({along.x, along.z + 1})) {
+                            break;
+                        }
+                        run.push_back(along);
+                    }
+                }
+            }
+            for (const int side : {-1, 1}) {
+                std::vector<TileCoord> row;
+                for (const TileCoord along : run) {
+                    row.push_back(vertical ? TileCoord{along.x + side, along.z}
+                                           : TileCoord{along.x, along.z + side});
+                }
+                if (std::ranges::all_of(row,
+                                        [&zoo](TileCoord candidate) { return OpenLawn(zoo, candidate); })) {
+                    script.PathTiles(row, map.At(tile).path);
+                    break;
+                }
+            }
+        }
+    }
+}
+
 void Facilities(Zoo& zoo, Script& script) {
+    std::vector<ServiceApron> serviceAprons;
     script.PathTiles(script.Ellipse(13, 74, 9.0f, 4.0f), PathKind::Cobblestone);
     // Trunks stand on unpaved islands; the broad crowns shade the two rows of tables.
     for (int e = 6; e <= 21; e += 3) {
         script.PathTiles({script.Tile(e, 74)}, PathKind::None);
         script.Prop("acacia", script.Point(e, 74));
     }
-    Service(zoo, script, "gift_shop", 12, 2, Dir::West);
-    Service(zoo, script, "restroom", -15, 2, Dir::East);
-    Service(zoo, script, "drinks_stall", 14, 7, Dir::West);
-    Service(zoo, script, "ice_cream_stand", -16, 8, Dir::East);
-    Service(zoo, script, "education_centre", -20, 15, Dir::South);
-    Service(zoo, script, "burger_stall", 6, 79, Dir::South);
-    Service(zoo, script, "drinks_stall", 11, 80, Dir::South);
-    Service(zoo, script, "ice_cream_stand", 16, 79, Dir::South);
-    Service(zoo, script, "restroom", 21, 78, Dir::South);
-    Service(zoo, script, "burger_stall", 0, 108, Dir::South);
-    Service(zoo, script, "drinks_stall", 5, 110, Dir::South);
-    Service(zoo, script, "restroom", 10, 110, Dir::South);
-    Service(zoo, script, "drinks_stall", -25, 74, Dir::South);
-    Service(zoo, script, "ice_cream_stand", -25, 99, Dir::South);
-    Service(zoo, script, "drinks_stall", 31, 35, Dir::South);
+    TrimTeeth(zoo, script);
+    Service(zoo, script, serviceAprons, "gift_shop", 12, 2, Dir::West);
+    Service(zoo, script, serviceAprons, "restroom", -15, 2, Dir::East);
+    Service(zoo, script, serviceAprons, "drinks_stall", 14, 7, Dir::West);
+    Service(zoo, script, serviceAprons, "ice_cream_stand", -16, 8, Dir::East);
+    Service(zoo, script, serviceAprons, "education_centre", -20, 15, Dir::South);
+    Service(zoo, script, serviceAprons, "burger_stall", 6, 79, Dir::South);
+    Service(zoo, script, serviceAprons, "drinks_stall", 11, 80, Dir::South);
+    Service(zoo, script, serviceAprons, "ice_cream_stand", 16, 79, Dir::South);
+    Service(zoo, script, serviceAprons, "restroom", 21, 78, Dir::South);
+    Service(zoo, script, serviceAprons, "burger_stall", 0, 108, Dir::South);
+    Service(zoo, script, serviceAprons, "drinks_stall", 5, 110, Dir::South);
+    Service(zoo, script, serviceAprons, "restroom", 10, 110, Dir::South);
+    Service(zoo, script, serviceAprons, "drinks_stall", -25, 74, Dir::South);
+    Service(zoo, script, serviceAprons, "ice_cream_stand", -25, 99, Dir::South);
+    Service(zoo, script, serviceAprons, "drinks_stall", 31, 35, Dir::South);
     // The new planting occupies the old narrow kiosk gap beside Elephant Valley.
     // Put its refreshments at the southern Kangaroo/Ostrich approach instead.
-    Service(zoo, script, "ice_cream_stand", -5, 18, Dir::North);
-    Service(zoo, script, "drinks_stall", 31, 94, Dir::East);
-    Service(zoo, script, "ice_cream_stand", 32, 139, Dir::South);
-    Service(zoo, script, "drinks_stall", -4, 56, Dir::South);
-    Service(zoo, script, "drinks_stall", -72, 52, Dir::East);
-    Service(zoo, script, "drinks_stall", 70, 52, Dir::West);
-    Service(zoo, script, "drinks_stall", -70, 115, Dir::East);
-    Service(zoo, script, "ice_cream_stand", -69, 17, Dir::East);
-    Service(zoo, script, "drinks_stall", -10, 144, Dir::South);
-    Service(zoo, script, "drinks_stall", 66, 123, Dir::West);
-    Service(zoo, script, "drinks_stall", 66, 91, Dir::West);
-    Service(zoo, script, "ice_cream_stand", -67, 84, Dir::East);
+    Service(zoo, script, serviceAprons, "ice_cream_stand", -5, 18, Dir::North);
+    Service(zoo, script, serviceAprons, "drinks_stall", 31, 94, Dir::East);
+    Service(zoo, script, serviceAprons, "ice_cream_stand", 32, 139, Dir::South);
+    Service(zoo, script, serviceAprons, "drinks_stall", -4, 56, Dir::South);
+    Service(zoo, script, serviceAprons, "drinks_stall", -72, 52, Dir::East);
+    Service(zoo, script, serviceAprons, "drinks_stall", 70, 52, Dir::West);
+    Service(zoo, script, serviceAprons, "drinks_stall", -70, 115, Dir::East);
+    Service(zoo, script, serviceAprons, "ice_cream_stand", -69, 17, Dir::East);
+    Service(zoo, script, serviceAprons, "drinks_stall", -10, 144, Dir::South);
+    Service(zoo, script, serviceAprons, "drinks_stall", 66, 123, Dir::West);
+    Service(zoo, script, serviceAprons, "drinks_stall", 66, 91, Dir::West);
+    Service(zoo, script, serviceAprons, "ice_cream_stand", -67, 84, Dir::East);
+    WidenServiceAprons(zoo, script, serviceAprons);
+    WidenThinWalks(zoo, script);
+    TrimTeeth(zoo, script);
     for (int n = 72; n <= 76; n += 4) {
         for (int e = 6; e <= 21; e += 3) {
             PublicProp(zoo, script, "picnic_table", script.Point(e, n));

@@ -73,11 +73,15 @@ whatever you take up (`docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `docs/V
   history also exposed a brittle keeper comparison: its maxima now identify animal/habitat/tick,
   retain the 0.06 comparison near danger and otherwise remain at or below the 0.70 welfare line
   (`docs/VISITOR_ZOO.md`, `docs/KEEPERS.md`, 2026-11-19).
+- Public one-tile walks are down from 48 paved tiles to 3 constrained remnants. Facility aprons
+  widen after all sites are fixed (so all 41 buildings remain well distributed; farthest walk
+  75.1 m), shade-tree islands keep a two-tile ring, dead raster teeth are removed, and thin runs
+  widen only across unobstructed public lawn. Both seeds report the same three coordinates; the
+  top-down plan and a food-court view were inspected. The changed deterministic routine history
+  improves animal stalls to 0.88%, under the unchanged 1.3% limit; seed 1 now has 2,579 props
+  (`docs/VISITOR_ZOO.md`, 2026-11-19).
 - **Stopped mid-work when the machine restarted (uncommitted, in their worktrees; no reports):**
   - `wt-sound`: G7c audio audit (brief `.codex-work/brief-G7c-sound-develop.md`), 28 files.
-  - `wt-life`: G8d plan details (brief `brief-G8d-plan-details.md`: only the 2 m walks remain).
-    Its Red Dune rail, meerkat stand, water-plant and front-tree findings were fixed on develop on
-    2026-11-19; do not reapply those parts of its old diff.
   - `wt-plants` (reused): A1 animal activity clips (brief `brief-A1-activity-clips.md`), 31 files.
   Look at each diff before going on; none is reviewed. Their earlier finished work is in develop.
 - **Deadline:** about **2026-11-28** the owner puts Zoo Simulator under the same AI policy as
