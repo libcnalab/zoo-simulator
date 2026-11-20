@@ -410,7 +410,8 @@ def make_wild_quadruped(config):
                              else config.get("sleep_neck", (26.0, 26.0)),
                              sleep_head=21.0 if wolf or kind == "polar_bear"
                              else config.get("sleep_head", 14.0),
-                             drink_height=0.06 if bear or zebra else 0.03,
+                             drink_height=config.get("drink_height",
+                                                     0.06 if bear or zebra else 0.03),
                              look_yaw=16.0, tail_idle=8.0,
                              idle_shift=config.get("idle_shift", .012),
                              idle_bob=config.get("idle_bob", .004),

@@ -5,6 +5,7 @@ The humps rise above a level back; a five-bone U-shaped neck carries the head
 above them. The limbs end in broad paired pads rather than carnivore paws.
 """
 import math
+from functools import partial
 
 import numpy as np
 
@@ -15,6 +16,9 @@ from zoogen.anatomy import chain, leg_bones, set_bone, split_foot
 from zoogen.geom import Bone, Part, R
 from zoogen.rig import Clip
 from zoogen.wild_quadruped import make_wild_quadruped
+
+
+JUVENILE_SCALE = .60
 
 
 def _anatomy(spec):
@@ -85,30 +89,149 @@ def _anatomy(spec):
         chain=chain(spec.bones, "tail1", "tail2", "tail3", "tail4"), segments=12, tag="tail"))
 
 
-def _paint(ctx):
-    sand = np.array([.56, .37, .20])
-    pale = np.array([.77, .63, .43])
-    grain = nz.fbm(ctx.P, 32.0, 3, seed=21)
+def _paint(ctx, juvenile=False, scale=1.0):
+    P = ctx.P / scale if juvenile else ctx.P
+    sand = np.array([.62, .44, .27]) if juvenile else np.array([.56, .37, .20])
+    pale = np.array([.82, .69, .49]) if juvenile else np.array([.77, .63, .43])
+    grain = nz.fbm(P, 32.0, 3, seed=21)
     under = nz.smoothstep(.15, -.70, ctx.N[..., 2])
     coat = nz.mix(sand, pale, under * .40) * (.90 + .16 * grain)[..., None]
     coat = nz.mix(coat, np.array([.16, .10, .055]), ctx.tag("eye"))
     coat = nz.mix(coat, np.array([.32, .22, .13]), ctx.tag("pad") * .7)
     # A fine vertical philtrum suggests the divided mobile upper lip.
-    lip = nz.smoothstep(1.82, 1.93, ctx.x) * nz.smoothstep(.018, .004, np.abs(ctx.y))
+    lip = nz.smoothstep(1.82, 1.93, P[..., 0]) * nz.smoothstep(.018, .004,
+                                                               np.abs(P[..., 1]))
     coat = nz.mix(coat, np.array([.23, .14, .075]), lip * ctx.tag("head"))
     return coat
 
 
-def make_spec():
+def _juvenile_shape(spec):
+    scale = JUVENILE_SCALE
+    for bone in spec.bones:
+        bone.head = np.asarray(bone.head, dtype=float) * scale
+        bone.tail = np.asarray(bone.tail, dtype=float) * scale
+    for part in spec.parts:
+        for ring in part.rings:
+            ring.c *= scale
+            ring.ry *= scale
+            ring.up *= scale
+            ring.dn *= scale
+        if part.chain is not None:
+            part.chain = [(name, np.asarray(head) * scale, np.asarray(tail) * scale)
+                          for name, head, tail in part.chain]
+        if part.rough is not None:
+            part.rough = (part.rough[0] * scale, part.rough[1] / scale)
+
+    neck_base = np.array([.51, 0, 1.86]) * scale
+
+    def shorten_neck(point):
+        point[:] = neck_base + .88 * (point - neck_base)
+
+    for bone in spec.bones:
+        if bone.name.startswith("neck") or bone.name in {"head", "jaw", "ear.L"}:
+            shorten_neck(bone.head)
+            shorten_neck(bone.tail)
+    for part in spec.parts:
+        if part.name in {"neck", "head", "jaw", "ear.L", "eye.L"}:
+            for ring in part.rings:
+                shorten_neck(ring.c)
+
+    # Shorten the face a second time while keeping the large juvenile cranium at the end of
+    # the neck. Calves have only low developing humps and relatively long legs with broad pads.
+    face_pivot = np.array([1.29, 0, 2.79]) * scale
+    shorten_neck(face_pivot)
+
+    def shorten_face(point):
+        point[0] = face_pivot[0] + .78 * (point[0] - face_pivot[0])
+
+    for bone in spec.bones:
+        if bone.name in {"head", "jaw", "ear.L"}:
+            shorten_face(bone.head)
+            shorten_face(bone.tail)
+        if bone.name == "ear.L":
+            # Seat the calf's small ears into its enlarged skull. Besides reading more
+            # naturally upright, this keeps their roots above ground at full neck flexion.
+            bone.head[2] -= .03
+            bone.tail[2] -= .03
+    for part in spec.parts:
+        if part.name in {"head", "jaw", "ear.L", "eye.L"}:
+            for ring in part.rings:
+                shorten_face(ring.c)
+        if part.name == "head":
+            for ring in part.rings:
+                ring.ry *= 1.20
+                ring.up *= 1.18
+                ring.dn *= 1.18
+        elif part.name == "eye.L":
+            for ring in part.rings:
+                ring.ry *= 1.38
+                ring.up *= 1.38
+                ring.dn *= 1.38
+        elif part.name == "ear.L":
+            for ring in part.rings:
+                ring.c[2] -= .03
+                ring.ry *= 1.22
+                ring.up *= 1.22
+                ring.dn *= 1.22
+        elif part.name == "torso":
+            for ring in part.rings:
+                ring.ry *= .92
+                ring.up *= .92
+                ring.dn *= .92
+        elif part.name.startswith("hump."):
+            back = 1.68 * scale
+            for ring in part.rings:
+                ring.c[2] = back + .55 * (ring.c[2] - back)
+                ring.ry *= .74
+                ring.up *= .58
+                ring.dn *= .58
+        elif "_pad." in part.name and part.name.endswith(".L"):
+            for ring in part.rings:
+                ring.ry *= 1.18
+                ring.up *= 1.10
+                ring.dn *= 1.10
+
+    bones = {bone.name: bone for bone in spec.bones}
+    for part in spec.parts:
+        if part.chain is not None:
+            part.chain = [(name, bones[name].head.copy(), bones[name].tail.copy())
+                          for name, _, _ in part.chain]
+    muzzle_bone, muzzle_point = spec.rig.extra["muzzle"]
+    muzzle_point = np.asarray(muzzle_point, dtype=float) * scale
+    shorten_neck(muzzle_point)
+    shorten_face(muzzle_point)
+    spec.rig.extra["muzzle"] = (muzzle_bone, muzzle_point)
+
+    spec.name = "camel_juvenile"
+    spec.paint = partial(_paint, juvenile=True, scale=scale)
+    spec.voxel = .008
+    spec.target_tris = 18000
+    spec.meta.update({"shoulder_height_m": 1.26, "body_length_m": 1.65,
+                      "variant_of": "camel", "variant": "juvenile",
+                      "relative_height": scale,
+                      "age_shape": "Calf: low humps, slim body, shorter face, larger eyes and pads"})
+
+
+def make_spec(juvenile=False):
+    scale = JUVENILE_SCALE if juvenile else 1.0
     spec = make_wild_quadruped({
         "name": "camel", "kind": "camel", "common_name": "Bactrian camel",
         "scientific_name": "Camelus bactrianus", "height": 2.1, "length": 3.0,
-        "walk_speed": 1.1, "trot_speed": 2.4,
+        "walk_speed": .72 if juvenile else 1.1, "trot_speed": 1.55 if juvenile else 2.4,
+        "walk_period": .82 if juvenile else 1.15,
+        "trot_period": .48 if juvenile else .62,
+        "walk_lift": .055 if juvenile else .08,
+        "fast_lift": .08 if juvenile else .12,
+        # The calf's shorter face needs a slightly higher water target to keep the head
+        # joint above ground while the muzzle still visibly touches the water surface.
+        "drink_height": .055 if juvenile else .03,
         "walk_pattern": "pace", "fast_pattern": "pace",
-        "head_down": quad.HeadDown(body_pitch=12, crouch=.24, chest=8,
+        "head_down": quad.HeadDown(body_pitch=12, crouch=.24 * scale, chest=8,
                                    neck=(8, 18, 32, 40, 45), head=15),
         "sleep_neck": (15, 20, 30, 35, 40), "sleep_head": 10,
-        "lie_drop": .90,
+        "lie_drop": .90 * scale,
+        "hind_tuck": .10 * scale, "hind_out": .07 * scale,
+        "idle_shift": .012 * scale, "idle_bob": .004 * scale,
     })
     _anatomy(spec)
     spec.paint = _paint
@@ -134,4 +257,6 @@ def make_spec():
     spec.clips = clips
     # The game's clip for the camel's still cud-chewing activity.
     spec.meta["activity_clips"] = {"ruminate": "ruminate"}
+    if juvenile:
+        _juvenile_shape(spec)
     return spec

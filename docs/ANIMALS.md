@@ -43,7 +43,7 @@ python3 -m unittest discover -s tools/animals/tests
 | `zoogen/scan.py` on a prepared third-party static sculpt, rigged by us (below) | zebra, zebra_female, zebra_juvenile |
 | `zoogen/giraffe2.py` on a prepared head-and-neck scan, body modelled by us (below) | giraffe, giraffe_female, giraffe_juvenile |
 | `zoogen/sculpt.py`, `bear.py` on a prepared third-party sculpt, rigged by us (below) | brown_bear, brown_bear_juvenile, polar_bear, polar_bear_juvenile |
-| `zoogen/quadruped.py`, `wild_quadruped.py`, `anatomy.py` | wolf, wolf_juvenile, camel, meerkat, meerkat_juvenile |
+| `zoogen/quadruped.py`, `wild_quadruped.py`, `anatomy.py` | wolf, wolf_juvenile, camel, camel_juvenile, meerkat, meerkat_juvenile |
 | `zoogen/birdscan.py` on a prepared third-party scan or sculpt, rigged by us (below) | penguin, penguin_juvenile, flamingo |
 | `zoogen/biped.py` | ostrich, ostrich_juvenile, kangaroo |
 
@@ -104,6 +104,25 @@ shape views and a real habitat frame are in
 four-month-old Anika. It now reads as a chick rather than a miniature cock, but it remains a
 smooth first-generation egg-body model: the down is painted, the stripes are procedural and
 there is no normal map or individual feather geometry.
+
+### Bactrian camel calf (2026-11-20)
+
+`camel_juvenile` replaces the uniformly scaled adults previously used for the two young animals
+at Red Dune. The 1.26 m calf has a slimmer barrel, a shorter face and neck, proportionally larger
+head, eyes, ears and split pads, and two low developing humps rather than the adult's tall full
+humps. Its separate lighter sand coat keeps the calf readable beside the adults. The short-stride
+walk is 0.72 m/s and the fast pace is 1.55 m/s. The model has 20,640 triangles, 36 bones and nine
+clips: the standard eight plus the adult's ten-second `ruminate` jaw grind.
+
+The calf's drinking pose targets the visible water surface while keeping its head and ear roots
+above ground; all clip joints, foot plants and loop boundaries are checked by the pipeline. A
+fresh adult export remained byte-for-byte identical after the opt-in generator change, and the
+production calf matches an independent final export. The game loaded the calf variant in a real
+Red Dune run and selected nine-month-old Ivo. The same-camera
+adult comparison, close calf viewer, four shape views and habitat frame are in
+`evidence/camel-juvenile-j4-2026-11-20.jpg`. Its age silhouette is distinct, but it deliberately
+inherits the smooth first-generation lofted camel: the coat has no normal map, the pads have no
+individual nails and the face remains simple up close.
 
 ### Big cats from a sculpt (2026-11-13)
 
@@ -330,7 +349,7 @@ named the real activity. Dedicated clips are now made in the pipeline
 | `flamingo` | `preen` (10 s) | `preen` | on both legs, the long neck laid back over the body: the bill combs the left wing, the back, the right wing and the rump, the worked wing lifted a little |
 | `ostrich` | `dust_bathe` (10 s) | `dust_bathe` | sitting (the `rest` posture), rocking onto one side, the neck laid along the ground sweeping sand to each side, the loosened wings lifted and shaken |
 | `elephant`, `elephant_female`, `elephant_juvenile` | `dust_bathe` (16 s) | `dust_bathe` | a fore foot scrapes the earth loose, the trunk gathers it at the ground and throws it up over the forehead, once to each side, the ears flapping |
-| `camel` | `ruminate` (10 s) | `ruminate` | standing with a slow asymmetric sideways jaw grind and a small head movement |
+| `camel`, `camel_juvenile` | `ruminate` (10 s) | `ruminate` | standing with a slow asymmetric sideways jaw grind and a small head movement |
 | `flamingo` | `filter_feed` (7 s) | `filter_feed` | the fitted inverted-bill feeding posture, sweeping a broad irregular arc through the shallows |
 | `giraffe`, `giraffe_female`, `giraffe_juvenile` | `ruminate` (10 s) | `ruminate` | standing, with a deliberate lateral cud grind slower and broader than the incidental idle chew |
 | `brown_bear`, `brown_bear_juvenile`, `polar_bear`, `polar_bear_juvenile` | `bathe` (9 s) | `bathe` | lying in the shallows, rolling the shoulders and paddling with alternating forepaws |

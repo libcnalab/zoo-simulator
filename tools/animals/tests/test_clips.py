@@ -24,7 +24,8 @@ SPECIES = ["lion", "lion_female", "lion_juvenile", "tiger", "wolf", "wolf_juveni
            "meerkat_juvenile",
            "brown_bear", "polar_bear",
            "brown_bear_juvenile", "polar_bear_juvenile",
-           "zebra", "zebra_female", "zebra_juvenile", "rhino", "camel", "elephant", "giraffe",
+           "zebra", "zebra_female", "zebra_juvenile", "rhino", "camel", "camel_juvenile",
+           "elephant", "giraffe",
            "giraffe_female", "giraffe_juvenile", "meerkat",
            "penguin", "penguin_juvenile", "ostrich", "ostrich_juvenile", "flamingo", "kangaroo"]
 
@@ -211,6 +212,45 @@ class ClipTests(unittest.TestCase):
 
 
 class AnatomyTests(unittest.TestCase):
+    def test_camel_calf_has_low_humps_juvenile_proportions_and_metadata(self):
+        adult = importlib.import_module("species.camel").make_spec()
+        calf = importlib.import_module("species.camel_juvenile").make_spec()
+        adult_parts = {part.name: part for part in adult.parts}
+        calf_parts = {part.name: part for part in calf.parts}
+        adult_height = adult.meta["shoulder_height_m"]
+        calf_height = calf.meta["shoulder_height_m"]
+        self.assertGreater(calf_parts["head"].rings[1].ry / calf_height,
+                           1.15 * adult_parts["head"].rings[1].ry / adult_height)
+        self.assertGreater(calf_parts["eye.L"].rings[0].ry / calf_height,
+                           1.3 * adult_parts["eye.L"].rings[0].ry / adult_height)
+        adult_face = adult_parts["head"].rings[-1].c[0] - adult_parts["head"].rings[0].c[0]
+        calf_face = calf_parts["head"].rings[-1].c[0] - calf_parts["head"].rings[0].c[0]
+        self.assertLess(calf_face / calf.meta["body_length_m"],
+                        .85 * adult_face / adult.meta["body_length_m"])
+        adult_hump = max(ring.c[2] + ring.up for ring in adult_parts["hump.front"].rings)
+        calf_hump = max(ring.c[2] + ring.up for ring in calf_parts["hump.front"].rings)
+        adult_back = adult_parts["torso"].rings[3].c[2]
+        calf_back = calf_parts["torso"].rings[3].c[2]
+        self.assertLess((calf_hump - calf_back) / calf_height,
+                        .65 * (adult_hump - adult_back) / adult_height)
+        adult_pad = adult_parts["front_pad.1.L"].rings[-1].ry / adult_height
+        calf_pad = calf_parts["front_pad.1.L"].rings[-1].ry / calf_height
+        self.assertGreater(calf_pad, 1.15 * adult_pad)
+        self.assertEqual(calf.meta["variant_of"], "camel")
+        self.assertEqual(calf.meta["variant"], "juvenile")
+        self.assertAlmostEqual(calf.meta["relative_height"], calf_height / adult_height)
+        root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+        with open(os.path.join(root, "assets", "animals", "camel_juvenile.json")) as source:
+            manifest = json.load(source)
+        self.assertEqual(manifest["name"], "camel_juvenile")
+        self.assertEqual(manifest["meta"], calf.meta)
+        self.assertLessEqual(manifest["triangles"], 22000)
+        clips = {clip["name"]: clip for clip in manifest["clips"]}
+        self.assertEqual(set(clips), {"idle", "walk", "trot", "eat", "drink", "rest",
+                                      "sleep", "vocalize", "ruminate"})
+        self.assertAlmostEqual(clips["walk"]["speed"], .72, delta=.02)
+        self.assertAlmostEqual(clips["trot"]["speed"], 1.55, delta=.02)
+
     def test_ostrich_chick_has_juvenile_proportions_plumage_and_metadata(self):
         adult = importlib.import_module("species.ostrich").make_spec()
         chick = importlib.import_module("species.ostrich_juvenile").make_spec()
@@ -327,7 +367,8 @@ class AnatomyTests(unittest.TestCase):
         self.assertTrue(np.allclose(np.sort(vertices[:, 1]), np.sort(-left[:, 1])))
 
     def test_ungulate_leg_skins_overlap_their_foot_tops(self):
-        for species, foot_name in (("camel", "pad"), ("giraffe", "hoof")):
+        for species, foot_name in (("camel", "pad"), ("camel_juvenile", "pad"),
+                                   ("giraffe", "hoof")):
             spec = importlib.import_module("species." + species).make_spec()
             for end in ("front", "hind"):
                 leg = next(part for part in spec.parts if part.name == end + "_leg.L")

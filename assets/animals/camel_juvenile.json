@@ -1,0 +1,148 @@
+{
+  "bones": 36,
+  "clips": [
+    {
+      "duration": 6.0,
+      "events": [],
+      "frames": 181,
+      "loop": true,
+      "name": "idle",
+      "speed": 0.0
+    },
+    {
+      "duration": 0.8333,
+      "events": [
+        {
+          "name": "step",
+          "time": 0.0
+        },
+        {
+          "name": "step",
+          "time": 0.05
+        },
+        {
+          "name": "step",
+          "time": 0.4167
+        },
+        {
+          "name": "step",
+          "time": 0.4667
+        }
+      ],
+      "frames": 26,
+      "loop": true,
+      "name": "walk",
+      "speed": 0.72
+    },
+    {
+      "duration": 0.4667,
+      "events": [
+        {
+          "name": "step",
+          "time": 0.0
+        },
+        {
+          "name": "step",
+          "time": 0.028
+        },
+        {
+          "name": "step",
+          "time": 0.2333
+        },
+        {
+          "name": "step",
+          "time": 0.2613
+        }
+      ],
+      "frames": 15,
+      "loop": true,
+      "name": "trot",
+      "speed": 1.55
+    },
+    {
+      "duration": 3.0,
+      "events": [],
+      "frames": 91,
+      "loop": true,
+      "name": "eat",
+      "speed": 0.0
+    },
+    {
+      "duration": 2.4,
+      "events": [],
+      "frames": 73,
+      "loop": true,
+      "name": "drink",
+      "speed": 0.0
+    },
+    {
+      "duration": 8.0,
+      "events": [],
+      "frames": 241,
+      "loop": true,
+      "name": "rest",
+      "speed": 0.0
+    },
+    {
+      "duration": 8.0,
+      "events": [],
+      "frames": 241,
+      "loop": true,
+      "name": "sleep",
+      "speed": 0.0
+    },
+    {
+      "duration": 2.6,
+      "events": [
+        {
+          "name": "call",
+          "time": 0.572
+        }
+      ],
+      "frames": 79,
+      "loop": false,
+      "name": "vocalize",
+      "speed": 0.0
+    },
+    {
+      "duration": 10.0,
+      "events": [],
+      "frames": 301,
+      "loop": true,
+      "name": "ruminate",
+      "speed": 0.0
+    }
+  ],
+  "generator": "tools/animals (zoogen)",
+  "license": "MIT",
+  "meta": {
+    "activity_clips": {
+      "ruminate": "ruminate"
+    },
+    "age_shape": "Calf: low humps, slim body, shorter face, larger eyes and pads",
+    "body_length_m": 1.65,
+    "common_name": "Bactrian camel",
+    "relative_height": 0.6,
+    "roughness": 0.94,
+    "scientific_name": "Camelus bactrianus",
+    "shoulder_height_m": 1.26,
+    "variant": "juvenile",
+    "variant_of": "camel"
+  },
+  "name": "camel_juvenile",
+  "skeleton_bounds_animal_space": {
+    "max": [
+      0.9855,
+      0.168,
+      1.651
+    ],
+    "min": [
+      -0.756,
+      -0.168,
+      0.0
+    ]
+  },
+  "texture": 1024,
+  "triangles": 20640,
+  "vertices": 10342
+}

@@ -207,7 +207,7 @@ tests pass. Nobody listened to the audio; preserve that qualification.
 - First-generation stylised models still: wolf, camel, meerkat, ostrich, kangaroo; bears are
   sculpt-based but crude (`docs/ANIMALS.md`; pipeline in `tools/animals/`, its tests
   `python3 -m unittest discover -s tools/animals/tests`, about 10 minutes).
-- No juvenile model for camel, kangaroo, flamingo (drawn as scaled
+- No juvenile model for kangaroo or flamingo (drawn as scaled
   adults); the brown/polar bear cub models exist but are unused (bears live as pairs).
 - `wolf_juvenile` is now a real older-pup variant rather than a scaled adult: 0.46 m shoulder,
   shorter body and muzzle, broader skull, larger eyes, ears and paws, lighter coat, 15,528
@@ -231,6 +231,14 @@ tests pass. Nobody listened to the audio; preserve that qualification.
   identical, the production chick matches an independent fresh export, and all 110 pipeline
   tests pass. A real habitat run loaded the variant and selected four-month-old Anika; the
   inspected evidence is `docs/evidence/ostrich-juvenile-j3-2026-11-20.jpg` (J3, 2026-11-20).
+- `camel_juvenile` now replaces the scaled adults used for the two young animals at Red Dune:
+  1.26 m shoulder, a slimmer barrel, shorter neck and face, larger head, eyes, ears and pads,
+  low developing humps and a lighter coat. It has 20,640 triangles, 36 bones and nine clips,
+  retaining the adult's dedicated `ruminate` activity with calf-scaled locomotion. The adult
+  export remained byte-for-byte identical, the production calf matches an independent final
+  export, all 111 pipeline tests and all 267 active CTest cases pass, and a real habitat run loaded
+  the variant and selected nine-month-old Ivo. The inspected evidence is
+  `docs/evidence/camel-juvenile-j4-2026-11-20.jpg` (J4, 2026-11-20).
 - Dedicated clips now cover meerkat sentry/dig, penguin and flamingo preening, flamingo filter
   feeding, camel and giraffe rumination, ostrich and elephant dust-bathing, and shallow wallowing
   for bears, tigers and rhinoceroses (elephants reuse their scoop/toss as a wet toss). Penguin
