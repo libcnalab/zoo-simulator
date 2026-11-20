@@ -16,6 +16,8 @@ namespace zoo {
 inline constexpr const char* kSaveFormat = "zoo-simulator-save";
 // Version 2 reserves stand-off ground; old readers must not reinterpret it as habitats.
 inline constexpr int kSaveVersion = 2;
+/// Derived summary cache beside a save. Missing or stale files fall back to the save itself.
+inline constexpr const char* kSaveSummarySuffix = ".summary";
 
 /// What a load menu shows about a saved game without loading it.
 struct SaveSummary {

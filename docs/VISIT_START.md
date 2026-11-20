@@ -34,6 +34,11 @@ In matched one-frame software-GL runs, the fresh path built and filled in 2.58 s
 different crowd setting produced a separate 1,720,917-byte state and hash. Truncating that entry
 to invalid JSON made the next run log the damage, rebuild it and reproduce its prior hash.
 
+The separate J28 save-summary sidecar also applies to these files through the core save API,
+although visit-cache files are never enumerated in the load menu. `VisitStartCost` now reports
+both a deliberately uncached summary (24.1--24.4 ms for this 2,374 KiB file) and the repaired
+sidecar path (34--50 microseconds); it removes both diagnostic files after the run.
+
 ## Method and baseline
 
 Measured on this machine on 2026-11-13 with the existing compiler, Release, no sanitizers,

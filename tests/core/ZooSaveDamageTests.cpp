@@ -267,6 +267,8 @@ TEST(ZooSaveDamageTests, TruncatedFilesAreRefused) {
     EXPECT_FALSE(error.empty());
     EXPECT_FALSE(std::filesystem::exists(path + "/below-a-file/save.zoo.tmp"));
     std::filesystem::remove(path);
+    std::filesystem::remove(path + kSaveSummarySuffix);
+    std::filesystem::remove(path + kSaveSummarySuffix + ".tmp");
 }
 
 TEST(ZooSaveDamageTests, FlippedBytesAreRefusedOrHarmless) {

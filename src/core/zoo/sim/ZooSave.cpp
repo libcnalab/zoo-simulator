@@ -2,9 +2,11 @@
 #include "zoo/sim/ZooSaveJson.hpp"
 
 #include <algorithm>
+#include <cstdint>
 #include <cstdio>
 #include <filesystem>
 #include <fstream>
+#include <optional>
 #include <set>
 #include <stdexcept>
 #include <utility>
@@ -420,9 +422,16 @@ std::unique_ptr<Zoo> ZooFromJson(const Json& json, const Catalog& catalog, const
     }
 }
 
+namespace {
+
+void WriteSummarySidecar(const std::string& path, const Json& save) noexcept;
+
+}  // namespace
+
 bool SaveZoo(const Zoo& zoo, const std::string& path, std::string* error) {
     const std::string temporary = path + ".tmp";
     try {
+        const Json document = ZooToJson(zoo);
         const std::filesystem::path target(path);
         if (target.has_parent_path()) {
             std::filesystem::create_directories(target.parent_path());
@@ -433,7 +442,7 @@ bool SaveZoo(const Zoo& zoo, const std::string& path, std::string* error) {
                 SetError(error, "Cannot write " + temporary + ".");
                 return false;
             }
-            out << ZooToJson(zoo).dump();
+            out << document.dump();
             out.flush();
             if (!out) {
                 SetError(error, "Writing " + temporary + " failed (disk full?).");
@@ -441,6 +450,7 @@ bool SaveZoo(const Zoo& zoo, const std::string& path, std::string* error) {
             }
         }
         std::filesystem::rename(temporary, target);
+        WriteSummarySidecar(path, document);
     } catch (const std::exception& e) {
         std::error_code ignored;
         std::filesystem::remove(temporary, ignored);
@@ -451,6 +461,28 @@ bool SaveZoo(const Zoo& zoo, const std::string& path, std::string* error) {
 }
 
 namespace {
+
+constexpr const char* kSummaryFormat = "zoo-simulator-save-summary";
+constexpr int kSummaryVersion = 1;
+constexpr std::uintmax_t kMaxSummaryBytes = 64U * 1024U;
+
+struct FileStamp {
+    std::uintmax_t size = 0;
+    std::int64_t written = 0;
+};
+
+std::optional<FileStamp> Stamp(const std::string& path) {
+    std::error_code failed;
+    const std::uintmax_t size = std::filesystem::file_size(path, failed);
+    if (failed) {
+        return std::nullopt;
+    }
+    const auto written = std::filesystem::last_write_time(path, failed);
+    if (failed) {
+        return std::nullopt;
+    }
+    return FileStamp{size, static_cast<std::int64_t>(written.time_since_epoch().count())};
+}
 
 bool ReadJsonFile(const std::string& path, Json& out, std::string* error) {
     std::ifstream in(path, std::ios::binary);
@@ -473,6 +505,71 @@ bool ReadJsonFile(const std::string& path, Json& out, std::string* error) {
     return true;
 }
 
+void WriteSummarySidecar(const std::string& path, const Json& save) noexcept {
+    const std::string sidecar = path + kSaveSummarySuffix;
+    const std::string temporary = sidecar + ".tmp";
+    try {
+        const std::optional<FileStamp> stamp = Stamp(path);
+        if (!stamp || !save.is_object() || !save.contains("format") || !save.contains("version") ||
+            !save.contains("summary")) {
+            return;
+        }
+        const Json summary{{"format", kSummaryFormat},
+                           {"version", kSummaryVersion},
+                           {"save_size", stamp->size},
+                           {"save_time", stamp->written},
+                           {"save", Json{{"format", save.at("format")},
+                                         {"version", save.at("version")},
+                                         {"summary", save.at("summary")}}}};
+        {
+            std::ofstream out(temporary, std::ios::binary | std::ios::trunc);
+            if (!out) {
+                return;
+            }
+            out << summary.dump();
+            out.flush();
+            if (!out) {
+                std::error_code ignored;
+                std::filesystem::remove(temporary, ignored);
+                return;
+            }
+        }
+        std::error_code ignored;
+        std::filesystem::remove(sidecar, ignored);
+        std::filesystem::rename(temporary, sidecar);
+    } catch (...) {
+        std::error_code ignored;
+        std::filesystem::remove(temporary, ignored);
+    }
+}
+
+bool ReadSummarySidecar(const std::string& path, SaveSummary& out) {
+    const std::optional<FileStamp> stamp = Stamp(path);
+    if (!stamp) {
+        return false;
+    }
+    std::error_code failed;
+    const std::uintmax_t sidecarSize = std::filesystem::file_size(path + kSaveSummarySuffix, failed);
+    if (failed || sidecarSize > kMaxSummaryBytes) {
+        return false;
+    }
+    Json summary;
+    if (!ReadJsonFile(path + kSaveSummarySuffix, summary, nullptr)) {
+        return false;
+    }
+    try {
+        if (!summary.is_object() || summary.at("format").get<std::string>() != kSummaryFormat ||
+            summary.at("version").get<int>() != kSummaryVersion ||
+            summary.at("save_size").get<std::uintmax_t>() != stamp->size ||
+            summary.at("save_time").get<std::int64_t>() != stamp->written) {
+            return false;
+        }
+        return SummaryFromJson(summary.at("save"), out, nullptr);
+    } catch (...) {
+        return false;
+    }
+}
+
 }  // namespace
 
 std::unique_ptr<Zoo> LoadZoo(const std::string& path, const Catalog& catalog, const SpeciesCatalog& species,
@@ -485,11 +582,18 @@ std::unique_ptr<Zoo> LoadZoo(const std::string& path, const Catalog& catalog, co
 }
 
 bool ReadSaveSummary(const std::string& path, SaveSummary& out, std::string* error) {
+    if (ReadSummarySidecar(path, out)) {
+        return true;
+    }
     Json json;
     if (!ReadJsonFile(path, json, error)) {
         return false;
     }
-    return SummaryFromJson(json, out, error);
+    if (!SummaryFromJson(json, out, error)) {
+        return false;
+    }
+    WriteSummarySidecar(path, json);
+    return true;
 }
 
 }  // namespace zoo

@@ -83,6 +83,8 @@ TEST(ZooSaveTests, FilesAreWrittenWholeAndSummarised) {
     std::string error;
     ASSERT_TRUE(SaveZoo(*zoo, path, &error)) << error;
     EXPECT_FALSE(std::filesystem::exists(path + ".tmp"));
+    EXPECT_TRUE(std::filesystem::exists(path + kSaveSummarySuffix));
+    EXPECT_FALSE(std::filesystem::exists(path + kSaveSummarySuffix + ".tmp"));
 
     SaveSummary summary;
     ASSERT_TRUE(ReadSaveSummary(path, summary, &error)) << error;
@@ -93,11 +95,70 @@ TEST(ZooSaveTests, FilesAreWrittenWholeAndSummarised) {
     EXPECT_EQ(summary.balance, zoo->Accounts().Balance());
     EXPECT_EQ(summary.day, zoo->Time().Day());
 
+    // The sidecar is only a derived cache. Losing it must neither lose nor invalidate the save,
+    // and the successful fallback repairs it for the next load-menu visit.
+    ASSERT_TRUE(std::filesystem::remove(path + kSaveSummarySuffix));
+    error.clear();
+    ASSERT_TRUE(ReadSaveSummary(path, summary, &error)) << error;
+    EXPECT_EQ(summary.name, "Save Me");
+    EXPECT_TRUE(std::filesystem::exists(path + kSaveSummarySuffix));
+
     const std::unique_ptr<Zoo> loaded =
         LoadZoo(path, testdata::GameCatalog(), testdata::GameSpecies(), &error);
     ASSERT_NE(loaded, nullptr) << error;
     EXPECT_TRUE(zoo->SameState(*loaded));
     std::filesystem::remove(path);
+    std::filesystem::remove(path + kSaveSummarySuffix);
+}
+
+TEST(ZooSaveTests, StaleOrDamagedSummarySidecarsAreIgnoredAndRepaired) {
+    const std::unique_ptr<Zoo> zoo = LivedInZoo();
+    const std::string path = TempFile("stale-summary.zoo");
+    const std::string sidecar = path + kSaveSummarySuffix;
+    std::string error;
+    ASSERT_TRUE(SaveZoo(*zoo, path, &error)) << error;
+
+    // Simulate another program replacing the save while leaving our derived summary behind. The
+    // changed file size makes the stamp stale, so the authoritative save must win.
+    nlohmann::json replacement;
+    {
+        std::ifstream in(path, std::ios::binary);
+        ASSERT_TRUE(in.good());
+        in >> replacement;
+    }
+    replacement["summary"]["name"] = "A Manually Replaced Zoo";
+    {
+        std::ofstream out(path, std::ios::binary | std::ios::trunc);
+        out << replacement.dump();
+        ASSERT_TRUE(out.good());
+    }
+    SaveSummary summary;
+    ASSERT_TRUE(ReadSaveSummary(path, summary, &error)) << error;
+    EXPECT_EQ(summary.name, "A Manually Replaced Zoo");
+
+    // Malformed cache data has the same semantics as no cache data and is repaired as well.
+    std::ofstream(sidecar, std::ios::binary | std::ios::trunc) << "not json";
+    error.clear();
+    ASSERT_TRUE(ReadSaveSummary(path, summary, &error)) << error;
+    EXPECT_EQ(summary.name, "A Manually Replaced Zoo");
+    nlohmann::json repaired;
+    {
+        std::ifstream in(sidecar, std::ios::binary);
+        ASSERT_TRUE(in.good());
+        EXPECT_NO_THROW(in >> repaired);
+    }
+    EXPECT_EQ(repaired.value("format", std::string()), "zoo-simulator-save-summary");
+
+    // A sidecar is expected to be tiny. Do not let an unrelated oversized file make the menu
+    // allocate and parse it; use the authoritative save and replace it with a small cache.
+    std::ofstream(sidecar, std::ios::binary | std::ios::trunc) << std::string(64U * 1024U + 1U, 'x');
+    error.clear();
+    ASSERT_TRUE(ReadSaveSummary(path, summary, &error)) << error;
+    EXPECT_EQ(summary.name, "A Manually Replaced Zoo");
+    EXPECT_LT(std::filesystem::file_size(sidecar), 64U * 1024U);
+
+    std::filesystem::remove(path);
+    std::filesystem::remove(sidecar);
 }
 
 TEST(ZooSaveTests, RefusesWhatIsNotASave) {
@@ -114,6 +175,7 @@ TEST(ZooSaveTests, RefusesWhatIsNotASave) {
     SaveSummary summary;
     EXPECT_FALSE(ReadSaveSummary(garbage, summary, &error));
     std::filesystem::remove(garbage);
+    std::filesystem::remove(garbage + kSaveSummarySuffix);
 
     error.clear();
     EXPECT_EQ(ZooFromJson(nlohmann::json{{"format", "something-else"}, {"version", 1}},

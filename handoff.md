@@ -262,6 +262,16 @@ whatever you take up (`docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `docs/V
   rejected and rebuilt to its earlier hash. All 273 active C++/game CTest cases pass; together with
   the unchanged animation pipeline, 274 active tests pass and 21 diagnostics are disabled
   (J27, 2026-11-20).
+- J28 removes full-save parsing from the ordinary load-menu path. Every successful `SaveZoo`
+  writes a small derived `<save>.summary` after the authoritative file is committed; its exact
+  size and file timestamp reject stale data. Missing, damaged or stale sidecars fall back to the
+  full validated save, then repair themselves; oversized sidecars are bounded before parsing, and
+  a sidecar write failure never fails the save. On the 2,374 KiB Visitor Zoo diagnostic, forced
+  cold reads took 24.1--24.4 ms and cached reads 34--50 microseconds (about 500--700x faster).
+  New tests cover creation, loss, staleness,
+  corruption, repair and interaction with truncated saves (J28, 2026-11-20).
+  The full suite passes: 275 active tests including the six-minute animation pipeline, with 21
+  diagnostics disabled as intended.
 - The stopped G7c audio audit is recovered and finished. Calls now follow `Vocalize`, social,
   play and documented feeding cues rather than a timer; takes do not repeat immediately, spatial
   pan is capped at 0.60, birds fade with daylight, crowd level follows its people, and footsteps

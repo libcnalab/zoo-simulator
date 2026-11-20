@@ -172,6 +172,7 @@ void PruneVisitCaches(const std::filesystem::path& directory) {
     constexpr std::size_t kRetainedVisitCaches = 8;
     for (std::size_t index = kRetainedVisitCaches; index < entries.size(); ++index) {
         std::filesystem::remove(entries[index].path, failed);
+        std::filesystem::remove(entries[index].path.string() + zoo::kSaveSummarySuffix, failed);
     }
 }
 

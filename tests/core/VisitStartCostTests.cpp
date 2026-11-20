@@ -53,16 +53,23 @@ TEST(VisitStartCost, DISABLED_BuildingAndFillingAgainstLoadingASave) {
         const double read = Since(began);
         ASSERT_NE(loaded, nullptr) << error;
         EXPECT_EQ(loaded->StateHash(), zoo.StateHash());
+        // Measure both paths: an old/moved save without its derived cache, then the menu's normal
+        // cached read after that fallback repaired the sidecar.
+        std::filesystem::remove(path + kSaveSummarySuffix);
         began = std::chrono::steady_clock::now();
         SaveSummary summary;
         ASSERT_TRUE(ReadSaveSummary(path, summary, &error)) << error;
-        const double summarised = Since(began);
+        const double summarisedCold = Since(began);
+        began = std::chrono::steady_clock::now();
+        ASSERT_TRUE(ReadSaveSummary(path, summary, &error)) << error;
+        const double summarisedCached = Since(began);
         std::cout << "STARTCOST round " << round << ": world " << made << " s, script " << built
                   << " s, fill " << filled << " s = " << made + built + filled << " s | save " << saved
-                  << " s, load " << read << " s, summary only " << summarised << " s, file "
-                  << std::filesystem::file_size(path) / 1024 << " KiB\n";
+                  << " s, load " << read << " s, summary cold " << summarisedCold << " s, summary cached "
+                  << summarisedCached << " s, file " << std::filesystem::file_size(path) / 1024 << " KiB\n";
     }
     std::filesystem::remove(path);
+    std::filesystem::remove(path + kSaveSummarySuffix);
 }
 
 }  // namespace

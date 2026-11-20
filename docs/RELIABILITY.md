@@ -229,12 +229,17 @@ kind of error; for UBSan see the caveat above.
   shows as SaveZoo's error, as the refused-save run shows) and a failed pose write (silent: the
   next load starts at the entrance). `ListSaves` stops at the first file-system error of the
   directory walk and shows the saves read so far.
-- **`ReadSaveSummary` parses the whole file.** For the list in the pause menu every save is read
-  in full: 0.10 to 0.26 s each for a 2.3 MB visit under today's load (measured by
-  `VisitStartCost`, below), as long as loading it. Ten saves are a second or two of a frozen
-  frame when the list opens. Proposal, not done (it is the save format's business, which other
-  tasks edit today): write the summary as a small file of its own beside the save, as the pose
-  is, and fall back to the full parse when it is missing.
+- **J28: save-list summaries no longer parse the whole save.** `SaveZoo` writes a small derived
+  `<save>.summary` sidecar after the authoritative save has been atomically committed. Its saved
+  file size and exact file-system timestamp bind it to that save; a missing, stale, malformed,
+  unsupported or implausibly large sidecar is ignored, the full save is parsed, and a successful
+  parse repairs the sidecar. Failure to write this cache never fails or damages the save. It is
+  not itself a save and `ListSaves` does not display it. On the current 2,374 KiB Visitor Zoo
+  save, three diagnostic rounds took 24.1--24.4 ms for the forced cold fallback and 34--50
+  microseconds for the normal cached read (roughly 500--700x faster). The earlier 0.10--0.26 s
+  figures included substantially noisier machine load. Regressions cover normal creation,
+  missing-cache fallback, stale stamps,
+  malformed/oversized cache data, self-repair and truncated authoritative saves.
 
 **Loading while a visit runs** (work item 6): `tests/game/visit_save_load.script` saves from the
 pause menu, loads that save, walks, loads it again, saves with F5 and quits through the menu.
@@ -541,11 +546,10 @@ measurement.
    keeps both remedies when cna-engine is corrected: the guard costs 4 microseconds a frame and
    is harmless on a correct engine; `stepHeight = 0` should stay as long as the world has no
    ledges.
-2. **The summary file for saves and the chunk images:** proposals above, not done.
-3. **Animals that breed during a visit:** J26 resolves the welfare failure by reserving nursery
+2. **Animals that breed during a visit:** J26 resolves the welfare failure by reserving nursery
    capacity while retaining young animals as something to see. The separate calendar question
    remains: animal life still advances after the visitor clock stops at 15:30.
-4. **What this audit did not get to**, in the order it would be done: the rest of the sanitized
+3. **What this audit did not get to**, in the order it would be done: the rest of the sanitized
    game runs, above all the scripted visit with its loads; the core suite once more with
    `halt_on_error=1` for UBSan; the start by phase, the memory by kind and the bench in Release;
    the pictures of the wall and of the refused save.
