@@ -189,8 +189,8 @@ which says nothing); the sound by ear; a long play session by a person.
 - No species has a swimming clip: a penguin or a polar bear in its pool is drawn with its
   walking and standing clips.
 - Ostrich, kangaroo and polar bear have no call recorded; they are silent.
-- Kangaroo and flamingo young are still scaled adults; the other young animals
-  used in the Visitor Zoo have dedicated variants (`docs/ANIMALS.md`).
+- Flamingo young are still scaled adults; the other young animals used in the Visitor Zoo have
+  dedicated variants (`docs/ANIMALS.md`).
 - The resting poses of the zebra and the elephant (forequarters down, head up) look stiff.
 - The ground texture is soft when one looks straight down; distant trees are simple.
 - No third-person view (the brief called it optional).

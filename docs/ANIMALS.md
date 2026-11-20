@@ -45,7 +45,7 @@ python3 -m unittest discover -s tools/animals/tests
 | `zoogen/sculpt.py`, `bear.py` on a prepared third-party sculpt, rigged by us (below) | brown_bear, brown_bear_juvenile, polar_bear, polar_bear_juvenile |
 | `zoogen/quadruped.py`, `wild_quadruped.py`, `anatomy.py` | wolf, wolf_juvenile, camel, camel_juvenile, meerkat, meerkat_juvenile |
 | `zoogen/birdscan.py` on a prepared third-party scan or sculpt, rigged by us (below) | penguin, penguin_juvenile, flamingo |
-| `zoogen/biped.py` | ostrich, ostrich_juvenile, kangaroo |
+| `zoogen/biped.py` | ostrich, ostrich_juvenile, kangaroo, kangaroo_juvenile |
 
 Each has the same eight clips, which the game picks from what the animal is doing: `idle`,
 `walk`, `trot` (the fast gait, a hop for the kangaroo), `eat`, `drink`, `rest`, `sleep`,
@@ -123,6 +123,25 @@ adult comparison, close calf viewer, four shape views and habitat frame are in
 `evidence/camel-juvenile-j4-2026-11-20.jpg`. Its age silhouette is distinct, but it deliberately
 inherits the smooth first-generation lofted camel: the coat has no normal map, the pads have no
 individual nails and the face remains simple up close.
+
+### Red kangaroo joey (2026-11-20)
+
+`kangaroo_juvenile` replaces the uniformly scaled adults used for the 0.65- and 0.7-year-old
+joeys at Kangaroo Grove. The 1.2-year-old animal is already older than half the species' age of
+maturity and correctly keeps the adult model. The dedicated 0.89 m joey has a shorter face,
+proportionally larger head, eyes, ears and long feet, a slimmer body and less muscular thighs and
+tail. Its separate grey-brown coat and pale underside distinguish it from the adults' richer red
+coat. The crawl is 0.58 m/s and the synchronized two-foot hop is 2.2 m/s. The model has 16,304
+triangles, 28 bones and the standard eight clips.
+
+The juvenile crawl remains supported on the hands, long feet and tail, while both hind feet leave
+and meet the ground together during the hop. A fresh adult export remained byte-for-byte
+identical after the opt-in generator change, and the production joey matches an independent fresh
+export. A real Kangaroo Grove run loaded the variant and selected eight-month-old Nadia. The
+same-camera comparison, four shape views and habitat frame are in
+`evidence/kangaroo-juvenile-j5-2026-11-20.jpg`. The silhouette now reads as a joey, but it still
+inherits the smooth first-generation kangaroo: the fur is painted without a normal map, the paws
+have no separate digits and the face remains simple up close.
 
 ### Big cats from a sculpt (2026-11-13)
 

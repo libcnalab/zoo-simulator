@@ -46,6 +46,7 @@ loudspeaker stays muted and nobody has listened to any of it.
 | Meerkat pups with juvenile proportions | both two-month-old animals at Meerkat Lookout now use a dedicated 0.17 m pup: rounder skull, shorter face, larger eyes, ears and paws, lighter coat and pup-scaled locomotion; its sentry and digging clips retain their grounded feet and tail | `docs/ANIMALS.md`, `evidence/meerkat-juvenile-j2-2026-11-20.jpg` |
 | Ostrich chicks instead of miniature adult males | all three four-month-old birds at Ostrich Rise now use a dedicated 1.13 m chick: shorter neck and face, larger round head, eyes and feet, compact wings and tail, brown striped down, chick-scaled locomotion and a retained dust-bathing clip | `docs/ANIMALS.md`, `evidence/ostrich-juvenile-j3-2026-11-20.jpg` |
 | Camel calves with developing humps | both young animals at Red Dune now use a dedicated 1.26 m calf: a slimmer body, shorter neck and face, larger head, eyes, ears and pads, a lighter coat, low developing humps, shorter-stride locomotion and the retained cud-chewing clip | `docs/ANIMALS.md`, `evidence/camel-juvenile-j4-2026-11-20.jpg` |
+| Kangaroo joeys with juvenile proportions | the two joeys below half the age of maturity at Kangaroo Grove now use a dedicated 0.89 m model: shorter face, larger head, eyes, ears and feet, slimmer body, less muscular tail and thighs, a grey-brown coat, joey-scaled crawling and synchronized hopping | `docs/ANIMALS.md`, `evidence/kangaroo-juvenile-j5-2026-11-20.jpg` |
 
 ### Light from the sky and the ground (2026-11-13)
 
@@ -85,9 +86,8 @@ where an animal wades. Penguins swim and float with their own clips now, and pol
 
 1. Animals: five of fifteen species (wolf, camel, meerkat, ostrich, kangaroo) are still the stylised first generation; the bears are sculpt-based but crude
    (`docs/ANIMALS.md`). The cats are believable now but not photographs (the tiger's cheek
-   ruff reads as a grey comb, the mane's cards show close up). Kangaroo young and flamingo
-   juveniles have no juvenile model and are drawn as
-   scaled adults.
+   ruff reads as a grey comb, the mane's cards show close up). Flamingo juveniles have no
+   juvenile model and are drawn as scaled adults.
 2. Habitat fronts: the catalog has no dry moat or ha-ha. Trees keep the planted strip's depth
    behind the barrier except where that would cross the species' vegetation welfare band (Rhino
    Hollow and Red Dune retain slender front trees; their massive trunks are still set back).

@@ -17,6 +17,8 @@ from zoogen.rig import Clip, Leg, Pose, Rig
 TAIL = [(-.24, 0, .60), (-.48, 0, .40), (-.72, 0, .22),
         (-.96, 0, .09), (-1.20, 0, .045), (-1.36, 0, .030)]
 CONTACT = {"L": .025, "R": .025, "FL": .040, "FR": .040}
+JUVENILE_SCALE = .55
+JUVENILE_TAIL = .88
 
 
 def _skeleton():
@@ -106,6 +108,151 @@ def paint(ctx):
     color *= (.92 + .13 * grain)[..., None]
     color = nz.mix(color, np.array([.045, .032, .022]), ctx.tag("eye") + ctx.tag("nose"))
     return color
+
+
+def paint_juvenile(ctx):
+    # Evaluate markings in adult coordinates so their scale and placement remain coherent.
+    P = ctx.P / JUVENILE_SCALE
+    grey = np.array([.48, .36, .27])
+    pale = np.array([.78, .68, .54])
+    grain = nz.fbm(P * [2, 3, 5], 70, 3, seed=89)
+    front = nz.smoothstep(-.03, .12, P[..., 0]) * nz.smoothstep(-.2, .75, ctx.N[..., 0])
+    color = nz.mix(grey, pale, front * .72)
+    limb_pale = ctx.tag("limb") * (.18 + .30 * nz.smoothstep(.55, .25, P[..., 2]))
+    color = nz.mix(color, pale * .94, limb_pale + ctx.tag("foot") * .50)
+    muzzle_mask = ctx.tag("head") * nz.smoothstep(.36, .49, P[..., 0])
+    color = nz.mix(color, pale, muzzle_mask)
+    cheek_height = 1.345 - .17 * (P[..., 0] - .31)
+    cheek = ctx.tag("head") * nz.smoothstep(.075, .045, np.abs(P[..., 0] - .34))
+    dark = cheek * nz.smoothstep(.012, .005, np.abs(P[..., 2] - cheek_height))
+    light = cheek * nz.smoothstep(.012, .005, np.abs(P[..., 2] - (cheek_height - .027)))
+    color = nz.mix(color, np.array([.27, .20, .16]), dark)
+    color = nz.mix(color, np.array([.88, .80, .68]), light)
+    inner_ear = ctx.tag("ear") * nz.smoothstep(-.1, .6, ctx.N[..., 0])
+    color = nz.mix(color, np.array([.48, .31, .29]), inner_ear)
+    color *= (.92 + .13 * grain)[..., None]
+    color = nz.mix(color, np.array([.045, .032, .022]), ctx.tag("eye") + ctx.tag("nose"))
+    return color
+
+
+def _juvenile_shape(spec):
+    scale = JUVENILE_SCALE
+    for bone in spec.bones:
+        bone.head = np.asarray(bone.head, dtype=float) * scale
+        bone.tail = np.asarray(bone.tail, dtype=float) * scale
+    for part in spec.parts:
+        for ring in part.rings:
+            ring.c *= scale
+            ring.ry *= scale
+            ring.up *= scale
+            ring.dn *= scale
+        if part.chain is not None:
+            part.chain = [(name, np.asarray(head) * scale, np.asarray(tail) * scale)
+                          for name, head, tail in part.chain]
+        if part.rough is not None:
+            part.rough = (part.rough[0] * scale, part.rough[1] / scale)
+
+    # A young-at-foot joey has a shorter muzzle, large sensory features and feet, and has not
+    # yet developed the buck's massive thighs and tail. Keep the long hind-limb proportions.
+    face_pivot = np.array([.17, 0, 1.335]) * scale
+
+    def shorten_face(point):
+        point[0] = face_pivot[0] + .72 * (point[0] - face_pivot[0])
+
+    head = next(bone for bone in spec.bones if bone.name == "head")
+    shorten_face(head.tail)
+    for part in spec.parts:
+        if part.name in {"deer_head", "nose", "eye.L"}:
+            for ring in part.rings:
+                shorten_face(ring.c)
+        if part.name == "deer_head":
+            for ring in part.rings:
+                ring.ry *= 1.25
+                ring.up *= 1.23
+                ring.dn *= 1.23
+        elif part.name == "eye.L":
+            for ring in part.rings:
+                ring.ry *= 1.45
+                ring.up *= 1.45
+                ring.dn *= 1.45
+        elif part.name == "ear.L":
+            ear_base = np.array([.185, .064, 1.38]) * scale
+            for ring in part.rings:
+                ring.c[:] = ear_base + 1.12 * (ring.c - ear_base)
+                ring.ry *= 1.18
+                ring.up *= 1.18
+                ring.dn *= 1.18
+        elif part.name == "pear_body":
+            for ring in part.rings:
+                ring.ry *= .88
+                ring.up *= .90
+                ring.dn *= .90
+        elif part.name == "hind_leg.L":
+            for ring in part.rings:
+                ring.ry *= .86
+                ring.up *= .86
+                ring.dn *= .86
+        elif part.name == "long_foot.L":
+            for ring in part.rings:
+                ring.ry *= 1.22
+                ring.up *= 1.16
+                ring.dn *= 1.16
+        elif part.name == "forearm.L":
+            for ring in part.rings:
+                ring.ry *= .88
+                ring.up *= .88
+                ring.dn *= .88
+        elif part.name == "small_hand.L":
+            for ring in part.rings:
+                ring.ry *= 1.15
+                ring.up *= 1.15
+                ring.dn *= 1.15
+
+    ear_base = np.array([.185, .064, 1.38]) * scale
+    ear = next(bone for bone in spec.bones if bone.name == "ear.L")
+    ear.tail[:] = ear_base + 1.12 * (ear.tail - ear_base)
+
+    tail_base = np.asarray(TAIL[0], dtype=float) * scale
+
+    def shorten_tail(point):
+        point[:] = tail_base + JUVENILE_TAIL * (point - tail_base)
+
+    for bone in spec.bones:
+        if bone.name.startswith("tail"):
+            shorten_tail(bone.head)
+            shorten_tail(bone.tail)
+    tail_part = next(part for part in spec.parts if part.name == "muscular_tail")
+    for ring in tail_part.rings:
+        shorten_tail(ring.c)
+        ring.ry *= .72
+        ring.up *= .72
+        ring.dn *= .72
+
+    bones = {bone.name: bone for bone in spec.bones}
+    for part in spec.parts:
+        if part.chain is not None:
+            part.chain = [(name, bones[name].head.copy(), bones[name].tail.copy())
+                          for name, _, _ in part.chain]
+
+    muzzle_bone, muzzle_point = spec.rig.extra["muzzle"]
+    muzzle_point = np.asarray(muzzle_point, dtype=float) * scale
+    shorten_face(muzzle_point)
+    spec.rig.extra["muzzle"] = (muzzle_bone, muzzle_point)
+    tip = np.asarray(spec.rig.extra["support_tail_tip"], dtype=float) * scale
+    shorten_tail(tip)
+    spec.rig.extra["support_tail_tip"] = tip
+    spec.rig.extra["contact_height"] = {
+        key: height * scale for key, height in spec.rig.extra["contact_height"].items()}
+
+    spec.name = "kangaroo_juvenile"
+    spec.paint = paint_juvenile
+    spec.voxel = .005
+    spec.target_tris = 14000
+    spec.meta.update({"shoulder_height_m": .89, "body_length_m": .82,
+                      "variant_of": "kangaroo", "variant": "juvenile",
+                      "relative_height": scale,
+                      "age_shape": "Joey at foot: large head, eyes, ears and feet; slim thighs and tail",
+                      "sex": "juvenile"})
 
 
 def _stand(solver):
@@ -208,9 +355,118 @@ def _clips(solver):
     return clips
 
 
-def make_spec():
+def _juvenile_crawl(solver, phase):
+    scale = JUVENILE_SCALE
+    period, speed = .52, .58
+    heights = solver.rig.extra["contact_height"]
+    pose = Pose().move("hips", dz=-.245 * scale).r("hips", ry=55)
+    pose.r("neck1", ry=-15)
+    pose.r("head", ry=-35)
+    for key in solver.rig.legs:
+        front = key.startswith("F")
+        duty, offset = (.64, .38) if front else (.42, 0)
+        path = Gait("walk", period, speed * period * duty, duty, {},
+                    lift=(.10 if front else .07) * scale,
+                    heel_off=0, swing_pitch=0, land_pitch=0)
+        dx, dz, _, _ = foot_path(path, (phase - offset) % 1)
+        y = solver.toe_base(key)[1]
+        position = [(.49 if front else -.04) * scale + dx, y, heights[key] + dz]
+        pose.plant(key, position, pole=(-1, 0, .2) if front else (1, 0, .25))
+    duty = .64
+    tail_path = Gait("walk", period, speed * period * duty, duty, {},
+                     lift=.10 * scale, heel_off=0, swing_pitch=0, land_pitch=0)
+    dx, dz, _, _ = foot_path(tail_path, (phase - .38) % 1)
+    biped.target_chain(solver, pose, solver.rig.tail,
+                       [-1.10 * scale * JUVENILE_TAIL + dx, 0, .030 * scale + dz])
+    return pose
+
+
+def _juvenile_hop(solver, phase):
+    scale = JUVENILE_SCALE
+    period, speed, duty = .48, 2.2, .4
+    flight = max(0, (phase - duty) / (1 - duty))
+    rise = .13 * scale * math.sin(math.pi * flight) ** 2
+    pose = Pose().move("hips", dz=rise - .04 * scale - .025 * scale * math.cos(math.tau * phase))
+    pose.r("hips", ry=25).r("neck1", ry=-10).r("head", ry=-10)
+    path = Gait("trot", period, speed * period * duty, duty, {}, lift=.18 * scale,
+                heel_off=0, swing_pitch=0, land_pitch=0)
+    dx, dz, _, _ = foot_path(path, phase)
+    for key in ("L", "R"):
+        pose.plant(key, solver.toe_base(key) + [dx, 0, dz])
+    for index, bone in enumerate(solver.rig.tail):
+        pose.r(bone, ry=3 * math.sin(math.tau * phase) / (index + 1))
+    return pose
+
+
+def _juvenile_lying(solver, sleeping):
+    scale = JUVENILE_SCALE
+    pose = Pose().move("hips", dz=-.30 * scale).r("hips", ry=76).r("hips", rz=90)
+    for key in solver.rig.legs:
+        side = 1 if key.endswith("L") else -1
+        if key == "FR":
+            pose.plant(key, np.array((.53, .36, .04)) * scale, pole=(.1, .45, -1))
+        elif key == "FL":
+            pose.plant(key, np.array((.55, .25, .22)) * scale, pole=(-1, 0, .5))
+        else:
+            pose.plant(key, np.array((.02, side * .26, .025)) * scale, pole=(1, 0, .4))
+    biped.sagittal_profile(solver, pose, solver.rig.tail, [-158, -166, -173, -180, -180])
+    biped.sagittal_profile(solver, pose, ["neck1"], [-40 if sleeping else 35])
+    biped.sagittal_profile(solver, pose, ["head"], [-42 if sleeping else 5])
+    return pose
+
+
+def _juvenile_clips(solver):
+    scale = JUVENILE_SCALE
+    walk = Clip("walk", .52, lambda phase: _juvenile_crawl(solver, phase), speed=.58,
+                events=[(0, "step"), (0, "step"), (.38, "step"), (.38, "step")])
+    trot = Clip("trot", .48, lambda phase: _juvenile_hop(solver, phase), speed=2.2,
+                events=[(0, "step"), (0, "step")])
+    trot.contact_keys = ("L", "R")
+    clips = [walk, trot]
+    base_feed = _juvenile_crawl(solver, .40)
+
+    def feeding(effort):
+        pose = biped.copy_pose(base_feed)
+        pose.r("chest", ry=10 * effort)
+        pose.r("neck1", ry=55 * effort)
+        pose.r("head", ry=65 * effort)
+        biped.sagittal_profile(solver, pose, solver.rig.tail, [-145, -155, -165, -175, -180])
+        return pose
+
+    feeding_poses = {}
+    # The shorter joey muzzle meets low forage and the water surface without forcing the
+    # head joint below ground; these remain below the shared 6 cm drink-contact limit.
+    for name, height in (("eat", .058), ("drink", .055)):
+        effort = bisect_effort(lambda value: muzzle(solver, feeding(value))[2], height, name)
+        feeding_poses[name] = feeding(effort)
+    postures = {"rest": _juvenile_lying(solver, False),
+                "sleep": _juvenile_lying(solver, True), **feeding_poses}
+    for name in ("idle", "eat", "drink", "rest", "sleep", "vocalize"):
+        def pose(phase, clip_name=name):
+            angle = math.tau * phase
+            result = biped.copy_pose(postures[clip_name]) if clip_name in postures else _stand(solver)
+            if clip_name == "idle":
+                result.r("head", rz=12 * math.sin(angle))
+                for side, sign in (("L", 1), ("R", -1)):
+                    result.r("ear." + side, rz=sign * 16 * math.sin(angle + sign))
+            elif clip_name == "vocalize":
+                result.r("chest", ry=-8)
+                result.r("head", ry=-15 + 2 * math.sin(2 * angle))
+            elif clip_name in ("eat", "drink"):
+                result.r("head", rz=2 * math.sin(angle))
+            return result
+        clips.append(Clip(name, 5, pose))
+    return clips
+
+
+def make_spec(juvenile=False):
     bones, rig = _skeleton()
-    return Spec("kangaroo", bones, _parts(bones), paint=paint, voxel=.007,
-                target_tris=14500, smooth_iters=4, rig=rig, clips=_clips, key_all_locations=True,
+    spec = Spec("kangaroo", bones, _parts(bones), paint=paint, voxel=.007,
+                target_tris=14500, smooth_iters=4, rig=rig,
+                clips=_juvenile_clips if juvenile else _clips, key_all_locations=True,
                 meta={"common_name": "Red kangaroo", "scientific_name": "Osphranter rufus",
-                      "shoulder_height_m": 1.6, "body_length_m": 1.5, "sex": "male", "roughness": .9})
+                      "shoulder_height_m": 1.6, "body_length_m": 1.5,
+                      "sex": "male", "roughness": .9})
+    if juvenile:
+        _juvenile_shape(spec)
+    return spec

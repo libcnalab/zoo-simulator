@@ -1,0 +1,125 @@
+{
+  "bones": 28,
+  "clips": [
+    {
+      "duration": 0.5333,
+      "events": [
+        {
+          "name": "step",
+          "time": 0.0
+        },
+        {
+          "name": "step",
+          "time": 0.0
+        },
+        {
+          "name": "step",
+          "time": 0.2027
+        },
+        {
+          "name": "step",
+          "time": 0.2027
+        }
+      ],
+      "frames": 17,
+      "loop": true,
+      "name": "walk",
+      "speed": 0.58
+    },
+    {
+      "duration": 0.4667,
+      "events": [
+        {
+          "name": "step",
+          "time": 0.0
+        },
+        {
+          "name": "step",
+          "time": 0.0
+        }
+      ],
+      "frames": 15,
+      "loop": true,
+      "name": "trot",
+      "speed": 2.2
+    },
+    {
+      "duration": 5.0,
+      "events": [],
+      "frames": 151,
+      "loop": true,
+      "name": "idle",
+      "speed": 0.0
+    },
+    {
+      "duration": 5.0,
+      "events": [],
+      "frames": 151,
+      "loop": true,
+      "name": "eat",
+      "speed": 0.0
+    },
+    {
+      "duration": 5.0,
+      "events": [],
+      "frames": 151,
+      "loop": true,
+      "name": "drink",
+      "speed": 0.0
+    },
+    {
+      "duration": 5.0,
+      "events": [],
+      "frames": 151,
+      "loop": true,
+      "name": "rest",
+      "speed": 0.0
+    },
+    {
+      "duration": 5.0,
+      "events": [],
+      "frames": 151,
+      "loop": true,
+      "name": "sleep",
+      "speed": 0.0
+    },
+    {
+      "duration": 5.0,
+      "events": [],
+      "frames": 151,
+      "loop": true,
+      "name": "vocalize",
+      "speed": 0.0
+    }
+  ],
+  "generator": "tools/animals (zoogen)",
+  "license": "MIT",
+  "meta": {
+    "age_shape": "Joey at foot: large head, eyes, ears and feet; slim thighs and tail",
+    "body_length_m": 0.82,
+    "common_name": "Red kangaroo",
+    "relative_height": 0.55,
+    "roughness": 0.9,
+    "scientific_name": "Osphranter rufus",
+    "sex": "juvenile",
+    "shoulder_height_m": 0.89,
+    "variant": "juvenile",
+    "variant_of": "kangaroo"
+  },
+  "name": "kangaroo_juvenile",
+  "skeleton_bounds_animal_space": {
+    "max": [
+      0.2242,
+      0.0935,
+      0.876
+    ],
+    "min": [
+      -0.6741,
+      -0.0935,
+      0.0
+    ]
+  },
+  "texture": 1024,
+  "triangles": 16304,
+  "vertices": 8164
+}
