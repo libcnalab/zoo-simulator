@@ -77,11 +77,14 @@ No changes were made to object indexing, navigation algorithms, persistence or p
 ## Regression coverage and findings
 
 The tests use real definitions and the named Greenhill habitat/species plan for seeds 1 and 2.
-`ScenarioReport` has aggregate totals and problems only; it does not report a per-habitat
-occupancy roster. Tests therefore independently assert all 14 named enclosures and their
+`ScenarioReport` now includes the actual opening inventory of every named habitat as well as
+aggregate totals and problems. Tests compare that inventory with the 14 promised enclosures and
 15 resident species, including giraffes and zebras sharing Acacia Plain. With penguins omitted,
-only Penguin Cove is empty, still named and present. An explicit empty-habitat report would
-require a future `ScenarioReport` API change outside this task's ownership.
+the report explicitly names Penguin Cove with an empty resident list; no missing whole group can
+hide behind a correct aggregate count. Tests still independently assert the planned roster. The
+short and 6,000-tick hashes for seeds 1–3 remain unchanged; the complete suite passes all 292
+active cases including its 365.28-second animation pipeline, with 21 diagnostics disabled
+(J44, 2026-11-20).
 
 Board tests reproduce the game's 2.8-metre reach, nearest/gaze selection (looking directly at
 the candidate), nearest occupied enclosure within 30 metres of its tile rectangle, and
@@ -262,10 +265,10 @@ expanding the read-only scenario/build scope. Coverage and the 2,000-step observ
 were retained instead of hiding this limitation. The 600-step three-seed hash guard took
 85.31 seconds, and the two-zoo sequence comparison took 50.73 seconds.
 
-No existing public API was changed. The only added API is the requested visit-start options,
-report and function. Negative fill counts are explicitly treated as zero. Suggested follow-ups
-are a per-habitat occupancy/omission report and persistence/hash coverage for `VisitorPace`.
-All work is left uncommitted; nothing was published remotely.
+T1 changed no pre-existing public API; its only added API was the requested visit-start options,
+report and function. Negative fill counts are explicitly treated as zero. J44 later completed the
+suggested per-habitat occupancy/omission report; persistence/hash coverage for `VisitorPace`
+remains a possible follow-up. The original T1 work was left uncommitted and unpublished.
 
 ## The zoo's plan and the prop buckets (2026-11-14)
 

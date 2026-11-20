@@ -18,8 +18,8 @@
 
 namespace zoo {
 namespace {
-// ScenarioReport contains totals, not a per-habitat roster. These are the scenario's promises,
-// independent of the animals actually created (so a missing whole group cannot escape detection).
+// These are the scenario's promises, independent of the animals actually created (so a missing
+// whole group cannot escape detection). ScenarioReport is checked against them below.
 const std::map<std::string, std::vector<std::string>> kResidents{{"Meerkat Lookout", {"meerkat"}},
                                                                  {"Flamingo Lagoon", {"flamingo"}},
                                                                  {"Acacia Plain", {"giraffe", "zebra"}},
@@ -55,6 +55,27 @@ void ExpectResidents(const Zoo& zoo, bool omitPenguin = false) {
             }
         }
     }
+}
+
+void ExpectReportedResidents(const ScenarioReport& report, bool omitPenguin) {
+    ASSERT_EQ(report.habitats.size(), kResidents.size());
+    int reportedAnimals = 0;
+    for (const ScenarioHabitatReport& habitat : report.habitats) {
+        ASSERT_TRUE(kResidents.contains(habitat.name)) << habitat.name;
+        std::vector<std::string> actual;
+        for (const ScenarioResidentReport& resident : habitat.residents) {
+            EXPECT_GT(resident.animals, 0) << habitat.name << '/' << resident.species;
+            reportedAnimals += resident.animals;
+            actual.push_back(resident.species);
+        }
+        std::vector<std::string> expected = kResidents.at(habitat.name);
+        if (omitPenguin && habitat.name == "Penguin Cove") {
+            expected.clear();
+        }
+        std::sort(expected.begin(), expected.end());
+        EXPECT_EQ(actual, expected) << habitat.name;
+    }
+    EXPECT_EQ(reportedAnimals, report.animals);
 }
 
 void ExpectContained(const Zoo& zoo, bool checkProps = false) {
@@ -396,6 +417,7 @@ TEST_P(VisitorZooHabitat, ResidentsAndOmittedPenguins) {
         EXPECT_TRUE(report.problems.empty());
         EXPECT_EQ(report.enclosures, 14);
         EXPECT_EQ(report.animals, zoo.AnimalCount());
+        ExpectReportedResidents(report, omitted);
         ExpectResidents(zoo, omitted);
         ExpectContained(zoo);
         // 600 steps keep normal ASan checks short; the full morning is exercised separately.

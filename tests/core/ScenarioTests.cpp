@@ -27,6 +27,14 @@ TEST(ScenarioTests, StarterZooBuildsWithoutProblemsOnTheDefaultMap) {
     EXPECT_EQ(report.animals, 3 + 5 + 4);
     EXPECT_EQ(report.buildings, 9);
     EXPECT_GT(report.props, 80);
+    ASSERT_EQ(report.habitats.size(), 3);
+    int reportedAnimals = 0;
+    for (const ScenarioHabitatReport& habitat : report.habitats) {
+        ASSERT_EQ(habitat.residents.size(), 1) << habitat.name;
+        EXPECT_GT(habitat.residents.front().animals, 0) << habitat.name;
+        reportedAnimals += habitat.residents.front().animals;
+    }
+    EXPECT_EQ(reportedAnimals, report.animals);
     EXPECT_EQ(zoo.Accounts().Balance(), before) << "the starter zoo is a gift";
     EXPECT_EQ(zoo.AnimalCount(), 12);
 }

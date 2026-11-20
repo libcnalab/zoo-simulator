@@ -2005,7 +2005,7 @@ ScenarioReport BuildVisitorZoo(Zoo& zoo, const VisitorZooOptions& options) {
     if (gate.x - map.PropertyMin().x < 70 || map.PropertyMax().x - gate.x < 70 ||
         gate.z - map.PropertyMin().z < 145) {
         script.Problem("the Visitor Zoo needs 70 tiles beside the entrance and 145 tiles north of it");
-        return script.Report();
+        return script.Finish();
     }
     Walks(zoo, script);
     for (const HabitatPlan& plan : kHabitats) {
@@ -2025,6 +2025,6 @@ ScenarioReport BuildVisitorZoo(Zoo& zoo, const VisitorZooOptions& options) {
     // The crew a visitor sees at work (docs/KEEPERS.md). Every keeper gate opens onto a dry
     // service apron joined to the walks (StandOffWithService), so no lane is cut for them.
     zoo.Keepers().Engage(zoo.MakeEnv(), zoo.Fauna());
-    return script.Report();
+    return script.Finish();
 }
 }  // namespace zoo

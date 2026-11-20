@@ -23,6 +23,8 @@ public:
           rng_(zoo.Config().seed, 0x5ce0a210) {}
 
     ScenarioReport& Report() { return report_; }
+    /// Completes and returns the report with the actual per-habitat opening inventory.
+    ScenarioReport Finish();
     /// See Builder::Hold(): for stretches that place much and read no habitat's figures.
     void Hold() { build_.Hold(); }
     void Release() { build_.Release(); }

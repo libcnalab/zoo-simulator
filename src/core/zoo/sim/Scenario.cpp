@@ -26,7 +26,7 @@ ScenarioReport BuildStarterZoo(Zoo& zoo) {
     if (entrance.x - map.PropertyMin().x < 32 || map.PropertyMax().x - entrance.x < 33 ||
         entrance.z - map.PropertyMin().z < 52) {
         s.Problem("the map is too small for the starter zoo");
-        return s.Report();
+        return s.Finish();
     }
 
     // ---- ground and paths ---------------------------------------------------------------
@@ -160,7 +160,7 @@ ScenarioReport BuildStarterZoo(Zoo& zoo) {
     s.Park(-45, 0, 46, 60, 90, {"oak", "birch", "pine", "spruce", "willow"});
 
     s.Provision();
-    return s.Report();
+    return s.Finish();
 }
 
 }  // namespace zoo

@@ -404,6 +404,13 @@ whatever you take up (`docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `docs/V
   all 29 focused visitor/day/walk cases pass. Changed short and 6,000-tick hashes repeat twice for
   seeds 1–3; the complete suite passes all 292 active cases including the 367.09-second animation
   pipeline, with 21 diagnostics disabled (J43, 2026-11-20).
+- J44 closes T1's empty-habitat reporting follow-up. `ScenarioReport` now contains every named
+  enclosure's actual opening species/count inventory, retaining an empty entry when stocking was
+  omitted or failed. The Visitor Zoo regression compares all 14 report entries with its promised
+  15 species and explicitly sees an empty Penguin Cove in the omit-penguin variant; both seeds and
+  all four starter-scenario cases pass without changing simulation state. Short and 6,000-tick
+  hashes for seeds 1–3 remain unchanged; the complete suite passes all 292 active cases including
+  its 365.28-second animation pipeline, with 21 diagnostics disabled (J44, 2026-11-20).
 - The stopped G7c audio audit is recovered and finished. Calls now follow `Vocalize`, social,
   play and documented feeding cues rather than a timer; takes do not repeat immediately, spatial
   pan is capped at 0.60, birds fade with daylight, crowd level follows its people, and footsteps

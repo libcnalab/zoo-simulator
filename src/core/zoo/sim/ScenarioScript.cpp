@@ -16,6 +16,41 @@ TileSet UniqueTiles(const std::vector<TileCoord>& tiles) {
 }
 }  // namespace
 
+ScenarioReport Script::Finish() {
+    report_.habitats.clear();
+    for (const Enclosure& enclosure : zoo_.Habitats().All()) {
+        report_.habitats.push_back({enclosure.id, enclosure.name, {}});
+    }
+    for (const Animal& animal : zoo_.Fauna().All()) {
+        if (!animal.InWorld() || animal.health <= 0.0f || animal.species < 0 ||
+            static_cast<std::size_t>(animal.species) >= zoo_.SpeciesList().All().size()) {
+            continue;
+        }
+        const auto habitat = std::find_if(
+            report_.habitats.begin(), report_.habitats.end(),
+            [home = animal.home](const ScenarioHabitatReport& item) { return item.enclosure == home; });
+        if (habitat == report_.habitats.end()) {
+            continue;
+        }
+        const std::string& species = zoo_.SpeciesList().All()[static_cast<std::size_t>(animal.species)].id;
+        auto resident =
+            std::find_if(habitat->residents.begin(), habitat->residents.end(),
+                         [&species](const ScenarioResidentReport& item) { return item.species == species; });
+        if (resident == habitat->residents.end()) {
+            habitat->residents.push_back({species, 1});
+        } else {
+            ++resident->animals;
+        }
+    }
+    for (ScenarioHabitatReport& habitat : report_.habitats) {
+        std::sort(habitat.residents.begin(), habitat.residents.end(),
+                  [](const ScenarioResidentReport& a, const ScenarioResidentReport& b) {
+                      return a.species < b.species;
+                  });
+    }
+    return report_;
+}
+
 void Script::PathTiles(const std::vector<TileCoord>& tiles, PathKind kind) {
     std::vector<TileCoord> changed;
     for (const auto& [z, x] : UniqueTiles(tiles)) {
