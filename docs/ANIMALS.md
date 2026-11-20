@@ -50,7 +50,9 @@ python3 -m unittest discover -s tools/animals/tests
 Each has the same eight clips, which the game picks from what the animal is doing: `idle`,
 `walk`, `trot` (the fast gait, a hop for the kangaroo), `eat`, `drink`, `rest`, `sleep`,
 `vocalize`; some have activity clips beside them (`sentry`, `dig`, `preen`, `dust_bathe`,
-below). 9,000 to 34,000 triangles, 18 to 46 bones, a coat painted by the species file. The first-generation models (the last two rows) are stylised, not photorealistic; what each is weak at is listed in
+`ruminate`, `filter_feed`, below). 9,000 to 34,000 triangles, 18 to 46 bones, a coat painted
+by the species file. The first-generation models (the last two rows) are stylised, not
+photorealistic; what each is weak at is listed in
 [`PIVOT_TO_ZOO_EXPLORATION.md`](PIVOT_TO_ZOO_EXPLORATION.md).
 
 ### Big cats from a sculpt (2026-11-13)
@@ -266,8 +268,8 @@ and standing empty).
 ### Activity clips (begun 2026-11-14, verified 2026-11-20)
 
 The species routines (`ANIMAL_BEHAVIOUR.md`) give animals signature activities beyond the eight
-standard clips. Until now these stood in `idle` while the information panel said "Preening".
-Five species have clips of their own for them now, made in the pipeline
+standard clips. Until now these stood in the nearest standard pose while the information panel
+named the real activity. Dedicated clips are now made in the pipeline
 (`tools/animals/zoogen/activity.py`: keyed postures that hold and move, as an animal does):
 
 | Model | Clip | Activity | What it shows |
@@ -278,6 +280,9 @@ Five species have clips of their own for them now, made in the pipeline
 | `flamingo` | `preen` (10 s) | `preen` | on both legs, the long neck laid back over the body: the bill combs the left wing, the back, the right wing and the rump, the worked wing lifted a little |
 | `ostrich` | `dust_bathe` (10 s) | `dust_bathe` | sitting (the `rest` posture), rocking onto one side, the neck laid along the ground sweeping sand to each side, the loosened wings lifted and shaken |
 | `elephant`, `elephant_female`, `elephant_juvenile` | `dust_bathe` (16 s) | `dust_bathe` | a fore foot scrapes the earth loose, the trunk gathers it at the ground and throws it up over the forehead, once to each side, the ears flapping |
+| `camel` | `ruminate` (10 s) | `ruminate` | standing with a slow asymmetric sideways jaw grind and a small head movement |
+| `flamingo` | `filter_feed` (7 s) | `filter_feed` | the fitted inverted-bill feeding posture, sweeping a broad irregular arc through the shallows |
+| `giraffe`, `giraffe_female`, `giraffe_juvenile` | `ruminate` (10 s) | `ruminate` | standing, with a deliberate lateral cud grind slower and broader than the incidental idle chew |
 
 Coverage of every species routine's nonstandard or signature action is below. “Default” means
 the model has no dedicated clip and the renderer deliberately uses the nearest standard pose.
@@ -285,10 +290,10 @@ the model has no dedicated clip and the renderer deliberately uses the nearest s
 | Species | Routine action | Clip played now | What a visitor would expect |
 |---|---|---|---|
 | Brown bear | hot-weather `bathe` | `rest` (default) | a shallow wallow or splash; still missing |
-| Camel | `ruminate` | `rest` (manifest) | standing or lying with slow chewing; chewing is missing |
+| Camel | `ruminate` | `ruminate` | standing with a slow lateral cud grind |
 | Elephant | `dust_bathe`; hot-weather `bathe` | `dust_bathe`; `rest` (default) | scrape, gather and toss dust; a wet mud toss remains a resting pose |
-| Flamingo | `preen`; `filter_feed`; `huddle` | `preen`; `eat` (default); `rest` (manifest) | grooming is dedicated; feeding should sweep the inverted bill; huddling uses the one-leg rest |
-| Giraffe | `browse`; `ruminate` | raised `eat` (manifest); `idle` (default) | browsing reaches foliage; chewing the cud is missing |
+| Flamingo | `preen`; `filter_feed`; `huddle` | `preen`; `filter_feed`; `rest` (manifest) | grooming and the inverted-bill sweep are dedicated; huddling uses the one-leg rest |
+| Giraffe | `browse`; `ruminate` | raised `eat` (manifest); `ruminate` | browsing reaches foliage; a separate slow jaw grind shows chewing the cud |
 | Kangaroo | social rest | ordinary `rest` / `idle` | a close resting mob; no paired interaction clip |
 | Lion | social contact | `idle` (default) | rubbing or nuzzling; still missing |
 | Meerkat | `sentinel`; `dig` | `sentry`; `dig` | upright scanning with tail support; alternating fore-paw scratches |
@@ -310,8 +315,8 @@ bill tip lies on the plumage, 0.5 to 3 cm out from the scan's surface, at the he
 sitting-up watch it always was.
 
 Not made: preening for the ostrich (its routine never preens), the zebra's head-up watch (its
-`sentinel` plays `idle`, which is already head-up), `filter_feed`, `browse` for the giraffe
-beyond its `eat`, `ruminate` chewing, `bathe` wallowing, `huddle` beyond the flamingo's one leg.
+`sentinel` plays `idle`, which is already head-up), `browse` for the giraffe beyond its `eat`,
+`bathe` wallowing, `huddle` beyond the flamingo's one leg, and paired social-contact clips.
 What is weak: no sand or dust is thrown (the game has no particles for it), the elephant's toss
 reaches above the forehead rather than over the back (ten trunk joints at most 48 degrees each),
 the flamingo's bill and neck are buried in the wing when it preens there, as a real one's are, so
@@ -324,6 +329,13 @@ flamingos and four dust-bathing elephants; at 13:00 after 6,000 ticks it contain
 penguins. The corresponding habitat pictures were opened. No ostrich happened to be dust-bathing
 in 28 sampled endpoint states across several hours, ticks and seeds, so that clip was verified in
 the viewer and by the pipeline geometry test, not observed during a habitat routine.
+
+The second evidence sheet (`evidence/animal-clips-a2-2026-11-20.jpg`) shows two held phases of
+the flamingo sweep, its habitat routine, two phases of the camel jaw, all three giraffe variants
+and a giraffe routine. At deterministic endpoint states, tick 600 had four giraffes ruminating,
+tick 2,400 had ten flamingos filter-feeding and tick 6,000 had three camels ruminating. The HUD
+identified the pictured giraffe as “Chewing the cud” and the flamingo as “Sieving the shallows”.
+The sheet, its nine source frames and every viewer phase were opened after integration.
 
 ### What the game does with a model
 

@@ -9,7 +9,16 @@ import math
 
 import numpy as np
 
-from .rig import smooth
+from .rig import Pose, smooth
+
+
+def copy_pose(pose):
+    """Copies an authored posture before an activity adds its own held movement."""
+    result = Pose()
+    result.rot = dict(pose.rot)
+    result.offset = dict(pose.offset)
+    result.feet = dict(pose.feet)
+    return result
 
 
 def held(u, keys):

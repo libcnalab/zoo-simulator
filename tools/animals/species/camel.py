@@ -4,12 +4,16 @@
 The humps rise above a level back; a five-bone U-shaped neck carries the head
 above them. The limbs end in broad paired pads rather than carnivore paws.
 """
+import math
+
 import numpy as np
 
+from zoogen import activity
 from zoogen import noise as nz
 from zoogen import quadruped as quad
 from zoogen.anatomy import chain, leg_bones, set_bone, split_foot
 from zoogen.geom import Bone, Part, R
+from zoogen.rig import Clip
 from zoogen.wild_quadruped import make_wild_quadruped
 
 
@@ -111,6 +115,23 @@ def make_spec():
     spec.voxel = .014
     spec.smooth_iters = 5
     spec.meta["roughness"] = .94
-    # The game's clip for a still activity: a camel chews the cud couched.
-    spec.meta["activity_clips"] = {"ruminate": "rest"}
+    standard = spec.clips
+
+    def clips(solver):
+        generated = standard(solver)
+        idle = next(clip for clip in generated if clip.name == "idle")
+
+        def ruminate(u):
+            angle = math.tau * u
+            pose = activity.copy_pose(idle.pose(u))
+            # A slow, asymmetric side-to-side grind rather than the quick vertical bites of eat.
+            pose.r("jaw", ry=2.5 + 2.0 * math.sin(6 * angle), rz=4.5 * math.sin(6 * angle + .7))
+            pose.r("head", ry=1.2 * math.sin(angle), rz=1.5 * math.sin(2 * angle))
+            return pose
+
+        return generated + [Clip("ruminate", 10, ruminate)]
+
+    spec.clips = clips
+    # The game's clip for the camel's still cud-chewing activity.
+    spec.meta["activity_clips"] = {"ruminate": "ruminate"}
     return spec

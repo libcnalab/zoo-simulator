@@ -295,7 +295,8 @@ class BipedTests(unittest.TestCase):
             self.assertEqual(manifest["texture"], 1024)
             clips = {clip["name"]: clip for clip in manifest["clips"]}
             # Activity clips beside the standard eight: tests/test_activity_clips.py.
-            activity = {"penguin": {"preen"}, "flamingo": {"preen"}, "ostrich": {"dust_bathe"}}
+            activity = {"penguin": {"preen"}, "flamingo": {"preen", "filter_feed"},
+                        "ostrich": {"dust_bathe"}}
             self.assertEqual(set(clips),
                              {"idle", "walk", "trot", "eat", "drink", "rest", "sleep", "vocalize"}
                              | ({"swim", "float"} if species == "penguin" else set())

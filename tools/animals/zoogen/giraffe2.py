@@ -11,7 +11,7 @@ from pathlib import Path
 
 import numpy as np
 
-from . import geom, noise as nz, quadruped as quad
+from . import activity, geom, noise as nz, quadruped as quad
 from .anatomy import chain
 from .geom import Bone, Part, R, Spec
 from .rig import Clip, Leg, Pose, Rig, rot_x, rot_y, rot_z
@@ -338,7 +338,7 @@ def make_spec(variant='male'):
                 coat_identity=('Reticulated pattern repainted over the complete animal; '
                                'scan identity unverified'),
                 fast_gait='Moderate rotary gallop exported under the required name trot',
-                activity_clips={'browse': 'eat'})
+                activity_clips={'browse': 'eat', 'ruminate': 'ruminate'})
     if variant != 'male':
         meta.update(variant_of='giraffe',variant=variant,relative_height=height/5.2)
     spec = Spec(name,bones,body_parts(bones,variant),paint=partial(paint,variant=variant),texture_size=2048,
@@ -371,16 +371,25 @@ def make_clips(solver):
         clip.pose = gait_pose
         gaits.append(clip)
 
-    def idle(u):
+    def idle(u, chewing=True):
         a = 2*math.pi*u
         pose = quad.stand(solver,Pose().move('hips',dz=-.025*scale))
         pose.r('neck3',rz=2.8*math.sin(a))
         pose.r('head',rz=5*math.sin(a),ry=1.2*math.sin(2*a))
-        pose.r('jaw',rz=2.3*math.sin(7*a),ry=1.5*(1+math.sin(7*a)))
+        if chewing:
+            pose.r('jaw',rz=2.3*math.sin(7*a),ry=1.5*(1+math.sin(7*a)))
         pose.r('ear.L',rx=12*math.sin(3*a)**9)
         pose.r('ear.R',rx=-14*math.sin(5*a+.8)**9)
         pose.r('tail2',rz=8*math.sin(a)+8*math.sin(3*a)**7)
         pose.r('tail4',rz=12*math.sin(3*a-.5))
+        return pose
+
+    def ruminate(u):
+        a = 2*math.pi*u
+        pose = idle(u, chewing=False)
+        # Deliberate lateral cud grinding, slower and broader than the incidental idle chew.
+        pose.r('jaw',rz=4.0*math.sin(6*a+.5),ry=2.5+2.0*math.sin(6*a))
+        pose.r('head',ry=1.0*math.sin(a+.8))
         return pose
 
     def eat(u):
@@ -431,7 +440,8 @@ def make_clips(solver):
         return pose
 
     return [Clip('idle',8,idle),*gaits,Clip('eat',5,eat),Clip('drink',5,drink),
-            Clip('rest',8,rest),Clip('sleep',8,sleep),Clip('vocalize',2,vocalize,loop=False)]
+            Clip('rest',8,rest),Clip('sleep',8,sleep),Clip('vocalize',2,vocalize,loop=False),
+            Clip('ruminate',10,ruminate)]
 
 
 def scan_weights(vertices, bones, variant):

@@ -408,6 +408,17 @@ def flamingo_preen(solver, phase):
     return pose
 
 
+def flamingo_filter_feed(solver, feeding, phase):
+    """`filter_feed`: bill inverted at the shallow-water surface, sweeping a broad arc while
+    the bird sieves; a smaller irregular movement prevents a metronomic side-to-side loop."""
+    angle = math.tau * phase
+    pose = activity.copy_pose(feeding)
+    sweep = 28 * math.sin(2 * angle) + 7 * math.sin(5 * angle + .4)
+    activity.turn_about_vertical(solver, pose, 'neck1', sweep)
+    pose.r('head', rx=3 * math.sin(8 * angle), ry=2 * math.sin(10 * angle + .5))
+    return pose
+
+
 def flamingo_clips(solver):
     from .quadruped import bisect_effort, muzzle
     clips = [biped.gait_clip(solver, biped.Stride('walk', .7, .60, .65, .10, bob=.006, nod=2.4)),
@@ -450,6 +461,7 @@ def flamingo_clips(solver):
             return result
         clips.append(Clip(name, 5, pose))
     clips.append(Clip('preen', 10, partial(flamingo_preen, solver)))
+    clips.append(Clip('filter_feed', 7, partial(flamingo_filter_feed, solver, feeding['drink'])))
     return clips
 
 
