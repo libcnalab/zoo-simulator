@@ -131,9 +131,20 @@ fresh adult export remained byte-for-byte identical after the opt-in generator c
 production calf matches an independent final export. The game loaded the calf variant in a real
 Red Dune run and selected nine-month-old Ivo. The same-camera
 adult comparison, close calf viewer, four shape views and habitat frame are in
-`evidence/camel-juvenile-j4-2026-11-20.jpg`. Its age silhouette is distinct, but it deliberately
-inherits the smooth first-generation lofted camel: the coat has no normal map, the pads have no
-individual nails and the face remains simple up close.
+`evidence/camel-juvenile-j4-2026-11-20.jpg`. Its age silhouette is distinct.
+
+A second pass improves both ages. An anisotropic tangent-space normal map gives the flat painted
+coat longitudinal guard-hair relief while leaving the pads, eyes and new nails smooth. A fused,
+roughened loft widens the crown and sides of the neck into a winter mane, with a small forelock;
+the thin tail now ends in a four-stage rough tuft. Each broad split pad has two separate dark
+nails, mirrored across all four feet. The additions bring both models to 21,760 triangles and 36
+bones without changing their nine clips; the adult GLB is 3.50 MB and the calf 3.52 MB. Both
+production exports match independent fresh builds.
+
+The inspected same-camera comparisons and a seed-1 Red Dune run after 3,000 simulation ticks are
+in `evidence/camel-coat-j11-2026-11-20.jpg`. The adult's full humps and the calf's low developing
+humps remain clearly distinct. The underlying lofted anatomy and face are still simple rather
+than scan-based, and the coat has no individual long hair cards.
 
 ### Red kangaroo joey (2026-11-20)
 

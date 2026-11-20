@@ -100,6 +100,15 @@ whatever you take up (`docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `docs/V
   pass (21 diagnostics disabled); both viewers plus a real Wolf Wood run after 3,000 ticks were
   inspected in
   `docs/evidence/wolf-coat-j10-2026-11-20.jpg` (J10, 2026-11-20). The anatomy remains stylised.
+- Adult and juvenile Bactrian camels now have a second-pass winter coat and species details. An
+  anisotropic normal map supplies longitudinal guard-hair relief; a fused rough neck mane and
+  forelock, four-stage tail tuft and eight separate dark nails replace the flat coat, cord tail
+  and bare pads. Both models have 21,760 triangles, 36 bones and nine clips; the 3.50 / 3.52 MB
+  production GLBs match independent fresh exports. All 122 animal-pipeline tests and all 270
+  active CTest cases pass (21 diagnostics disabled). The same-camera viewers and a real Red Dune
+  run after 3,000 ticks are inspected in
+  `docs/evidence/camel-coat-j11-2026-11-20.jpg` (J11, 2026-11-20). The face and base anatomy
+  remain stylised.
 - The stopped G7c audio audit is recovered and finished. Calls now follow `Vocalize`, social,
   play and documented feeding cues rather than a timer; takes do not repeat immediately, spatial
   pan is capped at 0.60, birds fade with daylight, crowd level follows its people, and footsteps
@@ -224,8 +233,8 @@ tests pass. Nobody listened to the audio; preserve that qualification.
 
 ### 4.6 Animals
 
-- First-generation stylised anatomy still: wolf, camel, meerkat, ostrich, kangaroo; the wolf has
-  received a second-pass double coat, ruff, shoulders and tail, but is not scan-based. Bears are
+- First-generation stylised anatomy still: wolf, camel, meerkat, ostrich, kangaroo. Wolf and
+  camel have second-pass coats and silhouette details, but are not scan-based. Bears are
   sculpt-based but crude (`docs/ANIMALS.md`; pipeline in `tools/animals/`, its tests
   `python3 -m unittest discover -s tools/animals/tests`, about 10 minutes).
 - Every young animal used in the Visitor Zoo has a dedicated variant; the brown/polar bear cub

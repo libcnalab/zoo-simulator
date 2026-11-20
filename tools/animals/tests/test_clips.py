@@ -252,6 +252,47 @@ class AnatomyTests(unittest.TestCase):
         self.assertAlmostEqual(clips["walk"]["speed"], .72, delta=.02)
         self.assertAlmostEqual(clips["trot"]["speed"], 1.55, delta=.02)
 
+    def test_camels_have_a_shaggy_mane_tail_tuft_and_split_nails(self):
+        adult_mane_roughness = None
+        for species in ("camel", "camel_juvenile"):
+            spec = importlib.import_module("species." + species).make_spec()
+            parts = {part.name: part for part in spec.parts}
+            self.assertIsNotNone(spec.surface_height)
+            self.assertEqual(spec.meta["surface_detail"],
+                             "anisotropic shaggy-coat normal map")
+            self.assertIn("neck_mane", parts)
+            self.assertIn("forelock", parts)
+            self.assertEqual(len(parts["tail_tuft"].rings), 4)
+            nails = [part for part in spec.parts if "_nail." in part.name]
+            self.assertEqual(len(nails), 4)
+            self.assertTrue(all(part.mirror and part.tag == "nail" for part in nails))
+            if species == "camel":
+                adult_mane_roughness = parts["neck_mane"].rough[0]
+            else:
+                self.assertAlmostEqual(parts["neck_mane"].rough[0],
+                                       adult_mane_roughness * .60)
+
+    def test_camel_exports_carry_the_coat_normal_map_and_tangents(self):
+        root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+        for species in ("camel", "camel_juvenile"):
+            glb = os.path.join(root, "assets", "animals", species + ".glb")
+            with open(glb, "rb") as source:
+                self.assertEqual(source.read(4), b"glTF")
+                source.read(8)
+                length, _ = struct.unpack("<II", source.read(8))
+                document = json.loads(source.read(length))
+            self.assertLess(os.path.getsize(glb), 4_000_000)
+            self.assertEqual(len(document["images"]), 2)
+            self.assertIn("normalTexture", document["materials"][0])
+            for mesh in document["meshes"]:
+                for primitive in mesh["primitives"]:
+                    self.assertIn("TANGENT", primitive["attributes"])
+            with open(os.path.join(root, "assets", "animals", species + ".json")) as source:
+                manifest = json.load(source)
+            self.assertLessEqual(manifest["triangles"], 23000)
+            self.assertEqual(manifest["meta"]["surface_detail"],
+                             "anisotropic shaggy-coat normal map")
+
     def test_ostrich_chick_has_juvenile_proportions_plumage_and_metadata(self):
         adult = importlib.import_module("species.ostrich").make_spec()
         chick = importlib.import_module("species.ostrich_juvenile").make_spec()

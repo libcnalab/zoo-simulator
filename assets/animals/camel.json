@@ -123,7 +123,8 @@
     "common_name": "Bactrian camel",
     "roughness": 0.94,
     "scientific_name": "Camelus bactrianus",
-    "shoulder_height_m": 2.1
+    "shoulder_height_m": 2.1,
+    "surface_detail": "anisotropic shaggy-coat normal map"
   },
   "name": "camel",
   "skeleton_bounds_animal_space": {
@@ -139,6 +140,6 @@
     ]
   },
   "texture": 1024,
-  "triangles": 20640,
-  "vertices": 10342
+  "triangles": 21760,
+  "vertices": 10918
 }

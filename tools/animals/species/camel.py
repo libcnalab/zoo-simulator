@@ -57,6 +57,18 @@ def _anatomy(spec):
              weights={"ear.L": 1.0}, mirror=True, segments=14, tag="ear"),
         Part("eye.L", [R((1.55, .141, 2.81), .023, .023), R((1.57, .143, 2.81), .022, .022)],
              weights={"head": 1.0}, mirror=True, fuse=False, segments=12, tag="eye"),
+        # Bactrian camels carry a long winter mane over the crown and both sides of the neck.
+        # This second fused loft changes the outline; the normal map supplies the shorter fibres.
+        Part("neck_mane", [R(points[0], .29, .34), R(points[1], .25, .31),
+                           R(points[2], .22, .28), R(points[3], .21, .27),
+                           R(points[4], .18, .23), R(points[5], .15, .19)],
+             chain=chain(spec.bones, *spec.rig.neck), segments=24, tag="mane",
+             rough=(.025, 20.0), cap_start="flat", cap_end="flat"),
+        Part("forelock", [R((1.30, 0, 2.83), .10, .11),
+                           R((1.42, 0, 2.88), .09, .10),
+                           R((1.50, 0, 2.84), .035, .045)],
+             weights={"head": 1.0}, segments=18, tag="mane", rough=(.018, 24.0),
+             cap_start="flat", cap_end="point"),
     ]
     # Upright closed lofts keep each hump rounded without bridging their saddle.
     for label, x, bone in (("rear", -.62, "spine1"), ("front", .20, "chest")):
@@ -80,6 +92,13 @@ def _anatomy(spec):
             chain=limb_chain, mirror=True, segments=18, tag="leg", cap_start="flat", cap_end="flat"))
         spec.parts.extend(split_foot(label + "_pad", x + .09, y, .16, .32, .10,
                                     "fingers.L" if front else "toes.L", tag="pad", exponent=2.3))
+        foot_bone = "fingers.L" if front else "toes.L"
+        for digit, offset in (("inner", -.083), ("outer", .083)):
+            spec.parts.append(Part(label + "_nail." + digit + ".L", [
+                R((x + .185, y + offset, .066), .031, .025, .020, n=2.4),
+                R((x + .225, y + offset, .052), .018, .014, .012, n=2.4),
+            ], weights={foot_bone: 1.0}, mirror=True, fuse=False, segments=10,
+                tag="nail", cap_start="flat", cap_end="point"))
     tail_points = [(-.96, 0, 1.77), (-1.15, 0, 1.50), (-1.20, 0, 1.24),
                    (-1.23, 0, 1.02), (-1.26, 0, .87)]
     for i in range(4):
@@ -87,6 +106,11 @@ def _anatomy(spec):
     spec.parts.append(Part("tail", [R(point, .045 - .005 * i, .045 - .005 * i)
         for i, point in enumerate(tail_points)],
         chain=chain(spec.bones, "tail1", "tail2", "tail3", "tail4"), segments=12, tag="tail"))
+    spec.parts.append(Part("tail_tuft", [
+        R(tail_points[-1], .075, .075), R((-1.27, 0, .75), .09, .085),
+        R((-1.27, 0, .63), .06, .055), R((-1.27, 0, .56), .018, .018)],
+        weights={"tail4": 1.0}, segments=16, tag="mane", rough=(.018, 24.0),
+        cap_start="flat", cap_end="point"))
 
 
 def _paint(ctx, juvenile=False, scale=1.0):
@@ -98,11 +122,23 @@ def _paint(ctx, juvenile=False, scale=1.0):
     coat = nz.mix(sand, pale, under * .40) * (.90 + .16 * grain)[..., None]
     coat = nz.mix(coat, np.array([.16, .10, .055]), ctx.tag("eye"))
     coat = nz.mix(coat, np.array([.32, .22, .13]), ctx.tag("pad") * .7)
+    coat = nz.mix(coat, np.array([.20, .13, .075]), ctx.tag("nail"))
     # A fine vertical philtrum suggests the divided mobile upper lip.
     lip = nz.smoothstep(1.82, 1.93, P[..., 0]) * nz.smoothstep(.018, .004,
                                                                np.abs(P[..., 1]))
     coat = nz.mix(coat, np.array([.23, .14, .075]), lip * ctx.tag("head"))
     return coat
+
+
+def _surface_height(ctx, juvenile=False, scale=1.0):
+    """Longitudinal guard-hair relief, with the face and feet kept smooth."""
+    P = ctx.P / scale if juvenile else ctx.P
+    directional = nz.fbm(P * np.array([.36, .82, 1.55]), 58.0, 4, seed=31)
+    clumps = nz.fbm(P, 19.0, 3, seed=32)
+    coat = .84 * directional + .16 * clumps
+    smooth = np.clip(ctx.tag("eye") * 4.0 + ctx.tag("pad") * 2.0
+                     + ctx.tag("nail") * 2.0, 0.0, 1.0)
+    return .5 + (coat - .5) * (1.0 - smooth)
 
 
 def _juvenile_shape(spec):
@@ -204,6 +240,7 @@ def _juvenile_shape(spec):
 
     spec.name = "camel_juvenile"
     spec.paint = partial(_paint, juvenile=True, scale=scale)
+    spec.surface_height = partial(_surface_height, juvenile=True, scale=scale)
     spec.voxel = .008
     spec.target_tris = 18000
     spec.meta.update({"shoulder_height_m": 1.26, "body_length_m": 1.65,
@@ -235,9 +272,12 @@ def make_spec(juvenile=False):
     })
     _anatomy(spec)
     spec.paint = _paint
+    spec.surface_height = _surface_height
+    spec.surface_strength = 1.15
     spec.voxel = .014
     spec.smooth_iters = 5
     spec.meta["roughness"] = .94
+    spec.meta["surface_detail"] = "anisotropic shaggy-coat normal map"
     standard = spec.clips
 
     def clips(solver):

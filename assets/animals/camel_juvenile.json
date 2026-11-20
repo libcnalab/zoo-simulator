@@ -126,6 +126,7 @@
     "roughness": 0.94,
     "scientific_name": "Camelus bactrianus",
     "shoulder_height_m": 1.26,
+    "surface_detail": "anisotropic shaggy-coat normal map",
     "variant": "juvenile",
     "variant_of": "camel"
   },
@@ -143,6 +144,6 @@
     ]
   },
   "texture": 1024,
-  "triangles": 20640,
-  "vertices": 10342
+  "triangles": 21760,
+  "vertices": 10918
 }
