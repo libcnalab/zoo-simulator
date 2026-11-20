@@ -78,12 +78,14 @@ benches, bins, boards, how pleasant each tile is) is derived from the world in
 `VisitorSites.cpp` and rebuilt only when a revision changes; it is not saved.
 
 Benches and picnic tables stand beside the paths: the last step from the paving
-to a seat is a straight line. Members that find no seat stand in front of the
-bench or at the ends of the table. When they leave, people within 3.5 m of a
-bench use that bench's recorded path access when a generic nearest-path search
-would carry them more than 3.5 m from it. Choosing the unrelated path once sent
-a person from the outer end of a picnic table across 19 ticks of open lawn
-(`VisitorDayTests.ADayInTheStarterZoo`, 2026-11-19).
+to a seat is a straight line. A bench is offered only when one reachable path
+tile has a fence-, water- and boundary-safe straight step to every advertised
+seat; a path tile on the other side of a barrier no longer makes it usable.
+Arrival and departure routing both use that recorded access instead of independently
+choosing a nearer path tile across a barrier. Members that find no seat stand in
+front of the bench or at the ends of the table. Choosing an unrelated departure
+path once sent a person from the outer end of a picnic table across 19 ticks of
+open lawn (`VisitorDayTests.ADayInTheStarterZoo`, 2026-11-19).
 
 ## How they walk and stand
 
@@ -296,7 +298,13 @@ the weather, an empty zoo, determinism, groups, places at the fence and on
 seats, saving and loading, a torn-up path, a loose lion, litter and bins, the
 price limits) and `tests/core/VisitorDayTests.cpp` (two whole days in the
 starter zoo with statistics printed, and invariants: nobody off the paths except
-at a seat, nobody stuck, everybody gone by night).
+at a seat, nobody stuck, everybody gone by night). `VisitorSitesTests` directly
+puts a bench across a fence from its only reachable path and proves it is no
+longer offered; removing the fence restores all of its seats. A second case gives
+the bench a nearer path access across a fence and a verified one around it, then
+checks that arrival ends and departure begins at the verified access. The complete
+suite passes all 287 active cases, including the 364.69-second animation test; 21
+diagnostics remain disabled (J36, 2026-11-20).
 
 ## Known limits
 
@@ -305,7 +313,6 @@ at a seat, nobody stuck, everybody gone by night).
 - Nothing is swept before midnight, so litter complaints pile up during a busy
   day until cleaners exist.
 - A group remembers only the last stall whose queue it gave up on.
-- The step from the paving to a seat is not checked against fences.
 - The once-an-hour limit on the "animal on the loose" alarm is not saved.
 - Walkers go round each other, staff and the player; people who stand do not
   step aside for anybody, and a watcher who comes to a fence after somebody

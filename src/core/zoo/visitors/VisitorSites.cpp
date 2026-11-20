@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <limits>
 
 #include "zoo/visitors/VisitorInternal.hpp"
 
@@ -17,6 +18,47 @@ bool ServesVisitors(BuildingRole role) {
     return role == BuildingRole::FoodStall || role == BuildingRole::DrinkStall ||
            role == BuildingRole::Restroom || role == BuildingRole::GiftShop ||
            role == BuildingRole::EducationCenter;
+}
+
+/// The nearest public path point from which every advertised place on a bench or
+/// table can actually be reached. The last step is over unpaved ground, so use a
+/// ground profile, but still honour fences, water and the property boundary.
+std::optional<Vec2> SeatAccess(const Env& env, const Prop& prop, int seats, int component) {
+    constexpr int kRadius = 2;
+    const TileCoord around = World::TileAt(prop.position);
+    NavProfile ground = kWalker;
+    ground.pathsOnly = false;
+    std::optional<Vec2> best;
+    int bestDistance = std::numeric_limits<int>::max();
+    for (int z = std::max(0, around.z - kRadius); z <= std::min(env.world.Depth() - 1, around.z + kRadius);
+         ++z) {
+        for (int x = std::max(0, around.x - kRadius);
+             x <= std::min(env.world.Width() - 1, around.x + kRadius); ++x) {
+            const TileCoord tile{x, z};
+            const int dx = x - around.x;
+            const int dz = z - around.z;
+            const int distance = dx * dx + dz * dz;
+            if (distance > kRadius * kRadius || distance >= bestDistance ||
+                env.nav.ComponentOf(tile, kWalker) != component) {
+                continue;
+            }
+            const Vec2 access = World::TileCenter(tile);
+            const SeatSite candidate{prop.id, prop.position, prop.heading, seats, access};
+            bool usable = true;
+            for (int seat = 0; seat < seats; ++seat) {
+                float face = 0.0f;
+                if (!env.nav.Walkable(access, SeatPosition(candidate, seat, face), ground)) {
+                    usable = false;
+                    break;
+                }
+            }
+            if (usable) {
+                best = access;
+                bestDistance = distance;
+            }
+        }
+    }
+    return best;
 }
 
 /// Where the queue of a stall stands: a few places straight out from the counter,
@@ -189,16 +231,19 @@ void Sites::Refresh(const Env& env) {
         if (def.role != PropRole::Bench && def.role != PropRole::Bin && def.role != PropRole::InfoBoard) {
             continue;
         }
+        if (def.role == PropRole::Bench) {
+            const int seats = std::clamp(static_cast<int>(def.capacity), 1, 8);
+            const std::optional<Vec2> access = SeatAccess(env, prop, seats, component);
+            if (access) {
+                benches.push_back({prop.id, prop.position, prop.heading, seats, *access});
+            }
+            continue;
+        }
         const auto tile = env.nav.NearestPassable(World::TileAt(prop.position), kWalker, 2);
         if (!tile || !reachable(*tile)) {
             continue;
         }
         const Vec2 access = World::TileCenter(*tile);
-        if (def.role == PropRole::Bench) {
-            benches.push_back({prop.id, prop.position, prop.heading,
-                               std::clamp(static_cast<int>(def.capacity), 1, 8), access});
-            continue;
-        }
         // Stand beside it, on the paving.
         Vec2 stand = prop.position + Normalized(access - prop.position, {0.0f, 1.0f}) * (def.radiusM + 0.45f);
         if (World::TileAt(stand) != *tile && !reachable(World::TileAt(stand))) {

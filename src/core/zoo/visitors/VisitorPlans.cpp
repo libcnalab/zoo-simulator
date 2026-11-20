@@ -122,8 +122,7 @@ bool Stepper::Route(Vec2 from, Vec2 to, std::vector<Vec2>& out) {
             const float distance = DistanceSquared(from, bench.position);
             NavProfile ground = kWalker;
             ground.pathsOnly = false;
-            if (distance < nearestBench && DistanceSquared(start, bench.position) >= 3.5f * 3.5f &&
-                nav.Walkable(from, bench.access, ground)) {
+            if (distance < nearestBench && nav.Walkable(from, bench.access, ground)) {
                 start = bench.access;
                 nearestBench = distance;
             }
@@ -136,6 +135,16 @@ bool Stepper::Route(Vec2 from, Vec2 to, std::vector<Vec2>& out) {
             return false;
         }
         goal = World::TileCenter(*near);
+        float nearestBench = 3.5f * 3.5f;
+        for (const SeatSite& bench : scr.sites.benches) {
+            const float distance = DistanceSquared(to, bench.position);
+            NavProfile ground = kWalker;
+            ground.pathsOnly = false;
+            if (distance < nearestBench && nav.Walkable(bench.access, to, ground)) {
+                goal = bench.access;
+                nearestBench = distance;
+            }
+        }
         tail = true;
     }
     if (!nav.Reachable(World::TileAt(start), World::TileAt(goal), kWalker)) {

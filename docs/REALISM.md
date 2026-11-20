@@ -17,7 +17,7 @@ loudspeaker stays muted and nobody has listened to any of it.
 | Visit start runs in the core | fill of 800 visitors 7 s -> 1.2-1.6 s; with 88 animals the prop buckets are no longer rebuilt on every feeding tick (fastest fill 2.52 -> 2.05 s under load) | `docs/VISIT_START.md` |
 | Scenery in one cell during a visit | engine time at the entrance 11.7 -> 5.7 ms | `docs/PERFORMANCE.md` |
 | At most 18 full CNA avatars a frame | people pass at the meerkats 15.5 -> 8.0 ms | `docs/PERFORMANCE.md`, `evidence/people-*.jpg` |
-| Groups at benches | a group sits only if half of it can; the rest stand in an arc | `docs/VISITORS.md` |
+| Groups at benches | a group sits only if half of it can; the rest stand in an arc; a bench is offered only when every advertised seat has a fence-safe last step from the same reachable path access | `docs/VISITORS.md` |
 | Audio audit | 54 licensed recordings with a measured per-take mix and labelled substitutes; calls follow animal activity instead of a timer, day birds fade at night, crowds scale with people, steps match the walked surface, sources have no hard pan or immediate repeat, and the two fountains have their own spatial loop | `docs/AUDIO.md`, `assets/audio/`, `evidence/audio-g7-2026-11-19.jpg` |
 | Regression tests | empty habitats, information boards, save/load of a visit, wading depth | `tests/core/` |
 | Light from the sky and the ground | below | `src/game/SkyLight.*` |

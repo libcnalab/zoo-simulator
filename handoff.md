@@ -343,6 +343,14 @@ whatever you take up (`docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `docs/V
   All 12 focused keeper tests pass, including the week and public-crowd run; the final complete
   suite passes all 285 active cases, including the 366.73-second animation test, with 21 diagnostics
   disabled (J35, 2026-11-20).
+- J36 closes the visitors' unchecked last step from paving to a seat. Site refresh now advertises
+  a bench or picnic table only when one reachable path access has a straight ground-profile line
+  to every real seat, so the line cannot cross a fence, water or the property boundary. Arrival
+  and departure routing both reuse that access rather than independently selecting a nearer tile
+  across a barrier. Two direct regressions cover an unusable fenced bench and the safe access at
+  both ends of a route; all visitor/day/walk and short-hash tests pass without changing the Visitor
+  Zoo hashes. The complete suite passes all 287 active cases, including the 364.69-second animation
+  test, with 21 diagnostics disabled (J36, 2026-11-20).
 - The stopped G7c audio audit is recovered and finished. Calls now follow `Vocalize`, social,
   play and documented feeding cues rather than a timer; takes do not repeat immediately, spatial
   pan is capped at 0.60, birds fade with daylight, crowd level follows its people, and footsteps
