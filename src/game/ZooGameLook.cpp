@@ -396,9 +396,46 @@ std::optional<ZooGame::Pose> ZooGame::StandPose(std::string_view what) const {
                     zoo::TileCoord inside = spot.tile + toward;
                     while (zoo_->Map().InBounds(inside) && zoo_->Map().At(inside).standOff)
                         inside = inside + toward;
-                    if (!zoo_->Map().InBounds(inside) ||
-                        zoo_->Map().FenceOn(inside, zoo::Opposite(spot.side)).gate)
+                    if (!zoo_->Map().InBounds(inside))
                         continue;
+                    const zoo::Fence barrier = zoo_->Map().FenceOn(inside, zoo::Opposite(spot.side));
+                    const zoo::FenceDef* barrierDef = zoo_->Definitions().FenceByKind(barrier.kind);
+                    if (barrier.gate || barrierDef == nullptr)
+                        continue;
+                    // Prefer the front a visitor facility is designed around, then choose the
+                    // best visible animal along that class of barrier. A nearby animal at the
+                    // service mesh must not outweigh glass or a dry moat farther round the walk.
+                    float front = 12.0f;
+                    if (barrierDef->style == zoo::FenceStyle::Glass ||
+                        barrierDef->style == zoo::FenceStyle::Moat)
+                        front = 1.0f;
+                    else if (barrierDef->style == zoo::FenceStyle::Rail ||
+                             barrierDef->style == zoo::FenceStyle::Cable)
+                        front = 1.5f;
+                    else if (barrierDef->style == zoo::FenceStyle::Hedge)
+                        front = 30.0f;
+                    // Devalue an end panel where the service barrier fills one side of the
+                    // frame, but do not let that preference outweigh an unobstructed animal.
+                    const zoo::Dir barrierSide = zoo::Opposite(spot.side);
+                    const bool horizontal = barrierSide == zoo::Dir::North ||
+                                            barrierSide == zoo::Dir::South;
+                    int span = 0;
+                    for (const zoo::Dir along : horizontal
+                                                   ? std::array{zoo::Dir::East, zoo::Dir::West}
+                                                   : std::array{zoo::Dir::North, zoo::Dir::South}) {
+                        const zoo::TileCoord beside = inside + zoo::Step(along);
+                        if (!zoo_->Map().InBounds(beside) ||
+                            !(zoo_->Habitats().At(beside) == enclosure.id))
+                            continue;
+                        const zoo::Fence neighbour = zoo_->Map().FenceOn(beside, barrierSide);
+                        const zoo::FenceDef* neighbourDef =
+                            zoo_->Definitions().FenceByKind(neighbour.kind);
+                        span += !neighbour.gate && neighbourDef != nullptr &&
+                                        neighbourDef->style == barrierDef->style
+                                    ? 1
+                                    : 0;
+                    }
+                    const auto worse = [&](float score) { return score >= best; };
                     // Where somebody stands to look: a short step back from the fence (0.8 m),
                     // not with the nose between its bars.
                     const zoo::Vec2 middle = centre(spot.tile);
@@ -427,7 +464,8 @@ std::optional<ZooGame::Pose> ZooGame::StandPose(std::string_view what) const {
                     // being on top of it.
                     const float off = std::sqrt(dx * dx + dz * dz) - 6.0f;
                     float score = (off * off + 1.0f) / (sight * sight * sight * sight);
-                    if (score >= best)
+                    score *= front * (span == 2 ? 1.0f : span == 1 ? 2.0f : 4.0f);
+                    if (worse(score))
                         continue;
                     // Through the fence rather than along it: looking along it, the eye is
                     // full of posts and rails and the animal is a strip between them.
@@ -437,11 +475,11 @@ std::optional<ZooGame::Pose> ZooGame::StandPose(std::string_view what) const {
                         std::max(distanceNow, 0.01f);
                     if (square < 0.9f)
                         score *= 1.0f + 16.0f * (0.9f - square);
-                    if (score >= best)
+                    if (worse(score))
                         continue;
                     if (blocked(at, {animal.position.x, animal.position.z}))
                         score *= 16.0f;
-                    if (score >= best)
+                    if (worse(score))
                         continue;
                     if (fences(at, {animal.position.x, animal.position.z}) > 1)
                         score *= 40.0f;
@@ -456,7 +494,7 @@ std::optional<ZooGame::Pose> ZooGame::StandPose(std::string_view what) const {
                             break;
                         }
                     }
-                    if (score < best) {
+                    if (!worse(score)) {
                         best = score;
                         // At the middle of the animal: down at a wolf lying at the fence, level
                         // at one far off, up at a giraffe.

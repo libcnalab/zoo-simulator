@@ -374,6 +374,14 @@ body's 0.28 m radius. A zero-tick `--stand habitat:<species>` smoke of all fourt
 reported exactly the same set-down and final coordinates to 0.1 m; the former 42 furniture
 overlaps therefore no longer rely on the controller pushing the body out (2026-11-19).
 
+They now also classify the containment barrier beyond a planted stand-off. Keeper gates are
+rejected; glass and moat fronts are strongly preferred over service mesh and hedges; and a panel
+with matching neighbours is preferred over an end panel. Visibility, intervening scenery and
+the animal's useful distance still participate in the same score, rather than an absolute
+material order hiding the subject behind a tree. Real offscreen Lion Rock and Bear Falls runs
+kept the selected animal visible through the public front; the inspected pair is
+`docs/evidence/public-front-stand-j32-2026-11-20.jpg` (2026-11-20).
+
 The camera near plane is 0.1 m now (was 0.3 m). At the valid closest centre of the body to the
 gift shop's west wall (`--view 181.97,301,75,0`), the old plane cut away the left quarter of
 the wall and exposed the space beyond it; the same offscreen contact picture after the change

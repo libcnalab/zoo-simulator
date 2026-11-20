@@ -80,8 +80,8 @@ private:
     void PrepareVisit(zoo::Zoo& zoo, bool fill);
     /// Where a visit begins: just inside the gate, looking into the zoo.
     Pose EntrancePose() const;
-    /// --stand habitat:N | board:N: at a viewing spot of the N-th lived-in enclosure, facing
-    /// its nearest animal, or in front of the N-th board (for scripted looks at the zoo).
+    /// --stand habitat:N | board:N: at the best public front of the N-th lived-in enclosure,
+    /// facing a visible animal, or in front of the N-th board (for scripted looks at the zoo).
     std::optional<Pose> StandPose(std::string_view what) const;
     void BeginWalk(const Pose& pose);
     void UpdateVisit(double seconds);

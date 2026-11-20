@@ -170,9 +170,10 @@ SDL_AUDIODRIVER=dummy xvfb-run -a -s "-screen 0 1280x720x24" ./zoo-simulator \
     --frames 44 --lockstep --people 60 --script /path/to/script.txt --stand habitat:lion --hour 15
 ```
 
-`--stand habitat:<species>` stands at the fence of that species' habitat where an animal is best
-seen (squarely through one non-service barrier, some six metres off, with no person, prop or
-building in the sight line) and lists how many
+`--stand habitat:<species>` stands at the public front of that species' habitat where an animal
+is best seen (squarely through a preferred glass, moat or open rail/cable span, some six metres
+off, with no person, prop or building in the sight line). The material preference is soft, so an
+unobstructed subject can beat glass hidden by scenery. The command also lists how many
 animals of each habitat are outdoors; `--stand habitat:N[:species]` takes the N-th habitat with
 an animal to be seen; `--stand board:N`
 at an information board; `--view x,z,yaw,pitch` anywhere; `--hour` starts the visit at another

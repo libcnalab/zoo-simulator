@@ -306,6 +306,15 @@ whatever you take up (`docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `docs/V
   106.99 seconds; together with the unchanged animation pipeline passed immediately before this
   work, 281 active tests pass and 21 diagnostics are disabled. Opened real-game views are in
   `docs/evidence/open-habitat-fronts-j31-2026-11-20.jpg` (J31, 2026-11-20).
+- J32 makes the scripted habitat camera choose a public viewing front rather than the nearest
+  service edge. `--stand habitat:<species>` rejects keeper gates, strongly prefers glass and moat
+  over mesh or hedge, prefers an interior span over an end panel, and still lets actual distance,
+  vegetation and visibility override that preference when the formally better panel hides the
+  animal. Real offscreen Lion Rock and Bear Falls views both keep their selected resting animal
+  visible; the opened pair is `docs/evidence/public-front-stand-j32-2026-11-20.jpg`. All fifteen
+  species aliases across the fourteen habitats resolve in a zero-tick offscreen smoke. The 22
+  game-side tests and the complete suite pass: 281 active tests including the 365.72-second
+  animation pipeline, with 21 diagnostics disabled as intended (J32, 2026-11-20).
 - The stopped G7c audio audit is recovered and finished. Calls now follow `Vocalize`, social,
   play and documented feeding cues rather than a timer; takes do not repeat immediately, spatial
   pan is capped at 0.60, birds fade with daylight, crowd level follows its people, and footsteps
@@ -529,14 +538,18 @@ containment-rated hedge around Meerkat Lookout's service sides, J30 widens or re
 remaining ordinary 2 m path remnants, and J31 replaces the last slender front-tree exceptions
 with low cover inside the welfare band.
 
-`--stand habitat:<species>` now rejects keeper gates and buildings in the sight line. The
-meerkat view moved from `(177.0, 263.2)`, looking through mesh into the shelter wall, to
-`(169.2, 269.0)`, with an unobstructed animal in the centre; the before/after offscreen images
-were inspected and the 18 game-side Walker/texture tests passed (2026-11-19).
+`--stand habitat:<species>` now rejects keeper gates and buildings in the sight line. It also
+scores the public barrier material and its span: glass and moat strongly outrank service mesh or
+hedge, while actual visibility can still override a scenery-obscured preferred panel. All fifteen
+species aliases resolve; real Lion Rock and Bear Falls views are recorded in
+`docs/evidence/public-front-stand-j32-2026-11-20.jpg` (J32). The earlier meerkat correction moved
+the view from `(177.0, 263.2)`, looking through mesh into the shelter wall, to `(169.2, 269.0)`,
+with an unobstructed animal in the centre; the before/after offscreen images were inspected and
+the 18 game-side Walker/texture tests passed (2026-11-19).
 
 The same command also rejects positions overlapping the exact solid radii used by `Walker`,
 including its 0.28 m body radius and furniture which simulation visitors may pass through.
-All fourteen species kept identical requested/final coordinates to 0.1 m in a zero-tick
+All fourteen habitats kept identical requested/final coordinates to 0.1 m in a zero-tick
 offscreen smoke, so the former 42 set-downs inside furniture are resolved (2026-11-19).
 
 ## 5. Worktrees in `.codex-work/` (git-ignored)
