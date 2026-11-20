@@ -153,6 +153,10 @@ void Zoo::Step() {
 
     Env env = MakeEnv();
     animals_.Step(env);
+    visitors_.ClearMovingObstacles();
+    for (const StaffMember& member : staff_.All()) {
+        visitors_.AddMovingObstacle(member.position);
+    }
     visitors_.Step(env, animals_);
     staff_.Step(env, animals_, visitors_);
     if (time_.tick % kTicksPerSecond == 0) {

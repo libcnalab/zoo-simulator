@@ -118,6 +118,10 @@ a line:
   `ClearBystander()` otherwise). Walkers go round it like round a standing
   visitor. It is not saved and not part of `StateHash()`: a zoo that is watched
   from within is no longer bit-identical to one that is not.
+- **Staff.** Before the visitor step, the zoo supplies every keeper, gardener and cleaner as a
+  transient steering obstacle. A walker gives them an adult's shoulder room, whether the member
+  is walking or working, but ignores a member behind a habitat fence. The list is rebuilt every
+  tick and is neither saved nor hashed; see `docs/KEEPERS.md` "Where they walk and stand".
 - **Standing.** People who stand to eat, read a board or use a bin, and those
   who find no seat, are placed by `Stepper::MakeRoom`: the group's little circle
   is moved as a whole (rings of 0.8 m) to where every member is `kRoomM` from
@@ -303,7 +307,7 @@ at a seat, nobody stuck, everybody gone by night).
 - A group remembers only the last stall whose queue it gave up on.
 - The step from the paving to a seat is not checked against fences.
 - The once-an-hour limit on the "animal on the loose" alarm is not saved.
-- Walkers go round each other and round the player; people who stand do not
+- Walkers go round each other, staff and the player; people who stand do not
   step aside for anybody, and a watcher who comes to a fence after somebody
   began to eat right behind the rail may stand within arm's length of them.
 - Two walkers of a group can still be inside each other for a moment where a

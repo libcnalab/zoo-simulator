@@ -292,6 +292,14 @@ float Stepper::Dodge(std::size_t self, Group g, Vec2 way, float& slow) const {
     if (all.hasBystander_) {
         meet(all.bystander_, 0.0f, 0.0f, 0.75f, 1.0f, 1.6f);
     }
+    const EnclosureId region = env.enclosures.At(World::TileAt(me.position));
+    for (const Vec2 position : all.movingObstacles_) {
+        // A keeper behind a habitat fence can be close in plan view without sharing the
+        // visitor's walking space. Only bodies in the same public region or habitat matter.
+        if (env.enclosures.At(World::TileAt(position)) == region) {
+            meet(position, 0.0f, 0.0f, 0.68f, 1.0f, 1.35f);
+        }
+    }
     return std::clamp(push, -1.0f, 1.0f);
 }
 

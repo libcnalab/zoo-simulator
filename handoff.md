@@ -181,6 +181,15 @@ whatever you take up (`docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `docs/V
   inspected at both habitats in `docs/evidence/dry-moats-j18-2026-11-20.jpg` (J18, 2026-11-20).
   Short and 6,000-step state hashes repeat for seeds 1–3. All 270 active CTest cases pass
   (21 diagnostics disabled).
+- J19 gives staff physical space in the simulation. Visitors steer around the current position of
+  every keeper, gardener and cleaner in their walking region; moving staff slide around visitors,
+  visible animals and one another, and may only separate from an overlap. A seed-1 morning over
+  3,600 measured ticks exercises 2,653 close visitor and 75 close animal steps; moving visitors
+  remain at least 0.383 m from the staff position they saw. Short and 6,000-step hashes repeat for
+  seeds 1–3, 269 active CTest cases pass, and the previously run `zoogen_animation` also passes
+  (21 diagnostics disabled). The two inspected runtime contexts are in
+  `docs/evidence/staff-personal-space-j19-2026-11-20.jpg` (J19, 2026-11-20). Shy animals still do
+  not avoid staff, and dangerous habitats still cannot be entered.
 - The stopped G7c audio audit is recovered and finished. Calls now follow `Vocalize`, social,
   play and documented feeding cues rather than a timer; takes do not repeat immediately, spatial
   pan is capped at 0.60, birds fade with daylight, crowd level follows its people, and footsteps

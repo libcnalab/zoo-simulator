@@ -71,6 +71,22 @@ not a gate and never enters a dangerous species' habitat (`MayStep`). A job whos
 cannot be reached, or whose walk takes more than twice what the route needs plus a minute,
 is done as the zoo's automatic care would have done it, and the member goes on.
 
+Since J19 walkers also keep their bodies apart. A moving member slides tangentially around
+visitors, visible animals and other staff in the same public region or habitat; if two bodies
+already overlap, only a separating step is accepted. Visitors in turn receive the nine current
+staff positions as stationary steering obstacles for that tick. Positions on opposite sides of a
+habitat fence do not interact. These obstacles are derived each step, not saved and not hashed;
+the paths taken because of them remain ordinary simulation state.
+
+The seed-1 morning regression starts with 249 visitors and follows all nine staff for another
+3,600 ticks. It exercised 2,653 staff/visitor and 75 staff/animal close approaches. No walking
+member reduced a current separation below the 0.68 m adult clearance (or the animal's scaled
+body clearance), and the closest moving visitor remained 0.383 m from the staff position it was
+steering around. The inspected game frames show a keeper among the meerkats and the cleaner at a
+bin beside the moving public: `evidence/staff-personal-space-j19-2026-11-20.jpg`. A still image is
+context rather than collision proof; `Keeper.AtWorkAmongVisitorsAfterTheMorningFill` is the
+measured check.
+
 ## Automatic care stays behind them
 
 The game's time is compressed (a game hour is thirty seconds of walking, `docs/VISITORS.md`
@@ -134,7 +150,6 @@ the first tick on), not because of the keepers.
 
 ## Open
 
-- Keepers walk through animals and visitors (no collision with either).
 - Shy animals do not keep their distance from a keeper; the animal model has no input for it
   (a per-enclosure `Animals::SetKeeper` would be the hook).
 - The dangerous species are never entered: no mucking out of the lions' or bears' habitats,

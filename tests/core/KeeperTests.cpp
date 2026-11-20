@@ -408,19 +408,76 @@ TEST(Keeper, AtWorkAmongVisitorsAfterTheMorningFill) {
     Watch watch(*zoo);
     std::int64_t working = 0;
     std::int64_t all = 0;
+    int visitorEncounters = 0;
+    int animalEncounters = 0;
+    float closestWalkingVisitor = 1.0e9f;
     for (int i = 0; i < 3600; ++i) {
+        std::vector<Vec2> staffBefore;
+        for (const StaffMember& member : zoo->Keepers().All()) {
+            staffBefore.push_back(member.position);
+        }
         zoo->Step();
         watch.Check(*zoo);
         if (::testing::Test::HasFatalFailure()) {
             return;
         }
-        for (const StaffMember& member : zoo->Keepers().All()) {
+        const auto& members = zoo->Keepers().All();
+        for (const Visitor& visitor : zoo->Guests().All()) {
+            if (visitor.inside || visitor.speed < 0.05f) {
+                continue;
+            }
+            const EnclosureId region = zoo->Habitats().At(World::TileAt(visitor.position));
+            for (const Vec2 staffPosition : staffBefore) {
+                if (zoo->Habitats().At(World::TileAt(staffPosition)) == region) {
+                    closestWalkingVisitor =
+                        std::min(closestWalkingVisitor, Distance(visitor.position, staffPosition));
+                }
+            }
+        }
+        for (std::size_t m = 0; m < members.size(); ++m) {
+            const StaffMember& member = members[m];
             ++all;
             working += member.working && member.activity != StaffActivity::Rest;
+            if (DistanceSquared(staffBefore[m], member.position) < 1.0e-8f) {
+                continue;
+            }
+            const EnclosureId region = zoo->Habitats().At(World::TileAt(staffBefore[m]));
+            for (const Visitor& visitor : zoo->Guests().All()) {
+                if (visitor.inside || zoo->Habitats().At(World::TileAt(visitor.position)) != region) {
+                    continue;
+                }
+                constexpr float clearance = 0.32f + 0.28f + 0.08f;
+                const float before = Distance(staffBefore[m], visitor.position);
+                const float after = Distance(member.position, visitor.position);
+                visitorEncounters += before < clearance + 0.08f;
+                EXPECT_GE(after + 1.0e-4f, std::min(before, clearance))
+                    << "staff " << member.id.value << " walked into visitor " << visitor.id.value;
+            }
+            for (const Animal& animal : zoo->Fauna().All()) {
+                if (!animal.InWorld() || animal.shelter || animal.species < 0 ||
+                    static_cast<std::size_t>(animal.species) >= zoo->SpeciesList().All().size() ||
+                    zoo->Habitats().At(World::TileAt(animal.position)) != region) {
+                    continue;
+                }
+                const SpeciesDef& species =
+                    zoo->SpeciesList().All()[static_cast<std::size_t>(animal.species)];
+                const float clearance =
+                    0.32f + species.bodyRadiusM * BodyScale(animal, species, zoo->Time()) * 0.75f + 0.08f;
+                const float before = Distance(staffBefore[m], animal.position);
+                const float after = Distance(member.position, animal.position);
+                animalEncounters += before < clearance + 0.08f;
+                EXPECT_GE(after + 1.0e-4f, std::min(before, clearance))
+                    << "staff " << member.id.value << " walked into animal " << animal.id.value;
+            }
         }
     }
     std::cout << "KEEPERS at a job " << working * 100 / all << " % of the staff's time\n";
+    std::cout << "KEEPERS guarded " << visitorEncounters << " close visitor and " << animalEncounters
+              << " close animal steps; nearest walking visitor " << closestWalkingVisitor << " m\n";
     EXPECT_GT(working * 5, all * 2) << "the staff are at a job less than two fifths of the time";
+    EXPECT_GT(visitorEncounters, 10) << "the run did not exercise walking through a crowd";
+    EXPECT_GT(animalEncounters, 0) << "the run did not exercise walking among animals";
+    EXPECT_GT(closestWalkingVisitor, 0.2f) << "a visitor walked through a member of staff";
 }
 
 // How often a visitor finds a keeper at a habitat: figures for docs/KEEPERS.md, not a check.

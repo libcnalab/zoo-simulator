@@ -45,6 +45,10 @@ constexpr float kRakeCleans = 0.5f;
 constexpr float kSweepReach = 5.0f;
 /// How far a walker keeps from the rim of a tree, a rock or a feeder.
 constexpr float kPropClearance = 0.3f;
+/// A uniform is narrower than the clearance a visitor gives another adult.
+constexpr float kStaffRadius = 0.32f;
+constexpr float kVisitorRadius = 0.28f;
+constexpr float kBodyClearance = 0.08f;
 
 struct Hasher {
     std::uint64_t value = 0xcbf29ce484222325ULL;
@@ -110,6 +114,74 @@ Vec2 AroundProps(const Env& env, Vec2 to, Vec2 goal, float step, std::vector<Pro
         return prop->position + Normalized(radial + tangent * (side * step / keep), radial) * keep;
     }
     return to;
+}
+
+/// Slide a walking member around visible bodies in the same public region or habitat. Bodies
+/// already overlapping are allowed to separate; a crowded shelter door must not trap anybody.
+Vec2 AroundBodies(const Env& env, const Animals& animals, const Visitors& visitors,
+                  std::span<const StaffMember> members, std::size_t self, Vec2 from, Vec2 to, Vec2 goal,
+                  float distanceThisTick) {
+    Vec2 step = to - from;
+    if (LengthSquared(step) < 1.0e-8f) {
+        return to;
+    }
+    const EnclosureId region = env.enclosures.At(World::TileAt(from));
+    bool blocked = false;
+    const auto consider = [&](Vec2 obstacle, float clearance, float tie, int pass) {
+        const float before = DistanceSquared(from, obstacle);
+        const float after = DistanceSquared(from + step, obstacle);
+        if (after >= clearance * clearance || after >= before - 1.0e-5f) {
+            return;
+        }
+        if (pass != 0) {
+            blocked = true;
+            return;
+        }
+        const Vec2 away = from - obstacle;
+        const float gap = Length(away);
+        const Vec2 radial = gap > 1.0e-4f ? away * (1.0f / gap) : Normalized(step) * -1.0f;
+        const float inward = Dot(step, radial);
+        if (inward >= 0.0f) {
+            return;
+        }
+        step = step - radial * inward;
+        if (LengthSquared(step) < 0.25f * distanceThisTick * distanceThisTick) {
+            const Vec2 tangent{-radial.z, radial.x};
+            float side = Dot(goal - obstacle, tangent) < 0.0f ? -1.0f : 1.0f;
+            if (DistanceSquared(goal, obstacle) < 0.01f) {
+                side = tie;
+            }
+            step = tangent * (side * distanceThisTick);
+        }
+    };
+    for (int pass = 0; pass < 2; ++pass) {
+        for (const Visitor& visitor : visitors.All()) {
+            if (visitor.inside || env.enclosures.At(World::TileAt(visitor.position)) != region) {
+                continue;
+            }
+            consider(visitor.position, kStaffRadius + kVisitorRadius + kBodyClearance,
+                     visitor.id.value % 2 == 0 ? -1.0f : 1.0f, pass);
+        }
+        for (const Animal& animal : animals.All()) {
+            if (!animal.InWorld() || animal.shelter || animal.species < 0 ||
+                static_cast<std::size_t>(animal.species) >= env.species.All().size() ||
+                env.enclosures.At(World::TileAt(animal.position)) != region) {
+                continue;
+            }
+            const SpeciesDef& species = env.species.All()[static_cast<std::size_t>(animal.species)];
+            const float radius = species.bodyRadiusM * BodyScale(animal, species, env.time) * 0.75f;
+            consider(animal.position, kStaffRadius + radius + kBodyClearance,
+                     animal.id.value % 2 == 0 ? -1.0f : 1.0f, pass);
+        }
+        for (std::size_t other = 0; other < members.size(); ++other) {
+            if (other == self || env.enclosures.At(World::TileAt(members[other].position)) != region) {
+                continue;
+            }
+            consider(members[other].position, 2.0f * kStaffRadius + kBodyClearance,
+                     members[other].id.value % 2 == 0 ? -1.0f : 1.0f, pass);
+        }
+    }
+    return blocked ? from : from + step;
 }
 
 /// How long a walk may take before it is given up, in ticks: twice the time the route
@@ -257,7 +329,8 @@ void Staff::Apply(Env& env, Animals& animals, Visitors& visitors, const StaffTas
 
 void Staff::Step(Env& env, Animals& animals, Visitors& visitors) {
     std::vector<PropId> scratch;
-    for (StaffMember& member : members_) {
+    for (std::size_t memberIndex = 0; memberIndex < members_.size(); ++memberIndex) {
+        StaffMember& member = members_[memberIndex];
         if (member.round.empty()) {
             continue;
         }
@@ -309,6 +382,8 @@ void Staff::Step(Env& env, Animals& animals, Visitors& visitors) {
             member.route.empty() || FollowPath(member.route, index, after, speed * kTickSeconds);
         if (!arrived && index < member.route.size()) {
             Vec2 aside = AroundProps(env, after, member.route[index], speed * kTickSeconds, scratch);
+            aside = AroundBodies(env, animals, visitors, members_, memberIndex, before, aside,
+                                 member.route[index], speed * kTickSeconds);
             // No further aside in a tick than a brisk step: who starts within a bush's
             // reach walks out of it and is not thrown out.
             const float reach = speed * kTickSeconds * 1.5f;

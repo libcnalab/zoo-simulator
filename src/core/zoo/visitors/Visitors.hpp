@@ -248,6 +248,10 @@ public:
         hasBystander_ = true;
     }
     void ClearBystander() { hasBystander_ = false; }
+    /// Other people visitors walk around this tick (the visible staff). Derived from the zoo,
+    /// not saved and not part of StateHash, like the player's bystander position.
+    void ClearMovingObstacles() { movingObstacles_.clear(); }
+    void AddMovingObstacle(Vec2 position) { movingObstacles_.push_back(position); }
     /// As if the zoo had been open for hours: every group that is on its feet inside
     /// (walking, standing or at a fence; not seated, served, queueing or in a house)
     /// is set down somewhere on the public paths the gate leads to, the farther in the
@@ -287,6 +291,7 @@ private:
     VisitorPace pace_;
     Vec2 bystander_;
     bool hasBystander_ = false;
+    std::vector<Vec2> movingObstacles_;
     float arrivalRemainder_ = 0.0f;
     float rating_ = 0.6f;
     float educationRating_ = 0.0f;
