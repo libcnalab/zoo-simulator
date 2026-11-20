@@ -172,6 +172,45 @@ class BearTests(unittest.TestCase):
         self.assertGreater(metrics['polar_bear'][0], metrics['brown_bear'][0] * 1.10)
         self.assertLess(metrics['polar_bear'][1], metrics['brown_bear'][1] * .90)
 
+    def test_second_pass_closes_mouth_smooths_shoulders_and_shortens_outline_fur(self):
+        for name, (spec, _, _) in self.cases.items():
+            data = spec.sculpt
+            height = spec.meta['shoulder_height_m']
+            juvenile = 'juvenile' in name
+            fur = [part for part in spec.parts if part.name.startswith('fur_')]
+            self.assertEqual(len(fur), 120 if juvenile else 105, name)
+            longest = max(np.linalg.norm(part.rings[-1].c - part.rings[0].c) for part in fur)
+            self.assertLess(longest / height, .075 if juvenile else .055, name)
+            self.assertEqual(spec.meta['rest_mouth_closure_deg'], 7.0)
+            self.assertEqual(spec.meta['anatomy_revision'],
+                             'Smoothed reposed shoulders and closed resting mouth')
+
+            vertices, triangles = data['vertices'], data['triangles']
+            edges = np.concatenate((triangles[:, [0, 1]], triangles[:, [1, 2]],
+                                    triangles[:, [2, 0]]))
+            edges = np.unique(np.sort(edges, axis=1), axis=0)
+            degree = np.zeros(len(vertices), dtype=float)
+            neighbours = np.zeros_like(vertices)
+            np.add.at(degree, edges[:, 0], 1)
+            np.add.at(degree, edges[:, 1], 1)
+            np.add.at(neighbours, edges[:, 0], vertices[edges[:, 1]])
+            np.add.at(neighbours, edges[:, 1], vertices[edges[:, 0]])
+            names = data['bone_names'].tolist()
+            arm = data['weights'][:, [names.index(bone) for bone in
+                                      ('scapula.L', 'scapula.R',
+                                       'upper_arm.L', 'upper_arm.R')]].sum(axis=1)
+            p = vertices / height
+            scapula = data['heads'][names.index('scapula.L')] / height
+            zone = np.exp(-((p[:, 0] - scapula[0]) / .28) ** 2
+                          - ((p[:, 2] - scapula[2]) / .34) ** 2)
+            side = np.clip((np.abs(p[:, 1]) - .06) / .18, 0, 1)
+            shoulder = (arm > .15) & (zone > .3) & (side > .2)
+            residual = np.linalg.norm(vertices - neighbours / np.maximum(degree, 1)[:, None],
+                                      axis=1) / height
+            self.assertGreater(int(shoulder.sum()), 800, name)
+            self.assertLess(float(residual[shoulder].mean()), .003, name)
+            self.assertLess(float(residual[shoulder].max()), .030, name)
+
     def test_side_sleep_is_independent_of_bone_rest_axes(self):
         from zoogen.geom import expand_bones
         from zoogen.rig import Solver, euler

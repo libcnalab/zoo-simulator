@@ -162,13 +162,13 @@ def fur_parts(data, juvenile):
         (p[:, 0] > .22) & (p[:, 0] < .72) & (p[:, 2] > .60))
     choices = np.flatnonzero(body & region & (np.abs(normals[:, 1]) > .35))
     parts = []
-    count = min(90, len(choices))
+    count = min(120 if juvenile else 105, len(choices))
     for number in range(count):
         index = choices[(number * 811) % len(choices)]
         point, normal = vertices[index], normals[index]
-        length = height * (.045 + .020 * (.5 + .5 * math.sin(number * 7.13)))
+        length = height * (.026 + .013 * (.5 + .5 * math.sin(number * 7.13)))
         if juvenile:
-            length *= 1.2
+            length *= 1.35
         direction = normal * .40 + np.array([-.42, 0, -.70])
         root = point - .008 * height * normal
         end = point + direction * length
@@ -176,8 +176,8 @@ def fur_parts(data, juvenile):
         weight = {name: float(data['weights'][index, i]) for i, name in enumerate(names)
                   if data['weights'][index, i] > 0}
         parts.append(Part('fur_' + str(number),
-                          [R(root, .007 * height, .002 * height),
-                           R(middle, .004 * height, .0015 * height),
+                          [R(root, (.009 if juvenile else .008) * height, .002 * height),
+                           R(middle, (.005 if juvenile else .0045) * height, .0015 * height),
                            R(end, .0005 * height, .0005 * height)],
                           weights=weight, tag='fur', fuse=False, segments=4, subdiv=1,
                           cap_start='flat', cap_end='point'))
@@ -215,8 +215,9 @@ def paint(ctx, data, polar, juvenile):
         if juvenile:
             collar = np.exp(-((x - .55) / .10) ** 2) * ctx.bones('neck1', 'neck2', 'chest')
             coat = nz.mix(coat, [.58, .46, .30], collar * .65)
-    coat = nz.mix(coat, [.014, .011, .009], ctx.tag('nose'))
-    coat = nz.mix(coat, [.10, .025, .028], ctx.tag('mouth'))
+    coat = nz.mix(coat, [.024, .020, .016] if polar else [.014, .011, .009], ctx.tag('nose'))
+    mouth = ctx.tag('mouth') * (.72 if polar else 1.0)
+    coat = nz.mix(coat, [.070, .052, .041] if polar else [.10, .025, .028], mouth)
     coat = nz.mix(coat, [.68, .60, .42], ctx.tag('teeth'))
     coat = nz.mix(coat, [.018, .012, .006], ctx.tag('eye'))
     coat = nz.mix(coat, [.09, .065, .04], ctx.tag('claws'))
@@ -230,8 +231,52 @@ def paint(ctx, data, polar, juvenile):
                                              - ((y - center[1]) / .065) ** 4))
         pads *= patch
     coat = nz.mix(coat, [.032, .024, .019], pads)
-    coat = nz.mix(coat, [.055, .034, .024], ctx.tag('lower_lip') * nz.smoothstep(.35, .8, ctx.N[..., 2]))
+    lip = [.13, .105, .078] if polar else [.055, .034, .024]
+    coat = nz.mix(coat, lip, ctx.tag('lower_lip') * nz.smoothstep(.35, .8, ctx.N[..., 2]))
     return coat
+
+
+def _smooth_shoulders(data, height):
+    """Soften the angular upright-sculpt fold around each reposed shoulder."""
+    vertices = data['vertices']
+    triangles = data['triangles']
+    names = data['bone_names'].tolist()
+    edges = np.concatenate((triangles[:, [0, 1]], triangles[:, [1, 2]],
+                            triangles[:, [2, 0]]))
+    edges = np.unique(np.sort(edges, axis=1), axis=0)
+    degree = np.zeros(len(vertices), dtype=float)
+    np.add.at(degree, edges[:, 0], 1)
+    np.add.at(degree, edges[:, 1], 1)
+    degree = np.maximum(degree, 1)
+    arm = data['weights'][:, [names.index(n) for n in
+                              ('scapula.L', 'scapula.R', 'upper_arm.L', 'upper_arm.R')]].sum(axis=1)
+    chest = data['weights'][:, names.index('chest')]
+    scapula = data['heads'][names.index('scapula.L')] / height
+    p = vertices / height
+    zone = np.exp(-((p[:, 0] - scapula[0]) / .28) ** 2
+                  - ((p[:, 2] - scapula[2]) / .34) ** 2)
+    side = np.clip((np.abs(p[:, 1]) - .06) / .18, 0, 1)
+    mask = np.clip((.55 * arm + .24 * chest) * zone * side, 0, .52)
+    current = vertices.copy()
+    for _ in range(3):
+        neighbours = np.zeros_like(current)
+        np.add.at(neighbours, edges[:, 0], current[edges[:, 1]])
+        np.add.at(neighbours, edges[:, 1], current[edges[:, 0]])
+        average = neighbours / degree[:, None]
+        current += mask[:, None] * .38 * (average - current)
+    vertices[:] = current
+
+
+def _close_resting_mouth(data, degrees=-7.0):
+    """Close the residual roar while retaining jaw weights for the vocalize clip."""
+    names = data['bone_names'].tolist()
+    jaw = names.index('jaw')
+    pivot = data['heads'][jaw]
+    rotation = rot_y(degrees)
+    moved = (data['vertices'] - pivot) @ rotation.T + pivot
+    weight = data['weights'][:, jaw, None]
+    data['vertices'][:] += weight * (moved - data['vertices'])
+    data['tails'][jaw] = rotation @ (data['tails'][jaw] - pivot) + pivot
 
 
 def make_bear(name, polar, juvenile, height, edits):
@@ -251,6 +296,8 @@ def make_bear(name, polar, juvenile, height, edits):
     vertices[:, 1] *= 1 + (.08 if polar else .18) * trunk
     belly = np.exp(-((x + .08) / .43) ** 2) * np.clip((.68 - z) / .25, 0, 1) * trunk
     vertices[:, 2] += (.045 if polar else .06) * height * belly
+    _smooth_shoulders(data, height)
+    _close_resting_mouth(data)
     # The longer polar muzzle is straight; brown has a shallow dish above the nose.
     face = data['weights'][:, names.index('head')]
     if polar:
@@ -291,6 +338,9 @@ def make_bear(name, polar, juvenile, height, edits):
                 source_url='https://sketchfab.com/3d-models/1d1bb459a39a428282ce4cb46bdc3ed5',
                 source_pose='Upright roaring brown-bear-like sculpt; species identification is visual',
                 derivation='Re-proportioned and repainted brown-bear sculpt' if polar else 'Reposed brown-bear sculpt',
+                anatomy_revision='Smoothed reposed shoulders and closed resting mouth',
+                rest_mouth_closure_deg=7.0,
+                outline_fur_clumps=120 if juvenile else 105,
                 proportion_edits=edits, rest_pose='Sternal recumbency, chin on forepaws', sleep_pose='Lying on side with folded legs',
                 activity_clips={'bathe': 'bathe'}, roughness=.9)
     if juvenile:

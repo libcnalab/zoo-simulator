@@ -137,6 +137,18 @@ whatever you take up (`docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `docs/V
   and close digit views were inspected, along with a real Kangaroo Grove run after 3,000 ticks in
   `docs/evidence/kangaroo-coat-j14-2026-11-20.jpg` (J14, 2026-11-20). The face and lofted body
   remain stylised.
+- All four bears have a second anatomy pass. Another 7-degree jaw closure removes the residual
+  resting roar while preserving `vocalize`; local mesh relaxation softens the upright sculpt's
+  angular reposed shoulders; 105 adult / 120 cub shorter outline clumps replace 90 long sparse
+  spikes; and the polar face has quieter nose, mouth and lip pigment. Triangle, bone and clip
+  counts are unchanged: brown adult/cub are 30,000/19,500 triangles and 5.58/5.12 MB, polar
+  adult/cub are 30,000/19,500 and 6.16/5.78 MB. All four production GLBs and JSONs match
+  independent exports byte for byte when both `OMP_NUM_THREADS=1` and Blender `-t 1` are used.
+  All 129 animal-pipeline tests and all 270 active CTest cases pass (21 diagnostics disabled);
+  `vocalize` and the same-camera viewers were inspected, as were real seed-1/tick-3000 Bear Falls
+  and Polar Sound runs in `docs/evidence/bear-anatomy-j15-2026-11-20.jpg` (J15, 2026-11-20).
+  Honest remaining limits: the crouched brown, slender converted polar and proportionally edited
+  cubs all retain the same upright brown-bear source sculpt and its sharp hip anatomy.
 - The stopped G7c audio audit is recovered and finished. Calls now follow `Vocalize`, social,
   play and documented feeding cues rather than a timer; takes do not repeat immediately, spatial
   pan is capped at 0.60, birds fade with daylight, crowd level follows its people, and footsteps
@@ -262,8 +274,9 @@ tests pass. Nobody listened to the audio; preserve that qualification.
 ### 4.6 Animals
 
 - First-generation stylised anatomy still: wolf, camel, meerkat, ostrich, kangaroo. All five now
-  have second-pass coats or plumage and silhouette details, but are not scan-based. Bears
-  are sculpt-based but crude (`docs/ANIMALS.md`; pipeline in `tools/animals/`, its tests
+  have second-pass coats or plumage and silhouette details, but are not scan-based. Bears have
+  a second-pass resting face, shoulders and outline fur, but remain visibly converted from an
+  upright brown-bear sculpt (`docs/ANIMALS.md`; pipeline in `tools/animals/`, its tests
   `python3 -m unittest discover -s tools/animals/tests`, about 10 minutes).
 - Every young animal used in the Visitor Zoo has a dedicated variant; the brown/polar bear cub
   models exist but are unused (bears live as pairs).

@@ -127,9 +127,11 @@
     "activity_clips": {
       "bathe": "bathe"
     },
+    "anatomy_revision": "Smoothed reposed shoulders and closed resting mouth",
     "asset_license": "CC-BY-4.0",
     "common_name": "Polar bear",
     "derivation": "Re-proportioned and repainted brown-bear sculpt",
+    "outline_fur_clumps": 120,
     "proportion_edits": {
       "ear": {
         "scale": [
@@ -196,6 +198,7 @@
       }
     },
     "relative_height": 0.3,
+    "rest_mouth_closure_deg": 7.0,
     "rest_pose": "Sternal recumbency, chin on forepaws",
     "roughness": 0.9,
     "scientific_name": "Ursus maritimus",
@@ -229,5 +232,5 @@
   },
   "texture": 2048,
   "triangles": 19500,
-  "vertices": 10208
+  "vertices": 10268
 }

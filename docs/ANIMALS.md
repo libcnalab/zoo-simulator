@@ -31,14 +31,14 @@ Every species has a model in `assets/animals/<id>.glb` with a description beside
 `tools/animals/species/`, so a model is rebuilt, not edited:
 
 ```bash
-OMP_NUM_THREADS=1 blender -b --factory-startup --python tools/animals/build_animal.py -- \
+OMP_NUM_THREADS=1 blender -b -t 1 --factory-startup --python tools/animals/build_animal.py -- \
     --species lion --out assets/animals --preview build-probe/animal-previews
 python3 -m unittest discover -s tools/animals/tests
 ```
 
-The one-thread OpenMP setting makes Blender's tangent calculation reproducible: parallel runs can
-otherwise differ in the last rounded tangent component while geometry, textures and animations
-remain identical.
+Both the one-thread OpenMP setting and Blender's one-worker `-t 1` are required for reproducible
+tangents. Parallel sculpt exports can otherwise differ in the last rounded tangent component
+while geometry, textures and animations remain identical.
 
 | Generator | Species |
 |---|---|
@@ -302,11 +302,21 @@ neck, a narrower head and a white coat are ours.
 | `polar_bear_juvenile` | 19,500 | | cub, `swim` |
 
 Seen in Blender, in the viewer and in both habitats (`evidence/bears-sculpt-2026-11-14.jpg`).
-Honest state, and Codex said it first: **these are not realistic bears**, but they are bears,
-where the old ones were lofted blobs with block feet. What is wrong: the upright sculpt's
-muscles leave angular shoulders and sharp hip folds after the repose; the brown bear stands
-crouched; the polar bear's lips are a dark snarl and its facial pigment has rough edges; the
-cubs are small adults rather than fluffy cubs; the fur tufts are sparse and spiky.
+A second pass on 2026-11-20 closes the residual resting roar by another 7 degrees without
+removing the jaw weights used by `vocalize`, locally relaxes the sharp reposed shoulder fold,
+and replaces 90 long sparse outline spikes with 105 shorter adult or 120 shorter cub clumps.
+The polar nose, mouth and lower lip are less black and red. Triangle, skeleton and clip counts
+do not change: the brown adult/cub GLBs are 5.58/5.12 MB and the polar adult/cub 6.16/5.78 MB.
+All four production files match independent fresh exports byte for byte with the deterministic
+command above. Same-camera comparisons and the two running habitats are in
+`evidence/bear-anatomy-j15-2026-11-20.jpg`; separate close checks confirmed that `vocalize`
+still opens the jaw.
+
+Honest state: **these are improved but still not realistic bears**. They replace the old lofted
+blobs with a real sculpt's head, paws and surface, but the source was an upright roaring brown
+bear and its muscles and sharp hip folds remain visible after the repose. The brown bear is
+crouched; the slender polar bear is a conversion of the same brown-bear sculpt, not polar-bear
+anatomy; and both cubs are proportionally edited adults rather than purpose-sculpted fluffy cubs.
 
 ### Elephant, second pass, and giraffe (2026-11-14)
 
