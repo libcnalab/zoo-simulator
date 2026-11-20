@@ -118,6 +118,19 @@ def make_wild_quadruped(config):
           0.13 * height),
     ], chain=neck_chain, segments=22, cap_start="flat", cap_end="flat"))
 
+    if wolf:
+        # A wolf's double coat breaks the neck-to-chest outline instead of following the
+        # underlying cylinder. This overlapping mass is fused into the body so there is no seam.
+        parts.append(Part("neck_ruff", [
+            R((front_x - 0.08 * length, 0, body_z + 0.02 * height), 0.22 * height,
+              0.25 * height, 0.28 * height),
+            R((front_x + 0.015 * length, 0, body_z + 0.10 * height), 0.20 * height,
+              0.22 * height, 0.27 * height),
+            R((front_x + 0.09 * length, 0, body_z + 0.16 * height), 0.15 * height,
+              0.17 * height, 0.20 * height),
+        ], chain=neck_chain, tag="ruff", segments=24, rough=(0.008 * height, 42.0 / height),
+           cap_start="flat", cap_end="flat"))
+
     if kind == "brown_bear":
         parts.append(Part("shoulder_hump", [
             R((front_x - 0.09 * length, 0, body_z + 0.05 * height), 0.17 * height,
@@ -216,6 +229,14 @@ def make_wild_quadruped(config):
         R((hip_x - 0.025 * length, leg_y, 0.10 * height), 0.060 * height, 0.07 * height),
         R((hip_x + 0.015 * length, leg_y, foot_z), 0.055 * height, 0.045 * height),
     ]
+    if wolf:
+        # The generic limb starts with two rings at the same shoulder point to make a bear's
+        # heavy upper arm. On a wolf that reads as a ball, so keep one lean transition instead.
+        f_rings = [f_rings[0], *f_rings[2:]]
+        f_rings[0].ry = 0.085 * height
+        f_rings[0].up = f_rings[0].dn = 0.11 * height
+        h_rings[0].ry = 0.105 * height
+        h_rings[0].up = h_rings[0].dn = 0.13 * height
     parts.extend([
         Part("front_leg.L", f_rings, chain=front_chain, tag="leg", segments=16, mirror=True,
              radius_scale=1.15 if bear else 1.0),
@@ -253,19 +274,37 @@ def make_wild_quadruped(config):
                                    subdiv=2, fuse=False, mirror=True, cap_start="flat", cap_end="point"))
 
     tail_len = 0.23 * length if tiger else 0.18 * length if zebra else 0.30 * length if wolf else 0.10 * length
-    tail_r = 0.022 * height if tiger else 0.055 * height if wolf else 0.018 * height
+    tail_r = 0.022 * height if tiger else 0.070 * height if wolf else 0.018 * height
     parts.append(Part("tail", [
         R((rear_x + 0.08 * length, 0, body_z), 0.045 * height, 0.045 * height),
         R((rear_x - 0.35 * tail_len, 0, body_z - 0.08 * height), tail_r, tail_r),
         R((rear_x - 0.70 * tail_len, 0, body_z - 0.18 * height), tail_r, tail_r),
         R((rear_x - tail_len, 0, body_z - 0.30 * height), tail_r, tail_r),
-    ], chain=tail_chain, tag="tail", segments=12, cap_end="flat"))
+    ], chain=tail_chain, tag="tail", segments=16 if wolf else 12, cap_end="flat",
+       rough=(0.007 * height, 48.0 / height) if wolf else None))
     if wolf or zebra:
-        parts.append(Part("tail_tuft", [
-            R((rear_x - tail_len, 0, body_z - 0.30 * height), 1.5 * tail_r, 1.5 * tail_r),
-            R((rear_x - 1.08 * tail_len, 0, body_z - 0.34 * height), 2.0 * tail_r, 1.6 * tail_r),
-            R((rear_x - 1.15 * tail_len, 0, body_z - 0.36 * height), 0.5 * tail_r, 0.5 * tail_r),
-        ], weights={"tail4": 1.0}, tag="tuft", segments=12, rough=(0.012, 28.0)))
+        if wolf:
+            tuft_rings = [
+                R((rear_x - tail_len, 0, body_z - 0.30 * height), 1.45 * tail_r, 1.45 * tail_r),
+                R((rear_x - 1.06 * tail_len, 0, body_z - 0.33 * height), 1.85 * tail_r,
+                  1.70 * tail_r),
+                R((rear_x - 1.14 * tail_len, 0, body_z - 0.37 * height), 1.25 * tail_r,
+                  1.15 * tail_r),
+                R((rear_x - 1.21 * tail_len, 0, body_z - 0.40 * height), 0.25 * tail_r,
+                  0.25 * tail_r),
+            ]
+        else:
+            tuft_rings = [
+                R((rear_x - tail_len, 0, body_z - 0.30 * height), 1.5 * tail_r, 1.5 * tail_r),
+                R((rear_x - 1.08 * tail_len, 0, body_z - 0.34 * height), 2.0 * tail_r,
+                  1.6 * tail_r),
+                R((rear_x - 1.15 * tail_len, 0, body_z - 0.36 * height), 0.5 * tail_r,
+                  0.5 * tail_r),
+            ]
+        parts.append(Part("tail_tuft", tuft_rings, weights={"tail4": 1.0}, tag="tuft",
+                          segments=16 if wolf else 12,
+                          rough=(0.014 * height / 0.8, 32.0 * 0.8 / height) if wolf
+                          else (0.012, 28.0)))
 
     def paint(ctx):
         P = ctx.P
@@ -351,6 +390,16 @@ def make_wild_quadruped(config):
             coat = nz.mix(coat, np.array([0.12, 0.075, 0.045]), ctx.tag("claw"))
         return coat
 
+    def surface_height(ctx):
+        # Anisotropic three-dimensional noise makes short guard hairs run predominantly along
+        # the body. Eyes and the wet nose stay smooth instead of inheriting fur relief.
+        P = ctx.P * np.array([0.42, 1.25, 1.8])
+        fine = nz.fbm(P, 110.0, 3, seed=118)
+        clumps = nz.fbm(ctx.P, 28.0, 3, seed=119)
+        fur = 0.90 * fine + 0.10 * clumps
+        smooth = np.clip(ctx.tag("eye") * 4.0 + ctx.tag("nose") * 1.5, 0.0, 1.0)
+        return 0.5 + (fur - 0.5) * (1.0 - smooth)
+
     def front(side):
         return Leg("upper_arm" + side, "forearm" + side, "hand" + side,
                    "fingers" + side, "scapula" + side)
@@ -425,8 +474,12 @@ def make_wild_quadruped(config):
             "shoulder_height_m": height,
             "body_length_m": length,
             "roughness": 0.9}
+    if wolf:
+        meta["surface_detail"] = "anisotropic double-coat normal map"
     meta.update(config.get("meta", {}))
     return Spec(name=name, bones=bones, parts=parts, paint=paint, texture_size=1024,
+                surface_height=surface_height if wolf else None,
+                surface_strength=1.35 if wolf else 2.0,
                 voxel=config.get("voxel", 0.010 if height < 1.1 else 0.012),
                 target_tris=config.get("target_tris", 18000),
                 smooth_iters=8, meta=meta,

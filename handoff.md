@@ -92,6 +92,14 @@ whatever you take up (`docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `docs/V
   unchanged. A direct model regression covers all five looks and the no-litter pine control; all
   270 active CTest cases pass (21 diagnostics disabled). The normal Tiger Forest view and close
   crop are inspected in `docs/evidence/leaf-litter-j9-2026-11-20.jpg` (J9, 2026-11-20).
+- Adult and juvenile grey wolves now have a second-pass double coat and silhouette: a reusable
+  height-to-normal stage packs an anisotropic guard-hair normal map and exports tangents; a fused
+  neck ruff, lean shoulder transitions and a tapered rough brush replace the smooth chest, ball
+  joints and cord tail. Triangle counts stay 18,528 / 15,528; the 3.09 / 2.97 MB production GLBs
+  match independent fresh exports. All 120 animal-pipeline tests and all 270 active CTest cases
+  pass (21 diagnostics disabled); both viewers plus a real Wolf Wood run after 3,000 ticks were
+  inspected in
+  `docs/evidence/wolf-coat-j10-2026-11-20.jpg` (J10, 2026-11-20). The anatomy remains stylised.
 - The stopped G7c audio audit is recovered and finished. Calls now follow `Vocalize`, social,
   play and documented feeding cues rather than a timer; takes do not repeat immediately, spatial
   pan is capped at 0.60, birds fade with daylight, crowd level follows its people, and footsteps
@@ -216,18 +224,19 @@ tests pass. Nobody listened to the audio; preserve that qualification.
 
 ### 4.6 Animals
 
-- First-generation stylised models still: wolf, camel, meerkat, ostrich, kangaroo; bears are
+- First-generation stylised anatomy still: wolf, camel, meerkat, ostrich, kangaroo; the wolf has
+  received a second-pass double coat, ruff, shoulders and tail, but is not scan-based. Bears are
   sculpt-based but crude (`docs/ANIMALS.md`; pipeline in `tools/animals/`, its tests
   `python3 -m unittest discover -s tools/animals/tests`, about 10 minutes).
 - Every young animal used in the Visitor Zoo has a dedicated variant; the brown/polar bear cub
   models exist but are unused (bears live as pairs).
 - `wolf_juvenile` is now a real older-pup variant rather than a scaled adult: 0.46 m shoulder,
   shorter body and muzzle, broader skull, larger eyes, ears and paws, lighter coat, 15,528
-  triangles, 33 bones and eight clips with pup-scaled motion. The adult wolf remained
-  byte-for-byte identical after the opt-in generator change, and the production pup matches an
-  independent fresh export. All 108 animal-pipeline tests pass; a real Wolf Ridge run selected
-  the model for one-year-old Rosa. The inspected comparison and habitat evidence is
-  `docs/evidence/wolf-juvenile-j1-2026-11-20.jpg` (J1, 2026-11-20).
+  triangles, 33 bones and eight clips with pup-scaled motion. That J1 production pup matched an
+  independent fresh export, and its real Wolf Ridge run selected the model for one-year-old
+  Rosa. J10 subsequently gave both ages a double-coat normal map and improved ruff, shoulder and
+  tail geometry; see the newer note above. The inspected J1 comparison and habitat evidence is
+  `docs/evidence/wolf-juvenile-j1-2026-11-20.jpg`.
 - `meerkat_juvenile` now replaces the scaled adults used for both 0.15-year-old pups in the
   Visitor Zoo: 0.17 m shoulder, rounder and proportionally broader skull, 72 % face length,
   larger eyes, ears and paws, lighter coat, 8,576 triangles, 33 bones and ten clips. Its

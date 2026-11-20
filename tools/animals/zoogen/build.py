@@ -13,6 +13,7 @@ from mathutils.bvhtree import BVHTree
 
 from . import geom
 from . import noise as nz
+from . import surface
 
 
 def to_blender(p):
@@ -326,6 +327,26 @@ def build_mesh(spec):
     tex = mat.node_tree.nodes.new("ShaderNodeTexImage")
     tex.image = img
     mat.node_tree.links.new(tex.outputs["Color"], bsdf.inputs["Base Color"])
+    normal_img = None
+    if spec.surface_height is not None:
+        height = np.asarray(spec.surface_height(ctx), dtype=np.float64)
+        if height.shape != ctx.filled.shape:
+            raise ValueError(
+                f"{spec.name}: surface height has shape {height.shape}, expected {ctx.filled.shape}")
+        height = _dilate(height[..., None], ctx.filled)[..., 0]
+        normal_rgb = surface.height_to_normal(height, spec.surface_strength)
+        normal_img = bpy.data.images.new(spec.name + "_normal", size, size, alpha=False)
+        normal_img.colorspace_settings.name = 'Non-Color'
+        normal_rgba = np.concatenate(
+            [normal_rgb, np.ones((size, size, 1))], axis=-1).astype(np.float32)
+        normal_img.pixels.foreach_set(normal_rgba.ravel())
+        normal_img.pack()
+        normal_tex = mat.node_tree.nodes.new("ShaderNodeTexImage")
+        normal_tex.image = normal_img
+        normal_node = mat.node_tree.nodes.new("ShaderNodeNormalMap")
+        normal_node.inputs["Strength"].default_value = 1.0
+        mat.node_tree.links.new(normal_tex.outputs["Color"], normal_node.inputs["Color"])
+        mat.node_tree.links.new(normal_node.outputs["Normal"], bsdf.inputs["Normal"])
     bsdf.inputs["Roughness"].default_value = spec.meta.get("roughness", 0.85)
     bsdf.inputs["Metallic"].default_value = 0.0
     me.materials.append(mat)
@@ -336,7 +357,7 @@ def build_mesh(spec):
         for vi in np.nonzero(col > 0.0)[0]:
             vg.add([int(vi)], float(col[vi]), 'REPLACE')
     info = {"bones": bones, "bone_names": bone_names, "triangles": int(len(me.polygons)),
-            "vertices": int(len(verts)), "image": img}
+            "vertices": int(len(verts)), "image": img, "normal_image": normal_img}
     return ob, info
 
 

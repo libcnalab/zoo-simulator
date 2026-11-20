@@ -346,6 +346,43 @@ class AnatomyTests(unittest.TestCase):
         self.assertAlmostEqual(clips["walk"]["speed"], .72, delta=.02)
         self.assertAlmostEqual(clips["trot"]["speed"], 1.65, delta=.02)
 
+    def test_wolves_have_a_double_coat_ruff_and_tapered_brush(self):
+        for species in ("wolf", "wolf_juvenile"):
+            spec = importlib.import_module("species." + species).make_spec()
+            parts = {part.name: part for part in spec.parts}
+            self.assertIsNotNone(spec.surface_height)
+            self.assertEqual(spec.meta["surface_detail"], "anisotropic double-coat normal map")
+            self.assertIn("neck_ruff", parts)
+            shoulder = parts["front_leg.L"].rings
+            self.assertGreater(np.linalg.norm(shoulder[1].c - shoulder[0].c),
+                               .20 * spec.meta["shoulder_height_m"])
+            brush = parts["tail_tuft"].rings
+            self.assertEqual(len(brush), 4)
+            self.assertGreater(brush[1].ry, brush[0].ry)
+            self.assertLess(brush[-1].ry, .2 * brush[1].ry)
+
+    def test_wolf_exports_carry_the_coat_normal_map_and_tangents(self):
+        root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+        for species, triangle_limit in (("wolf", 20000), ("wolf_juvenile", 17000)):
+            glb = os.path.join(root, "assets", "animals", species + ".glb")
+            with open(glb, "rb") as source:
+                self.assertEqual(source.read(4), b"glTF")
+                source.read(8)
+                length, _ = struct.unpack("<II", source.read(8))
+                document = json.loads(source.read(length))
+            self.assertLess(os.path.getsize(glb), 3_500_000)
+            self.assertEqual(len(document["images"]), 2)
+            self.assertEqual({image["mimeType"] for image in document["images"]}, {"image/png"})
+            self.assertIn("normalTexture", document["materials"][0])
+            for mesh in document["meshes"]:
+                for primitive in mesh["primitives"]:
+                    self.assertIn("TANGENT", primitive["attributes"])
+            with open(os.path.join(root, "assets", "animals", species + ".json")) as source:
+                manifest = json.load(source)
+            self.assertLessEqual(manifest["triangles"], triangle_limit)
+            self.assertEqual(manifest["meta"]["surface_detail"],
+                             "anisotropic double-coat normal map")
+
     def test_pillar_feet_have_flat_round_soles(self):
         from zoogen.anatomy import round_foot
         foot = round_foot("foot.L", 1.0, .5, .3, .28, "toes.L")

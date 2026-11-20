@@ -115,6 +115,7 @@
     "roughness": 0.9,
     "scientific_name": "Canis lupus",
     "shoulder_height_m": 0.46,
+    "surface_detail": "anisotropic double-coat normal map",
     "variant": "juvenile",
     "variant_of": "wolf"
   },

@@ -55,7 +55,7 @@ by the species file. The first-generation models (the last two rows) are stylise
 photorealistic; what each is weak at is listed in
 [`PIVOT_TO_ZOO_EXPLORATION.md`](PIVOT_TO_ZOO_EXPLORATION.md).
 
-### Grey wolf pup (2026-11-20)
+### Grey wolf pup and double coat (2026-11-20)
 
 `wolf_juvenile` replaces the scaled-adult wolf used for animals below half the species'
 age of maturity. It is an older pup with a 0.46 m shoulder, 0.78 m body, a proportionally
@@ -64,13 +64,24 @@ generator's proportion. Its lighter coat is separate from the adult's. The model
 triangles, 33 bones and the standard eight clips; its short-stride walk is 0.72 m/s and its
 trot is 1.65 m/s.
 
-The generator changes are opt-in: a fresh adult wolf export remained byte-for-byte identical
-to the production model, and the production pup matches a separate fresh export. The viewer
-comparison and a real Wolf Ridge frame are in
-`evidence/wolf-juvenile-j1-2026-11-20.jpg`; the latter shows the game selecting the pup for
-one-year-old Rosa. The proportions read as young, especially beside an adult, but this is still
-the same stylised loft-and-tube first-generation model rather than a furred or scan-based wolf;
-the large paws are deliberate and there is no normal map.
+The first juvenile pass was opt-in: a fresh adult export remained byte-for-byte identical and
+the production pup matched a separate fresh export. Its viewer comparison and a real Wolf Ridge
+frame are in `evidence/wolf-juvenile-j1-2026-11-20.jpg`; the latter shows the game selecting the
+pup for one-year-old Rosa.
+
+A second pass improves both ages. A fused, irregular neck ruff breaks the cylindrical chest
+outline; the upper legs now enter the body through lean transitions instead of duplicated rings
+that read as balls; and the thin cord tail is replaced by a roughened, four-stage tapered brush.
+The texture builder can now turn an optional UV-space height field into a packed tangent-space
+normal map. Wolves use anisotropic 3D noise for short guard-hair relief while the eyes and wet
+nose stay smooth. Both GLBs contain the normal texture and vertex tangents; the adult remains
+18,528 triangles (3.09 MB) and the pup 15,528 triangles (2.97 MB), so the change adds surface
+detail rather than mesh density. Both production files match independent fresh exports.
+
+The inspected before/after viewers and a real seed-1 Wolf Wood run after 3,000 simulation ticks
+are in `evidence/wolf-coat-j10-2026-11-20.jpg`. The relief, ruff and brush make the silhouette and
+lighting less toy-like, but the underlying lofted anatomy is still stylised rather than a scan;
+the deliberately large pup paws and rounded adult haunches remain visible limitations.
 
 ### Meerkat pup (2026-11-20)
 

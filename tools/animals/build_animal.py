@@ -54,6 +54,8 @@ def main():
         build.export_glb(glb, mesh_ob, arm_ob, tangents=True, all_bones=True)
     elif spec.sculpt is not None and spec.sculpt.get("source_material", False):
         build.export_glb(glb, mesh_ob, arm_ob, tangents=True)
+    elif spec.surface_height is not None:
+        build.export_glb(glb, mesh_ob, arm_ob, tangents=True)
     else:
         build.export_glb(glb, mesh_ob, arm_ob)
     build.write_manifest(os.path.join(args.out, spec.name + ".json"), spec, info, clips)

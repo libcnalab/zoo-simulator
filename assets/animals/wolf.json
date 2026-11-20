@@ -112,7 +112,8 @@
     "common_name": "Grey wolf",
     "roughness": 0.9,
     "scientific_name": "Canis lupus",
-    "shoulder_height_m": 0.8
+    "shoulder_height_m": 0.8,
+    "surface_detail": "anisotropic double-coat normal map"
   },
   "name": "wolf",
   "skeleton_bounds_animal_space": {

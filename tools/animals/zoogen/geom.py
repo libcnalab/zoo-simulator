@@ -287,6 +287,8 @@ class Spec:
     bones: list                       # [Bone]; left bones named *.L are mirrored
     parts: list                       # [Part]
     paint: object = None              # callable(ctx) -> rgb float array (H, W, 3)
+    surface_height: object = None     # optional callable(ctx) -> height field for a normal map
+    surface_strength: float = 2.0     # tangent-space slope multiplier for that height field
     texture_size: int = 1024
     voxel: float = 0.012              # voxel remesh size in metres
     target_tris: int = 16000
