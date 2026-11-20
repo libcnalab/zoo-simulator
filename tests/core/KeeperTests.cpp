@@ -152,7 +152,7 @@ TEST(Keeper, TheVisitorZooHasItsCrew) {
     EXPECT_EQ(staff.KeeperOf(EnclosureId{9999}), nullptr);
 }
 
-TEST(Keeper, AWholeDangerousGroupCanBeAtomicallySecuredForStaff) {
+TEST(Keeper, AWholeDangerousGroupIsRecalledToCapacityCheckedShelters) {
     const auto zoo = VisitorZoo();
     const std::set<std::uint32_t> dangerous = DangerousHabitats(*zoo);
     ASSERT_FALSE(dangerous.empty());
@@ -167,22 +167,56 @@ TEST(Keeper, AWholeDangerousGroupCanBeAtomicallySecuredForStaff) {
         }
     }
     ASSERT_FALSE(group.empty());
+    std::map<std::uint32_t, Vec2> beforeRecall;
+    for (AnimalId id : group) {
+        beforeRecall[id.value] = zoo->Fauna().Find(id)->position;
+    }
     Env env = zoo->MakeEnv();
     ASSERT_TRUE(zoo->Fauna().SecureForStaff(env, habitat));
 
-    std::map<std::uint32_t, int> occupants;
     float hungerBefore = 0.0f;
+    bool visibleRecall = false;
     for (AnimalId id : group) {
         const Animal* animal = zoo->Fauna().Find(id);
         ASSERT_NE(animal, nullptr);
         EXPECT_EQ(animal->home, habitat);
-        EXPECT_TRUE(animal->shelter);
         EXPECT_EQ(animal->activity, AnimalActivity::Shelter);
-        EXPECT_FALSE(animal->moving);
         EXPECT_FALSE(animal->loose);
-        ++occupants[animal->shelter.value];
+        EXPECT_EQ(animal->position, beforeRecall[id.value]) << "recall must not teleport animal " << id.value;
+        visibleRecall |= animal->moving && !animal->shelter;
         hungerBefore += animal->hunger;
     }
+    EXPECT_TRUE(visibleRecall);
+
+    zoo->Fauna().ClearStaffLockouts();
+    zoo->Fauna().AddStaffLockout(habitat);
+    int recallTicks = 0;
+    for (; recallTicks < 5000; ++recallTicks) {
+        bool allSheltered = true;
+        for (AnimalId id : group) {
+            allSheltered &= static_cast<bool>(zoo->Fauna().Find(id)->shelter);
+        }
+        if (allSheltered) {
+            break;
+        }
+        env.time.tick = recallTicks + 1;
+        zoo->Fauna().Step(env);
+    }
+    EXPECT_GT(recallTicks, 0);
+    ASSERT_LT(recallTicks, 5000);
+
+    std::map<std::uint32_t, int> occupants;
+    bool changedPosition = false;
+    for (AnimalId id : group) {
+        const Animal* animal = zoo->Fauna().Find(id);
+        ASSERT_NE(animal, nullptr);
+        ASSERT_TRUE(animal->shelter);
+        EXPECT_EQ(animal->activity, AnimalActivity::Shelter);
+        EXPECT_FALSE(animal->moving);
+        changedPosition |= Distance(animal->position, beforeRecall[id.value]) > 0.0f;
+        ++occupants[animal->shelter.value];
+    }
+    EXPECT_TRUE(changedPosition);
     for (const auto& [buildingId, count] : occupants) {
         const Building* building = zoo->Objects().FindBuilding(BuildingId{buildingId});
         ASSERT_NE(building, nullptr);
@@ -198,7 +232,7 @@ TEST(Keeper, AWholeDangerousGroupCanBeAtomicallySecuredForStaff) {
     EXPECT_TRUE(zoo->Fauna().StaffLockout(habitat));
     EXPECT_EQ(zoo->Fauna().StateHash(), beforeTransientInput);
     for (int step = 0; step < 180; ++step) {
-        env.time.tick = step + 1;
+        env.time.tick = recallTicks + step + 1;
         zoo->Fauna().Step(env);
     }
     float hungerAfter = 0.0f;
@@ -245,6 +279,7 @@ TEST(Keeper, DangerousHabitatsHaveOutsideServiceAndLockoutWorkInside) {
     std::map<std::uint32_t, int> release;
     std::map<std::uint32_t, int> active;
     std::map<std::uint32_t, int> entered;
+    std::map<std::uint32_t, int> visibleRecall;
     std::map<std::uint32_t, int> activeStreak;
     std::map<std::uint32_t, int> longestActive;
     for (int i = 0; i < 50000; ++i) {
@@ -255,6 +290,15 @@ TEST(Keeper, DangerousHabitatsHaveOutsideServiceAndLockoutWorkInside) {
                 ++active[member.lockout.value];
                 entered[member.lockout.value] +=
                     zoo->Habitats().At(World::TileAt(member.position)) == member.lockout;
+                bool recalling = false;
+                for (const Animal& animal : zoo->Fauna().All()) {
+                    if (animal.InWorld() && animal.home == member.lockout && !animal.shelter) {
+                        recalling |= animal.activity == AnimalActivity::Shelter && animal.moving;
+                        EXPECT_NE(zoo->Habitats().At(World::TileAt(member.position)), member.lockout)
+                            << "keeper entered habitat " << member.lockout.value << " during recall";
+                    }
+                }
+                visibleRecall[member.lockout.value] += recalling;
                 activeNow.insert(member.lockout.value);
             }
             for (const StaffTask& task : member.tasks) {
@@ -287,7 +331,8 @@ TEST(Keeper, DangerousHabitatsHaveOutsideServiceAndLockoutWorkInside) {
         EXPECT_GT(release[id], 0) << enclosure->name;
         EXPECT_GT(active[id], 0) << enclosure->name;
         EXPECT_GT(entered[id], 0) << enclosure->name;
-        EXPECT_LT(longestActive[id], 600) << enclosure->name << " remained secured too long";
+        EXPECT_GT(visibleRecall[id], 0) << enclosure->name << " did not show its recall";
+        EXPECT_LT(longestActive[id], 1500) << enclosure->name << " remained secured too long";
     }
 }
 
@@ -413,6 +458,57 @@ TEST(Keeper, AnActiveDangerousLockoutSurvivesSaveAndContinuesSafely) {
         }
     }
     EXPECT_TRUE(loaded->SameState(*original));
+}
+
+TEST(Keeper, AnAnimatedDangerousRecallSurvivesSaveAndFinishesSafely) {
+    const auto original = VisitorZoo();
+    original->Guests().SetOpen(false);
+    EnclosureId habitat;
+    for (int i = 0; i < 30000 && !habitat; ++i) {
+        original->Step();
+        for (const StaffMember& member : original->Keepers().All()) {
+            if (!member.lockout ||
+                original->Habitats().At(World::TileAt(member.position)) == member.lockout) {
+                continue;
+            }
+            for (const Animal& animal : original->Fauna().All()) {
+                if (animal.InWorld() && animal.home == member.lockout && !animal.shelter && animal.moving &&
+                    animal.activity == AnimalActivity::Shelter) {
+                    habitat = member.lockout;
+                    break;
+                }
+            }
+        }
+    }
+    ASSERT_TRUE(habitat);
+
+    std::string error;
+    const auto loaded =
+        ZooFromJson(ZooToJson(*original), testdata::GameCatalog(), testdata::GameSpecies(), &error);
+    ASSERT_NE(loaded, nullptr) << error;
+    ASSERT_TRUE(loaded->SameState(*original));
+
+    Watch originalWatch(*original);
+    Watch loadedWatch(*loaded);
+    bool entered = false;
+    bool released = false;
+    for (int i = 0; i < 3000 && !released; ++i) {
+        original->Step();
+        loaded->Step();
+        originalWatch.Check(*original);
+        loadedWatch.Check(*loaded);
+        ASSERT_TRUE(loaded->SameState(*original)) << "after recall step " << i;
+        bool active = false;
+        for (const StaffMember& member : loaded->Keepers().All()) {
+            if (member.lockout == habitat) {
+                active = true;
+                entered |= loaded->Habitats().At(World::TileAt(member.position)) == habitat;
+            }
+        }
+        released = entered && !active;
+    }
+    EXPECT_TRUE(entered);
+    EXPECT_TRUE(released);
 }
 
 TEST(Keeper, ASaveWithoutStaffOpensUnstaffedAndDamagedStaffIsRefused) {

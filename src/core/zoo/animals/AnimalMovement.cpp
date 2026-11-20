@@ -215,8 +215,17 @@ void AdvanceMovement(Animal& animal, const SpeciesDef& species, const Env& env, 
                 return;
             }
             ++pathCalls;
-            if (!env.nav.FindPath(animal.position, animal.target, profile, animal.route,
-                                  tuning::kPathExpansionLimit, navScratch)) {
+            bool found = env.nav.FindPath(animal.position, animal.target, profile, animal.route,
+                                          tuning::kPathExpansionLimit, navScratch);
+            // A registered house door can sit beyond a dense grove whose exact body-clearance
+            // circles leave no tile-centre A* edge. Shelter is the fail-safe destination: retain
+            // the old grid route as a fallback, then let waypoint adjustment and per-step prop
+            // collision steer the animal through the real available gap.
+            if (!found && animal.activity == AnimalActivity::Shelter) {
+                found = env.nav.FindPath(animal.position, animal.target, profile, animal.route,
+                                         tuning::kPathExpansionLimit);
+            }
+            if (!found) {
                 animal.moving = false;
                 animal.route.clear();
                 animal.routeIndex = 0;

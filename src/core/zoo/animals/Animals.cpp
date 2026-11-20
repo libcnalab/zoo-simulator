@@ -822,10 +822,25 @@ bool Animals::SecureForStaff(const Env& env, EnclosureId enclosureId) {
             chosen[static_cast<std::size_t>(occupant[slot])] = slot;
         }
     }
+    // Capacity alone is not enough: a door on a disconnected dry island would start a
+    // fail-closed recall which can never finish. Check the fallback grid route used by
+    // shelter errands before changing any animal, preserving the operation's atomic failure.
+    std::vector<Vec2> route;
+    for (std::size_t number = 0; number < animalIndexes.size(); ++number) {
+        const Animal& animal = animals_[animalIndexes[number]];
+        const ShelterSlot& slot = slots[chosen[number]];
+        if (animal.shelter == slot.building || animal.position == slot.front) {
+            continue;
+        }
+        const SpeciesDef& species = env.species.All()[static_cast<std::size_t>(animal.species)];
+        if (!env.nav.FindPath(animal.position, slot.front, NavProfile::Animal(0.0f, species.canSwim),
+                              route)) {
+            return false;
+        }
+    }
     for (std::size_t number = 0; number < animalIndexes.size(); ++number) {
         Animal& animal = animals_[animalIndexes[number]];
         const ShelterSlot& slot = slots[chosen[number]];
-        animal.position = slot.front;
         animal.target = slot.front;
         animal.speed = 0.0f;
         animal.home = enclosureId;
@@ -833,9 +848,12 @@ bool Animals::SecureForStaff(const Env& env, EnclosureId enclosureId) {
         animal.activity = AnimalActivity::Shelter;
         animal.activityLeft = 0;
         animal.activityTicks = 0;
-        animal.moving = false;
+        if (animal.shelter != slot.building) {
+            animal.shelter = {};
+        }
+        animal.moving = !animal.shelter && DistanceSquared(animal.position, slot.front) >
+                                               tuning::kMovementStartDistanceSquaredM2;
         animal.targetProp = {};
-        animal.shelter = slot.building;
         animal.route.clear();
         animal.routeIndex = 0;
         animal.following = {};
@@ -949,7 +967,11 @@ void Animals::StepAnimals(Env& env, const std::vector<Enclosure>& enclosures, in
         }
         const EnclosureId enclosureId = env.enclosures.At(animal.position);
         const Enclosure* enclosure = env.enclosures.Find(enclosureId);
-        const bool heldForStaff = animal.shelter && StaffLockout(enclosureId);
+        // A recall is ordinary visible movement until the animal reaches its assigned
+        // door. The saved staff lockout keeps needs advancing but prevents a fresh
+        // behaviour decision from replacing that route on the way.
+        const bool heldForStaff =
+            StaffLockout(enclosureId) && (animal.shelter || animal.activity == AnimalActivity::Shelter);
         if (animal.shelter && !heldForStaff) {
             const Building* shelter = env.objects.FindBuilding(animal.shelter);
             bool validShelter = shelter != nullptr && shelter->open && shelter->def >= 0 &&
@@ -1112,6 +1134,15 @@ void Animals::StepAnimals(Env& env, const std::vector<Enclosure>& enclosures, in
             animal.nextNeedCheck = env.time.tick + 2 * kTicksPerSecond;
         }
         AvoidKeeper(animal, species, env, enclosureId, urgentDrink || urgentEat);
+        if (heldForStaff && !animal.shelter && !animal.moving &&
+            DistanceSquared(animal.position, animal.target) > tuning::kMovementStartDistanceSquaredM2) {
+            // Ordinary errands may be abandoned after their movement budget. A safety recall
+            // instead retries deterministically while the keeper remains at the outside control.
+            animal.moving = true;
+            animal.activityTicks = 0;
+            animal.route.clear();
+            animal.routeIndex = 0;
+        }
         if ((animal.activity == AnimalActivity::Eat || animal.activity == AnimalActivity::Drink ||
              animal.activity == AnimalActivity::Play) &&
             animal.targetProp) {

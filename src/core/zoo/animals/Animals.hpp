@@ -280,10 +280,11 @@ public:
         }
     }
 
-    /// Moves every animal standing in `enclosure` into its registered shelters, provided
-    /// all of them fit and every assigned door is usable by its species. The operation is
-    /// atomic: false leaves every animal unchanged. A resident loose outside the habitat
-    /// also makes it fail, since the habitat cannot then be made safe for staff.
+    /// Recalls every animal standing in `enclosure` to an assigned registered shelter,
+    /// provided all of them fit and every assigned door is usable by its species. Assignment
+    /// is atomic: false leaves every animal unchanged. A resident loose outside the habitat
+    /// also makes it fail, since the habitat cannot then be made safe for staff. The caller
+    /// must hold a staff lockout while they walk and wait until every animal is sheltered.
     bool SecureForStaff(const Env& env, EnclosureId enclosure);
     /// Habitats whose animals must remain secured this tick. Like keeper positions, this is
     /// transient input rebuilt by Zoo before Step(), never saved, compared or hashed.

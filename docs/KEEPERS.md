@@ -50,10 +50,12 @@ zoo happens half way through the job.
   side. When dirt reaches 0.18 (and periodically every third visit), the keeper operates a
   four-second lockout at the service gate. Every animal in the habitat must fit into an open,
   registered shelter whose door its species can use; a loose resident, missing door or short
-  capacity makes the whole operation fail without moving any animal. On success the group is
-  held in the houses, the keeper crosses the same registered gate for one twelve-second rake
-  at its inside tile, returns outside and only then releases it. If the way out changes, the
-  animals stay secured and the keeper retries rather than completing the release remotely.
+  capacity or disconnected route makes the whole operation fail without moving any animal. On
+  success the assigned group remains visible while walking to those doors. The keeper waits at
+  the outside control until the last dangerous resident is hidden, crosses the same registered
+  gate for one twelve-second rake at its inside tile, returns outside and only then releases it.
+  If the way out changes, the animals stay secured and the keeper retries rather than completing
+  the release remotely.
 - **The gardener** waters a bed every third stop, kneels and tends it with a trowel, and
   rests now and then; **the cleaner** gives priority to the nearest bin with litter within
   30 m, empties it and then sweeps that litter, or the path beside the bin. The overlapping
@@ -142,6 +144,22 @@ determinism, a mid-round save/load and the staffed week. The combined J41/J42 su
 292 active cases, including the 366.68-second animation pipeline; 21 diagnostics remain disabled.
 Both short and 6,000-tick state hashes repeat twice for seeds 1–3 (J42, 2026-11-20).
 
+J50 replaces J35's instantaneous shelter transfer with a visible, fail-closed recall. The same
+atomic capacity and fallback-route check assigns each resident a registered door, but preserves
+its position and uses the ordinary animal gait and collision system to reach it. A shelter route
+which cannot fit the exact prop-aware tile-centre graph may fall back to the older grid route;
+waypoint correction and every physical step still avoid the real trees and rocks. The keeper holds
+the outside control until `DangerSecuredForStaff` sees every dangerous resident hidden, so the gate
+remains impassable during the walk. Every dangerous Visitor Zoo habitat shows a recall and later
+admits its keeper; the longest complete lockout is 1,116 ticks (55.8 seconds) against a 1,500-tick
+regression bound.
+Both a recall and the subsequent inside lockout survive save/load bit-identically. The current
+staffed week records 10 animal-hours in need against 16 with automatic care alone, and a two-hour
+longest spell against four. The inspected Polar Sound frame shows all three bears approaching the
+house in `evidence/animated-lockout-j50-2026-11-20.png`. Changed short and 6,000-step hashes
+repeat for seeds 1–3. The complete suite passes all 298 active cases including the 466.17-second
+animation pipeline, with 21 diagnostics disabled (2026-11-20).
+
 J21 spreads outside work around habitats which have a planted stand-off strip. `BarrierStands`
 used to stop as soon as it found the service gate, even if that left Elephant Valley and Rhino
 Hollow with one place for every feeding, fence check and sweep. It now keeps both the direct gate
@@ -182,9 +200,9 @@ hours in need and their longest run may be only narrowly worse; the worst hunger
 within 0.07 of automatic care whenever it is near the welfare issue line, and otherwise must still
 remain at or below that 0.70 line. The diagnostic names the particular animal, habitat and tick
 behind each maximum so a layout-dependent change can be investigated rather than dismissed as noise.
-After J35's earlier service thresholds, public-feeding water check and short dangerous lockouts,
-the staffed week records 7 animal-hours in need against 9 under automatic care, with worst hunger
-0.712 against 0.786 and thirst 0.777 against 0.722. The comparison still keeps its separate
+With J50's animated dangerous recalls, the staffed week records 10 animal-hours in need against
+16 under automatic care, with worst hunger 0.739 against 0.770 and thirst 0.762 against 0.730.
+The comparison still keeps its separate
 aggregate, duration and peak checks rather than allowing one good average to hide a stranded animal.
 
 ## Determinism and saves
@@ -242,6 +260,6 @@ the first tick on), not because of the keepers.
 
 ## Open
 
-- Lockout moves animals into their houses atomically; it does not yet animate a recall or expose a
-  separate holding-yard gate. Shelter capacity and doors are real, but the transfer is immediate.
+- The visible recall uses each registered shelter door; there is no separately operated holding-yard
+  gate, and release returns residents at that door without an opening-door animation.
 - Nobody is drawn beyond 150 m or beyond the 12 nearest.

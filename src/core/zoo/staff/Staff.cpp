@@ -464,6 +464,15 @@ void Staff::Step(Env& env, Animals& animals, Visitors& visitors) {
                     Apply(env, animals, visitors, task);
                 }
             }
+            // Operating the lockout starts a visible recall rather than moving the
+            // group instantly. Stay at the outside control until the last dangerous
+            // resident reaches its assigned house; MayStep still independently refuses the
+            // gate crossing unless this same condition is true.
+            if (member.ticksLeft <= 1 && task.lockout == StaffLockoutAction::Secure &&
+                member.lockout == task.enclosure && !DangerSecuredForStaff(env, animals, task.enclosure)) {
+                member.ticksLeft = 1;
+                continue;
+            }
             if (--member.ticksLeft <= 0) {
                 NextTask(member);
             }

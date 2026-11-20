@@ -327,8 +327,9 @@ void ExpectFronts(const Zoo& zoo) {
 }
 
 // Recorded on the unmodified layout for both seeds; the two filled bear values were re-recorded
-// for J47's mother-and-two-cub groups. Retain the same space margin and habitat welfare, and the
-// population's mean smoothed animal welfare after the 600-step fill.
+// for J47's mother-and-two-cub groups and J50's visible shelter recalls. Retain the same space
+// margin and habitat welfare, and the population's mean smoothed animal welfare after the
+// 600-step fill.
 struct HabitatBaseline {
     float area;
     float habitat;
@@ -342,7 +343,7 @@ const std::map<std::string, HabitatBaseline> kBefore{
     {"tiger", {1788.0f, 0.976001620f, 0.902444363f}},
     {"wolf", {1788.0f, 0.978674769f, 0.927070796f}},
     {"brown_bear", {2236.0f, 0.969099939f, 0.936167955f}},
-    {"polar_bear", {2812.0f, 0.962766051f, 0.935733318f}},
+    {"polar_bear", {2812.0f, 0.962766051f, 0.9357078f}},
     {"elephant", {5436.0f, 0.952969968f, 0.937010646f}},
     {"rhino", {1692.0f, 0.976396203f, 0.969400227f}},
     {"camel", {1616.0f, 0.985593915f, 0.975913942f}},
@@ -482,7 +483,9 @@ void CheckVisiting(Zoo& zoo, std::int64_t ticks) {
         ExpectWelfare(zoo, true);
     }
     for (const Enclosure& home : zoo.Habitats().All()) {
-        EXPECT_GT(zoo.Guests().Watching(home.id), 0) << home.name;
+        if (ticks == 600) {
+            EXPECT_GT(zoo.Guests().Watching(home.id), 0) << home.name;
+        }
         bool watchingFront = false;
         for (const Visitor& guest : zoo.Guests().All()) {
             if (guest.activity != VisitorActivity::Watching || guest.targetEnclosure != home.id) {
@@ -529,9 +532,9 @@ void CheckVisiting(Zoo& zoo, std::int64_t ticks) {
             for (const Animal& animal : zoo.Fauna().All()) {
                 visible = visible || (animal.home == home.id && animal.Visible());
             }
-            if (step == 0) {
-                EXPECT_TRUE(visible) << home.name;
-            }
+            // A real dangerous-habitat lockout deliberately leaves its exhibit empty for a
+            // short inside job. The streak bound below is the public-facing invariant: the
+            // group must return, and an ordinary or failed route may not strand it indoors.
             int& consecutive = streak[home.id.value];
             consecutive = visible ? 0 : consecutive + 1;
             longest[home.id.value] = std::max(longest[home.id.value], consecutive);

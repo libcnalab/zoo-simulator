@@ -539,6 +539,8 @@ from the Release build, visitor zoo, seed 1, after the visit's fill.
   probe falls again to 819 of 287,191 moving ticks (0.285 %), with the unchanged 0.75 % and
   120-tick limits. Short and 6,000-step hashes for seeds 1–3 repeat. The complete suite passes all
   297 active cases, including its 374.83-second animation pipeline, with 21 diagnostics disabled.
+  J50's real dangerous-habitat recalls add long, converging shelter walks to the same measurement;
+  the current result is 967 of 269,129 moving ticks (0.359 %), still below both unchanged bounds.
 - **Golden hashes** of `tests/core/VisitStartTests.cpp` re-recorded for the routines.
 - Pictures: `docs/evidence/animal-routines-2026-11-13.jpg` (lions resting in the shade at
   midday; penguins standing together, one swimming; flamingos at the lagoon after the wader

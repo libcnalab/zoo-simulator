@@ -456,6 +456,18 @@ whatever you take up (`docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `docs/V
   short/full hash regressions pass; both hash sets repeat for seeds 1–3. The complete suite passes
   all 297 active cases including the 374.83-second animation pipeline, with 21 diagnostics disabled
   as intended (J49, 2026-11-20).
+- J50 replaces the dangerous-habitat lockout's teleport with a visible shelter recall. Capacity
+  and usable doors are still assigned atomically, then every resident walks there with ordinary
+  gait and collision while the keeper waits at the outside control; `MayStep` remains fail-closed
+  until the last dangerous animal is hidden. All seven dangerous habitats show the transfer and
+  later admit the keeper; the longest whole lockout is 1,116 ticks (55.8 seconds) under a
+  1,500-tick bound. Saves during both the walk and inside work resume bit-identically. The current
+  staffed week records 10 animal-hours in need against 16 without visible staff, with longest
+  spells of two against four hours. The inspected Polar Sound frame is
+  `docs/evidence/animated-lockout-j50-2026-11-20.png`. The changed short and 6,000-step hashes
+  repeat for seeds 1–3. Both manually enabled full-visibility and visiting-day capacity seeds pass;
+  the complete suite passes all 298 active cases including the 466.17-second animation pipeline,
+  with 21 diagnostics disabled (J50, 2026-11-20).
 - The stopped G7c audio audit is recovered and finished. Calls now follow `Vocalize`, social,
   play and documented feeding cues rather than a timer; takes do not repeat immediately, spatial
   pan is capped at 0.60, birds fade with daylight, crowd level follows its people, and footsteps
@@ -546,7 +558,7 @@ sound unknown); saves there live only in the page's memory.
 
 ### 4.1 to 4.3: done on develop (2026-11-14)
 
-Keepers (`docs/KEEPERS.md`; open: lockout transfer is immediate rather than animated), ground and water edges
+Keepers (`docs/KEEPERS.md`; open: no separate holding-yard gate or release-door animation), ground and water edges
 (`docs/GROUND.md`; open: steep banks at deep pools), plants (`docs/PLANTS.md`;
 open: far cut-out edges aliased and fill cost of alpha-tested cards). The new first
 priority is memory (section 0).
