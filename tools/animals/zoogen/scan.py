@@ -10,7 +10,7 @@ from pathlib import Path
 
 import numpy as np
 
-from . import quadruped as quad
+from . import activity, quadruped as quad
 from .geom import Bone, Spec, expand_bones
 from .rig import Clip, Leg, Pose, Rig
 from .sculpt import prepare_instance, read_source
@@ -225,9 +225,33 @@ def equid_clips(solver, height):
     clips += [quad.eat_clip(solver, params), quad.drink_clip(solver, params),
               Clip('rest', 8, partial(equid_rest_pose, solver, params, scale, False, 0, base=base)),
               Clip('sleep', 8, partial(equid_rest_pose, solver, params, scale, True, effort, base=base)),
-              quad.vocalize_clip(solver, params)]
-    clips[-1].pose = partial(equid_call_pose, solver, params)
+              quad.vocalize_clip(solver, params),
+              Clip('sentry', 9, partial(equid_sentry_pose, solver))]
+    clips[-2].pose = partial(equid_call_pose, solver, params)
     return clips
+
+
+EQUID_WATCH = [
+    (0.00, (0, 0, 0)),
+    (0.10, (25, 10, -5), .08),
+    (0.36, (25, -8, 8), .05),
+    (0.48, (0, 0, 0), .08),
+    (0.60, (-30, -6, 9), .08),
+    (0.88, (-30, 9, -6), .05),
+]
+
+
+def equid_sentry_pose(solver, phase):
+    """`sentry`: all four hooves planted while the high head and independently aimed ears scan."""
+    yaw, left_ear, right_ear = activity.held(phase, EQUID_WATCH)
+    pose = quad.stand(solver, Pose())
+    pose.r('neck1', ry=-8, rz=.35 * yaw)
+    pose.r('neck2', ry=-6, rz=.35 * yaw)
+    pose.r('head', ry=-4, rz=.30 * yaw)
+    pose.r('ear.L', rz=left_ear, ry=-.25 * yaw)
+    pose.r('ear.R', rz=right_ear, ry=-.25 * yaw)
+    pose.r('tail1', rz=3 * math.sin(2 * math.tau * phase))
+    return pose
 
 
 def model_previews(scene, arm, spec, clips, args):

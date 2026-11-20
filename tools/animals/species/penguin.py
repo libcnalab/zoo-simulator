@@ -31,7 +31,7 @@ def make_spec(juvenile=False):
             'float': {'clip': 'float', 'depth_m': .25 * scale, 'speed': .12 * scale},
             'water_origin_convention': 'Set asset origin to water surface minus depth_m; clip speed is metres/second',
             # The game's clip for a still activity (AnimalRenderer).
-            'activity_clips': {'preen': 'preen'}}
+            'activity_clips': {'preen': 'preen', 'huddle': 'huddle'}}
     if juvenile:
         meta.update(variant_of='penguin', variant='juvenile', relative_height=scale)
     def coat(context):

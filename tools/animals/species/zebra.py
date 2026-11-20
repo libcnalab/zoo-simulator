@@ -49,7 +49,8 @@ PREPARATION = {'rotation': [[0, -1, 0], [1, 0, 0], [0, 0, 1]],
 
 def make_variant(name, height, variant, edits):
     meta = {'common_name': 'Plains zebra', 'scientific_name': 'Equus quagga', 'asset_license': 'CC BY 4.0',
-            'source': 'Shikaki_Naito, Zebra Anatomy, CC BY 4.0', 'variant': variant}
+            'source': 'Shikaki_Naito, Zebra Anatomy, CC BY 4.0', 'variant': variant,
+            'activity_clips': {'sentinel': 'sentry'}}
     if variant != 'male':
         meta.update(variant_of='zebra', relative_height=height / 1.35)
     edits = {'ear': {'scale': [1.1, 1.1, 1.3]}, **edits}

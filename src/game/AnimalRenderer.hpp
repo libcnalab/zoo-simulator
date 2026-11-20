@@ -28,7 +28,7 @@ namespace zoogame {
 /// (`meta.activity_clips`).
 enum class AnimalPose : std::uint8_t {
     Idle, Walk, Trot, Eat, Drink, Rest, Sleep, Vocalize, Swim, Float, Sentry, Dig, Preen,
-    DustBathe, Ruminate, FilterFeed, Bathe, Count
+    DustBathe, Ruminate, FilterFeed, Bathe, Huddle, Count
 };
 
 /// Draws the zoo's animals: one skinned model per species (assets/animals,

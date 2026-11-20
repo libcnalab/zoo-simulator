@@ -27,7 +27,7 @@ ACTIVITIES = {"idle", "wander", "forage", "eat", "drink", "rest", "sleep", "play
               "bathe", "dust_bathe", "preen", "sentinel", "dig", "filter_feed", "patrol", "huddle"}
 # The clips a still animal may play (AnimalRenderer's still poses).
 STILL_CLIPS = {"idle", "eat", "drink", "rest", "sleep", "sentry", "dig", "preen", "dust_bathe",
-               "ruminate", "filter_feed", "bathe"}
+               "ruminate", "filter_feed", "bathe", "huddle"}
 EXPECTED = {
     "brown_bear": {"bathe": "bathe"},
     "brown_bear_juvenile": {"bathe": "bathe"},
@@ -35,8 +35,8 @@ EXPECTED = {
     "polar_bear_juvenile": {"bathe": "bathe"},
     "camel": {"ruminate": "ruminate"},
     "meerkat": {"sentinel": "sentry", "dig": "dig"},
-    "penguin": {"preen": "preen"},
-    "penguin_juvenile": {"preen": "preen"},
+    "penguin": {"preen": "preen", "huddle": "huddle"},
+    "penguin_juvenile": {"preen": "preen", "huddle": "huddle"},
     "flamingo": {"huddle": "rest", "preen": "preen", "filter_feed": "filter_feed"},
     "ostrich": {"dust_bathe": "dust_bathe"},
     "elephant": {"dust_bathe": "dust_bathe", "bathe": "dust_bathe"},
@@ -48,6 +48,9 @@ EXPECTED = {
     "giraffe": {"browse": "eat", "ruminate": "ruminate"},
     "giraffe_female": {"browse": "eat", "ruminate": "ruminate"},
     "giraffe_juvenile": {"browse": "eat", "ruminate": "ruminate"},
+    "zebra": {"sentinel": "sentry"},
+    "zebra_female": {"sentinel": "sentry"},
+    "zebra_juvenile": {"sentinel": "sentry"},
 }
 
 
@@ -214,6 +217,32 @@ class BatheTests(unittest.TestCase):
                 chest_heights.append(world[spec.rig.chest][2, 3])
             self.assertGreater(max(np.linalg.norm(matrix - hips[0]) for matrix in hips), .08, species)
             self.assertLess(max(chest_heights), .75 * spec.meta["shoulder_height_m"], species)
+
+
+class HuddleAndWatchTests(unittest.TestCase):
+    def test_penguins_huddle_compactly_without_moving_their_feet(self):
+        for species in ("penguin", "penguin_juvenile"):
+            spec, solver, clips = clips_of(species)
+            bodies = []
+            for index in range(60):
+                pose = clips["huddle"].pose(index / 60)
+                world = solver.solve(pose)
+                bodies.append(world[spec.rig.body][:3, :3])
+                for key, leg in spec.rig.legs.items():
+                    self.assertAlmostEqual(world[leg.toes][2, 3], solver.toe_base(key)[2], places=6)
+            self.assertGreater(max(np.linalg.norm(matrix - bodies[0]) for matrix in bodies), .02, species)
+
+    def test_zebras_watch_with_four_planted_hooves_and_a_turning_head(self):
+        for species in ("zebra", "zebra_female", "zebra_juvenile"):
+            spec, solver, clips = clips_of(species)
+            heads = []
+            for index in range(60):
+                pose = clips["sentry"].pose(index / 60)
+                world = solver.solve(pose)
+                heads.append(world[spec.rig.head][:3, :3])
+                for key, leg in spec.rig.legs.items():
+                    self.assertAlmostEqual(world[leg.toes][2, 3], solver.toe_base(key)[2], places=6)
+            self.assertGreater(max(np.linalg.norm(matrix - heads[0]) for matrix in heads), .25, species)
 
 
 class DustBatheTests(unittest.TestCase):

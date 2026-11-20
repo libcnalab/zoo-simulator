@@ -331,6 +331,21 @@ def penguin_preen(solver, phase):
     return pose
 
 
+def penguin_huddle(solver, phase):
+    """`huddle`: a compact upright bird with flippers held close and a subtle shared-cold shiver."""
+    angle = math.tau * phase
+    scale = solver.rig.extra['scale']
+    pose = biped.standing(solver).move('hips', dz=-.012 * scale)
+    pose.r('hips', rx=1.2 * math.sin(8 * angle), ry=-4)
+    pose.r('chest', rx=-1.2 * math.sin(8 * angle + .3), ry=3)
+    pose.r('neck1', ry=12)
+    pose.r('head', ry=18, rz=2 * math.sin(angle))
+    for side, sign in [('L', 1), ('R', -1)]:
+        pose.r('flipper1.' + side, rx=sign * 2, rz=-sign * 3)
+        pose.r('flipper2.' + side, rx=-sign * 2)
+    return pose
+
+
 def penguin_clips(solver):
     scale = solver.rig.extra['scale']
     clips = [biped.gait_clip(solver, biped.Stride('walk', .5 * scale, .40, .64, .025 * scale,
@@ -347,6 +362,7 @@ def penguin_clips(solver):
             clip.contact_keys = []
         clips.append(clip)
     clips.append(Clip('preen', 8, partial(penguin_preen, solver)))
+    clips.append(Clip('huddle', 8, partial(penguin_huddle, solver)))
     return clips
 
 

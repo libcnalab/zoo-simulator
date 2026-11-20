@@ -12,7 +12,7 @@ from zoogen import quadruped
 
 ROOT = Path(__file__).resolve().parents[3]
 SPECIES = ('zebra', 'zebra_female', 'zebra_juvenile')
-CLIPS = {'idle', 'walk', 'trot', 'eat', 'drink', 'rest', 'sleep', 'vocalize'}
+CLIPS = {'idle', 'walk', 'trot', 'eat', 'drink', 'rest', 'sleep', 'vocalize', 'sentry'}
 
 
 class ZebraTests(unittest.TestCase):

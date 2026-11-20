@@ -50,7 +50,7 @@ python3 -m unittest discover -s tools/animals/tests
 Each has the same eight clips, which the game picks from what the animal is doing: `idle`,
 `walk`, `trot` (the fast gait, a hop for the kangaroo), `eat`, `drink`, `rest`, `sleep`,
 `vocalize`; some have activity clips beside them (`sentry`, `dig`, `preen`, `dust_bathe`,
-`ruminate`, `filter_feed`, `bathe`, below). 9,000 to 34,000 triangles, 18 to 46 bones, a coat painted
+`ruminate`, `filter_feed`, `bathe`, `huddle`, below). 9,000 to 34,000 triangles, 18 to 46 bones, a coat painted
 by the species file. The first-generation models (the last two rows) are stylised, not
 photorealistic; what each is weak at is listed in
 [`PIVOT_TO_ZOO_EXPLORATION.md`](PIVOT_TO_ZOO_EXPLORATION.md).
@@ -287,6 +287,8 @@ named the real activity. Dedicated clips are now made in the pipeline
 | `tiger` | `bathe` (8 s) | `bathe` | lying low, rolling its chest and batting water with alternating forepaws |
 | `rhino`, `rhino_juvenile` | `bathe` (10 s) | `bathe` | a low wallow, rocking the barrel while the muzzle and tail sweep |
 | `elephant`, `elephant_female`, `elephant_juvenile` | `dust_bathe` (16 s) | `bathe` | hot-weather bathing reuses the fitting scrape, trunk scoop and toss as a wet mud toss |
+| `penguin`, `penguin_juvenile` | `huddle` (8 s) | `huddle` | a compact upright rest: body lowered, neck and head tucked, flippers held close and a subtle shiver |
+| `zebra`, `zebra_female`, `zebra_juvenile` | `sentry` (9 s) | `sentinel` | four planted hooves, a high neck and held scans to either side, with independently turning ears |
 
 Coverage of every species routine's nonstandard or signature action is below. “Default” means
 the model has no dedicated clip and the renderer deliberately uses the nearest standard pose.
@@ -302,12 +304,12 @@ the model has no dedicated clip and the renderer deliberately uses the nearest s
 | Lion | social contact | `idle` (default) | rubbing or nuzzling; still missing |
 | Meerkat | `sentinel`; `dig` | `sentry`; `dig` | upright scanning with tail support; alternating fore-paw scratches |
 | Ostrich | `dust_bathe` | `dust_bathe` | sitting, wing shaking and neck sweeps |
-| Penguin | `preen`; `huddle` | `preen`; `idle` (default) | grooming is dedicated; a tight upright huddle has no separate clip |
+| Penguin | `preen`; `huddle` | `preen`; `huddle` | grooming and the tight, tucked upright rest are dedicated |
 | Polar bear | `bathe` | `bathe` | a low shoulder roll and alternating forepaw paddles |
 | Rhinoceros | `bathe` | `bathe` | low barrel rocking, muzzle sweep and tail movement |
 | Tiger | `bathe` | `bathe` | lying low, rolling and batting the water with both forepaws |
 | Wolf | `patrol` | `walk` / `trot` while moving, `idle` when stopped | the existing gait already shows the boundary patrol |
-| Zebra | `sentinel` | `idle` (default) | a head-up watch; the existing idle is already head-up |
+| Zebra | `sentinel` | `sentry` | four planted hooves, raised neck, held side-to-side scans and independently aimed ears |
 
 The manifest maps an activity to a clip (`meta.activity_clips`, activity names as the save
 format writes them); `AnimalRenderer` plays the clip where the model has it and keeps its
@@ -318,9 +320,9 @@ bill tip lies on the plumage, 0.5 to 3 cm out from the scan's surface, at the he
 (compared bone by bone against the previous pipeline); the meerkat's `idle` remains the
 sitting-up watch it always was.
 
-Not made: preening for the ostrich (its routine never preens), the zebra's head-up watch (its
-`sentinel` plays `idle`, which is already head-up), `browse` for the giraffe beyond its `eat`,
-`huddle` beyond the flamingo's one leg, and paired social-contact clips.
+Not made: preening for the ostrich (its routine never preens), `browse` for the giraffe beyond
+its `eat`, a group-synchronised huddle beyond individual poses (the flamingo still uses its
+one-leg rest), and paired social-contact clips.
 What is weak: no sand or dust is thrown (the game has no particles for it), the elephant's toss
 reaches above the forehead rather than over the back (ten trunk joints at most 48 degrees each),
 the flamingo's bill and neck are buried in the wing when it preens there, as a real one's are, so
@@ -349,6 +351,15 @@ the deterministic state selected `bathe` for polar bear Esme, but she spent the 
 walking to the water, so no habitat frame is claimed as a settled wallow. All nine viewer frames
 and the sheet were opened after integration.
 
+The fourth sheet (`evidence/animal-clips-a4-2026-11-20.jpg`) shows two held phases each for the
+adult and juvenile penguin huddle, a Penguin Cove habitat frame, two phases of the stallion's
+watch and the mare and foal variants. At deterministic tick 6,000, three penguins were huddling
+and two zebras were on sentinel duty. The selected penguin Suki's HUD read “Standing with the
+flock”; the zebra habitat capture did not expose an activity HUD, so it is not used as evidence.
+All eight viewer frames, the habitat frame and the sheet were opened after integration. The ten
+production model and manifest files match independent fresh exports byte for byte (one zebra
+export needed a repeat because Blender rounded one tangent float differently on its first run).
+
 ### What the game does with a model
 
 - **Females and young.** Beside `<id>.glb` the game looks for `<id>_female.glb` and
@@ -370,7 +381,7 @@ and the sheet were opened after integration.
 - **Activity clips.** A still animal plays the clip its model's `meta.activity_clips` names
   for its activity (`sentinel` -> `sentry`, `preen` -> `preen`, ...; see above), provided the
   model has that clip; it changes into and out of `sentry`, `dust_bathe` and `bathe` with the slower
-  0.9 s blend of lying down.
+  0.9 s blend of lying down; standing `huddle` uses the regular blend.
 - **Textures.** CNA imports glTF images with one level (its warning GLTF-206), so the game
   builds the mip chain itself when it loads a model (`src/game/AnimalTextures.cpp`). The renderer
   also takes a normal map and an occlusion-roughness-metallic map when a model has them and its

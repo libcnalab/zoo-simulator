@@ -442,8 +442,9 @@ from the Release build, visitor zoo, seed 1, after the visit's fill.
 - **What the game shows.** `AnimalRenderer` takes the clip of a still animal from a table per
   activity (`Kind::shown`) and lets each model's manifest override the closest standard pose.
   Dedicated clips now cover sentry duty, digging, preening, dust bathing, filter feeding,
-  rumination and shallow wallowing (`docs/ANIMALS.md`); the information panel names every
-  activity. The remaining closest-pose cases are huddling, paired social contact and zebra watch.
+  rumination, shallow wallowing, penguin huddling and zebra watch (`docs/ANIMALS.md`); the
+  information panel names every activity. The remaining closest-pose cases are flamingo huddling
+  (one-leg rest) and paired social contact; no pose is synchronised between two animals.
 - **Flamingos are waders.** The routine sent them into the lagoon for every activity but
   sleep, and the lagoon of the present plan is 0.45 to 1.40 m deep everywhere (103 tiles, none
   shallower): they stood in it to the neck. `RoutinePlace` now treats a flamingo as a wader in
