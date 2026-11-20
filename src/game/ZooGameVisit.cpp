@@ -5,18 +5,23 @@
 
 #include <algorithm>
 #include <array>
+#include <bit>
 #include <chrono>
 #include <cmath>
 #include <cstdio>
 #include <ctime>
 #include <filesystem>
 #include <fstream>
+#include <iomanip>
 #include <map>
+#include <sstream>
 #include <string>
+#include <vector>
 
 #include "CnaEngine/App/AssetDirectory.hpp"
 
 #include "Saves.hpp"
+#include "zoo/base/Version.hpp"
 #include "zoo/sim/Scenario.hpp"
 #include "zoo/sim/VisitStart.hpp"
 #include "zoo/sim/VisitorZoo.hpp"
@@ -66,6 +71,110 @@ constexpr float kTurnPerPixel = 0.0021f;
 /// Real seconds between two keepings of the visit "Continue Visit" goes on with.
 constexpr double kKeepEvery = 120.0;
 
+// Bump when BuildVisitorZoo or the fill sequence changes without changing the data or save
+// version. Data files and every option that affects the filled state are hashed separately.
+constexpr std::uint64_t kVisitCacheRevision = 1;
+
+void CacheHash(std::uint64_t& hash, std::string_view bytes) {
+    for (const unsigned char byte : bytes) {
+        hash ^= byte;
+        hash *= 1099511628211ULL;
+    }
+}
+
+void CacheHash(std::uint64_t& hash, std::uint64_t value) {
+    for (int byte = 0; byte < 8; ++byte) {
+        hash ^= static_cast<unsigned char>(value >> (byte * 8));
+        hash *= 1099511628211ULL;
+    }
+}
+
+bool CacheHashFile(std::uint64_t& hash, const std::filesystem::path& path) {
+    std::ifstream file(path, std::ios::binary);
+    if (!file) {
+        return false;
+    }
+    std::array<char, 16384> buffer{};
+    while (file) {
+        file.read(buffer.data(), static_cast<std::streamsize>(buffer.size()));
+        CacheHash(hash, std::string_view(buffer.data(), static_cast<std::size_t>(file.gcount())));
+    }
+    return file.eof();
+}
+
+bool CacheHashDefinitions(std::uint64_t& hash, const std::filesystem::path& data) {
+    std::vector<std::filesystem::path> files;
+    std::error_code failed;
+    for (const std::filesystem::path& directory : {data / "construction", data / "species"}) {
+        for (std::filesystem::directory_iterator it(directory, failed), end; !failed && it != end;
+             it.increment(failed)) {
+            if (it->is_regular_file(failed) && it->path().extension() == ".json") {
+                files.push_back(it->path());
+            }
+        }
+        if (failed) {
+            return false;
+        }
+    }
+    std::sort(files.begin(), files.end());
+    for (const std::filesystem::path& file : files) {
+        CacheHash(hash, file.filename().string());
+        if (!CacheHashFile(hash, file)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+std::optional<std::filesystem::path> VisitCachePath(std::uint64_t seed, int crowd, float hour,
+                                                    std::int64_t ticks,
+                                                    const zoo::VisitorZooOptions& zooOptions) {
+    const auto data = CnaEngine::App::FindAssetDirectory("data");
+    if (!data) {
+        return std::nullopt;
+    }
+    std::uint64_t hash = 14695981039346656037ULL;
+    CacheHash(hash, kVisitCacheRevision);
+    CacheHash(hash, static_cast<std::uint64_t>(zoo::kSaveVersion));
+    CacheHash(hash, zoo::VersionString());
+    CacheHash(hash, seed);
+    CacheHash(hash, static_cast<std::uint64_t>(crowd));
+    CacheHash(hash, static_cast<std::uint64_t>(ticks));
+    CacheHash(hash, static_cast<std::uint64_t>(std::bit_cast<std::uint32_t>(hour)));
+    for (const std::string& omitted : zooOptions.withoutSpecies) {
+        CacheHash(hash, omitted);
+    }
+    if (!CacheHashDefinitions(hash, *data)) {
+        return std::nullopt;
+    }
+    std::ostringstream name;
+    name << "visit-" << std::hex << std::setfill('0') << std::setw(16) << hash << ".zoo-cache";
+    return SaveDirectory() / ".cache" / name.str();
+}
+
+void PruneVisitCaches(const std::filesystem::path& directory) {
+    struct Entry {
+        std::filesystem::file_time_type written;
+        std::filesystem::path path;
+    };
+    std::vector<Entry> entries;
+    std::error_code failed;
+    for (std::filesystem::directory_iterator it(directory, failed), end; !failed && it != end;
+         it.increment(failed)) {
+        if (!it->is_regular_file(failed) || it->path().extension() != ".zoo-cache") {
+            continue;
+        }
+        entries.push_back({it->last_write_time(failed), it->path()});
+    }
+    std::sort(entries.begin(), entries.end(), [](const Entry& a, const Entry& b) {
+        return a.written > b.written;
+    });
+    constexpr std::size_t kRetainedVisitCaches = 8;
+    for (std::size_t index = kRetainedVisitCaches; index < entries.size(); ++index) {
+        std::filesystem::remove(entries[index].path, failed);
+    }
+}
+
 std::string StampedTitle() {
     const std::time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
     std::tm local{};
@@ -79,15 +188,40 @@ std::string StampedTitle() {
 
 std::unique_ptr<zoo::Zoo> ZooGame::MakeVisitorZoo() {
     const auto began = std::chrono::steady_clock::now();
-    auto made = std::make_unique<zoo::Zoo>(*catalog_, *species_, zoo::VisitorZooConfig(seed_));
+    zoo::VisitorZooOptions options;
     if (!emptyMap_) {
         // A habitat whose animals the game cannot show yet is built and named, and waits for them.
-        zoo::VisitorZooOptions options;
         const auto assets = CnaEngine::App::FindAssetDirectory("assets");
         for (const zoo::SpeciesDef& def : species_->All()) {
             if (!assets || !std::filesystem::exists(*assets / "animals" / (def.id + ".glb")))
                 options.withoutSpecies.push_back(def.id);
         }
+    }
+    const float hour = startHour_ ? static_cast<float>(*startHour_) : kVisitHour;
+    const std::int64_t ticks = warmUpTicks_ > 0 ? warmUpTicks_ : kFillTicks;
+    const bool automated = Automation().Options().Automated() || script_.has_value();
+    const auto cache = !emptyMap_ && (!automated || ownSaves_)
+                           ? VisitCachePath(seed_, visit_.settings.crowd, hour, ticks, options)
+                           : std::nullopt;
+    if (cache) {
+        std::string error;
+        if (std::unique_ptr<zoo::Zoo> loaded = zoo::LoadZoo(cache->string(), *catalog_, *species_, &error)) {
+            PrepareVisit(*loaded, false);
+            ShowLoading("The morning's visitors are ready", 0.7f);
+            const double took =
+                std::chrono::duration<double>(std::chrono::steady_clock::now() - began).count();
+            std::printf("zoo: visit cache: loaded %s in %.2f s (state %llu)\n", cache->string().c_str(), took,
+                        static_cast<unsigned long long>(loaded->StateHash()));
+            return loaded;
+        }
+        std::error_code presentError;
+        if (std::filesystem::exists(*cache, presentError)) {
+            std::printf("zoo: visit cache: ignored %s: %s\n", cache->string().c_str(), error.c_str());
+        }
+    }
+
+    auto made = std::make_unique<zoo::Zoo>(*catalog_, *species_, zoo::VisitorZooConfig(seed_));
+    if (!emptyMap_) {
         const zoo::ScenarioReport report = zoo::BuildVisitorZoo(*made, options);
         const double took = std::chrono::duration<double>(std::chrono::steady_clock::now() - began).count();
         std::printf("zoo: visitor zoo: %d enclosures, %d animals, %d buildings, %d props (%.2f s)\n",
@@ -97,6 +231,18 @@ std::unique_ptr<zoo::Zoo> ZooGame::MakeVisitorZoo() {
     }
     ShowLoading("The gates opened at nine: the morning's visitors are coming in", 0.3f);
     PrepareVisit(*made, true);
+    if (cache) {
+        std::error_code ignored;
+        std::filesystem::create_directories(cache->parent_path(), ignored);
+        std::string error;
+        if (zoo::SaveZoo(*made, cache->string(), &error)) {
+            PruneVisitCaches(cache->parent_path());
+            std::printf("zoo: visit cache: stored %s (state %llu)\n", cache->string().c_str(),
+                        static_cast<unsigned long long>(made->StateHash()));
+        } else {
+            std::printf("zoo: visit cache: could not store %s: %s\n", cache->string().c_str(), error.c_str());
+        }
+    }
     return made;
 }
 

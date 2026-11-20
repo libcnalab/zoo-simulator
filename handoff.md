@@ -252,6 +252,16 @@ whatever you take up (`docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `docs/V
   172,800 steps with 102 animals, 14 births, no death or escape and no capacity failure. Short and
   6,000-step hashes for seeds 1–3 remain unchanged; all 274 active CTest cases pass, including the
   separate animation pipeline (21 diagnostics disabled; J26, 2026-11-20).
+- J27 implements the reliability audit's filled-zoo cache. A normal visit stores its deterministic
+  built-and-filled state under the save directory's private `.cache/`; keys separate seed, crowd,
+  hour, ticks, available models, save/game versions and all construction/species definition bytes.
+  Invalid entries rebuild atomically, only eight variants remain, and automation opts in with
+  `--saves`. Matched software-GL runs loaded the identical state hash `2609457543749151601` in
+  0.04 s instead of 2.58 s for build/fill (64.5x), cutting startup through visitors/tools
+  8.15 -> 5.65 s. A different crowd made a separate cache, and a deliberately truncated one was
+  rejected and rebuilt to its earlier hash. All 273 active C++/game CTest cases pass; together with
+  the unchanged animation pipeline, 274 active tests pass and 21 diagnostics are disabled
+  (J27, 2026-11-20).
 - The stopped G7c audio audit is recovered and finished. Calls now follow `Vocalize`, social,
   play and documented feeding cues rather than a timer; takes do not repeat immediately, spatial
   pan is capped at 0.60, birds fade with daylight, crowd level follows its people, and footsteps

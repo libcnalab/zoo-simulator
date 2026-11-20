@@ -424,7 +424,7 @@ the 5.5 s of a quiet machine (`docs/PERFORMANCE.md`). The sanitized runs print t
 older lines, which at least order the costs under ASan: building the zoo 30 to 40 s, the fill
 100 to 170 s, painting the ground 24 to 31 s of a start of three to five minutes.
 
-### Is caching the built zoo worth it
+### Filled-zoo cache
 
 `VisitStartCost.DISABLED_BuildingAndFillingAgainstLoadingASave` (new, core only, Release), three
 rounds at load average 25:
@@ -438,13 +438,19 @@ rounds at load average 25:
 On a quiet machine the same two phases are 0.6 s and 1.2 s (`docs/VISIT_START.md`), and the
 ratio is what carries over: **loading the filled zoo costs between a sixtieth and a ninetieth of
 building and filling it**, and the loaded zoo is the same state bit for bit (the round-trip
-tests). **So yes, as far as the simulation goes**: the 1.8 s of
-building and filling on a quiet machine would become a few hundredths of a second, a third of
-the start. What it needs: a saved zoo for each seed and each set of options that changes the
-fill (`--people`, `--hour`, `--ticks`), kept beside the saves and thrown away when the
-definitions or the builder change (a hash of the data files and of the save format's version in
-its name). Not done: it changes `PrepareVisit` and `LoadGame`, which other tasks edit today, and
-the rest of the start (painting the ground, the models) is the larger part and is G1's.
+tests). J27 implements that proposal. The private key includes the seed, crowd, hour, ticks,
+available models, save/game versions and the contents of the construction and species definitions;
+a code-only builder change has an explicit revision beside the key. Bad entries rebuild, variants
+are kept out of the save menu, the newest eight are retained, and automation touches them only with
+an explicit `--saves` directory.
+
+In a matched software-GL pair the fresh path stored state `2609457543749151601`; the next run
+loaded the same hash. The `the zoo, built and filled` phase fell 2.58 -> 0.04 s (64.5x), and startup
+through `visitors and tools` fell 8.15 -> 5.65 s. The remaining ground, scenery and animal imports
+are real renderer work and remain the larger part. A different crowd got a different file and
+state; a deliberately truncated entry was rejected, rebuilt and restored to its earlier hash.
+All 273 active C++/game CTest cases pass in 108.78 s; the unchanged animation pipeline also passed
+earlier in this session (274 active overall, 21 diagnostics disabled).
 
 ## Memory
 
@@ -535,8 +541,7 @@ measurement.
    keeps both remedies when cna-engine is corrected: the guard costs 4 microseconds a frame and
    is harmless on a correct engine; `stepHeight = 0` should stay as long as the world has no
    ledges.
-2. **Caching the filled zoo**, the summary file for saves, the chunk images: proposals above,
-   not done, each in files other tasks are editing today.
+2. **The summary file for saves and the chunk images:** proposals above, not done.
 3. **Animals that breed during a visit:** J26 resolves the welfare failure by reserving nursery
    capacity while retaining young animals as something to see. The separate calendar question
    remains: animal life still advances after the visitor clock stops at 15:30.

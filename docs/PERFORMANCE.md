@@ -143,6 +143,12 @@ What the 5.5 s are now: GL and data 0.3 s, building the zoo 0.6 s, filling 1.2 s
 sky/shadows/avatars and the ground painting about 2.5 s (painting 2.2 s), the animal models
 0.7 s.
 
+J27 (2026-11-20) removes the repeated build/fill cost after the first visit by loading a private,
+input-keyed save cache. In matched software-GL runs the phase fell from 2.58 s to 0.04 s with the
+same state hash, and startup through the populated renderers fell 8.15 -> 5.65 s. These are a
+sandbox measurement, not a replacement for the Radeon figures above; `docs/VISIT_START.md`
+documents the key, invalidation, corruption fallback and retention rules.
+
 ## What was changed: the scenery is one cell during a visit
 
 The scenery was merged in cells of 32 x 32 tiles, one mesh per finish in each: 1,114 draw calls

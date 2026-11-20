@@ -13,6 +13,27 @@ run after each 250 steps and once at completion, including a zero-step fill. Neg
 counts mean zero. Calendar and pace validation remains with the existing setters.
 The callback is observational: callers must not mutate the zoo if they need identical results.
 
+## Filled-visit cache (J27, 2026-11-20)
+
+The desktop game now saves the completed deterministic build-and-fill state under the save
+directory's private `.cache/` subdirectory. The next visit with the same inputs loads that state
+through the ordinary validated save reader, restores the unsaved visitor-pace setting, and begins
+with the identical `Zoo::StateHash()`. These files are derived data, never shown in the save menu;
+only the eight newest variants are retained.
+
+The cache key covers the seed, crowd level, start hour, warm-up ticks, save format, game version,
+available animal models and the bytes of every construction and species JSON file. Code-only
+changes to `BuildVisitorZoo` or the fill sequence must bump `kVisitCacheRevision` beside the key
+builder in `ZooGameVisit.cpp`. An unreadable or damaged entry is reported, ignored and atomically
+replaced after a normal build. Automated and scripted runs do not read or write personal cache
+files unless they explicitly supply `--saves`; the empty-map diagnostic is never cached.
+
+In matched one-frame software-GL runs, the fresh path built and filled in 2.58 s and stored a
+2,431,686-byte entry. The second run loaded it in 0.04 s with the same state hash
+`2609457543749151601`, reducing startup through `visitors and tools` from 8.15 to 5.65 s. A
+different crowd setting produced a separate 1,720,917-byte state and hash. Truncating that entry
+to invalid JSON made the next run log the damage, rebuild it and reproduce its prior hash.
+
 ## Method and baseline
 
 Measured on this machine on 2026-11-13 with the existing compiler, Release, no sanitizers,
