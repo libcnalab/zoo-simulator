@@ -235,6 +235,13 @@ whatever you take up (`docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `docs/V
   2,461 -> 2,394 MB heap. Treat that 60 MB as a matched sandbox saving, not a Radeon absolute
   figure. The warning-clean game build and all 272 active functional CTest cases pass (21
   diagnostics disabled; J24, 2026-11-20).
+- J25 closes the stale entrance-board decision from the reliability audit. A board farther than
+  eight metres from every lived-in habitat already used general visitor guidance; its panel now
+  also gives the simulation's real 9:00–19:00 opening hours, 16:30 last admission and live animal
+  and habitat counts. Both entrance boards were opened in separate runs, and board 2
+  retained its full Meerkat Lookout species, resident and feeding content. The inspected panel is
+  `docs/evidence/entrance-welcome-board-j25-2026-11-20.jpg`; all 272 active functional CTest cases
+  pass (21 diagnostics disabled; J25, 2026-11-20).
 - The stopped G7c audio audit is recovered and finished. Calls now follow `Vocalize`, social,
   play and documented feeding cues rather than a timer; takes do not repeat immediately, spatial
   pan is capped at 0.60, birds fade with daylight, crowd level follows its people, and footsteps

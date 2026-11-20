@@ -101,7 +101,7 @@ working tree after the change.
 | 3 | `src/core/zoo/animals/AnimalLife.cpp:138-146` (`Animals::AdvanceLife`, birth) | `VisitorZooHabitat.NoHabitatEmptyOrOverFullAtTheStartAfterADayAndAfterAWeek`: "Expected: (group.sameSpecies) <= (def.groupMax), actual: 23 vs 20 ... Ostrich Rise holds too many ostrich" after day 7, seed 1 | The litter is cut to the room the group has left, never below the smallest litter. Conception already asks for room, but only for `litterMin` young; birth then drew up to `litterMax` (ostrich: 1 to 20 in a group of at most 20). An over-full group fights, by the simulation's own rule. |
 | 4 | `src/core/zoo/sim/ZooSave.cpp:438-445` (`ReadJsonFile`) | `ZooSaveDamageTests.TruncatedFilesAreRefused`: "C++ exception with description "basic_filebuf::underflow error reading the file: Is a directory" thrown in the test body" | The parse is wrapped in `try`; the message goes where every other load error goes. The parser was told not to throw, but it reads the stream's buffer itself, and libstdc++'s buffer throws on a failed read (a directory under the save's name, a failing disk). The exception left `LoadZoo` and `ReadSaveSummary`, and with them the game: `ListSaves` reads every entry of the saves directory. |
 | 5 | `src/game/ZooGameVisit.cpp:222-228` (`LoadVisit`) | Reading the code: the pose file beside a save was checked for finite numbers inside the map and nothing else | A pose on enclosure ground or in the planted strip before a barrier is not used; the visit begins at the entrance instead. The pose is a file of its own (`<save>.pose`): another zoo's, or a damaged one, set the player down among the animals, behind barriers that then held them in. |
-| 6 | `src/game/ZooGameLook.cpp:190` (`OpenBoard`) | `--stand board:0`, key E: "This board is still blank" on both boards at the entrance (`build-probe/shots/board-entrance-before.png`) | The board tells of the nearest lived-in habitat, however far (the limit was 30 m; the entrance boards stand 34.2 m and 21 m from Meerkat Lookout's fence, measured to the habitat's nearest tile). **A decision is open here**, see "For the lead to decide". |
+| 6 | `src/game/ZooGameLook.cpp` (`OpenBoard`) | `--stand board:0`, key E: "This board is still blank" on both boards at the entrance (`build-probe/shots/board-entrance-before.png`) | The later final correction associates only boards within 8 m with a lived-in habitat. The two remote entrance boards instead welcome visitors, give the 9:00–19:00 hours, 16:30 last admission, current animal/habitat counts and map/species-board guidance (`docs/evidence/entrance-welcome-board-j25-2026-11-20.jpg`). |
 
 Also added, not corrections: `StartMark` in `src/game/ZooGame.cpp` (with `--bench`, one line for each
 phase of the start and of a load: seconds and resident memory), the test target `zoo_game_tests`
@@ -518,26 +518,21 @@ measurement.
 
 ## For the lead to decide
 
-1. **The boards at the entrance** (`board:0`, `board:1`). They stand 21 m and 34 m from the
-   nearest habitat and belong to none. Before: "This board is still blank". Now (correction 6):
-   they tell of Meerkat Lookout, which is wrong in another way, only less visibly. The choices:
-   a text of their own (a welcome, the map, the opening hours: new content), no boards at the
-   entrance (the builder's file), or as it is now.
-2. **Groups that outgrow their habitats.** After a week of the simulation the ostriches and
+1. **Groups that outgrow their habitats.** After a week of the simulation the ostriches and
    the penguins are 20 each in habitats built and sheltered for the group the plan put there
    (shelter for 18; the ostriches' space score 0.83). The choices: habitats sized for
-   `groupMax`, or conception that also asks for shelter and space. See also point 5.
-3. **The two controller defects** for `docs/UPSTREAM.md` (text above), and whether the game
+   `groupMax`, or conception that also asks for shelter and space. See also point 4.
+2. **The two controller defects** for `docs/UPSTREAM.md` (text above), and whether the game
    keeps both remedies when cna-engine is corrected: the guard costs 4 microseconds a frame and
    is harmless on a correct engine; `stepHeight = 0` should stay as long as the world has no
    ledges.
-4. **Caching the filled zoo**, the summary file for saves, the chunk images: proposals above,
+3. **Caching the filled zoo**, the summary file for saves, the chunk images: proposals above,
    not done, each in files other tasks are editing today.
-5. **Animals that breed during a visit** (above): the first young after 56 minutes of play,
+4. **Animals that breed during a visit** (above): the first young after 56 minutes of play,
    habitats short of shelter after two hours, while the clock stands at 15:30. Either the
    animals' life follows the visit's calendar, or residents of the Visitor Zoo do not breed, or
    it is wanted (young animals are something to see) and the habitats get room for it.
-6. **What this audit did not get to**, in the order it would be done: the rest of the sanitized
+5. **What this audit did not get to**, in the order it would be done: the rest of the sanitized
    game runs, above all the scripted visit with its loads; the core suite once more with
    `halt_on_error=1` for UBSan; the start by phase, the memory by kind and the bench in Release;
    the pictures of the wall and of the refused save.

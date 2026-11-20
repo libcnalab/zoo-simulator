@@ -36,6 +36,14 @@ are written out in "The zoo's plan" below. **S** = south; **W/E** = west/east.
 The principal fronts face south and the zoo's centre. The habitat footprints are unchanged:
 the public walks and rails move outward, preserving all space and habitat provisions.
 
+The two boards flanking the entrance are visitor boards rather than habitat boards. They welcome
+the visitor, give the 9:00–19:00 opening hours and 16:30 last admission, count the current animals
+and habitats, and point to the map and the species boards. A board within eight metres of a lived-in
+habitat still shows that habitat's animals instead. The inspected entrance panel is in
+`evidence/entrance-welcome-board-j25-2026-11-20.jpg`. Both entrance boards and the first habitat
+board were opened in real off-screen runs; all 272 active functional CTest cases pass (21
+diagnostics remain disabled).
+
 | Habitat | Animals (of them young) | Area, m² | m² per animal | Front | Back | Stand-off depth |
 |---|---|---:|---:|---|---|---:|
 | Meerkat Lookout | Meerkat 5 (2) | 252 | 50 | Glass S/W | Wire mesh | 0 |

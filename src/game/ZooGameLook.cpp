@@ -11,6 +11,7 @@
 
 #include "Hud.hpp"
 #include "ZooGame.hpp"
+#include "zoo/visitors/VisitorTuning.hpp"
 
 namespace zoogame {
 
@@ -221,6 +222,15 @@ void ZooGame::OpenBoard(const zoo::Prop& board) {
         BoardText text;
         text.title = zoo_->Config().name;
         text.latin = "Welcome to the zoo";
+        text.rows.emplace_back(
+            "Open today", ClockText(zoo::visitor_tuning::kOpeningHour) + " - " +
+                              ClockText(zoo::visitor_tuning::kClosingHour));
+        text.rows.emplace_back("Last admission", ClockText(zoo::visitor_tuning::kLastAdmissionHour));
+        const std::size_t animals = std::ranges::count_if(
+            zoo_->Fauna().All(), [](const zoo::Animal& animal) { return animal.InWorld(); });
+        text.rows.emplace_back(
+            "Animals today",
+            Format("%zu in %zu habitats", animals, zoo_->Habitats().All().size()));
         text.facts = {"Follow the paths to the animal habitats.",
                       "Press M to see the visitor map.",
                       "Press E beside a habitat board to learn about its animals."};
