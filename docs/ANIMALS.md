@@ -50,7 +50,7 @@ python3 -m unittest discover -s tools/animals/tests
 Each has the same eight clips, which the game picks from what the animal is doing: `idle`,
 `walk`, `trot` (the fast gait, a hop for the kangaroo), `eat`, `drink`, `rest`, `sleep`,
 `vocalize`; some have activity clips beside them (`sentry`, `dig`, `preen`, `dust_bathe`,
-`ruminate`, `filter_feed`, `bathe`, `huddle`, below). 9,000 to 34,000 triangles, 18 to 46 bones, a coat painted
+`ruminate`, `filter_feed`, `bathe`, `huddle`, `browse`, below). 9,000 to 34,000 triangles, 18 to 46 bones, a coat painted
 by the species file. The first-generation models (the last two rows) are stylised, not
 photorealistic; what each is weak at is listed in
 [`PIVOT_TO_ZOO_EXPLORATION.md`](PIVOT_TO_ZOO_EXPLORATION.md).
@@ -188,10 +188,10 @@ the scan's photo is not used in any material) and gives it compact cloven hooves
 | `giraffe_female` | 27,143 | 4.5 m | cow, slimmer |
 | `giraffe_juvenile` | 19,641 | 2.0 m | calf: long legs, short neck |
 
-The `eat` clip browses: the muzzle reaches up into the crowns (about 5 m for the bull), which
-is what the species' `browse` activity plays (`meta.activity_clips`), and the one exception to
-the pipeline's test that an eating muzzle is on the ground. Seen in Blender, in the viewer and
-in the habitat (`evidence/giraffe-2026-11-14.jpg`). Honest state: the first giraffe that reads
+The standard `eat` clip reaches up into the crowns (about 5 m for the bull), the one exception to
+the pipeline's test that an eating muzzle is on the ground. The dedicated `browse` clip adds held
+reaches to both sides and distinct bites while all four hooves remain planted. Seen in Blender,
+in the viewer and in the habitat (`evidence/giraffe-2026-11-14.jpg`). Honest state: the first giraffe that reads
 as a giraffe at any distance; the patch pattern is rather regular and clean for a real coat,
 the mane is faceted, the calf's eyes are large and its tufts simple. The subspecies of the
 scanned mount is unknown; the coat is painted as reticulated and labelled so in the manifest.
@@ -289,6 +289,8 @@ named the real activity. Dedicated clips are now made in the pipeline
 | `elephant`, `elephant_female`, `elephant_juvenile` | `dust_bathe` (16 s) | `bathe` | hot-weather bathing reuses the fitting scrape, trunk scoop and toss as a wet mud toss |
 | `penguin`, `penguin_juvenile` | `huddle` (8 s) | `huddle` | a compact upright rest: body lowered, neck and head tucked, flippers held close and a subtle shiver |
 | `zebra`, `zebra_female`, `zebra_juvenile` | `sentry` (9 s) | `sentinel` | four planted hooves, a high neck and held scans to either side, with independently turning ears |
+| `flamingo` | `huddle` (9 s) | `huddle` | a two-legged braced stance, with the neck drawn in, the wings held close and a small shiver |
+| `giraffe`, `giraffe_female`, `giraffe_juvenile` | `browse` (12 s) | `browse` | high held reaches to both sides of a crown, taking and stripping leaves with separate bites |
 
 Coverage of every species routine's nonstandard or signature action is below. “Default” means
 the model has no dedicated clip and the renderer deliberately uses the nearest standard pose.
@@ -298,8 +300,8 @@ the model has no dedicated clip and the renderer deliberately uses the nearest s
 | Brown bear | hot-weather `bathe` | `bathe` | a low shoulder roll and alternating forepaw paddles |
 | Camel | `ruminate` | `ruminate` | standing with a slow lateral cud grind |
 | Elephant | `dust_bathe`; hot-weather `bathe` | `dust_bathe` for both | scrape, gather and toss dry dust or wet mud with the trunk |
-| Flamingo | `preen`; `filter_feed`; `huddle` | `preen`; `filter_feed`; `rest` (manifest) | grooming and the inverted-bill sweep are dedicated; huddling uses the one-leg rest |
-| Giraffe | `browse`; `ruminate` | raised `eat` (manifest); `ruminate` | browsing reaches foliage; a separate slow jaw grind shows chewing the cud |
+| Flamingo | `preen`; `filter_feed`; `huddle` | `preen`; `filter_feed`; `huddle` | grooming, inverted-bill sweep and a compact two-legged cold-weather stance are dedicated |
+| Giraffe | `browse`; `ruminate` | `browse`; `ruminate` | high held reaches take leaves from both sides; a separate slow jaw grind shows chewing the cud |
 | Kangaroo | social rest | ordinary `rest` / `idle` | a close resting mob; no paired interaction clip |
 | Lion | social contact | `idle` (default) | rubbing or nuzzling; still missing |
 | Meerkat | `sentinel`; `dig` | `sentry`; `dig` | upright scanning with tail support; alternating fore-paw scratches |
@@ -320,9 +322,8 @@ bill tip lies on the plumage, 0.5 to 3 cm out from the scan's surface, at the he
 (compared bone by bone against the previous pipeline); the meerkat's `idle` remains the
 sitting-up watch it always was.
 
-Not made: preening for the ostrich (its routine never preens), `browse` for the giraffe beyond
-its `eat`, a group-synchronised huddle beyond individual poses (the flamingo still uses its
-one-leg rest), and paired social-contact clips.
+Not made: preening for the ostrich (its routine never preens), group-synchronised huddles beyond
+individual poses, and paired social-contact clips.
 What is weak: no sand or dust is thrown (the game has no particles for it), the elephant's toss
 reaches above the forehead rather than over the back (ten trunk joints at most 48 degrees each),
 the flamingo's bill and neck are buried in the wing when it preens there, as a real one's are, so
@@ -359,6 +360,16 @@ flock”; the zebra habitat capture did not expose an activity HUD, so it is not
 All eight viewer frames, the habitat frame and the sheet were opened after integration. The ten
 production model and manifest files match independent fresh exports byte for byte (one zebra
 export needed a repeat because Blender rounded one tangent float differently on its first run).
+
+The fifth sheet (`evidence/animal-clips-a5-2026-11-20.jpg`) shows two phases of the flamingo's
+two-legged compact huddle, opposite held reaches of the bull's browse, and the cow and calf browse
+variants. Tests require both flamingo feet and all four giraffe hooves to remain planted, the
+flamingo head to draw down by at least 8 cm, and the giraffe muzzle to stay high while crossing a
+species-scaled lateral distance. At deterministic tick 6,000, four of five giraffes had `browse`;
+the habitat camera twice selected an animal still walking to feed, so neither capture is claimed
+as evidence of the settled clip. All six viewer frames and the sheet were opened after the final
+export. The eight production model and manifest files match independent fresh exports byte for
+byte.
 
 ### What the game does with a model
 

@@ -32,7 +32,8 @@ constexpr float kPi = 3.14159265f;
 
 constexpr std::array<const char*, static_cast<std::size_t>(AnimalPose::Count)> kClipNames = {
     "idle", "walk", "trot", "eat", "drink", "rest", "sleep", "vocalize", "swim", "float",
-    "sentry", "dig", "preen", "dust_bathe", "ruminate", "filter_feed", "bathe", "huddle"};
+    "sentry", "dig", "preen", "dust_bathe", "ruminate", "filter_feed", "bathe", "huddle",
+    "browse"};
 
 /// Up to this share of its growing time an animal is drawn with the model of the young.
 constexpr float kJuvenileShare = 0.5f;
@@ -97,7 +98,7 @@ ShownPoses DefaultShownPoses() {
     return shown;
 }
 
-/// `meta.activity_clips` of a model's sidecar: {"huddle": "rest", "preen": "preen", ...}, activity
+/// `meta.activity_clips` of a model's sidecar: {"huddle": "huddle", "preen": "preen", ...}, activity
 /// names as the save format writes them, clip names as the models carry them. Unknown names, and
 /// clips the model does not have, are left out.
 void ReadActivityClips(const nlohmann::json& clips, const PoseClips& present, ShownPoses& shown) {
@@ -111,7 +112,8 @@ void ReadActivityClips(const nlohmann::json& clips, const PoseClips& present, Sh
         for (const AnimalPose pose :
              {AnimalPose::Idle, AnimalPose::Eat, AnimalPose::Drink, AnimalPose::Rest, AnimalPose::Sleep,
               AnimalPose::Sentry, AnimalPose::Dig, AnimalPose::Preen, AnimalPose::DustBathe,
-              AnimalPose::Ruminate, AnimalPose::FilterFeed, AnimalPose::Bathe, AnimalPose::Huddle}) {
+              AnimalPose::Ruminate, AnimalPose::FilterFeed, AnimalPose::Bathe, AnimalPose::Huddle,
+              AnimalPose::Browse}) {
             const auto index = static_cast<std::size_t>(pose);
             if (clip == kClipNames[index] && present[index] != nullptr)
                 shown[activity] = pose;

@@ -338,7 +338,7 @@ def make_spec(variant='male'):
                 coat_identity=('Reticulated pattern repainted over the complete animal; '
                                'scan identity unverified'),
                 fast_gait='Moderate rotary gallop exported under the required name trot',
-                activity_clips={'browse': 'eat', 'ruminate': 'ruminate'})
+                activity_clips={'browse': 'browse', 'ruminate': 'ruminate'})
     if variant != 'male':
         meta.update(variant_of='giraffe',variant=variant,relative_height=height/5.2)
     spec = Spec(name,bones,body_parts(bones,variant),paint=partial(paint,variant=variant),texture_size=2048,
@@ -399,6 +399,22 @@ def make_clips(solver):
         pose.r('head',ry=-25)
         return pose
 
+    def browse(u):
+        """Reach among high leaves, taking held bites and stripping them sideways."""
+        a = 2 * math.pi * u
+        side, bite = activity.held(u, [
+            (0.00, (-22, 0)), (0.14, (-22, 1), .05), (0.30, (-22, 0), .04),
+            (0.43, (0, 0), .06), (0.55, (24, 0), .06), (0.67, (24, 1), .05),
+            (0.83, (24, 0), .04), (0.92, (0, 0), .05)])
+        pose = idle(u, chewing=False)
+        pose.r('neck1', ry=-10, rz=.25 * side)
+        pose.r('neck2', rz=.30 * side)
+        pose.r('neck4', ry=-7, rz=.25 * side)
+        pose.r('head', ry=-22, rz=.20 * side, rx=2 * math.sin(3 * a))
+        pose.r('jaw', ry=5 * bite + 1.2 * math.sin(8 * a) * bite,
+               rz=2.5 * math.sin(8 * a) * bite)
+        return pose
+
     hd = quad.HeadDown(body_pitch=22,crouch=(.55 if scale < .5 else .08)*scale,chest=0,
                        neck=(115,10,0,0,0),head=-150,splay=.85*scale)
     effort = quad.bisect_effort(
@@ -441,7 +457,7 @@ def make_clips(solver):
 
     return [Clip('idle',8,idle),*gaits,Clip('eat',5,eat),Clip('drink',5,drink),
             Clip('rest',8,rest),Clip('sleep',8,sleep),Clip('vocalize',2,vocalize,loop=False),
-            Clip('ruminate',10,ruminate)]
+            Clip('ruminate',10,ruminate),Clip('browse',12,browse)]
 
 
 def scan_weights(vertices, bones, variant):

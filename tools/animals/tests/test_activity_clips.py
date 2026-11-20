@@ -27,7 +27,7 @@ ACTIVITIES = {"idle", "wander", "forage", "eat", "drink", "rest", "sleep", "play
               "bathe", "dust_bathe", "preen", "sentinel", "dig", "filter_feed", "patrol", "huddle"}
 # The clips a still animal may play (AnimalRenderer's still poses).
 STILL_CLIPS = {"idle", "eat", "drink", "rest", "sleep", "sentry", "dig", "preen", "dust_bathe",
-               "ruminate", "filter_feed", "bathe", "huddle"}
+               "ruminate", "filter_feed", "bathe", "huddle", "browse"}
 EXPECTED = {
     "brown_bear": {"bathe": "bathe"},
     "brown_bear_juvenile": {"bathe": "bathe"},
@@ -37,7 +37,7 @@ EXPECTED = {
     "meerkat": {"sentinel": "sentry", "dig": "dig"},
     "penguin": {"preen": "preen", "huddle": "huddle"},
     "penguin_juvenile": {"preen": "preen", "huddle": "huddle"},
-    "flamingo": {"huddle": "rest", "preen": "preen", "filter_feed": "filter_feed"},
+    "flamingo": {"huddle": "huddle", "preen": "preen", "filter_feed": "filter_feed"},
     "ostrich": {"dust_bathe": "dust_bathe"},
     "elephant": {"dust_bathe": "dust_bathe", "bathe": "dust_bathe"},
     "elephant_female": {"dust_bathe": "dust_bathe", "bathe": "dust_bathe"},
@@ -45,9 +45,9 @@ EXPECTED = {
     "rhino": {"bathe": "bathe"},
     "rhino_juvenile": {"bathe": "bathe"},
     "tiger": {"bathe": "bathe"},
-    "giraffe": {"browse": "eat", "ruminate": "ruminate"},
-    "giraffe_female": {"browse": "eat", "ruminate": "ruminate"},
-    "giraffe_juvenile": {"browse": "eat", "ruminate": "ruminate"},
+    "giraffe": {"browse": "browse", "ruminate": "ruminate"},
+    "giraffe_female": {"browse": "browse", "ruminate": "ruminate"},
+    "giraffe_juvenile": {"browse": "browse", "ruminate": "ruminate"},
     "zebra": {"sentinel": "sentry"},
     "zebra_female": {"sentinel": "sentry"},
     "zebra_juvenile": {"sentinel": "sentry"},
@@ -243,6 +243,37 @@ class HuddleAndWatchTests(unittest.TestCase):
                 for key, leg in spec.rig.legs.items():
                     self.assertAlmostEqual(world[leg.toes][2, 3], solver.toe_base(key)[2], places=6)
             self.assertGreater(max(np.linalg.norm(matrix - heads[0]) for matrix in heads), .25, species)
+
+    def test_flamingo_huddle_is_compact_on_two_planted_legs(self):
+        spec, solver, clips = clips_of("flamingo")
+        idle_head = solver.solve(clips["idle"].pose(0))[spec.rig.head][2, 3]
+        heads = []
+        for index in range(60):
+            world = solver.solve(clips["huddle"].pose(index / 60))
+            heads.append(world[spec.rig.head][:3, 3])
+            for key, leg in spec.rig.legs.items():
+                self.assertAlmostEqual(world[leg.toes][2, 3], solver.toe_base(key)[2], places=6)
+        heads = np.asarray(heads)
+        self.assertLess(heads[:, 2].max(), idle_head - .08)
+        self.assertGreater(np.ptp(heads[:, 1]), .04)
+
+
+class BrowsingTests(unittest.TestCase):
+    def test_giraffes_reach_high_and_strip_leaves_side_to_side(self):
+        for species in ("giraffe", "giraffe_female", "giraffe_juvenile"):
+            spec, solver, clips = clips_of(species)
+            muzzles, jaws = [], []
+            for index in range(72):
+                pose = clips["browse"].pose(index / 72)
+                world = solver.solve(pose)
+                muzzles.append(quadruped.muzzle(solver, pose))
+                jaws.append(world[spec.rig.jaw][:3, :3])
+                for key, leg in spec.rig.legs.items():
+                    self.assertAlmostEqual(world[leg.toes][2, 3], solver.toe_base(key)[2], places=6)
+            muzzles = np.asarray(muzzles)
+            self.assertGreater(muzzles[:, 2].min(), .6 * spec.meta["shoulder_height_m"], species)
+            self.assertGreater(np.ptp(muzzles[:, 1]), .025 * spec.meta["shoulder_height_m"], species)
+            self.assertGreater(max(np.linalg.norm(matrix - jaws[0]) for matrix in jaws), .04, species)
 
 
 class DustBatheTests(unittest.TestCase):

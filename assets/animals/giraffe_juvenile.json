@@ -106,13 +106,21 @@
       "loop": true,
       "name": "ruminate",
       "speed": 0.0
+    },
+    {
+      "duration": 12.0,
+      "events": [],
+      "frames": 361,
+      "loop": true,
+      "name": "browse",
+      "speed": 0.0
     }
   ],
   "generator": "tools/animals (zoogen)",
   "license": "CC-BY-4.0",
   "meta": {
     "activity_clips": {
-      "browse": "eat",
+      "browse": "browse",
       "ruminate": "ruminate"
     },
     "asset_license": "CC-BY-4.0",

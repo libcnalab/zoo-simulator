@@ -435,6 +435,24 @@ def flamingo_filter_feed(solver, feeding, phase):
     return pose
 
 
+def flamingo_huddle(solver, phase):
+    """`huddle`: a compact, two-legged cold-weather stance, neck drawn in and wings held close."""
+    angle = math.tau * phase
+    pose = biped.standing(solver).move('hips', dz=-.018)
+    neutral = [math.degrees(math.atan2(*(b-a)[[2, 0]]))
+               for a, b in zip(FLAMINGO_NECK, FLAMINGO_NECK[1:])]
+    tuck = .42
+    biped.sagittal_profile(solver, pose, solver.rig.neck,
+                           [a + (b-a) * tuck for a, b in zip(neutral, FLAMINGO_TUCK)])
+    biped.sagittal_profile(solver, pose, ['head'], [-60])
+    activity.turn_about_vertical(solver, pose, 'neck1', 6 * math.sin(angle))
+    pose.r('chest', rx=1.0 * math.sin(8 * angle))
+    pose.r('head', rz=3 * math.sin(angle + .5), ry=1.5 * math.sin(8 * angle + .3))
+    pose.r('wing.L', rx=2)
+    pose.r('wing.R', rx=-2)
+    return pose
+
+
 def flamingo_clips(solver):
     from .quadruped import bisect_effort, muzzle
     clips = [biped.gait_clip(solver, biped.Stride('walk', .7, .60, .65, .10, bob=.006, nod=2.4)),
@@ -478,6 +496,7 @@ def flamingo_clips(solver):
         clips.append(Clip(name, 5, pose))
     clips.append(Clip('preen', 10, partial(flamingo_preen, solver)))
     clips.append(Clip('filter_feed', 7, partial(flamingo_filter_feed, solver, feeding['drink'])))
+    clips.append(Clip('huddle', 9, partial(flamingo_huddle, solver)))
     return clips
 
 

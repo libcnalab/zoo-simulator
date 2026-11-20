@@ -259,7 +259,7 @@ When `moving`, render locomotion first; once arrived, use the activity pose.
 | `Dig` / `dig` | Meerkat forepaw digging and nose investigation. |
 | `FilterFeed` / `filter_feed` | Flamingo lowered head/bill in shallow water with small sweeps. |
 | `Patrol` / `patrol` | Existing walk/trot chosen by speed; no stereotypic pacing cue. |
-| `Huddle` / `huddle` | Upright flock rest; flamingos on one leg. Use the same standing sleep pose for flamingo `Sleep`. |
+| `Huddle` / `huddle` | Compact flock rest: penguins tuck in; flamingos brace on both legs. Flamingo `Sleep` keeps its separate one-leg pose. |
 | `following == mother` | Juvenile follows its living mother; optional calf/joey following gait or proximity interaction. |
 | `following != mother`, non-null | Juvenile playmate; optional paired play gesture while `Play`. |
 
@@ -442,9 +442,9 @@ from the Release build, visitor zoo, seed 1, after the visit's fill.
 - **What the game shows.** `AnimalRenderer` takes the clip of a still animal from a table per
   activity (`Kind::shown`) and lets each model's manifest override the closest standard pose.
   Dedicated clips now cover sentry duty, digging, preening, dust bathing, filter feeding,
-  rumination, shallow wallowing, penguin huddling and zebra watch (`docs/ANIMALS.md`); the
-  information panel names every activity. The remaining closest-pose cases are flamingo huddling
-  (one-leg rest) and paired social contact; no pose is synchronised between two animals.
+  rumination, shallow wallowing, penguin and flamingo huddling, giraffe browsing and zebra watch
+  (`docs/ANIMALS.md`); the information panel names every activity. The remaining closest-pose
+  cases are paired social contact; no pose is synchronised between two animals.
 - **Flamingos are waders.** The routine sent them into the lagoon for every activity but
   sleep, and the lagoon of the present plan is 0.45 to 1.40 m deep everywhere (103 tiles, none
   shallower): they stood in it to the neck. `RoutinePlace` now treats a flamingo as a wader in

@@ -212,12 +212,13 @@ tests pass. Nobody listened to the audio; preserve that qualification.
 - Dedicated clips now cover meerkat sentry/dig, penguin and flamingo preening, flamingo filter
   feeding, camel and giraffe rumination, ostrich and elephant dust-bathing, and shallow wallowing
   for bears, tigers and rhinoceroses (elephants reuse their scoop/toss as a wet toss). Penguin
-  huddling and zebra watch now also have dedicated clips for both ages/all three variants. Lion
-  contact, flamingo huddling and all synchronised multi-animal contact remain nearest individual
-  poses. The exact table and honest visual limitations are in `docs/ANIMALS.md`. A4's ten
-  production files match independent exports byte for byte; 105 pipeline tests and all 20
-  game-side tests pass. The inspected evidence is
-  `docs/evidence/animal-clips-a4-2026-11-20.jpg` (2026-11-20).
+  huddling, flamingo huddling, giraffe browsing and zebra watch now also have dedicated clips for
+  every model variant. Lion contact and all synchronised multi-animal contact remain nearest
+  individual poses. The exact table and honest visual limitations are in `docs/ANIMALS.md`.
+  A5's eight production files match independent exports byte for byte; 107 pipeline tests pass.
+  The renderer integration's warning-clean build and all 267 enabled CTest cases passed (the
+  pipeline was rerun after the last visual refinement). The inspected evidence is
+  `docs/evidence/animal-clips-a5-2026-11-20.jpg` (2026-11-20).
 - Blocking-prop pockets are now rejected by `ClearPlace`: every routine destination needs two
   body-wide exit segments clear of fences, water and blocking props. Seed 1 fell from 4,183 of
   280,044 stalled moving ticks (1.49 %) to 2,994 of 270,133 (1.11 %), with no continuous stall

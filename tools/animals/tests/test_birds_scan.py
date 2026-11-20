@@ -65,7 +65,7 @@ class BirdScanTests(unittest.TestCase):
             self.assertEqual(manifest['license'], 'CC-BY-4.0')
             self.assertEqual(manifest['meta'], spec.meta)
             # Both preen (an activity clip, tests/test_activity_clips.py); penguins also swim.
-            activities = {'preen'} | ({'filter_feed'} if name == 'flamingo' else {'huddle'})
+            activities = {'preen', 'huddle'} | ({'filter_feed'} if name == 'flamingo' else set())
             expected = STANDARD | activities | ({'swim', 'float'} if name.startswith('penguin') else set())
             self.assertEqual(set(clips), expected)
             exported = {clip['name']: clip for clip in manifest['clips']}

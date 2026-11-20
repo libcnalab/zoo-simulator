@@ -98,6 +98,14 @@
       "loop": true,
       "name": "filter_feed",
       "speed": 0.0
+    },
+    {
+      "duration": 9.0,
+      "events": [],
+      "frames": 271,
+      "loop": true,
+      "name": "huddle",
+      "speed": 0.0
     }
   ],
   "generator": "tools/animals (zoogen)",
@@ -105,7 +113,7 @@
   "meta": {
     "activity_clips": {
       "filter_feed": "filter_feed",
-      "huddle": "rest",
+      "huddle": "huddle",
       "preen": "preen"
     },
     "asset_license": "CC-BY-4.0",
