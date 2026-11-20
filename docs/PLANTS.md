@@ -148,6 +148,17 @@ skipped rose from 874 to 1,169 MB. The dual far batches therefore account for ab
 They remain in the normal visit because the measured benefit above is about 1 ms per frame; a
 streaming replacement would need to rebuild procedural plants without causing a visible hitch.
 
+## Open habitat fronts (J31, 2026-11-20)
+
+Every habitat tree now stands at least five metres plus the planted strip's depth from every
+viewing tile. Rhino Hollow and Red Dune formerly allowed slender acacias or palms inside that full
+line because a second tree-only planting attempt otherwise crossed the vegetation welfare band.
+The builder now fills free beds with the habitat style's non-blocking low layer before it considers
+that fallback. Rhino Hollow retains 0.140 cover with grass and savanna scrub; Red Dune gains steppe
+grass and retains 0.125 cover, above the 0.120 guarded minimum, while its palms move behind the
+open crown line. The seed-1 zoo has 47 more low plants (2,752 props total); the real views are in
+`evidence/open-habitat-fronts-j31-2026-11-20.jpg`.
+
 How the grove size was chosen (the same binary with the size from the environment; frames a
 second, runs of different rounds): 80 tiles offset by half a grove (the earlier run's choice)
 53.0, 52.1, the slowest every time; 20 tiles 59.7, 66.0 (632 draw calls); 32 tiles 56.0, 77.5,

@@ -641,17 +641,14 @@ TEST_P(VisitorZooPlan, NoPlantOnAPathOrBeforeABench) {
         // stands half a metre off the middle of its tile.
         const float open = home.stats.areaM2 < 300.0f ? 1.4f : 2.4f;
         // No trunk right before any place at the barrier, benched or not, nor within the planted
-        // strip's depth behind it. Rhino Hollow and Red Dune would become too bare for their
-        // residents if every slender tree kept that extra distance; massive trunks still do.
-        const bool needsFrontCover = home.name == "Rhino Hollow" || home.name == "Red Dune";
+        // strip's depth behind it. Low grass and scrub preserve cover in a small habitat whose
+        // long front leaves too little room for all of its trees behind this line.
         for (const ViewingSpot& spot : home.viewing) {
             for (const Prop& prop : zoo_.Objects().Props()) {
                 const PropDef& kind = KindOf(zoo_, prop);
                 if (kind.role == PropRole::Tree &&
                     zoo_.Habitats().At(World::TileAt(prop.position)) == home.id) {
-                    const bool setBack = kind.radiusM >= 1.0f || !needsFrontCover;
-                    EXPECT_GE(Distance(prop.position, World::TileCenter(spot.tile)),
-                              5.0f + (setBack ? spot.standOffM : 0.0f))
+                    EXPECT_GE(Distance(prop.position, World::TileCenter(spot.tile)), 5.0f + spot.standOffM)
                         << KindOf(zoo_, prop).id << " at " << prop.position.x << ',' << prop.position.z;
                 }
             }
@@ -666,6 +663,22 @@ TEST_P(VisitorZooPlan, NoPlantOnAPathOrBeforeABench) {
                 }
             }
         }
+    }
+}
+
+TEST_P(VisitorZooPlan, HabitatCoverKeepsAMarginInsideTheWelfareBand) {
+    for (const Enclosure& home : zoo_.Habitats().All()) {
+        SCOPED_TRACE(home.name);
+        float target = 0.0f;
+        for (const Animal& animal : zoo_.Fauna().All()) {
+            if (animal.home == home.id) {
+                target = std::max(target, SpeciesOf(zoo_, animal).vegetationDensity);
+            }
+        }
+        ASSERT_GT(target, 0.0f);
+        // Welfare tolerates 0.15 below the species figure. Keep a further 0.02 margin so that
+        // setting every tree fully behind the viewing line does not merely scrape that boundary.
+        EXPECT_GE(home.stats.vegetationDensity + 1.0e-6f, target - 0.13f);
     }
 }
 

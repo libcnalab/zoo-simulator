@@ -70,16 +70,17 @@ TEST(VisitStart, MatchesGameSequence) {
 // shy animals retreat from staff who enter a safe habitat; outside work at dangerous habitats
 // uses both the service gate and the public viewing bays; the meerkats' back and sides use a
 // mesh-backed wildlife hedge instead of exposed wire mesh; every ordinary public walk is at
-// least four metres wide).
+// least four metres wide; habitat trees keep the full viewing set-back while low cover preserves
+// the vegetation welfare margin).
 void CheckFillHashes(std::int64_t ticks) {
     constexpr std::array<std::array<std::uint64_t, 2>, 3> shortHashes{
-        {{15056301161949404809ULL, 6290015796891621664ULL},
-         {17420587684363512343ULL, 1045740791732874050ULL},
-         {11926063864469466928ULL, 9801592877205674851ULL}}};
+        {{2725684843489029588ULL, 3357293820874255840ULL},
+         {12309360878145448919ULL, 14277915818068623419ULL},
+         {15502582931028565722ULL, 17595135594674141907ULL}}};
     constexpr std::array<std::array<std::uint64_t, 2>, 3> fullHashes{
-        {{1841699992070855733ULL, 2824813617764069291ULL},
-         {7551829702075433428ULL, 4247192674491169501ULL},
-         {1884035997097648101ULL, 1122505658487957816ULL}}};
+        {{504360534067112685ULL, 10742059891344772980ULL},
+         {9537168113040831859ULL, 9805348266334420997ULL},
+         {12545992534931372384ULL, 14629157054146545591ULL}}};
     for (const std::uint64_t seed : {1ULL, 2ULL, 3ULL}) {
         Zoo zoo(testdata::GameCatalog(), testdata::GameSpecies(), VisitorZooConfig(seed));
         BuildVisitorZoo(zoo);

@@ -295,6 +295,17 @@ whatever you take up (`docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `docs/V
   lane, its two planted buffers and two rails. The full suite passes: 279 active tests including
   the 364.99-second animation pipeline, with 21 diagnostics disabled as intended. Opened views are
   recorded in `docs/evidence/wide-walks-j30-2026-11-20.jpg` (J30, 2026-11-20).
+- J31 removes the final tree-view exceptions at Rhino Hollow and Red Dune. Every trunk at every
+  habitat now keeps five metres plus the planted strip's depth from every viewing tile. Where that
+  set-back approaches the welfare band, deterministic low-layer planting fills free beds first:
+  grass and savanna scrub retain Rhino Hollow's 0.140 cover, and new steppe grass retains Red
+  Dune's 0.125 cover while its palms stay behind the crown line (guarded minimum 0.120). Seed 1
+  has 2,752 props (+47 low plants); all areas, water, residents and views remain unchanged. The
+  stall probe remains under its 1.3% limit at 2,988 / 293,364 moving ticks (1.019%). Both short
+  and 6,000-step hashes repeat twice for seeds 1–3. All 280 active functional CTest cases pass in
+  106.99 seconds; together with the unchanged animation pipeline passed immediately before this
+  work, 281 active tests pass and 21 diagnostics are disabled. Opened real-game views are in
+  `docs/evidence/open-habitat-fronts-j31-2026-11-20.jpg` (J31, 2026-11-20).
 - The stopped G7c audio audit is recovered and finished. Calls now follow `Vocalize`, social,
   play and documented feeding cues rather than a timer; takes do not repeat immediately, spatial
   pan is capped at 0.60, birds fade with daylight, crowd level follows its people, and footsteps
@@ -513,10 +524,10 @@ tests pass. Nobody listened to the audio; preserve that qualification.
 
 ### 4.8 Plan details left from G8 (`docs/VISITOR_ZOO.md` "The zoo's plan")
 
-Slender front trees remain where a full set-back would cross the vegetation welfare band (Rhino
-Hollow and Red Dune); area per animal is an estimate, not EAZA/AZA figures. J18 closed the
-dry-moat item, J29 puts a containment-rated hedge around Meerkat Lookout's service sides, and J30
-widens or removes all three remaining ordinary 2 m path remnants.
+Area per animal is an estimate, not EAZA/AZA figures. J18 closed the dry-moat item, J29 puts a
+containment-rated hedge around Meerkat Lookout's service sides, J30 widens or removes all three
+remaining ordinary 2 m path remnants, and J31 replaces the last slender front-tree exceptions
+with low cover inside the welfare band.
 
 `--stand habitat:<species>` now rejects keeper gates and buildings in the sight line. The
 meerkat view moved from `(177.0, 263.2)`, looking through mesh into the shelter wall, to

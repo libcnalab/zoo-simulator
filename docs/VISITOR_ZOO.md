@@ -28,7 +28,7 @@ combine elliptical lobes. Every habitat has a keeper gate, shelter, stocked feed
 enrichment, a public information board and benches. Planting concentrates behind the open
 viewing ground, with woods between habitats and around the perimeter.
 
-The seed-1 zoo contains **88 animals in 14 habitats, 41 buildings and 2,705 props** when
+The seed-1 zoo contains **88 animals in 14 habitats, 41 buildings and 2,752 props** when
 every species is included (74 animals and 2,817 props before the plan's rework of
 2026-11-14, below). The farthest public path tile is **75.1 m** walking distance
 from a visitor facility. `VisitorZooTests.DISABLED_PrintPlan` prints these measurements. Families
@@ -286,7 +286,7 @@ inside each keeper gate are kept clear.
 plus 1 m apart, so that no pocket forms that an animal walks into and not out of
 (`BlockingPropsLeaveAnAdultWidthPlusOneMetre`). `ClearPlace` also rejects a routine destination
 unless an animal has two body-wide, prop-free ways out of it. The seed-1 stall probe of
-`docs/ANIMAL_BEHAVIOUR.md` now counts 2,324 stalled of 263,930 moving ticks (0.88 %; 1.49 %
+`docs/ANIMAL_BEHAVIOUR.md` now counts 2,988 stalled of 293,364 moving ticks (1.019 %; 1.49 %
 before pocket rejection, 5.4 % on the old plan), with no continuous stall reaching 300 ticks.
 An animal that makes no progress tries a sidestep after one second rather than 1.5 seconds. This
 is enforced by `AnimalMovementTests.VisitorZooAnimalsDoNotRemainStalledInPropPockets`.
@@ -295,10 +295,13 @@ is enforced by `AnimalMovementTests.VisitorZooAnimalsDoNotRemainStalledInPropPoc
 across), towards the back and the rim, in passes 3.6, 2.6 and 2.0 m apart, never in the lines
 from the three benches to the habitat's middle (3 m to either side, 2 m on the mound), never
 within 5 m of any viewing place. Every trunk also keeps the planted strip's depth farther back:
-a slender acacia a metre inside Elephant Valley's cable still put its crown in the view. Where
-that would cross the species' vegetation welfare band, the planting is restored with only massive
-trunks (a metre and more: baobab, bamboo clump) set back; this retains cover in Rhino Hollow and
-Red Dune. An ordinary land plant's whole circle also keeps off a water tile and the
+a slender acacia a metre inside Elephant Valley's cable still put its crown in the view. J31
+removes the former Rhino Hollow and Red Dune exception: every slender trunk now keeps this full
+distance too. If that leaves cover close to the welfare band, remaining suitable beds receive the
+style's non-blocking low layer first. Rhino Hollow uses grass and savanna scrub; steppe grass joins
+desert scrub in Red Dune while its palms remain behind the open crown line. The measured cover is
+0.140 and 0.125 respectively, above the species figure less 0.13 guard (0.120). An ordinary land
+plant's whole circle also keeps off a water tile and the
 eight surrounding tiles whose shared corners the pool bed lowers; ferns no longer stand in the
 flamingo lagoon. Twelve non-blocking reed stands are the deliberate marginal exception: their
 whole circles remain on dry ground, but they root on the lowered bank around the lagoon, away
@@ -310,6 +313,11 @@ as a problem only below the welfare band (figure − 0.15, `Animals.cpp`). Lawn 
 public grounds stand in groves as well (they stood on every third tile, an orchard), and a
 broad crown is planted beside each viewing bench, on an island left in a paved bay where the
 paving stays all round it. The lamp stands at the end of the bench, not before it.
+
+`NoPlantOnAPathOrBeforeABench` applies the full tree set-back to every habitat and both seeds;
+`HabitatCoverKeepsAMarginInsideTheWelfareBand` separately preserves the 0.02 margin within the
+welfare tolerance. The inspected Rhino Hollow and Red Dune views are in
+`evidence/open-habitat-fronts-j31-2026-11-20.jpg`.
 
 **Keeper gates.** Where a habitat has a stand-off strip, a dry stone service apron two tiles
 wide runs through the strip from the back walk to the keeper gate and is railed off from the
