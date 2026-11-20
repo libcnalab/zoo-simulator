@@ -2,7 +2,8 @@
 
 What the ground of Greenhill Zoo is drawn from, how the banks of its pools are shaped, the
 height lookup everything standing on the ground uses, what it costs, and what is open.
-Tasks G1 (2026-11-13), G1b and G1c (2026-11-14). Code: `src/game/GroundPaint.{hpp,cpp}`
+Tasks G1 (2026-11-13), G1b and G1c (2026-11-14), J51 (2026-11-20). Code:
+`src/game/GroundPaint.{hpp,cpp}`
 (colours and heights), `src/game/GroundDetail.{hpp,cpp}` (the detail layer's textures),
 `src/game/TerrainRenderer.{hpp,cpp}` (meshes, textures, drawing). Evidence:
 `docs/evidence/ground-g1-2026-11-14.jpg`.
@@ -14,8 +15,9 @@ Tasks G1 (2026-11-13), G1b and G1c (2026-11-14). Code: `src/game/GroundPaint.{hp
   tones, dry savanna grass, sand, dry earth, forest floor, rock, mud; bound gravel, asphalt
   with a flush concrete kerb, paving slabs (`Cobblestone` is laid as 0.5 m slabs in a running
   bond with a border course of setts), boardwalk planks; building foundations; bark mulch on
-  planted stand-offs; ground worn bare along fences and wider at gates, a soil verge along
-  paths, stones kicked off gravel paths; bare rock where the ground is steep.
+  planted stand-offs; ground worn bare along finite fence segments and wider at gates, with
+  rounded free ends and blended turns instead of tile-square cuts; a soil verge along paths,
+  stones kicked off gravel paths; bare rock where the ground is steep.
   The editor retains the CPU image and tile signatures so it can repaint changed chunks.
   A read-only visitor zoo discards that 100 MB edit cache after upload; animated water keeps
   updating, while a later load builds a fresh renderer and cache before discarding it again.
@@ -171,14 +173,24 @@ garbled in the log; the frame times are from a second series right after it.)
 real map: every vertex two chunks share has the same height and normal to the bit; every
 interior edge of the ground mesh is shared by exactly two triangles (no T-junction); the
 lookup agrees with the mesh; the paint's colour along every tile side as both tiles paint
-it; the animals' drawn water depth over 6,000 ticks. Seams of paint that remain are at
-paths, buildings, fences and mulch, not at the water (see "Open").
+it; the animals' drawn water depth over 6,000 ticks. At that point the remaining paint seams
+were at paths, buildings, fences and mulch rather than water; J51 closes the fence case below.
+
+J51 replaces the fence wear's distance to an infinite tile side with distance to the actual
+finite segment. Each tile carries its own sides and their immediate continuations, which cover
+the widest 1.5 m gate apron; a free end is therefore a round cap, a turn is the union of its
+segments and a gate blends into its narrower neighbours. `PaintSignature` reads the same twelve
+possible segments, so adding or removing a continuation repaints the adjacent tile too. Three
+game-side regressions compare both painters along 648 samples of internal tile sides in a scene
+containing a free end, L turn, straight join and gate transition; colours agree within 1e-6 and
+detail kinds agree exactly. All 28 game-side C++ tests pass. An offscreen 1280 x 720 Tiger Forest
+smoke also completed; ground painting took 1.77 seconds, within G1c's recorded range. The complete
+suite passes all 301 active cases including the 562.16-second animation pipeline, with 21
+diagnostics disabled.
 
 ## Open
 
-- Paint seams on land: the bare strip along a fence ends square where a fence ends or turns
-  and is wider along a gate than beside it (up to 0.22 in linear colour across a tile side);
-  building foundations end at the tile (intentional so far).
+- Building foundations end at the tile (intentional so far).
 - Detail layer outlines are 25 cm cells: the edge between mud and grass is stepped close up.
 - Shallow against deep water: the bed's colour changes with depth, but the banks are steep,
   so the pale shallow band is narrow.

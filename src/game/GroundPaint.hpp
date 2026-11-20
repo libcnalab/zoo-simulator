@@ -35,6 +35,15 @@ enum class GroundDetail : std::uint8_t {
 };
 inline constexpr int kGroundDetailCount = 8;
 
+/// One fence segment near a tile, in world metres. The ground wear is the distance
+/// to this finite segment rather than to the whole tile side, so a free end is round
+/// and joined segments blend through a corner.
+struct GroundFence {
+    zoo::Vec2 from;
+    zoo::Vec2 to;
+    bool gate = false;
+};
+
 /// Side of one paving slab (PathKind::Cobblestone is laid as slabs in a running
 /// bond). The baked colour and the detail layer's joints share this grid.
 inline constexpr float kPavingSlabM = 0.5f;
@@ -70,8 +79,10 @@ struct TilePaintInfo {
     /// Slowly varying lawn tones at the corners (0..1), interpolated inside.
     std::array<float, 4> lush{};
     std::array<float, 4> rough{};
-    /// Bit `Dir`: a fence stands on that side of the tile; bit `4 + Dir`: it is a gate.
-    std::uint8_t fences = 0;
+    /// The tile's four sides and their immediate continuations: enough to cover the
+    /// widest 1.5 m gate wear without stopping it at a tile boundary.
+    std::array<GroundFence, 12> fences{};
+    std::uint8_t fenceCount = 0;
     /// 0 at the map's rim, 1 well inside (at the tile's corners).
     std::array<float, 4> inland{};
     bool mixedTerrain = false;

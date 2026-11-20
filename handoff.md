@@ -468,6 +468,16 @@ whatever you take up (`docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `docs/V
   repeat for seeds 1–3. Both manually enabled full-visibility and visiting-day capacity seeds pass;
   the complete suite passes all 298 active cases including the 466.17-second animation pipeline,
   with 21 diagnostics disabled (J50, 2026-11-20).
+- J51 removes the square ground-wear seam at fence ends, turns and gate transitions. Ground paint
+  now measures the distance to finite nearby fence segments rather than the infinite side of its
+  own tile: free ends are round, turns join and the 1.5 m gate apron blends into the narrower panel
+  wear. The tile paint signature covers the same twelve possible segments, so an editor fence
+  change also invalidates every neighbouring texture it can affect. Three game regressions compare
+  648 boundary samples around a free end, L turn, straight join and panel/gate transition; colour
+  agrees within 1e-6 and detail kinds exactly. All 28 game-side C++ tests pass. A 1280 x 720
+  offscreen Tiger Forest smoke completed with ground paint at 1.77 seconds, within the previous
+  measured range. The complete suite passes all 301 active cases including the 562.16-second
+  animation pipeline, with 21 diagnostics disabled (J51, 2026-11-20).
 - The stopped G7c audio audit is recovered and finished. Calls now follow `Vocalize`, social,
   play and documented feeding cues rather than a timer; takes do not repeat immediately, spatial
   pan is capped at 0.60, birds fade with daylight, crowd level follows its people, and footsteps

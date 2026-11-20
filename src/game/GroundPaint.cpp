@@ -29,6 +29,30 @@ float Cloud(float x, float z, int octaves, std::uint32_t seed) {
     return Noise::Fbm(x, z, 0, octaves, 2.0f, 0.5f, seed);
 }
 
+/// The horizontal sides of this tile and their one-segment continuations, then
+/// the corresponding vertical sides. A gate's worn reach is less than one tile,
+/// so no more distant segment can affect this tile.
+template <typename Visit>
+void VisitNearbyFenceEdges(TileCoord tile, Visit&& visit) {
+    for (int edgeZ = 0; edgeZ <= 1; ++edgeZ) {
+        for (int dx = -1; dx <= 1; ++dx)
+            visit(zoo::EdgeRef{tile.x + dx, tile.z + edgeZ, true});
+    }
+    for (int edgeX = 0; edgeX <= 1; ++edgeX) {
+        for (int dz = -1; dz <= 1; ++dz)
+            visit(zoo::EdgeRef{tile.x + edgeX, tile.z + dz, false});
+    }
+}
+
+float DistanceToSegment(float x, float z, const GroundFence& fence) {
+    const float dx = fence.to.x - fence.from.x;
+    const float dz = fence.to.z - fence.from.z;
+    const float lengthSquared = dx * dx + dz * dz;
+    const float along = std::clamp(((x - fence.from.x) * dx + (z - fence.from.z) * dz) / lengthSquared,
+                                   0.0f, 1.0f);
+    return std::hypot(x - (fence.from.x + along * dx), z - (fence.from.z + along * dz));
+}
+
 Color3 Multiply(const Color3& c, float s) {
     return {c[0] * s, c[1] * s, c[2] * s};
 }
@@ -447,16 +471,18 @@ TilePaintInfo PaintInfo(const zoo::World& world, zoo::TileCoord tile) {
     }
     // Rock shows from a slope of 0.5 on, give or take its wandering edge (SampleGround).
     info.steep = *std::max_element(info.slope.begin(), info.slope.end()) > kRockSlope - kRockWander;
-    if (world.InBounds(tile)) {
-        for (int side = 0; side < 4; ++side) {
-            const zoo::Fence fence = world.FenceOn(tile, static_cast<zoo::Dir>(side));
-            if (fence.Exists())
-                info.fences =
-                    static_cast<std::uint8_t>(info.fences | (1u << static_cast<unsigned>(side)) |
-                                              (fence.gate ? 16u << static_cast<unsigned>(side) : 0u));
-        }
-    }
-    info.plain = !info.mixedTerrain && !info.paved && !info.mulched && !info.steep && info.fences == 0 &&
+    VisitNearbyFenceEdges(tile, [&](zoo::EdgeRef edge) {
+        const zoo::Fence fence = world.FenceAt(edge);
+        if (!fence.Exists())
+            return;
+        const float x = static_cast<float>(edge.x) * zoo::kTileSize;
+        const float z = static_cast<float>(edge.z) * zoo::kTileSize;
+        GroundFence& paint = info.fences[info.fenceCount++];
+        paint.from = {x, z};
+        paint.to = edge.horizontal ? zoo::Vec2{x + zoo::kTileSize, z} : zoo::Vec2{x, z + zoo::kTileSize};
+        paint.gate = fence.gate;
+    });
+    info.plain = !info.mixedTerrain && !info.paved && !info.mulched && !info.steep && info.fenceCount == 0 &&
                  info.waterLevel == zoo::kNoWater;
     return info;
 }
@@ -703,16 +729,15 @@ GroundSample SampleGround(const TilePaintInfo& info, float x, float z) {
                         Noise::SmoothStep(-0.14f - 0.12f * crumble, -0.03f, inside) * 0.85f,
                         Noise::SmoothStep(-0.9f, -0.05f, inside) * trodden * (0.5f + 0.5f * crumble));
                 }
-                if ((info.fences & 0x0fu) != 0) {
+                if (info.fenceCount != 0) {
                     // Along a fence the animals' pacing and the keepers' boots leave
-                    // the ground bare; at a gate much more so.
-                    const float sides[4] = {v, 1.0f - u, 1.0f - v, u};
+                    // the ground bare; at a gate much more so. Finite-segment distance
+                    // rounds a free end and joins turns instead of cutting at a tile side.
                     const float ragged = (Value(x * 1.7f, z * 1.7f, 91) - 0.5f) * 0.4f;
-                    for (unsigned side = 0; side < 4; ++side) {
-                        if ((info.fences & (1u << side)) == 0)
-                            continue;
-                        const float reach = (info.fences & (16u << side)) != 0 ? 1.5f : 0.55f;
-                        const float distance = sides[side] * zoo::kTileSize + ragged;
+                    for (std::uint8_t number = 0; number < info.fenceCount; ++number) {
+                        const GroundFence& fence = info.fences[number];
+                        const float reach = fence.gate ? 1.5f : 0.55f;
+                        const float distance = DistanceToSegment(x, z, fence) + ragged;
                         bare = std::max(bare, Noise::SmoothStep(reach, reach * 0.3f, distance) * 0.75f);
                     }
                 }
@@ -814,13 +839,11 @@ std::uint32_t PaintSignature(const zoo::World& world, zoo::TileCoord tile) {
             hash = zoo::HashU32(hash,
                                 std::bit_cast<std::uint32_t>(world.VertexHeight(tile.x + dx, tile.z + dz)));
     }
-    std::uint32_t fences = 0;
-    for (unsigned side = 0; side < 4; ++side) {
-        const zoo::Fence fence = world.FenceOn(tile, static_cast<zoo::Dir>(side));
-        if (fence.Exists())
-            fences |= (fence.gate ? 0x11u : 0x1u) << side;
-    }
-    return zoo::HashU32(hash, fences);
+    VisitNearbyFenceEdges(tile, [&](zoo::EdgeRef edge) {
+        const zoo::Fence fence = world.FenceAt(edge);
+        hash = zoo::HashU32(hash, fence.Exists() ? (fence.gate ? 2u : 1u) : 0u);
+    });
+    return hash;
 }
 
 }  // namespace zoogame
