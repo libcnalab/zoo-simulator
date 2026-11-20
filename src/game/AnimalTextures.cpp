@@ -20,7 +20,8 @@ namespace Xna = Microsoft::Xna::Framework::Graphics;
 constexpr int kMaxAnimalTextureSide = 1024;
 
 std::unique_ptr<Xna::Texture2D> Mipmapped(const Xna::Texture2D& texture, bool srgb,
-                                          std::optional<int> alphaTestReference) {
+                                          std::optional<int> alphaTestReference,
+                                          bool discardCpuMipCopies) {
     if (texture.getLevelCountProperty() > 1 || texture.getFormatProperty() != Xna::SurfaceFormat::Color)
         return nullptr;
     Xna::GraphicsDevice* device = texture.getGraphicsDeviceProperty();
@@ -44,13 +45,26 @@ std::unique_ptr<Xna::Texture2D> Mipmapped(const Xna::Texture2D& texture, bool sr
                     ? CnaEngine::Graphics::DownsampleForAlphaTest(image, *alphaTestReference, coverage, options)
                     : CnaEngine::Graphics::Downsample(image, options);
     }
-    return CnaEngine::Graphics::UploadTexture(*device, image, options, true);
+    auto made = CnaEngine::Graphics::UploadTexture(*device, image, options, true);
+    if (discardCpuMipCopies) {
+        // Context recovery is deliberately unavailable in a desktop visit. UploadTexture has
+        // already released level zero there, but CNA retains the smaller levels as CPU staging.
+        // Re-wrap the same completed renderer without those copies; GPU sampling stays intact.
+        auto renderer = made->GetRendererWeak().lock();
+        if (renderer) {
+            auto thin = std::make_unique<Xna::Texture2D>(Xna::Texture2D::ReconstructFromCache(
+                *device, made->getWidthProperty(), made->getHeightProperty(), made->getFormatProperty(),
+                made->getLevelCountProperty(), std::move(renderer), {}));
+            return thin;
+        }
+    }
+    return made;
 }
 
 }  // namespace
 
 std::vector<std::unique_ptr<Xna::Texture2D>> GiveMaterialMipmaps(
-    std::span<CnaEngine::Graphics::Material* const> materials) {
+    std::span<CnaEngine::Graphics::Material* const> materials, bool discardCpuMipCopies) {
     std::vector<std::unique_ptr<Xna::Texture2D>> made;
     // Count distinct filtering requests before changing any texture. A source shared by
     // colour and data, or cut-out and opaque materials, needs separate mip chains.
@@ -81,7 +95,7 @@ std::vector<std::unique_ptr<Xna::Texture2D>> GiveMaterialMipmaps(
         }
         Xna::Texture2D* const original = slot;
         try {
-            if (auto texture = Mipmapped(*original, srgb, reference)) {
+            if (auto texture = Mipmapped(*original, srgb, reference, discardCpuMipCopies)) {
                 if (variants.at(original) == 1) {
                     // The imported model (also cached by ContentManager) owns this wrapper.
                     // Keep its address, but dispose the unused single-level GPU image first.
@@ -104,11 +118,12 @@ std::vector<std::unique_ptr<Xna::Texture2D>> GiveMaterialMipmaps(
     return made;
 }
 
-std::vector<std::unique_ptr<Xna::Texture2D>> GiveMipmaps(CnaEngine::Graphics::ModelView& view) {
+std::vector<std::unique_ptr<Xna::Texture2D>> GiveMipmaps(CnaEngine::Graphics::ModelView& view,
+                                                         bool discardCpuMipCopies) {
     std::vector<CnaEngine::Graphics::Material*> materials;
     for (auto& part : view.Parts())
         materials.push_back(&part.material.material);
-    return GiveMaterialMipmaps(materials);
+    return GiveMaterialMipmaps(materials, discardCpuMipCopies);
 }
 
 }  // namespace zoogame

@@ -49,8 +49,11 @@ whatever you take up (`docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `docs/V
   J53 releases each importer's bone timelines after copying them into the clips the actors use:
   the current matched software-GL sample fell 2,848 -> 2,799 MB resident (heap 2,499 -> 2,457),
   and the isolated animal loading mark fell 2,601 -> 2,550 MB. A 3,000-tick Lion Rock run and its
-  frame were clean, as was the equivalent three-frame ASan/UBSan game smoke.
-  The complete suite after these changes is 267 active tests passed, with 21 long-running
+  frame were clean, as was the equivalent three-frame ASan/UBSan game smoke. J54 also drops the
+  smaller CPU mip staging levels after their GPU upload on desktop Linux only: the same profile
+  falls 2,799 -> 2,760 MB (heap 2,457 -> 2,405), and the animal mark 2,550 -> 2,486 MB. Other
+  platforms retain context recovery and readback.
+  The complete suite after these changes is 302 active tests passed, with 21 long-running
   measurement/diagnostic tests disabled as intended.
 - Animal models are now submitted only when a generous body-and-shadow sphere intersects the
   main camera. The count fell from 88 everywhere to entrance 72, lion 7, meerkat 17, penguin 15
@@ -501,6 +504,17 @@ whatever you take up (`docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `docs/V
   intact, and the same warm-up plus three frames completes without ASan or UBSan findings (J53,
   2026-11-20). The complete C++ suite passes all 301 active cases in 311.90 seconds, with 21
   diagnostics disabled; the unchanged animation pipeline passed in the preceding full run.
+- J54 removes the CPU staging vectors for animal mip levels after their complete GPU upload, but
+  only in the desktop Linux visit where context recovery is already deliberately disabled. The
+  viewer and Windows, Android and web paths retain readback/recovery. The immediate same-machine
+  software-GL profile falls 2,799 -> 2,760 MB resident and 2,457 -> 2,405 MB heap; the animal mark
+  falls 2,550 -> 2,486 MB. All five alternate modes move in the same direction, but only the
+  direct 39 MB resident result is claimed. A regression proves the thin wrapper retains its GPU
+  renderer and complete mip count without level-zero CPU pixels; all six texture tests pass under
+  ASan and all 30 game-side tests pass. A matched Lion Rock pair differs only on 0.14% moving
+  distant pixels, and a real ASan/UBSan visit loads all 33 variants and draws 65 of 90 animals
+  cleanly. The complete C++ suite passes all 302 active cases in 366.28 seconds, with 21
+  diagnostics disabled (J54, 2026-11-20).
 - The stopped G7c audio audit is recovered and finished. Calls now follow `Vocalize`, social,
   play and documented feeding cues rather than a timer; takes do not repeat immediately, spatial
   pan is capped at 0.60, birds fade with daylight, crowd level follows its people, and footsteps

@@ -105,6 +105,24 @@ TEST(AnimalTextures, OversizedAtlasStartsAtOneK) {
               (std::array<std::uint8_t, 4>{23, 71, 149, 255}));
 }
 
+TEST(AnimalTextures, DiscardedCpuMipCopiesKeepTheWholeGpuChain) {
+    Xna::GraphicsDevice device;
+    const auto image = Pattern();
+    auto source = Graphics::UploadTexture(device, image, {}, false);
+    Graphics::Material material;
+    material.baseTexture = source.get();
+    material.colorTexturesAreSrgb = true;
+    std::array materials{&material};
+
+    auto variants = GiveMaterialMipmaps(materials, true);
+    EXPECT_TRUE(variants.empty());
+    EXPECT_TRUE(source->GetCpuPixelsWeak().expired());
+    const auto expected = Graphics::BuildMipChain(image, {.rounding = Graphics::MipRounding::Nearest,
+                                                        .srgb = true, .alphaTestReference = {}});
+    EXPECT_EQ(source->getLevelCountProperty(), static_cast<int>(expected.size()));
+    EXPECT_FALSE(source->GetRendererWeak().expired());
+}
+
 TEST(AnimalTextures, ReleasesRendererRetainedByContentManagerRecord) {
     Xna::GraphicsDevice device;
     const auto image = Pattern();

@@ -430,3 +430,28 @@ AddressSanitizer and UndefinedBehaviorSanitizer. All 29 game-side C++ tests pass
 was disabled for the sanitizer smoke because it is unavailable under this managed ptrace session.
 The complete C++ suite passes all 301 active cases in 311.90 seconds, with 21 intended diagnostics
 disabled; the unchanged Python animation pipeline passed in the immediately preceding full run.
+
+## Animal mip staging memory (2026-11-20)
+
+CNA's static `Texture2D` path already releases level-zero CPU pixels when desktop context recovery
+is disabled, but `UploadTexture` retains CPU staging for every smaller mip. After an animal atlas
+has uploaded its complete chain, the desktop Linux visit now re-wraps that same GPU renderer
+without those staging vectors. It does this only where `ZooGame` deliberately disabled context
+recovery and the renderer only samples the static atlas; Windows, Android, the web build, the
+viewer and the default helper path retain the former readback/recovery behaviour.
+
+Immediately after J53, the same short software-GL profile moved from **2,799 to 2,760 MB** resident
+and 2,457 to **2,405 MB** heap. The animal loading mark moved 2,550 -> **2,486 MB**. The five
+alternate modes moved by 60, 33, 73, 96 and 13 MB in the same direction, but their spread is wider
+than the change, so only the direct 39 MB resident reduction is claimed. This remains a sandbox
+comparison, not a Radeon absolute measurement.
+
+A direct regression requests CPU staging removal, proves level-zero pixels are gone while the
+wrapper and complete level count remain, and the six texture tests pass under AddressSanitizer.
+All 30 game-side tests pass. A matched 3,000-tick Lion Rock pair differs in 1,321 of 921,600 pixels
+(0.14%), confined to moving distant people and animals; the scene and textured surfaces are
+unchanged. A separate sanitized real visit completed its 6,000-step fill, loaded all 33 variants
+and drew 65 of 90 animals without an ASan/UBSan finding. Leak detection remains unavailable under
+this managed ptrace session. The final complete C++ suite passes all **302 active cases** in
+366.28 seconds, with 21 intended diagnostics disabled; the unchanged Python animation pipeline
+passed in the immediately preceding full run.

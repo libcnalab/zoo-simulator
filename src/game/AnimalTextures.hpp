@@ -21,11 +21,13 @@ namespace zoogame {
 /// the view. The model must outlive the view as usual.
 /// Atlases larger than 1024 texels on either side start at their 1K mip: at the game's
 /// output size the extra level is not visible, while its decoded pixels are expensive.
+/// `discardCpuMipCopies` is only for a caller which has deliberately disabled context recovery
+/// and will sample, but never read back, these static textures after this call.
 std::vector<std::unique_ptr<Microsoft::Xna::Framework::Graphics::Texture2D>> GiveMipmaps(
-    CnaEngine::Graphics::ModelView& view);
+    CnaEngine::Graphics::ModelView& view, bool discardCpuMipCopies = false);
 
 /// The same operation on material slots (also usable without an imported model).
 std::vector<std::unique_ptr<Microsoft::Xna::Framework::Graphics::Texture2D>> GiveMaterialMipmaps(
-    std::span<CnaEngine::Graphics::Material* const> materials);
+    std::span<CnaEngine::Graphics::Material* const> materials, bool discardCpuMipCopies = false);
 
 }  // namespace zoogame

@@ -41,6 +41,11 @@ constexpr float kJuvenileShare = 0.5f;
 constexpr float kFloatDepthShare = 0.62f;
 /// ...and then, without a figure from its model, this share of its height is under water.
 constexpr float kFloatSunkShare = 0.72f;
+#if defined(__linux__) && !defined(__ANDROID__)
+constexpr bool kDiscardAnimalCpuMipCopies = true;
+#else
+constexpr bool kDiscardAnimalCpuMipCopies = false;
+#endif
 
 /// The model that stands in for a species whose own does not exist yet: the
 /// nearest body plan there is, sized to the species' shoulder height.
@@ -167,7 +172,7 @@ const AnimalRenderer::Kind* AnimalRenderer::Load(const std::string& model) {
 #if defined(__linux__) && !defined(__ANDROID__)
     content_.getGraphicsDeviceInternal().SetContextRecoveryEnabled(false);
 #endif
-    kind->textures = GiveMipmaps(*kind->view);
+    kind->textures = GiveMipmaps(*kind->view, kDiscardAnimalCpuMipCopies);
     if (std::getenv("ZOO_LOAD_TIMING") != nullptr) {
         std::printf("zoo: model: %s load/view %.3f s, mipmaps %.3f s\n", model.c_str(),
                     std::chrono::duration<double>(loaded - started).count(),
