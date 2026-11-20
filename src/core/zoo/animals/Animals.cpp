@@ -5,6 +5,7 @@
 #include <array>
 #include <bit>
 #include <cmath>
+#include <functional>
 #include <iterator>
 #include <limits>
 #include <span>
@@ -720,8 +721,130 @@ int Animals::Viewers(EnclosureId enclosure) const {
     return 0;
 }
 
-bool Animals::AvoidKeeper(Animal& animal, const SpeciesDef& species, const Env& env,
-                          EnclosureId enclosure, bool urgentNeed) {
+void Animals::AddStaffLockout(EnclosureId enclosure) {
+    if (!enclosure) {
+        return;
+    }
+    const auto found =
+        std::lower_bound(staffLockouts_.begin(), staffLockouts_.end(), enclosure.value,
+                         [](EnclosureId candidate, std::uint32_t value) { return candidate.value < value; });
+    if (found == staffLockouts_.end() || *found != enclosure) {
+        staffLockouts_.insert(found, enclosure);
+    }
+}
+
+bool Animals::StaffLockout(EnclosureId enclosure) const {
+    return std::binary_search(staffLockouts_.begin(), staffLockouts_.end(), enclosure);
+}
+
+bool Animals::SecureForStaff(const Env& env, EnclosureId enclosureId) {
+    const Enclosure* enclosure = env.enclosures.Find(enclosureId);
+    if (enclosure == nullptr) {
+        return false;
+    }
+
+    std::vector<std::size_t> animalIndexes;
+    for (std::size_t index = 0; index < animals_.size(); ++index) {
+        const Animal& animal = animals_[index];
+        if (!animal.InWorld()) {
+            continue;
+        }
+        const EnclosureId standing = env.enclosures.At(animal.position);
+        if (animal.home == enclosureId && standing != enclosureId) {
+            return false;
+        }
+        if (standing == enclosureId) {
+            animalIndexes.push_back(index);
+        }
+    }
+    if (animalIndexes.empty()) {
+        return false;
+    }
+
+    struct ShelterSlot {
+        BuildingId building;
+        Vec2 front;
+    };
+    std::vector<ShelterSlot> slots;
+    for (BuildingId buildingId : enclosure->shelters) {
+        const Building* building = env.objects.FindBuilding(buildingId);
+        if (building == nullptr || !building->open || building->def < 0 ||
+            static_cast<std::size_t>(building->def) >= env.catalog.buildings.size()) {
+            continue;
+        }
+        const BuildingDef& definition = env.catalog.buildings[static_cast<std::size_t>(building->def)];
+        const TileCoord front = FrontTile(definition, building->origin, building->facing);
+        if (definition.role != BuildingRole::AnimalShelter || definition.capacity <= 0 ||
+            env.enclosures.At(front) != enclosureId) {
+            continue;
+        }
+        for (int place = 0; place < definition.capacity; ++place) {
+            slots.push_back({buildingId, World::TileCenter(front)});
+        }
+    }
+    if (slots.size() < animalIndexes.size()) {
+        return false;
+    }
+
+    std::vector<int> occupant(slots.size(), -1);
+    std::function<bool(int, std::vector<bool>&)> assign = [&](int animalNumber, std::vector<bool>& visited) {
+        const Animal& animal = animals_[animalIndexes[static_cast<std::size_t>(animalNumber)]];
+        if (animal.species < 0 || static_cast<std::size_t>(animal.species) >= env.species.All().size()) {
+            return false;
+        }
+        const SpeciesDef& species = env.species.All()[static_cast<std::size_t>(animal.species)];
+        for (int preference = 0; preference < 2; ++preference) {
+            for (std::size_t slot = 0; slot < slots.size(); ++slot) {
+                if (visited[slot] || (slots[slot].building == animal.shelter) != (preference == 0) ||
+                    !env.nav.Passable(World::TileAt(slots[slot].front),
+                                      NavProfile::Animal(0.0f, species.canSwim))) {
+                    continue;
+                }
+                visited[slot] = true;
+                if (occupant[slot] < 0 || assign(occupant[slot], visited)) {
+                    occupant[slot] = animalNumber;
+                    return true;
+                }
+            }
+        }
+        return false;
+    };
+    for (int animal = 0; animal < static_cast<int>(animalIndexes.size()); ++animal) {
+        std::vector<bool> visited(slots.size(), false);
+        if (!assign(animal, visited)) {
+            return false;
+        }
+    }
+
+    std::vector<std::size_t> chosen(animalIndexes.size());
+    for (std::size_t slot = 0; slot < slots.size(); ++slot) {
+        if (occupant[slot] >= 0) {
+            chosen[static_cast<std::size_t>(occupant[slot])] = slot;
+        }
+    }
+    for (std::size_t number = 0; number < animalIndexes.size(); ++number) {
+        Animal& animal = animals_[animalIndexes[number]];
+        const ShelterSlot& slot = slots[chosen[number]];
+        animal.position = slot.front;
+        animal.target = slot.front;
+        animal.speed = 0.0f;
+        animal.home = enclosureId;
+        animal.loose = false;
+        animal.activity = AnimalActivity::Shelter;
+        animal.activityLeft = 0;
+        animal.activityTicks = 0;
+        animal.moving = false;
+        animal.targetProp = {};
+        animal.shelter = slot.building;
+        animal.route.clear();
+        animal.routeIndex = 0;
+        animal.following = {};
+    }
+    return true;
+}
+
+bool Animals::AvoidKeeper(Animal& animal, const SpeciesDef& species, const Env& env, EnclosureId enclosure,
+                          bool urgentNeed) {
     if (!enclosure || animal.shelter || animal.loose || urgentNeed ||
         animal.activity == AnimalActivity::BreakOut || species.shyness <= tuning::kKeeperShynessThreshold) {
         return false;
@@ -759,9 +882,8 @@ bool Animals::AvoidKeeper(Animal& animal, const SpeciesDef& species, const Env& 
     } else {
         away = Normalized(away);
     }
-    const float wadeDepth = species.canSwim
-                                ? tuning::kWadingShoulderFraction * species.shoulderHeightM * scale
-                                : 0.0f;
+    const float wadeDepth =
+        species.canSwim ? tuning::kWadingShoulderFraction * species.shoulderHeightM * scale : 0.0f;
     const NavProfile profile = NavProfile::Animal(wadeDepth, species.canSwim);
     constexpr std::array<float, 7> turns{0.0f, 0.45f, -0.45f, 0.9f, -0.9f, 1.35f, -1.35f};
     for (const float turn : turns) {
@@ -769,8 +891,7 @@ bool Animals::AvoidKeeper(Animal& animal, const SpeciesDef& species, const Env& 
         const float cosine = std::cos(turn);
         const Vec2 direction{away.x * cosine - away.z * sine, away.x * sine + away.z * cosine};
         const Vec2 target = animal.position + direction * tuning::kKeeperRetreatM;
-        if (env.enclosures.At(target) != enclosure ||
-            !env.nav.Passable(World::TileAt(target), profile) ||
+        if (env.enclosures.At(target) != enclosure || !env.nav.Passable(World::TileAt(target), profile) ||
             !env.nav.Walkable(animal.position, target, profile)) {
             continue;
         }
@@ -828,7 +949,8 @@ void Animals::StepAnimals(Env& env, const std::vector<Enclosure>& enclosures, in
         }
         const EnclosureId enclosureId = env.enclosures.At(animal.position);
         const Enclosure* enclosure = env.enclosures.Find(enclosureId);
-        if (animal.shelter) {
+        const bool heldForStaff = animal.shelter && StaffLockout(enclosureId);
+        if (animal.shelter && !heldForStaff) {
             const Building* shelter = env.objects.FindBuilding(animal.shelter);
             bool validShelter = shelter != nullptr && shelter->open && shelter->def >= 0 &&
                                 static_cast<std::size_t>(shelter->def) < env.catalog.buildings.size();
@@ -943,12 +1065,14 @@ void Animals::StepAnimals(Env& env, const std::vector<Enclosure>& enclosures, in
             }
         }
         const std::int64_t escapeTick = env.time.tick + static_cast<std::int64_t>(animal.id.value);
-        if (escapeTick % kTicksPerGameHour == 0) {
+        if (!heldForStaff && escapeTick % kTicksPerGameHour == 0) {
             animal_internal::TryEscape(animal, species, env, rng_);
         }
         const float previousHeading = animal.heading;
-        animal_internal::UpdateSpeciesBehaviour(animal, species, env, animals_, neighbors,
-                                                Viewers(enclosureId), rng_, propScratch_);
+        if (!heldForStaff) {
+            animal_internal::UpdateSpeciesBehaviour(animal, species, env, animals_, neighbors,
+                                                    Viewers(enclosureId), rng_, propScratch_);
+        }
         const bool completed = animal.activityLeft <= 0 && !animal.moving;
         if (animal.targetProp && std::as_const(env.objects).FindProp(animal.targetProp) == nullptr) {
             animal.targetProp = {};
@@ -982,7 +1106,7 @@ void Animals::StepAnimals(Env& env, const std::vector<Enclosure>& enclosures, in
             animal.moving = true;
             animal.route.clear();
             animal.routeIndex = 0;
-        } else if (urgentInterrupt || completed) {
+        } else if (!heldForStaff && (urgentInterrupt || completed)) {
             animal_internal::DecideActivity(animal, species, env, animals_, neighbors, rng_, propScratch_,
                                             Viewers(enclosureId));
             animal.nextNeedCheck = env.time.tick + 2 * kTicksPerSecond;

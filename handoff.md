@@ -331,6 +331,18 @@ whatever you take up (`docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `docs/V
   before the fix with 227/240 steps in a legal 3 m pool and a closest approach of 6.7 cm through
   a visible rock whose required body clearance is 0.86 m. It passes after the correction, as do
   all 23 game-side tests / 13 Walker cases (J34, 2026-11-20).
+- J35 gives dangerous habitats a real fail-closed keeper lockout. The whole group is atomically
+  assigned to registered shelter capacity (a loose animal, bad door or short capacity changes
+  nothing), remains hidden while needs and health continue, and is released only after the keeper
+  has crossed back out through the same registered service gate. Routine outside care stays
+  outside; a due lockout contains one twelve-second rake at the gate, and all seven dangerous
+  habitats exercise it without any measured hold reaching 600 ticks. Active phase and task actions
+  are saved in staff format 2; format 1 still loads, and a mid-lockout zoo resumes bit-identically.
+  Earlier 0.85/0.90 service thresholds plus fresh water at both public feedings improve the staffed
+  week to 7 animal-hours in need versus 9 under automatic care (worst hunger 0.712 vs 0.786).
+  All 12 focused keeper tests pass, including the week and public-crowd run; the final complete
+  suite passes all 285 active cases, including the 366.73-second animation test, with 21 diagnostics
+  disabled (J35, 2026-11-20).
 - The stopped G7c audio audit is recovered and finished. Calls now follow `Vocalize`, social,
   play and documented feeding cues rather than a timer; takes do not repeat immediately, spatial
   pan is capped at 0.60, birds fade with daylight, crowd level follows its people, and footsteps
@@ -421,7 +433,7 @@ sound unknown); saves there live only in the page's memory.
 
 ### 4.1 to 4.3: done on develop (2026-11-14)
 
-Keepers (`docs/KEEPERS.md`; open: dangerous habitats never entered), ground and water edges
+Keepers (`docs/KEEPERS.md`; open: lockout transfer is immediate rather than animated), ground and water edges
 (`docs/GROUND.md`; open: steep banks at deep pools), plants (`docs/PLANTS.md`;
 open: far cut-out edges aliased and fill cost of alpha-tested cards). The new first
 priority is memory (section 0).

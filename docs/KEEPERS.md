@@ -32,24 +32,28 @@ to stand, a way to face, a duration, a visible activity (`StaffActivity`) and th
 member gets there (walking, carrying a bucket, pushing the wheelbarrow). Its effect on the
 zoo happens half way through the job.
 
-- **Feed and water.** Feeders below `kFeederDue` (0.6) and troughs below `kTroughDue` (0.7)
+- **Feed and water.** Feeders below `kFeederDue` (0.85) and troughs below `kTroughDue` (0.9)
   of their capacity are filled, the emptiest first, at most four a stop. Inside a habitat
   the keeper stands behind the feeder as the public sees it, facing them.
 - **Public feedings.** Two a day per habitat, by diet (herbivores 9:30 and 14:00,
   omnivores 10:00 and 14:30, insect eaters 10:30 and 16:00, carnivores 11:00 and 15:00,
   fish eaters 11:30 and 15:30); one keeper's two habitats are kept at least 45 minutes
   apart. A feeding due (from 9 minutes before its hour to 45 minutes after) comes before
-  the order of the round: feed is scattered near where the public stands and every feeder
-  of the habitat is topped up. The information board of the habitat says when
+  the order of the round: feed is scattered near where the public stands, every feeder
+  is topped up and every trough gets fresh water. The information board of the habitat says when
   ("Keeper feeds: 11:00 and 15:00, next at 15:00"; `Staff::FeedingHours`,
   `Staff::NextFeeding`).
 - **Routine by the hour.** Mucking out (raking, the wheelbarrow) in the morning, hosing at
   the water's edge, fence checks with a clipboard, a breather at midday, a walk round at
   night. A habitat dirtier than 0.25 is raked whatever the hour.
-- **Dangerous species.** Nothing in the animal model shuts the big cats or the bears in
-  their house, so a keeper never walks into a habitat where a dangerous animal lives or
-  stands (`KeepersMayEnter`): there they work from the public side of the barrier (feed
-  thrown over, the trough filled with the hose, the fence checked, the walk swept).
+- **Dangerous species.** Feeding, watering, fence checks and sweeping remain on the public
+  side. When dirt reaches 0.18 (and periodically every third visit), the keeper operates a
+  four-second lockout at the service gate. Every animal in the habitat must fit into an open,
+  registered shelter whose door its species can use; a loose resident, missing door or short
+  capacity makes the whole operation fail without moving any animal. On success the group is
+  held in the houses, the keeper crosses the same registered gate for one twelve-second rake
+  at its inside tile, returns outside and only then releases it. If the way out changes, the
+  animals stay secured and the keeper retries rather than completing the release remotely.
 - **The gardener** waters a bed every third stop, kneels and tends it with a trowel, and
   rests now and then; **the cleaner** empties the bin and then sweeps the nearest litter
   within 25 m, or the path beside the bin.
@@ -66,8 +70,10 @@ strips are nobody's ground and nobody walks them.
 A place to work is only chosen on ground no deeper in water than a boot (8 cm; the tiles
 beside a pool are dry by the map and still slope into it), inside the habitat when the
 keeper goes in, on public ground otherwise, and clear of trees and rocks. On the way a
-walker follows the rim of a tree or a rock that is in the way, never crosses a fence that is
-not a gate and never enters a dangerous species' habitat (`MayStep`). A job whose place
+walker follows the rim of a tree or a rock that is in the way and never crosses a fence that is
+not a gate. A dangerous habitat is passable only while its saved keeper lockout is active and
+every dangerous resident is sheltered; the short direct step is tied to that habitat's registered
+keeper gate (`MayStep`). A job whose place
 cannot be reached, or whose walk takes more than twice what the route needs plus a minute,
 is done as the zoo's automatic care would have done it, and the member goes on.
 
@@ -105,6 +111,17 @@ one. If a shy animal has just entered its clearance plus an 8 cm reaction margin
 its keeper-retreat route instead of walking away through the overlap. The changed wide-walk plan's
 morning run exercises 3,289 close staff/visitor steps, records zero staff/animal approaches, and
 keeps the nearest moving visitor 0.253 m away; the zero-contact assertions were not relaxed.
+
+J35 closes the dangerous-habitat care gap. `Animals::SecureForStaff` first solves the whole
+group-to-shelter capacity assignment and changes nothing unless every animal has a valid slot.
+The resulting shelter hold is transient input rebuilt from the keeper's saved `lockout` field:
+needs, disease and health continue to advance, but escape, new behaviour and leaving the house do
+not. All seven dangerous Visitor Zoo habitats exercise a real inside job; no measured lockout lasts
+600 ticks. Failed capacity is atomic, a live lockout survives save/load, staff save version 1 still
+loads, and the safety actions are version 2. The week records 7 animal-hours in need against 9 with
+automatic care alone, a two-hour longest spell against three, and worst hunger 0.712 against 0.786;
+the 3,600-tick public morning still records zero staff/animal body-clearance approaches. All 285
+active CTest cases pass, including the 366.73-second animation test; 21 diagnostics remain disabled.
 
 J21 spreads outside work around habitats which have a planted stand-off strip. `BarrierStands`
 used to stop as soon as it found the service gate, even if that left Elephant Valley and Rhino
@@ -146,9 +163,10 @@ hours in need and their longest run may be only narrowly worse; the worst hunger
 within 0.07 of automatic care whenever it is near the welfare issue line, and otherwise must still
 remain at or below that 0.70 line. The diagnostic names the particular animal, habitat and tick
 behind each maximum so a layout-dependent change can be investigated rather than dismissed as noise.
-After J26's capacity-aware births the staffed week records 6 animal-hours in need against 13 under
-automatic care, with worst hunger 0.840 against 0.773; that measured 0.066 peak is why the former
-0.06 allowance is now 0.07, while the aggregate and duration checks remain separate.
+After J35's earlier service thresholds, public-feeding water check and short dangerous lockouts,
+the staffed week records 7 animal-hours in need against 9 under automatic care, with worst hunger
+0.712 against 0.786 and thirst 0.777 against 0.722. The comparison still keeps its separate
+aggregate, duration and peak checks rather than allowing one good average to hide a stranded animal.
 
 ## Determinism and saves
 
@@ -156,7 +174,8 @@ automatic care, with worst hunger 0.840 against 0.773; that measured 0.066 peak 
 the stateless hashes of ids, tiles and the count of stops done); everything is plain data
 compared by `operator==` and hashed by `StateHash` (FNV-1a, floats by bit pattern). The save
 key `"staff"` holds the whole crew; a save without it opens as a zoo without staff, a damaged
-one is refused (`StaffFromJson`). A zoo without staff keeps the state hash it had.
+one is refused (`StaffFromJson`). Staff format 2 adds each task's lockout action and the keeper's
+active habitat; format 1 still loads with both absent. A zoo without staff keeps the state hash it had.
 
 ## Drawing them
 
@@ -200,6 +219,6 @@ the first tick on), not because of the keepers.
 
 ## Open
 
-- The dangerous species are never entered: no mucking out of the lions' or bears' habitats,
-  because the model cannot shut the animals in their house.
+- Lockout moves animals into their houses atomically; it does not yet animate a recall or expose a
+  separate holding-yard gate. Shelter capacity and doors are real, but the transfer is immediate.
 - Nobody is drawn beyond 150 m or beyond the 8 nearest.

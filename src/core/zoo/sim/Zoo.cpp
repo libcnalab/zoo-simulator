@@ -153,8 +153,10 @@ void Zoo::Step() {
 
     Env env = MakeEnv();
     animals_.ClearKeepers();
+    animals_.ClearStaffLockouts();
     for (const StaffMember& member : staff_.All()) {
         animals_.SetKeeper(enclosures_.At(member.position), member.position);
+        animals_.AddStaffLockout(member.lockout);
     }
     animals_.Step(env);
     visitors_.ClearMovingObstacles();

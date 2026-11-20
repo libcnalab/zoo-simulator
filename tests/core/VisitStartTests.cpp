@@ -71,16 +71,17 @@ TEST(VisitStart, MatchesGameSequence) {
 // uses both the service gate and the public viewing bays; the meerkats' back and sides use a
 // mesh-backed wildlife hedge instead of exposed wire mesh; every ordinary public walk is at
 // least four metres wide; habitat trees keep the full viewing set-back while low cover preserves
-// the vegetation welfare margin).
+// the vegetation welfare margin; dangerous groups use a saved shelter lockout for inside keeper
+// work, public feedings service troughs too, and routine care is requested earlier).
 void CheckFillHashes(std::int64_t ticks) {
     constexpr std::array<std::array<std::uint64_t, 2>, 3> shortHashes{
-        {{2725684843489029588ULL, 3357293820874255840ULL},
-         {12309360878145448919ULL, 14277915818068623419ULL},
-         {15502582931028565722ULL, 17595135594674141907ULL}}};
+        {{12080672554484292643ULL, 9758341793471327809ULL},
+         {11088966625971319769ULL, 4445196529499393920ULL},
+         {4883456111034529366ULL, 13513627041716576339ULL}}};
     constexpr std::array<std::array<std::uint64_t, 2>, 3> fullHashes{
-        {{504360534067112685ULL, 10742059891344772980ULL},
-         {9537168113040831859ULL, 9805348266334420997ULL},
-         {12545992534931372384ULL, 14629157054146545591ULL}}};
+        {{13294833563110516530ULL, 18281523683389025830ULL},
+         {11825789820700567331ULL, 15436640618414102508ULL},
+         {7455558949014992433ULL, 4288200548114374703ULL}}};
     for (const std::uint64_t seed : {1ULL, 2ULL, 3ULL}) {
         Zoo zoo(testdata::GameCatalog(), testdata::GameSpecies(), VisitorZooConfig(seed));
         BuildVisitorZoo(zoo);

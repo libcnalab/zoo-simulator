@@ -37,6 +37,8 @@ constexpr std::array<std::string_view, static_cast<std::size_t>(StaffActivity::C
     "tends the flower bed",
     "waters the flowers",
     "takes a breather"};
+constexpr std::array<std::string_view, static_cast<std::size_t>(StaffLockoutAction::Count)> kLockoutNames = {
+    "none", "secure", "release"};
 
 /// How fast a member turns to face the work or the way, in radians a second.
 constexpr float kTurnRate = 4.0f;
@@ -238,6 +240,23 @@ int WalkBudget(Vec2 from, std::span<const Vec2> route, float speed) {
     return static_cast<int>(metres / (speed * kTickSeconds)) * 2 + 60 * kTicksPerSecond;
 }
 
+bool ThroughKeeperGate(const Env& env, EnclosureId enclosureId, Vec2 from, Vec2 to) {
+    const Enclosure* enclosure = env.enclosures.Find(enclosureId);
+    if (enclosure == nullptr) {
+        return false;
+    }
+    const TileCoord a = World::TileAt(from);
+    const TileCoord b = World::TileAt(to);
+    for (const EdgeRef gate : enclosure->gates) {
+        const TileCoord near{gate.x, gate.z};
+        const TileCoord far = gate.horizontal ? TileCoord{gate.x, gate.z - 1} : TileCoord{gate.x - 1, gate.z};
+        if ((a == near && b == far) || (a == far && b == near)) {
+            return true;
+        }
+    }
+    return false;
+}
+
 /// May the walker be moved from `from` to `to`: ground staff walk on, no fence crossed,
 /// and no habitat a dangerous animal lives in.
 bool MayStep(const Env& env, const Animals& animals, Vec2 from, Vec2 to) {
@@ -246,11 +265,19 @@ bool MayStep(const Env& env, const Animals& animals, Vec2 from, Vec2 to) {
     if (a == b) {
         return true;
     }
+    const EnclosureId fromEnclosure = env.enclosures.At(a);
+    const EnclosureId toEnclosure = env.enclosures.At(b);
+    const EnclosureId crossed = toEnclosure ? toEnclosure : fromEnclosure;
+    if (crossed && animals.StaffLockout(crossed) && DangerSecuredForStaff(env, animals, crossed) &&
+        ThroughKeeperGate(env, crossed, from, to)) {
+        return env.nav.Passable(b, kStaffProfile);
+    }
     if (!env.nav.Passable(b, kStaffProfile) || !env.nav.Walkable(from, to, kStaffProfile)) {
         return false;
     }
     const EnclosureId entered = env.enclosures.At(b);
-    return !entered || entered == env.enclosures.At(a) || !HoldsDanger(env, animals, entered);
+    return !entered || entered == env.enclosures.At(a) || !HoldsDanger(env, animals, entered) ||
+           DangerSecuredForStaff(env, animals, entered);
 }
 
 }  // namespace
@@ -267,6 +294,9 @@ std::string_view ToString(StaffActivity v) {
 std::string_view Describe(StaffActivity v) {
     return v < StaffActivity::Count ? kActivityWords[static_cast<std::size_t>(v)]
                                     : std::string_view{"at work"};
+}
+std::string_view ToString(StaffLockoutAction v) {
+    return v < StaffLockoutAction::Count ? kLockoutNames[static_cast<std::size_t>(v)] : std::string_view{};
 }
 
 const StaffMember* Staff::Find(StaffId id) const {
@@ -335,13 +365,18 @@ void Staff::Apply(Env& env, Animals& animals, Visitors& visitors, const StaffTas
             if (role == PropRole::Feeder && animals.FoodFor(env, *prop) >= 0) {
                 animals.RefillFeeder(env, task.prop);
             } else if (const Enclosure* fed = task.prop ? nullptr : env.enclosures.Find(task.enclosure)) {
-                // Feed scattered at a public feeding: every feeder of the habitat is topped up.
+                // A public feeding is also a full service visit: every feeder is topped up
+                // and every trough gets fresh water before the keeper moves on.
                 const std::vector<PropId> feeders = fed->feeders;
                 for (const PropId id : feeders) {
                     const Prop* feeder = env.objects.FindProp(id);
                     if (feeder != nullptr && animals.FoodFor(env, *feeder) >= 0) {
                         animals.RefillFeeder(env, id);
                     }
+                }
+                const std::vector<PropId> troughs = fed->troughs;
+                for (const PropId id : troughs) {
+                    animals.RefillTrough(env, id);
                 }
             }
             break;
@@ -379,14 +414,51 @@ void Staff::Step(Env& env, Animals& animals, Visitors& visitors) {
         if (member.task >= member.tasks.size()) {
             PlanStop(env, animals, visitors, member);
         }
+        // A failed secure action must not degrade into remote work inside the habitat.
+        // Skip every inside job until the outside release task (which is then a no-op).
+        while (member.task < member.tasks.size()) {
+            const StaffTask& candidate = member.tasks[member.task];
+            const bool inside = candidate.enclosure &&
+                                env.enclosures.At(World::TileAt(candidate.place)) == candidate.enclosure;
+            if (!inside || !HoldsDanger(env, animals, candidate.enclosure) ||
+                member.lockout == candidate.enclosure) {
+                break;
+            }
+            NextTask(member);
+        }
+        if (member.task >= member.tasks.size()) {
+            continue;
+        }
         const StaffTask task = member.tasks[member.task];
+
+        // The exact control point is presentation, not a safety condition. Once the
+        // keeper has crossed out of the habitat, nobody remains exposed inside and
+        // the group must not stay confined merely because a path to that point changed.
+        if (task.lockout == StaffLockoutAction::Release && member.lockout == task.enclosure &&
+            env.enclosures.At(member.position) != task.enclosure) {
+            member.lockout = {};
+            NextTask(member);
+            member.activity = StaffActivity::Rest;
+            continue;
+        }
 
         if (member.working) {
             member.speed = 0.0f;
             member.activity = task.work;
             member.heading = TurnTowards(member.heading, task.facing, kTurnRate * kTickSeconds);
             if (member.ticksLeft == (std::max(task.ticks, 1) + 1) / 2) {
-                Apply(env, animals, visitors, task);
+                if (task.lockout == StaffLockoutAction::Secure) {
+                    if (!member.lockout && animals.SecureForStaff(env, task.enclosure)) {
+                        member.lockout = task.enclosure;
+                        animals.AddStaffLockout(task.enclosure);
+                    }
+                } else if (task.lockout == StaffLockoutAction::Release) {
+                    if (member.lockout == task.enclosure) {
+                        member.lockout = {};
+                    }
+                } else {
+                    Apply(env, animals, visitors, task);
+                }
             }
             if (--member.ticksLeft <= 0) {
                 NextTask(member);
@@ -400,9 +472,27 @@ void Staff::Step(Env& env, Animals& animals, Visitors& visitors) {
         if (member.routeIndex >= member.route.size()) {
             member.route.clear();
             member.routeIndex = 0;
-            if (Distance(member.position, task.place) > 0.05f &&
-                !env.nav.FindPath(member.position, task.place, kStaffProfile, member.route)) {
-                Apply(env, animals, visitors, task);
+            bool routeFound = true;
+            if (Distance(member.position, task.place) > 0.05f) {
+                // The two lockout jobs straddle the same open gate. Grid routing may prefer
+                // a very long path-centre detour between their edge points; the direct,
+                // explicitly walkable gate crossing is the intended route.
+                if (member.lockout == task.enclosure && Distance(member.position, task.place) < 3.0f &&
+                    ThroughKeeperGate(env, task.enclosure, member.position, task.place)) {
+                    member.route.push_back(task.place);
+                } else {
+                    routeFound = env.nav.FindPath(member.position, task.place, kStaffProfile, member.route);
+                }
+            }
+            if (!routeFound) {
+                if (task.lockout == StaffLockoutAction::Release && member.lockout == task.enclosure) {
+                    member.activity = StaffActivity::Rest;
+                    member.ticksLeft = 0;
+                    continue;
+                }
+                if (task.lockout == StaffLockoutAction::None) {
+                    Apply(env, animals, visitors, task);
+                }
                 NextTask(member);
                 member.activity = StaffActivity::Rest;
                 continue;
@@ -412,7 +502,17 @@ void Staff::Step(Env& env, Animals& animals, Visitors& visitors) {
         if (--member.ticksLeft < 0) {
             // Walked far longer than the route is long (hemmed in between trees and a
             // fence): the job is done as automatic care would have done it, on to the next.
-            Apply(env, animals, visitors, task);
+            if (task.lockout == StaffLockoutAction::Release && member.lockout == task.enclosure) {
+                member.route.clear();
+                member.routeIndex = 0;
+                member.ticksLeft = 0;
+                member.speed = 0.0f;
+                member.activity = StaffActivity::Rest;
+                continue;
+            }
+            if (task.lockout == StaffLockoutAction::None) {
+                Apply(env, animals, visitors, task);
+            }
             NextTask(member);
             member.activity = StaffActivity::Rest;
             continue;
@@ -455,8 +555,16 @@ void Staff::Step(Env& env, Animals& animals, Visitors& visitors) {
                 member.route = std::move(other);
                 member.routeIndex = 0;
             } else {
-                Apply(env, animals, visitors, task);
-                NextTask(member);
+                if (task.lockout == StaffLockoutAction::Release && member.lockout == task.enclosure) {
+                    member.route.clear();
+                    member.routeIndex = 0;
+                    member.ticksLeft = 0;
+                } else {
+                    if (task.lockout == StaffLockoutAction::None) {
+                        Apply(env, animals, visitors, task);
+                    }
+                    NextTask(member);
+                }
                 member.activity = StaffActivity::Rest;
             }
             continue;
@@ -510,6 +618,7 @@ std::uint64_t Staff::StateHash() const {
             h.Add(task.ticks);
             h.Add(task.enclosure.value);
             h.Add(task.prop.value);
+            h.Add(static_cast<int>(task.lockout));
         }
         h.Add(m.task);
         h.Add(m.working);
@@ -519,6 +628,7 @@ std::uint64_t Staff::StateHash() const {
             h.Add(point);
         }
         h.Add(m.routeIndex);
+        h.Add(m.lockout.value);
     }
     return h.value;
 }

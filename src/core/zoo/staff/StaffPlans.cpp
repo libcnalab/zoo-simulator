@@ -17,7 +17,8 @@ bool HoldsDanger(const Env& env, const Animals& animals, EnclosureId enclosure) 
         return false;
     }
     for (const Animal& animal : animals.All()) {
-        if (!animal.InWorld() || animal.species < 0) {
+        if (!animal.InWorld() || animal.species < 0 ||
+            static_cast<std::size_t>(animal.species) >= env.species.All().size()) {
             continue;
         }
         const SpeciesDef& def = env.species.All()[static_cast<std::size_t>(animal.species)];
@@ -26,6 +27,28 @@ bool HoldsDanger(const Env& env, const Animals& animals, EnclosureId enclosure) 
         }
     }
     return false;
+}
+
+bool DangerSecuredForStaff(const Env& env, const Animals& animals, EnclosureId enclosure) {
+    if (!enclosure || !animals.StaffLockout(enclosure)) {
+        return false;
+    }
+    bool found = false;
+    for (const Animal& animal : animals.All()) {
+        if (!animal.InWorld() || animal.species < 0 ||
+            static_cast<std::size_t>(animal.species) >= env.species.All().size()) {
+            continue;
+        }
+        const SpeciesDef& def = env.species.All()[static_cast<std::size_t>(animal.species)];
+        if (!def.dangerous || (animal.home != enclosure && env.enclosures.At(animal.position) != enclosure)) {
+            continue;
+        }
+        found = true;
+        if (!animal.shelter) {
+            return false;
+        }
+    }
+    return found;
 }
 
 bool Reachable(const Env& env, TileCoord tile) {
@@ -45,6 +68,7 @@ constexpr float kFillTroughS = 14.0f;
 constexpr float kThrowFeedS = 9.0f;
 constexpr float kScatterS = 15.0f;
 constexpr float kRakeS = 34.0f;
+constexpr float kDangerousRakeS = 12.0f;
 constexpr float kHoseS = 30.0f;
 constexpr float kInspectS = 22.0f;
 constexpr float kSweepS = 24.0f;
@@ -54,6 +78,9 @@ constexpr float kWaterS = 16.0f;
 constexpr float kNightRestS = 90.0f;
 /// Dirt from which a habitat is raked whatever the hour (0..1).
 constexpr float kRakeFromDirt = 0.25f;
+/// Dangerous groups are shut in only for a short, necessary clean, not for every round.
+/// Starting before the ordinary issue threshold leaves ample time to reach the service gate.
+constexpr float kDangerousRakeFromDirt = 0.18f;
 /// At most this many feeders and troughs are seen to one by one at a stop, the emptiest
 /// first. The rest wait for the feed scattered at a public feeding or for the zoo's
 /// automatic care.
@@ -380,6 +407,41 @@ std::optional<Stand> NearestStand(const std::vector<Stand>& stands, Vec2 to) {
     return best;
 }
 
+/// Public ground at a keeper gate, facing into the habitat. This is where the lockout
+/// is operated both before entry and after the keeper has come back out.
+std::optional<Stand> LockoutStand(const Env& env, const Enclosure& enclosure, Vec2 from, Vec2& insidePlace) {
+    std::optional<Stand> best;
+    float nearest = std::numeric_limits<float>::max();
+    for (const EdgeRef gate : enclosure.gates) {
+        const TileCoord near{gate.x, gate.z};
+        const TileCoord far = gate.horizontal ? TileCoord{gate.x, gate.z - 1} : TileCoord{gate.x - 1, gate.z};
+        TileCoord inside{};
+        TileCoord outside{};
+        if (env.enclosures.At(near) == enclosure.id) {
+            inside = near;
+            outside = far;
+        } else if (env.enclosures.At(far) == enclosure.id) {
+            inside = far;
+            outside = near;
+        } else {
+            continue;
+        }
+        if (env.enclosures.RegionAt(outside) != Region::Public || !Reachable(env, inside) ||
+            !Reachable(env, outside)) {
+            continue;
+        }
+        const Vec2 inward = Normalized(World::TileCenter(inside) - World::TileCenter(outside));
+        const Vec2 place = World::TileCenter(outside) + inward * 0.4f;
+        const float distance = DistanceSquared(from, place);
+        if (distance < nearest && Shallow(env, place)) {
+            nearest = distance;
+            best = Stand{place, HeadingOf(inward)};
+            insidePlace = World::TileCenter(inside);
+        }
+    }
+    return best;
+}
+
 /// The open tile of the habitat nearest to `target` that no tree or rock stands on: where a
 /// keeper serves from inside what cannot be stood beside (a feeder on an island).
 std::optional<Stand> NearestOpen(const Env& env, const std::vector<TileCoord>& open, Vec2 target) {
@@ -398,8 +460,9 @@ std::optional<Stand> NearestOpen(const Env& env, const std::vector<TileCoord>& o
 }
 
 StaffTask Job(StaffActivity work, StaffActivity approach, Vec2 place, float facing, float seconds,
-              EnclosureId enclosure = {}, PropId prop = {}) {
-    return StaffTask{work, approach, place, facing, Ticks(seconds), enclosure, prop};
+              EnclosureId enclosure = {}, PropId prop = {},
+              StaffLockoutAction lockout = StaffLockoutAction::None) {
+    return StaffTask{work, approach, place, facing, Ticks(seconds), enclosure, prop, lockout};
 }
 
 /// Puts the jobs from `first` on in the order of the shortest hops, starting from `from`.
@@ -442,7 +505,18 @@ void PlanHabitat(const Env& env, const Animals& animals, StaffMember& member, En
         return;
     }
     const Enclosure& enclosure = *found;
-    const bool enter = KeepersMayEnter(env, animals, id);
+    const bool dangerous = HoldsDanger(env, animals, id);
+    Vec2 lockoutInside{};
+    const std::optional<Stand> lockout =
+        dangerous ? LockoutStand(env, enclosure, member.position, lockoutInside) : std::optional<Stand>{};
+    const Vec2 lockoutPlace = lockout ? lockout->place : Vec2{};
+    const float lockoutFacing = lockout ? lockout->facing : 0.0f;
+    const bool lockoutInsideValid =
+        lockout && env.enclosures.At(lockoutInside) == id && Standable(env, lockoutInside, id);
+    const bool lockoutDue =
+        animals.Dirt(id) >= kDangerousRakeFromDirt || (member.stopsDone + id.value) % 3u == 0u;
+    const bool enter = dangerous ? lockoutInsideValid && lockoutDue : KeepersMayEnter(env, animals, id);
+    const bool serveInside = enter && !dangerous;
     std::vector<Stand> barrier;
     BarrierStands(env, enclosure, barrier);
     std::vector<TileCoord> open;
@@ -468,7 +542,7 @@ void PlanHabitat(const Env& env, const Animals& animals, StaffMember& member, En
         if (!feeding && full >= Staff::kFeederDue) {
             continue;
         }
-        if (enter) {
+        if (serveInside) {
             // Behind the feeder as the public sees it: the keeper faces them.
             const Front front = NearestView(enclosure, feeder->position);
             const Vec2 wish = front.any ? feeder->position - front.point : Vec2{0.0f, -1.0f};
@@ -479,7 +553,7 @@ void PlanHabitat(const Env& env, const Animals& animals, StaffMember& member, En
                 continue;
             }
         }
-        const Stand stand = (enter ? NearestOpen(env, open, feeder->position) : std::nullopt)
+        const Stand stand = (serveInside ? NearestOpen(env, open, feeder->position) : std::nullopt)
                                 .or_else([&] { return NearestStand(barrier, feeder->position); })
                                 .value_or(Stand{member.position, 0.0f});
         fills.push_back({full, Job(StaffActivity::ThrowFeed, StaffActivity::Carry, stand.place,
@@ -495,7 +569,7 @@ void PlanHabitat(const Env& env, const Animals& animals, StaffMember& member, En
         if (full >= Staff::kTroughDue) {
             continue;
         }
-        if (enter) {
+        if (serveInside) {
             const Front front = NearestView(enclosure, trough->position);
             const Vec2 wish = front.any ? trough->position - front.point : Vec2{0.0f, -1.0f};
             if (const auto stand =
@@ -505,7 +579,7 @@ void PlanHabitat(const Env& env, const Animals& animals, StaffMember& member, En
                 continue;
             }
         }
-        const Stand stand = (enter ? NearestOpen(env, open, trough->position) : std::nullopt)
+        const Stand stand = (serveInside ? NearestOpen(env, open, trough->position) : std::nullopt)
                                 .or_else([&] { return NearestStand(barrier, trough->position); })
                                 .value_or(Stand{member.position, 0.0f});
         fills.push_back({full, Job(StaffActivity::Hose, StaffActivity::Walk, stand.place,
@@ -572,8 +646,8 @@ void PlanHabitat(const Env& env, const Animals& animals, StaffMember& member, En
     if (feeding) {
         // Something for the animals to come for, where the public sees it. It tops up every
         // feeder of the habitat (Staff::Apply): a public feeding leaves nobody out.
-        const auto stand = enter ? PaddockStand(env, animals, enclosure, open, salt + 30u, after())
-                                 : PickBarrier(enclosure, barrier, salt, after());
+        const auto stand = serveInside ? PaddockStand(env, animals, enclosure, open, salt + 30u, after())
+                                       : PickBarrier(enclosure, barrier, salt, after());
         if (stand) {
             tasks.push_back(Job(StaffActivity::ThrowFeed, StaffActivity::Carry, stand->place, stand->facing,
                                 kScatterS, id));
@@ -581,8 +655,14 @@ void PlanHabitat(const Env& env, const Animals& animals, StaffMember& member, En
     }
 
     const std::size_t routine = tasks.size();
+    const std::size_t firstInside = tasks.size();
     const Shift shift = ShiftAt(env.time.Hour());
-    if (enter) {
+    if (enter && dangerous) {
+        // One purposeful job keeps the group lockout short enough that normal feeding and
+        // drinking are not displaced by a long sequence or a walk across the habitat.
+        tasks.push_back(Job(StaffActivity::Rake, StaffActivity::Push, lockoutInside,
+                            WrapAngle(lockoutFacing + 1.2f), kDangerousRakeS, id));
+    } else if (enter) {
         switch (shift) {
             case Shift::Morning:
                 rake(0);
@@ -653,6 +733,13 @@ void PlanHabitat(const Env& env, const Animals& animals, StaffMember& member, En
                 rest(kNightRestS);
                 break;
         }
+    }
+    if (dangerous && enter && lockout && tasks.size() > firstInside) {
+        tasks.insert(tasks.begin() + static_cast<std::ptrdiff_t>(firstInside),
+                     Job(StaffActivity::Inspect, StaffActivity::Walk, lockoutPlace, lockoutFacing, 4.0f, id,
+                         {}, StaffLockoutAction::Secure));
+        tasks.push_back(Job(StaffActivity::Inspect, StaffActivity::Walk, lockoutPlace, lockoutFacing, 4.0f,
+                            id, {}, StaffLockoutAction::Release));
     }
 }
 

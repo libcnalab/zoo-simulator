@@ -280,6 +280,17 @@ public:
         }
     }
 
+    /// Moves every animal standing in `enclosure` into its registered shelters, provided
+    /// all of them fit and every assigned door is usable by its species. The operation is
+    /// atomic: false leaves every animal unchanged. A resident loose outside the habitat
+    /// also makes it fail, since the habitat cannot then be made safe for staff.
+    bool SecureForStaff(const Env& env, EnclosureId enclosure);
+    /// Habitats whose animals must remain secured this tick. Like keeper positions, this is
+    /// transient input rebuilt by Zoo before Step(), never saved, compared or hashed.
+    void ClearStaffLockouts() { staffLockouts_.clear(); }
+    void AddStaffLockout(EnclosureId enclosure);
+    bool StaffLockout(EnclosureId enclosure) const;
+
     /// The full report for one animal, evaluated now.
     WelfareReport Welfare(const Env& env, const Animal& animal) const;
 
@@ -365,9 +376,10 @@ private:
         Vec2 position;
     };
 
-    std::vector<Animal> animals_;      // ascending id
-    std::vector<EnclosureCare> care_;  // ascending id
-    std::vector<KeeperPresence> keepers_;  // current input, not simulation state
+    std::vector<Animal> animals_;             // ascending id
+    std::vector<EnclosureCare> care_;         // ascending id
+    std::vector<KeeperPresence> keepers_;     // current input, not simulation state
+    std::vector<EnclosureId> staffLockouts_;  // current input, sorted, not simulation state
     std::vector<std::vector<std::size_t>> enclosureScratch_;
     std::vector<PropId> propScratch_;
     std::vector<HabitatCache> habitatScratch_;

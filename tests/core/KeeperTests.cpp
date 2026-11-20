@@ -59,18 +59,39 @@ struct Watch {
             const TileCoord tile = World::TileAt(member.position);
             const std::string who =
                 "staff " + std::to_string(member.id.value) + " at tick " + std::to_string(zoo.Time().tick) +
-                " (" + std::to_string(member.position.x) + ", " + std::to_string(member.position.z) + ")";
+                " (" + std::to_string(member.position.x) + ", " + std::to_string(member.position.z) +
+                ") from (" + std::to_string(before[i].x) + ", " + std::to_string(before[i].z) +
+                "), lockout " + std::to_string(member.lockout.value) + ", task " +
+                std::to_string(member.task);
             ASSERT_TRUE(zoo.Routes().Passable(tile, kStaff)) << who << " stands where nobody can walk";
             ASSERT_NE(zoo.Habitats().RegionAt(tile), Region::StandOff) << who << " stands in a planted strip";
             ASSERT_FALSE(zoo.Map().At(tile).standOff) << who << " stands in a planted strip";
             // Dry-shod: no deeper than a boot anywhere along the way (a lagoon's shelf is 0.3 m).
             ASSERT_LE(zoo.Map().WaterDepthAt(member.position), 0.08f) << who << " wades";
-            ASSERT_FALSE(dangerous.contains(zoo.Habitats().At(tile).value))
-                << who << " is inside the habitat of a dangerous species";
+            const EnclosureId standing = zoo.Habitats().At(tile);
+            if (dangerous.contains(standing.value)) {
+                ASSERT_EQ(member.lockout, standing) << who << " entered without its lockout";
+                for (const Animal& animal : zoo.Fauna().All()) {
+                    if (!animal.InWorld() || animal.species < 0 ||
+                        static_cast<std::size_t>(animal.species) >= zoo.SpeciesList().All().size()) {
+                        continue;
+                    }
+                    const SpeciesDef& species =
+                        zoo.SpeciesList().All()[static_cast<std::size_t>(animal.species)];
+                    if (species.dangerous &&
+                        (animal.home == standing || zoo.Habitats().At(animal.position) == standing)) {
+                        ASSERT_TRUE(animal.shelter)
+                            << who << " shares the habitat with dangerous animal " << animal.id.value;
+                    }
+                }
+            }
             // No step is longer than a walk allows, and none goes through a fence.
-            ASSERT_LE(Distance(before[i], member.position), kStepBound) << who;
-            ASSERT_TRUE(zoo.Routes().Walkable(before[i], member.position, kStaff))
-                << who << " crossed a barrier";
+            const float moved = Distance(before[i], member.position);
+            ASSERT_LE(moved, kStepBound) << who;
+            if (moved > 1.0e-6f) {
+                ASSERT_TRUE(zoo.Routes().Walkable(before[i], member.position, kStaff))
+                    << who << " crossed a barrier";
+            }
             if (member.working) {
                 ++worked[static_cast<std::size_t>(member.activity)];
             }
@@ -132,30 +153,142 @@ TEST(Keeper, TheVisitorZooHasItsCrew) {
     EXPECT_EQ(staff.KeeperOf(EnclosureId{9999}), nullptr);
 }
 
+TEST(Keeper, AWholeDangerousGroupCanBeAtomicallySecuredForStaff) {
+    const auto zoo = VisitorZoo();
+    const std::set<std::uint32_t> dangerous = DangerousHabitats(*zoo);
+    ASSERT_FALSE(dangerous.empty());
+    const EnclosureId habitat{*dangerous.begin()};
+    const Enclosure* enclosure = zoo->Habitats().Find(habitat);
+    ASSERT_NE(enclosure, nullptr);
+
+    std::vector<AnimalId> group;
+    for (const Animal& animal : zoo->Fauna().All()) {
+        if (animal.InWorld() && zoo->Habitats().At(animal.position) == habitat) {
+            group.push_back(animal.id);
+        }
+    }
+    ASSERT_FALSE(group.empty());
+    Env env = zoo->MakeEnv();
+    ASSERT_TRUE(zoo->Fauna().SecureForStaff(env, habitat));
+
+    std::map<std::uint32_t, int> occupants;
+    float hungerBefore = 0.0f;
+    for (AnimalId id : group) {
+        const Animal* animal = zoo->Fauna().Find(id);
+        ASSERT_NE(animal, nullptr);
+        EXPECT_EQ(animal->home, habitat);
+        EXPECT_TRUE(animal->shelter);
+        EXPECT_EQ(animal->activity, AnimalActivity::Shelter);
+        EXPECT_FALSE(animal->moving);
+        EXPECT_FALSE(animal->loose);
+        ++occupants[animal->shelter.value];
+        hungerBefore += animal->hunger;
+    }
+    for (const auto& [buildingId, count] : occupants) {
+        const Building* building = zoo->Objects().FindBuilding(BuildingId{buildingId});
+        ASSERT_NE(building, nullptr);
+        ASSERT_GE(building->def, 0);
+        ASSERT_LT(static_cast<std::size_t>(building->def), zoo->Definitions().buildings.size());
+        EXPECT_LE(count, zoo->Definitions().buildings[static_cast<std::size_t>(building->def)].capacity);
+    }
+
+    const std::uint64_t beforeTransientInput = zoo->Fauna().StateHash();
+    zoo->Fauna().ClearStaffLockouts();
+    zoo->Fauna().AddStaffLockout(habitat);
+    zoo->Fauna().AddStaffLockout(habitat);
+    EXPECT_TRUE(zoo->Fauna().StaffLockout(habitat));
+    EXPECT_EQ(zoo->Fauna().StateHash(), beforeTransientInput);
+    for (int step = 0; step < 180; ++step) {
+        env.time.tick = step + 1;
+        zoo->Fauna().Step(env);
+    }
+    float hungerAfter = 0.0f;
+    for (AnimalId id : group) {
+        const Animal* animal = zoo->Fauna().Find(id);
+        ASSERT_NE(animal, nullptr);
+        EXPECT_TRUE(animal->shelter) << "animal " << id.value << " left during lockout";
+        EXPECT_EQ(animal->activity, AnimalActivity::Shelter);
+        EXPECT_FALSE(animal->moving);
+        hungerAfter += animal->hunger;
+    }
+    EXPECT_GT(hungerAfter, hungerBefore) << "secured animals should keep accumulating needs";
+}
+
+TEST(Keeper, FailedGroupLockoutChangesNoAnimal) {
+    const auto zoo = VisitorZoo();
+    const std::set<std::uint32_t> dangerous = DangerousHabitats(*zoo);
+    ASSERT_FALSE(dangerous.empty());
+    const EnclosureId habitat{*dangerous.begin()};
+    const Enclosure* enclosure = zoo->Habitats().Find(habitat);
+    ASSERT_NE(enclosure, nullptr);
+    ASSERT_FALSE(enclosure->shelters.empty());
+    for (BuildingId shelter : enclosure->shelters) {
+        Building* building = zoo->Objects().FindBuilding(shelter);
+        ASSERT_NE(building, nullptr);
+        building->open = false;
+    }
+    const std::uint64_t before = zoo->Fauna().StateHash();
+    Env env = zoo->MakeEnv();
+    EXPECT_FALSE(zoo->Fauna().SecureForStaff(env, habitat));
+    EXPECT_EQ(zoo->Fauna().StateHash(), before);
+}
+
 // A planted stand-off strip leaves the service gate as the only place directly beside a
 // dangerous habitat.  The public viewing bays are safe working places too: without them a
 // keeper repeats a whole round at one or two points hidden behind the habitat.
-TEST(Keeper, DangerousHabitatsHaveSeveralSafeBarrierWorkPlaces) {
+TEST(Keeper, DangerousHabitatsHaveOutsideServiceAndLockoutWorkInside) {
     const auto zoo = VisitorZoo();
     zoo->Guests().SetOpen(false);
     const std::set<std::uint32_t> dangerous = DangerousHabitats(*zoo);
     std::map<std::uint32_t, std::set<std::pair<float, float>>> places;
-    for (int i = 0; i < 12000; ++i) {
+    std::map<std::uint32_t, int> inside;
+    std::map<std::uint32_t, int> secure;
+    std::map<std::uint32_t, int> release;
+    std::map<std::uint32_t, int> active;
+    std::map<std::uint32_t, int> entered;
+    std::map<std::uint32_t, int> activeStreak;
+    std::map<std::uint32_t, int> longestActive;
+    for (int i = 0; i < 50000; ++i) {
         zoo->Step();
+        std::set<std::uint32_t> activeNow;
         for (const StaffMember& member : zoo->Keepers().All()) {
+            if (member.lockout) {
+                ++active[member.lockout.value];
+                entered[member.lockout.value] +=
+                    zoo->Habitats().At(World::TileAt(member.position)) == member.lockout;
+                activeNow.insert(member.lockout.value);
+            }
             for (const StaffTask& task : member.tasks) {
                 if (!dangerous.contains(task.enclosure.value)) {
                     continue;
                 }
-                EXPECT_EQ(zoo->Habitats().RegionAt(World::TileAt(task.place)), Region::Public);
-                places[task.enclosure.value].insert({task.place.x, task.place.z});
+                const EnclosureId standing = zoo->Habitats().At(World::TileAt(task.place));
+                if (standing == task.enclosure) {
+                    EXPECT_EQ(task.lockout, StaffLockoutAction::None);
+                    ++inside[task.enclosure.value];
+                } else {
+                    EXPECT_EQ(zoo->Habitats().RegionAt(World::TileAt(task.place)), Region::Public);
+                    places[task.enclosure.value].insert({task.place.x, task.place.z});
+                }
+                secure[task.enclosure.value] += task.lockout == StaffLockoutAction::Secure;
+                release[task.enclosure.value] += task.lockout == StaffLockoutAction::Release;
             }
+        }
+        for (const std::uint32_t id : dangerous) {
+            activeStreak[id] = activeNow.contains(id) ? activeStreak[id] + 1 : 0;
+            longestActive[id] = std::max(longestActive[id], activeStreak[id]);
         }
     }
     for (const std::uint32_t id : dangerous) {
         const Enclosure* enclosure = zoo->Habitats().Find(EnclosureId{id});
         ASSERT_NE(enclosure, nullptr);
         EXPECT_GE(places[id].size(), 2u) << enclosure->name;
+        EXPECT_GT(inside[id], 0) << enclosure->name;
+        EXPECT_GT(secure[id], 0) << enclosure->name;
+        EXPECT_GT(release[id], 0) << enclosure->name;
+        EXPECT_GT(active[id], 0) << enclosure->name;
+        EXPECT_GT(entered[id], 0) << enclosure->name;
+        EXPECT_LT(longestActive[id], 600) << enclosure->name << " remained secured too long";
     }
 }
 
@@ -225,6 +358,62 @@ TEST(Keeper, SavedAndLoadedTheyCarryOnTheSame) {
     const auto reread = StaffFromJson(nlohmann::json::parse(ToJson(original->Keepers()).dump()), &error);
     ASSERT_TRUE(reread.has_value()) << error;
     EXPECT_TRUE(*reread == original->Keepers());
+
+    // Version 1 had neither safety actions nor an active lockout. It remains readable.
+    nlohmann::json legacy = ToJson(original->Keepers());
+    legacy["version"] = 1;
+    for (nlohmann::json& member : legacy["members"]) {
+        member.erase("lockout");
+        for (nlohmann::json& task : member["tasks"]) {
+            task.erase("lockout_action");
+        }
+    }
+    EXPECT_TRUE(StaffFromJson(legacy, &error).has_value()) << error;
+}
+
+TEST(Keeper, AnActiveDangerousLockoutSurvivesSaveAndContinuesSafely) {
+    const auto original = VisitorZoo();
+    original->Guests().SetOpen(false);
+    const StaffMember* active = nullptr;
+    for (int i = 0; i < 30000 && active == nullptr; ++i) {
+        original->Step();
+        for (const StaffMember& member : original->Keepers().All()) {
+            if (member.lockout && original->Habitats().At(World::TileAt(member.position)) == member.lockout) {
+                active = &member;
+                break;
+            }
+        }
+    }
+    ASSERT_NE(active, nullptr);
+    const EnclosureId habitat = active->lockout;
+    std::string error;
+    const auto loaded =
+        ZooFromJson(ZooToJson(*original), testdata::GameCatalog(), testdata::GameSpecies(), &error);
+    ASSERT_NE(loaded, nullptr) << error;
+    ASSERT_TRUE(loaded->SameState(*original));
+    bool restored = false;
+    for (const StaffMember& member : loaded->Keepers().All()) {
+        restored |= member.lockout == habitat;
+    }
+    EXPECT_TRUE(restored);
+    for (const Animal& animal : loaded->Fauna().All()) {
+        if (animal.InWorld() && animal.home == habitat) {
+            EXPECT_TRUE(animal.shelter) << "animal " << animal.id.value;
+        }
+    }
+
+    Watch originalWatch(*original);
+    Watch loadedWatch(*loaded);
+    for (int i = 0; i < 1800; ++i) {
+        original->Step();
+        loaded->Step();
+        originalWatch.Check(*original);
+        loadedWatch.Check(*loaded);
+        if (::testing::Test::HasFatalFailure()) {
+            return;
+        }
+    }
+    EXPECT_TRUE(loaded->SameState(*original));
 }
 
 TEST(Keeper, ASaveWithoutStaffOpensUnstaffedAndDamagedStaffIsRefused) {

@@ -48,6 +48,15 @@ std::string_view ToString(StaffActivity v);  // "walk", "carry", "push", "fill_f
 /// A few words for a visitor ("fills the feeder"); never empty.
 std::string_view Describe(StaffActivity v);
 
+/// The safety action attached to a task at a dangerous habitat. Names are saved; append only.
+enum class StaffLockoutAction : std::uint8_t {
+    None,
+    Secure,   ///< put the whole group in its houses before entering
+    Release,  ///< let it out, only after the keeper has returned to public ground
+    Count
+};
+std::string_view ToString(StaffLockoutAction v);  // "none", "secure", "release"
+
 /// One job: a place to stand, a way to face, something to be seen doing for a while.
 /// The job's effect on the zoo (a feeder filled, dirt gone) happens half way through.
 struct StaffTask {
@@ -59,6 +68,7 @@ struct StaffTask {
     std::int32_t ticks = 0;
     EnclosureId enclosure;  ///< the habitat it serves; null for work on the paths
     PropId prop;            ///< the feeder, trough, bin or bed; null when there is none
+    StaffLockoutAction lockout = StaffLockoutAction::None;
 
     bool operator==(const StaffTask&) const = default;
 };
@@ -99,6 +109,8 @@ struct StaffMember {
     std::int32_t ticksLeft = 0;
     std::vector<Vec2> route;  ///< remaining waypoints while walking to the task
     std::uint32_t routeIndex = 0;
+    /// Dangerous habitat currently secured for this member, until an outside release task.
+    EnclosureId lockout;
 
     const StaffTask* Task() const { return task < tasks.size() ? &tasks[task] : nullptr; }
 
@@ -113,7 +125,8 @@ struct StaffMember {
 /// in the morning, hosing and fence checks later, the two feedings a day visitors can
 /// come to). Keepers go in through the keeper gate, except where a dangerous species
 /// lives: nothing in the animal model shuts those animals in, so there the keeper never
-/// enters and works from the barrier (feed thrown over, the trough filled with the hose).
+/// enters only after the whole group has been secured in capacity-checked houses. Public
+/// feeding stays outside; routine work ends by returning outside before releasing the group.
 ///
 /// Step() is deterministic: equal state and equal inputs give bit-identical results.
 /// The class has no random stream; variety comes from the stateless hashes. Members
@@ -125,8 +138,8 @@ public:
     static constexpr float kCarrySpeed = 1.45f;
     static constexpr float kPushSpeed = 1.35f;
     /// A feeder below this share of its capacity is filled at the keeper's next stop; a trough likewise.
-    static constexpr float kFeederDue = 0.6f;
-    static constexpr float kTroughDue = 0.7f;
+    static constexpr float kFeederDue = 0.85f;
+    static constexpr float kTroughDue = 0.9f;
     /// A feeding visitors can watch begins at a stop planned from this long before its
     /// hour until this long after it (calendar hours).
     static constexpr float kFeedingEarly = 0.15f;

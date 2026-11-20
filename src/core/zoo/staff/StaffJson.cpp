@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 #include "zoo/staff/StaffJson.hpp"
 
+#include <algorithm>
 #include <cmath>
 #include <stdexcept>
 
@@ -10,7 +11,7 @@ namespace {
 
 using Json = nlohmann::json;
 
-constexpr int kVersion = 1;
+constexpr int kVersion = 2;
 /// More than any zoo engages; a guard against a document that is not ours.
 constexpr std::size_t kMostMembers = 256;
 constexpr std::size_t kMostStops = 4096;
@@ -71,7 +72,7 @@ Json Encode(const StaffTask& task) {
     return Json{{"work", ToString(task.work)}, {"approach", ToString(task.approach)},
                 {"place", Point(task.place)},  {"facing", task.facing},
                 {"ticks", task.ticks},         {"enclosure", task.enclosure.value},
-                {"prop", task.prop.value}};
+                {"prop", task.prop.value},     {"lockout_action", ToString(task.lockout)}};
 }
 
 StaffTask DecodeTask(const Json& json) {
@@ -83,8 +84,14 @@ StaffTask DecodeTask(const Json& json) {
     task.ticks = json.at("ticks").get<std::int32_t>();
     task.enclosure = EnclosureId{json.at("enclosure").get<std::uint32_t>()};
     task.prop = PropId{json.at("prop").get<std::uint32_t>()};
+    if (json.contains("lockout_action")) {
+        task.lockout = ReadEnum<StaffLockoutAction>(json.at("lockout_action"), "lockout action");
+    }
     if (!std::isfinite(task.facing) || task.ticks < 0) {
         throw std::runtime_error("a task needs a finite facing and no negative duration");
+    }
+    if (task.lockout != StaffLockoutAction::None && !task.enclosure) {
+        throw std::runtime_error("a lockout task needs a habitat");
     }
     return task;
 }
@@ -117,7 +124,8 @@ Json Encode(const StaffMember& m) {
                 {"working", m.working},
                 {"ticks_left", m.ticksLeft},
                 {"route", std::move(route)},
-                {"route_index", m.routeIndex}};
+                {"route_index", m.routeIndex},
+                {"lockout", m.lockout.value}};
 }
 
 StaffMember DecodeMember(const Json& json) {
@@ -156,9 +164,18 @@ StaffMember DecodeMember(const Json& json) {
         m.route.push_back(ReadPoint(point));
     }
     m.routeIndex = json.at("route_index").get<std::uint32_t>();
+    if (json.contains("lockout")) {
+        m.lockout = EnclosureId{json.at("lockout").get<std::uint32_t>()};
+    }
     if (m.stop >= m.round.size() || m.task > m.tasks.size() || m.routeIndex > m.route.size() ||
         !std::isfinite(m.heading) || !(m.speed >= 0.0f) || m.ticksLeft < 0) {
         throw std::runtime_error("a member's stop, task, route index or body is out of range");
+    }
+    const bool releasesLockout = std::any_of(m.tasks.begin(), m.tasks.end(), [&](const StaffTask& task) {
+        return task.lockout == StaffLockoutAction::Release && task.enclosure == m.lockout;
+    });
+    if (m.lockout && (m.role != StaffRole::Keeper || !releasesLockout)) {
+        throw std::runtime_error("an active lockout needs its keeper and release task");
     }
     return m;
 }
@@ -177,7 +194,7 @@ Staff StaffJsonAccess::Load(const Json& json) {
     if (!json.is_object()) {
         throw std::runtime_error("the staff must be an object");
     }
-    if (const int version = json.at("version").get<int>(); version != kVersion) {
+    if (const int version = json.at("version").get<int>(); version < 1 || version > kVersion) {
         throw std::runtime_error("unsupported staff version " + std::to_string(version));
     }
     Staff staff;

@@ -689,7 +689,9 @@ TEST_P(VisitorZooHabitat, SaveLoadInTheMiddleOfTheVisit) {
         EXPECT_GE(animalsDoing.size(), 4U);
         EXPECT_GT(animalsOnRoute, 0);
         EXPECT_GE(visitorsDoing.size(), 3U);
-        EXPECT_GT(visitorsOnRoute, 20);
+        // J35's earlier habitat service changes the deterministic crowd encounters: seed 1's
+        // first checkpoint has 19 half-walked routes (formerly 21), still a broad save sample.
+        EXPECT_GE(visitorsOnRoute, 18);
 
         const nlohmann::json saved = ZooToJson(zoo);
         std::string error;
