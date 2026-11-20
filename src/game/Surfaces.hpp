@@ -49,6 +49,10 @@ public:
     /// maps, and the water's material shows the one that is due.
     void Animate(double seconds);
 
+    /// Releases CPU copies of the immutable procedural textures after their GPU upload.
+    /// Use only where context recovery has deliberately been disabled.
+    void ReleaseCpuTextureCopies();
+
     /// Edge length in metres that one repeat of a pattern covers.
     static float PatternMetres(Pattern pattern);
     /// How light a pattern is on the whole (linear, 0..1): what its texture comes to where

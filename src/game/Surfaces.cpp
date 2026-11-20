@@ -11,6 +11,7 @@
 #include "BarrierTextures.hpp"
 #include "FoliageTextures.hpp"
 #include "SignTextures.hpp"
+#include "StaticTexture.hpp"
 
 namespace zoogame {
 
@@ -434,6 +435,24 @@ void Surfaces::Animate(double seconds) {
     rippleTime_ = std::fmod(rippleTime_ + seconds, kRippleSeconds);
     const auto frame = static_cast<std::size_t>(rippleTime_ / kRippleSeconds * static_cast<double>(kRippleFrames));
     water_.normalTexture = ripples_[std::min(frame, ripples_.size() - 1)].get();
+}
+
+void Surfaces::ReleaseCpuTextureCopies() {
+    const auto release = [](auto& texture) {
+        if (texture)
+            DiscardCpuTextureCopies(*texture);
+    };
+    for (auto& texture : patterns_)
+        release(texture);
+    release(wire_);
+    release(leafSpray_);
+    release(needleSpray_);
+    release(signs_);
+    release(pane_);
+    release(weld_);
+    release(fronds_);
+    for (auto& texture : ripples_)
+        release(texture);
 }
 
 const Material& Surfaces::Get(const Finish& finish) {

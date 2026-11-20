@@ -399,6 +399,8 @@ void SceneryRenderer::BuildGrove(const zoo::World& world, const zoo::ZooObjects&
 }
 
 void SceneryRenderer::Update(const zoo::World& world, const zoo::ZooObjects& objects, int maxCells) {
+    if (editCacheDiscarded_)
+        return;
     if (cells_.empty() || world.Width() != width_ || world.Depth() != depth_) {
         Layout(world);
     }
@@ -459,6 +461,11 @@ void SceneryRenderer::Update(const zoo::World& world, const zoo::ZooObjects& obj
         --budget;
     }
     palette_.Upload();
+}
+
+void SceneryRenderer::DiscardEditCache(bool discardCpuTextureCopies) {
+    palette_.DiscardEditCache(discardCpuTextureCopies);
+    editCacheDiscarded_ = true;
 }
 
 void SceneryRenderer::Submit(CnaEngine::App::Frame& frame, const Vector3& eye) {

@@ -38,6 +38,9 @@ public:
     /// Brings the texture up to date with what Merge allotted. Call before the meshes are
     /// drawn; costs nothing when nothing is new.
     void Upload();
+    /// Releases the source image and allocation caches of a completed, read-only palette,
+    /// optionally including CPU texture copies. Merge and Upload must not be called afterwards.
+    void DiscardEditCache(bool discardCpuTextureCopies = false);
 
     /// The reference stays valid for the lifetime of this object.
     const CnaEngine::Graphics::Material& Solid() const { return solid_; }

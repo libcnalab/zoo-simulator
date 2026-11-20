@@ -61,6 +61,8 @@ public:
     /// Brings at most `maxCells` out-of-date cells up to date (all of them when
     /// negative); call every frame. Cheap when nothing changed.
     void Update(const zoo::World& world, const zoo::ZooObjects& objects, int maxCells = 2);
+    /// Releases the completed far-plant palette's CPU edit data in a read-only visit.
+    void DiscardEditCache(bool discardCpuTextureCopies = false);
     /// Submits the scenery as seen from `eye`: the groves far from it in their far form.
     void Submit(CnaEngine::App::Frame& frame, const Vector3& eye);
     /// Submits everything in full detail.
@@ -101,6 +103,7 @@ private:
     std::uint32_t objectsRevision_ = 0;
     bool pending_ = false;
     bool fullDetail_ = false;  ///< ZOO_PLANTS_FULL_DETAIL: fixed-view comparison of near and far forms
+    bool editCacheDiscarded_ = false;
 };
 
 }  // namespace zoogame

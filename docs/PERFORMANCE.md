@@ -481,3 +481,29 @@ visually intact; 13,253 of 921,600 pixels (1.44%) differ from J54, localized by 
 image to moving people and animals rather than the terrain. The full animation pipeline passes
 all 131 cases in 442.306 seconds, and the complete C++ suite passes all 302 active cases in
 253.16 seconds, with 21 intended diagnostics disabled.
+
+## Common static-texture memory (2026-11-20)
+
+The same read-only desktop visit now releases CPU staging for the immutable procedural surface
+textures after upload: the pattern set, foliage cards, sign sheet, viewing pane, fence textures
+and all 48 water-normal frames. Their smaller mip levels total **5,046,296 bytes (4.81 MiB)**.
+Water animation is unaffected because its material still selects among the same GPU-backed
+texture wrappers. The completed far-plant palette also releases its 1024-square source image,
+three 128-square source miniatures, allocation map and smaller mip staging, another **5,789,012
+bytes (5.52 MiB)**. Thus 10,835,308 known bytes (**10.33 MiB**), plus small map allocations, no
+longer remain on the CPU. The editor retains all of these resources, and context-recovering
+platforms retain texture staging; non-editor visits on those platforms may still release only the
+far palette's source image and allocation caches.
+
+No resident-memory reduction is claimed from the short-run sampler. Its direct as-played result
+moved from 2,665 to 2,698 MB while four alternate visitor modes moved down by 9, 39, 13 and 11 MB;
+the unchanged editor path moved down by 29 MB. That contradictory spread is allocator noise, so
+the exact allocation accounting above is the useful result.
+
+All 30 game-side tests pass. A matched 3,000-tick Lion Rock frame differs from J55 in 1,361 of
+921,600 pixels (0.15%), localized to moving people and animals; the static scene is intact. A real
+ASan/UBSan visit builds the complete scenery, loads all 33 animal variants and draws 65 of 90
+animals without a finding. The editor starts cleanly, and the 400-frame end-to-end visit script
+saves, loads the same zoo twice, saves again and exits through its menu without rebuilding the
+discarded static cache. The complete suite passes all **303 active tests** in 420.97 seconds,
+including the animation pipeline, with 21 intended diagnostics disabled.

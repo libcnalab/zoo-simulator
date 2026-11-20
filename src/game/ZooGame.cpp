@@ -438,6 +438,14 @@ void ZooGame::Adopt(std::unique_ptr<zoo::Zoo> zoo) {
             device, *surfaces_, *catalog_,
             editor_ ? SceneryRenderer::kEditCellTiles : std::max(zoo_->Map().Width(), zoo_->Map().Depth()));
         scenery_->Update(zoo_->Map(), zoo_->Objects(), -1);
+        if (!editor_) {
+#if defined(__linux__) && !defined(__ANDROID__)
+            scenery_->DiscardEditCache(true);
+            surfaces_->ReleaseCpuTextureCopies();
+#else
+            scenery_->DiscardEditCache();
+#endif
+        }
     }
     StartMark(bench_.on, "scenery");
     if (!animals_)

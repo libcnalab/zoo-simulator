@@ -7,6 +7,7 @@
 
 #include "Microsoft/Xna/Framework/Graphics/SamplerState.hpp"
 
+#include "StaticTexture.hpp"
 #include "Surfaces.hpp"
 
 namespace zoogame {
@@ -207,6 +208,14 @@ void PlantPalette::Upload() {
         CnaEngine::Graphics::UpdateTexture(*texture_, image_, {.srgb = true, .alphaTestReference = 127});
         dirty_ = false;
     }
+}
+
+void PlantPalette::DiscardEditCache(bool discardCpuTextureCopies) {
+    image_ = CnaEngine::Graphics::Image();
+    miniatures_.clear();
+    placed_.clear();
+    if (discardCpuTextureCopies && texture_)
+        DiscardCpuTextureCopies(*texture_);
 }
 
 }  // namespace zoogame

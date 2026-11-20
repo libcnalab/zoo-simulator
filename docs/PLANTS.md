@@ -164,6 +164,13 @@ skipped rose from 874 to 1,169 MB. The dual far batches therefore account for ab
 They remain in the normal visit because the measured benefit above is about 1 ms per frame; a
 streaming replacement would need to rebuild procedural plants without causing a visible hitch.
 
+Once a non-editor visit has finished building those batches, their 1024-square palette is
+read-only. It now releases the source image, three 128-square miniature atlases and allocation
+map. On desktop Linux, where context recovery is already disabled, it also releases the palette's
+smaller CPU mip staging. These known allocations total **5.52 MiB**, excluding the small map
+nodes. The GPU texture, both materials and both near/far grove meshes stay alive; the editor keeps
+the complete mutable palette.
+
 ## Open habitat fronts (J31, 2026-11-20)
 
 Every habitat tree now stands at least five metres plus the planted strip's depth from every

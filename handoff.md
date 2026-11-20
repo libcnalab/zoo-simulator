@@ -55,7 +55,11 @@ whatever you take up (`docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `docs/V
   platforms retain context recovery and readback. J55 applies the same completed-GPU-chain
   operation to the read-only desktop terrain: the immediate sample falls 2,760 -> 2,665 MB
   (heap 2,405 -> 2,301). The editor and other platforms retain their staging.
-  The complete suite after these changes is 302 active tests passed, with 21 long-running
+  J56 applies it to immutable procedural surfaces and the completed far-plant palette, and also
+  discards the palette's source image and miniatures. Exact known CPU allocations removed are
+  10.33 MiB; contradictory short-run RSS samples are not claimed as a saving. Water animation,
+  editor mutation and same-zoo reloads remain intact.
+  The complete suite after these changes is 303 active tests passed, with 21 long-running
   measurement/diagnostic tests disabled as intended.
 - Animal models are now submitted only when a generous body-and-shadow sphere intersects the
   main camera. The count fell from 88 everywhere to entrance 72, lion 7, meerkat 17, penguin 15
@@ -528,6 +532,16 @@ whatever you take up (`docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `docs/V
   ASan/UBSan visit completes 6,000 steps cleanly, and the inspected Lion Rock image keeps the
   terrain intact. The animation pipeline passes all 131 cases, and the complete C++ suite passes
   all 302 active cases in 253.16 seconds with 21 diagnostics disabled (J55, 2026-11-20).
+- J56 releases another exact 10.33 MiB of known CPU allocations after a read-only desktop visit
+  has uploaded its common procedural textures: 4.81 MiB of smaller surface mips and 5.52 MiB for
+  the far-plant palette source image, three miniatures and mip staging. GPU wrappers and materials
+  retain their addresses, including the 48 water-normal frames selected by animation. The editor
+  keeps all editable resources; context-recovering platforms keep texture staging. No RSS saving
+  is inferred from the noisy matrix (the direct sample rose while all four alternates fell).
+  All 30 game-side tests pass; a matched Lion Rock image changes only on 0.15% moving pixels, a
+  real ASan/UBSan visit completes cleanly, and both an editor smoke and the two-reload end-to-end
+  script pass. The complete suite passes all 303 active tests in 420.97 seconds, including the
+  animation pipeline, with 21 diagnostics disabled (J56, 2026-11-20).
 - The stopped G7c audio audit is recovered and finished. Calls now follow `Vocalize`, social,
   play and documented feeding cues rather than a timer; takes do not repeat immediately, spatial
   pan is capped at 0.60, birds fade with daylight, crowd level follows its people, and footsteps

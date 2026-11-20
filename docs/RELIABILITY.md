@@ -527,6 +527,17 @@ real 6,000-step sanitized visit completes cleanly, and the inspected Lion Rock t
 The full animation pipeline passes all 131 cases, and the complete C++ suite passes all 302 active
 cases with 21 intended diagnostics disabled.
 
+The immutable common surfaces and completed far-plant palette now use the same desktop-only
+staging release. The exact known CPU allocation removed is 10.33 MiB: 4.81 MiB of smaller mips for
+patterns, foliage, signs, barriers and 48 animated water normals, plus 5.52 MiB for the palette's
+source image, three miniatures and smaller mips. Texture wrapper addresses and GPU renderers remain
+fixed; water continues to animate by selecting among them. The editor retains its mutable copies,
+and context-recovering platforms retain mip staging. Contradictory short-run RSS samples are not
+reported as a saving. All 30 game tests pass; a full sanitized visit, an editor smoke and the
+save/load script with two same-zoo reloads complete cleanly. A matched Lion Rock frame changes only
+0.15% of pixels, all on moving actors. The complete suite passes all 303 active tests in 420.97
+seconds, including the animation pipeline, with 21 intended diagnostics disabled.
+
 The reload spike exposed by the original 400-frame script is fixed on the game side. A visit now
 compares all render-relevant terrain, fence and placed-object fields and retains its uploaded
 ground and scenery when a loaded save has the same static scene; animal actors reset but their
