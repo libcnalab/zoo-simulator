@@ -125,9 +125,19 @@ A fresh adult export remained byte-for-byte identical after the opt-in refactor,
 production chick matches an independent fresh export. The same-camera size comparison, four
 shape views and a real habitat frame are in
 `evidence/ostrich-juvenile-j3-2026-11-20.jpg`; the HUD identifies the selected chick as
-four-month-old Anika. It now reads as a chick rather than a miniature cock, but it remains a
-smooth first-generation egg-body model: the down is painted, the stripes are procedural and
-there is no normal map or individual feather geometry.
+four-month-old Anika. It now reads as a chick rather than a miniature cock.
+
+A second pass gives both ages layered plumage while preserving the skeleton and grounded
+`dust_bathe` clip. Four detached feathers overlap each folded wing and five more form a separated
+tail fan, replacing the adult's fused white blobs and giving the chick a subtle downy edge. A
+feather-only tangent-space normal map adds directional barb relief while leaving the bare neck,
+legs, bill and eyes smooth. The adult now has 19,992 triangles and the chick 17,992; each has 19
+bones and nine clips. Their 2.79 / 2.86 MB production GLBs match independent fresh exports.
+
+The same-camera comparisons and a seed-1 Ostrich Rise run after 3,000 simulation ticks are in
+`evidence/ostrich-feathers-j13-2026-11-20.jpg`. The wings and tail now read as layered plumage,
+but the underlying egg body remains stylised and the body surface has no individual feather
+cards or sculpted feather tracts.
 
 ### Bactrian camel calf (2026-11-20)
 

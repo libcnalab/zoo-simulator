@@ -118,6 +118,15 @@ whatever you take up (`docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `docs/V
   the same-camera viewers plus a real Meerkat Lookout run after 3,000 ticks are inspected in
   `docs/evidence/meerkat-coat-j12-2026-11-20.jpg` (J12, 2026-11-20). The head and base anatomy
   remain stylised.
+- Adult and juvenile ostriches now have second-pass layered plumage. Four detached feathers
+  overlap each folded wing and five more separate the tail fan; a feather-only tangent-space
+  normal map adds directional barb relief while leaving the bare skin smooth. The adult has
+  19,992 triangles and the chick 17,992; both retain 19 bones and nine clips. Their 2.79 / 2.86
+  MB production GLBs match independent fresh exports. All 126 animal-pipeline tests and all 270
+  active CTest cases pass (21 diagnostics disabled); `dust_bathe` was visually rechecked, and
+  the same-camera viewers plus a real Ostrich Rise run after 3,000 ticks are inspected in
+  `docs/evidence/ostrich-feathers-j13-2026-11-20.jpg` (J13, 2026-11-20). The egg-body anatomy
+  remains stylised.
 - The stopped G7c audio audit is recovered and finished. Calls now follow `Vocalize`, social,
   play and documented feeding cues rather than a timer; takes do not repeat immediately, spatial
   pan is capped at 0.60, birds fade with daylight, crowd level follows its people, and footsteps
@@ -243,7 +252,8 @@ tests pass. Nobody listened to the audio; preserve that qualification.
 ### 4.6 Animals
 
 - First-generation stylised anatomy still: wolf, camel, meerkat, ostrich, kangaroo. The wolf,
-  camel and meerkat have second-pass coats and silhouette details, but are not scan-based. Bears
+  camel, meerkat and ostrich have second-pass coats or plumage and silhouette details, but are
+  not scan-based. Bears
   are sculpt-based but crude (`docs/ANIMALS.md`; pipeline in `tools/animals/`, its tests
   `python3 -m unittest discover -s tools/animals/tests`, about 10 minutes).
 - Every young animal used in the Visitor Zoo has a dedicated variant; the brown/polar bear cub

@@ -72,6 +72,24 @@ def _parts(bones):
             R((length * .55, .17 + dy, .030), width, .023),
             R((length, .17 + dy, .026), width * .6, .019)],
             weights={"toes.L": 1}, mirror=True, segments=16, tag="digit", cap_scale=.25))
+    # Separate overlapping feathers break up the single smooth wing and tail masses. They are
+    # rigid to the existing wing/tail bones, so every established clip keeps its deformation.
+    for index, (root_x, end_x, y, z) in enumerate((
+            (.12, -.38, .34, 1.32), (.04, -.52, .38, 1.29),
+            (-.05, -.65, .40, 1.25), (-.14, -.74, .39, 1.21))):
+        parts.append(Part(f"wing_feather.{index}.L", [
+            R((root_x, y, z + .05), .035, .055),
+            R(((root_x + end_x) * .5, y + .018, z), .045, .048),
+            R((end_x, y, z - .025), .012, .018)],
+            weights={"wing.L": 1}, mirror=True, fuse=False, segments=12, tag="wing",
+            rough=(.006, 34), cap_start="flat", cap_end="point"))
+    for index, (end_x, y, z) in enumerate((
+            (-1.34, -.12, 1.48), (-1.43, -.06, 1.42), (-1.47, 0, 1.34),
+            (-1.43, .06, 1.27), (-1.34, .12, 1.22))):
+        parts.append(Part(f"tail_feather.{index}", [
+            R((-.79, 0, 1.37), .060, .075), R((-1.06, y * .5, (1.37 + z) * .5), .075, .060),
+            R((end_x, y, z), .016, .020)], weights={"tail1": 1}, fuse=False,
+            segments=12, tag="plume", rough=(.010, 28), cap_start="flat", cap_end="point"))
     return parts
 
 
@@ -113,6 +131,16 @@ def paint(ctx, juvenile=False, scale=1.0):
     color = nz.mix(color, np.array([.58, .48, .37]), ctx.tag("beak"))
     color = nz.mix(color, np.array([.045, .025, .012]), ctx.tag("eye"))
     return color
+
+
+def surface_height(ctx, scale=1.0):
+    """Layered feather relief on plumage while bare skin, bill, eyes and feet stay smooth."""
+    P = ctx.P / scale
+    directional = nz.fbm(P * np.array([.38, 1.15, 2.10]), 46.0, 4, seed=66)
+    barbs = nz.fbm(P * np.array([.30, 1.35, 2.50]), 105.0, 2, seed=67)
+    feather = np.maximum(ctx.tag("body"), np.maximum(ctx.tag("wing"), ctx.tag("plume")))
+    relief = .72 * directional + .28 * barbs
+    return .5 + (relief - .5) * feather
 
 
 def _feeding(solver, effort, scale=1.0):
@@ -275,14 +303,14 @@ def _juvenile_shape(spec):
                 ring.ry *= 1.08
                 ring.up *= 1.08
                 ring.dn *= 1.08
-        elif part.name == "folded_wing.L":
+        elif part.name == "folded_wing.L" or part.name.startswith("wing_feather."):
             wing_root = part.rings[0].c[0]
             for ring in part.rings:
                 ring.c[0] = wing_root + .55 * (ring.c[0] - wing_root)
                 ring.ry *= .90
                 ring.up *= .90
                 ring.dn *= .90
-        elif part.name == "tail_plume":
+        elif part.name == "tail_plume" or part.name.startswith("tail_feather."):
             tail_root = part.rings[0].c[0]
             for ring in part.rings:
                 ring.c[0] = tail_root + .35 * (ring.c[0] - tail_root)
@@ -307,6 +335,7 @@ def _juvenile_shape(spec):
 
     spec.name = "ostrich_juvenile"
     spec.paint = partial(paint, juvenile=True, scale=scale)
+    spec.surface_height = partial(surface_height, scale=scale)
     spec.voxel = .005
     spec.target_tris = 12000
     spec.meta.update({"shoulder_height_m": 1.13, "body_length_m": 1.17,
@@ -318,12 +347,14 @@ def _juvenile_shape(spec):
 
 def make_spec(juvenile=False):
     bones, rig = _skeleton()
-    spec = Spec("ostrich", bones, _parts(bones), paint=paint, voxel=.009,
+    spec = Spec("ostrich", bones, _parts(bones), paint=paint,
+                surface_height=surface_height, surface_strength=1.15, voxel=.009,
                 target_tris=14000, smooth_iters=4, rig=rig,
                 clips=partial(_clips, juvenile=True, scale=JUVENILE_SCALE) if juvenile else _clips,
                 key_all_locations=True,
                 meta={"common_name": "Common ostrich", "scientific_name": "Struthio camelus",
                       "shoulder_height_m": 2.4, "body_length_m": 2.1, "sex": "male", "roughness": .93,
+                      "surface_detail": "layered feather normal map",
                       # The game's clip for a still activity (AnimalRenderer).
                       "activity_clips": {"dust_bathe": "dust_bathe"}})
     if juvenile:

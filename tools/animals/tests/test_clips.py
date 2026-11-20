@@ -317,12 +317,45 @@ class AnatomyTests(unittest.TestCase):
             manifest = json.load(source)
         self.assertEqual(manifest["name"], "ostrich_juvenile")
         self.assertEqual(manifest["meta"], chick.meta)
-        self.assertLessEqual(manifest["triangles"], 15000)
+        self.assertLessEqual(manifest["triangles"], 20000)
         clips = {clip["name"]: clip for clip in manifest["clips"]}
         self.assertEqual(set(clips), {"idle", "walk", "trot", "eat", "drink", "rest",
                                       "sleep", "vocalize", "dust_bathe"})
         self.assertAlmostEqual(clips["walk"]["speed"], .75, delta=.02)
         self.assertAlmostEqual(clips["trot"]["speed"], 2.0, delta=.02)
+
+    def test_ostriches_have_layered_wing_and_tail_feathers(self):
+        for species in ("ostrich", "ostrich_juvenile"):
+            spec = importlib.import_module("species." + species).make_spec()
+            wings = [part for part in spec.parts if part.name.startswith("wing_feather.")]
+            tail = [part for part in spec.parts if part.name.startswith("tail_feather.")]
+            self.assertEqual(len(wings), 4)
+            self.assertEqual(len(tail), 5)
+            self.assertTrue(all(part.mirror and part.tag == "wing" for part in wings))
+            self.assertTrue(all(not part.fuse and part.tag == "plume" for part in tail))
+            self.assertIsNotNone(spec.surface_height)
+            self.assertEqual(spec.meta["surface_detail"], "layered feather normal map")
+
+    def test_ostrich_exports_carry_the_feather_normal_map_and_tangents(self):
+        root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+        for species, triangle_limit in (("ostrich", 22000), ("ostrich_juvenile", 20000)):
+            glb = os.path.join(root, "assets", "animals", species + ".glb")
+            with open(glb, "rb") as source:
+                self.assertEqual(source.read(4), b"glTF")
+                source.read(8)
+                length, _ = struct.unpack("<II", source.read(8))
+                document = json.loads(source.read(length))
+            self.assertLess(os.path.getsize(glb), 3_200_000)
+            self.assertEqual(len(document["images"]), 2)
+            self.assertIn("normalTexture", document["materials"][0])
+            for mesh in document["meshes"]:
+                for primitive in mesh["primitives"]:
+                    self.assertIn("TANGENT", primitive["attributes"])
+            with open(os.path.join(root, "assets", "animals", species + ".json")) as source:
+                manifest = json.load(source)
+            self.assertLessEqual(manifest["triangles"], triangle_limit)
+            self.assertEqual(manifest["meta"]["surface_detail"],
+                             "layered feather normal map")
 
     def test_meerkat_pup_has_juvenile_proportions_and_variant_metadata(self):
         adult = importlib.import_module("species.meerkat").make_spec()
@@ -542,7 +575,7 @@ class BipedTests(unittest.TestCase):
     def test_manifest_budgets_and_ground_speeds(self):
         root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
         budgets = {"penguin": (6000, 12000), "ostrich": (12000, 24000),
-                   "ostrich_juvenile": (9000, 16000),
+                   "ostrich_juvenile": (9000, 20000),
                    "flamingo": (8000, 16000), "flamingo_juvenile": (8000, 16000),
                    "kangaroo": (12000, 24000),
                    "kangaroo_juvenile": (10000, 20000)}
@@ -748,7 +781,9 @@ class BipedTests(unittest.TestCase):
                 binary = source.read(length)
             # Sculpt cats have separate source maps; their material contract is checked below.
             if species not in CATS:
-                self.assertEqual(len(document["images"]), 1, species)
+                spec = importlib.import_module("species." + species).make_spec()
+                self.assertEqual(len(document["images"]),
+                                 2 if spec.surface_height is not None else 1, species)
                 texture = document["images"][0]
                 self.assertEqual(texture["mimeType"], "image/png", species)
                 texture_view = document["bufferViews"][texture["bufferView"]]

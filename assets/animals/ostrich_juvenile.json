@@ -106,6 +106,7 @@
     "scientific_name": "Struthio camelus",
     "sex": "juvenile",
     "shoulder_height_m": 1.13,
+    "surface_detail": "layered feather normal map",
     "variant": "juvenile",
     "variant_of": "ostrich"
   },
@@ -123,6 +124,6 @@
     ]
   },
   "texture": 1024,
-  "triangles": 14560,
-  "vertices": 7290
+  "triangles": 17992,
+  "vertices": 9032
 }
