@@ -205,7 +205,7 @@ HabitatStyle Style(std::string_view species) {
                 "sandstone_rock",
                 {"termite_mound", "log_pile", "fallen_log"},
                 {"acacia", "acacia", "acacia", "acacia", "savanna_shrub", "savanna_shrub", "savanna_shrub",
-                 "baobab"}};
+                 "tall_grass", "baobab"}};
     }
     if (species == "ostrich") {
         return {Terrain::Savanna,
@@ -216,7 +216,7 @@ HabitatStyle Style(std::string_view species) {
                 "savanna_shrub",
                 "sandstone_rock",
                 {"termite_mound", "log_pile", "fallen_log"},
-                {"acacia", "acacia", "savanna_shrub", "savanna_shrub", "savanna_shrub"}};
+                {"acacia", "acacia", "savanna_shrub", "savanna_shrub", "savanna_shrub", "tall_grass"}};
     }
     if (species == "lion") {
         return {Terrain::Savanna,
@@ -227,7 +227,7 @@ HabitatStyle Style(std::string_view species) {
                 "savanna_shrub",
                 "sandstone_rock",
                 {"scratching_post", "log_pile", "climbing_frame", "ball", "fallen_log"},
-                {"acacia", "acacia", "savanna_shrub", "savanna_shrub", "savanna_shrub"}};
+                {"acacia", "acacia", "savanna_shrub", "savanna_shrub", "savanna_shrub", "tall_grass"}};
     }
     if (species == "tiger") {
         return {Terrain::ForestFloor,
@@ -295,7 +295,7 @@ HabitatStyle Style(std::string_view species) {
                 "sandstone_rock",
                 {"log_pile", "tyre_swing", "ball", "scratching_post"},
                 {"acacia", "acacia", "acacia", "acacia", "savanna_shrub", "savanna_shrub", "savanna_shrub",
-                 "baobab"}};
+                 "tall_grass", "baobab"}};
     }
     if (species == "rhino") {
         return {Terrain::Grass,
@@ -306,7 +306,7 @@ HabitatStyle Style(std::string_view species) {
                 "savanna_shrub",
                 "sandstone_rock",
                 {"log_pile", "scratching_post"},
-                {"acacia", "acacia", "savanna_shrub", "savanna_shrub", "savanna_shrub"}};
+                {"acacia", "acacia", "savanna_shrub", "savanna_shrub", "savanna_shrub", "tall_grass"}};
     }
     if (species == "camel") {
         return {Terrain::Sand,
@@ -328,7 +328,7 @@ HabitatStyle Style(std::string_view species) {
             "sandstone_rock",
             {"log_pile", "fallen_log", "termite_mound"},
             // Wattles are acacias: the nearest the catalog has to an Australian wood.
-            {"acacia", "acacia", "savanna_shrub", "savanna_shrub", "savanna_shrub"}};
+            {"acacia", "acacia", "savanna_shrub", "savanna_shrub", "savanna_shrub", "tall_grass"}};
 }
 
 /// One resident: its sex, its age in years on the opening day, and for a young animal the place in
@@ -577,7 +577,6 @@ bool BedReaches(const World& map, TileCoord tile) {
 }
 
 /// Whether a land plant of `radius` stands entirely above the bank the pool did not dig into.
-/// The catalog has no water plant, so this rule applies to every tree and bush.
 bool AboveTheBank(const World& map, Vec2 point, float radius) {
     const TileCoord low = World::TileAt({point.x - radius, point.z - radius});
     const TileCoord high = World::TileAt({point.x + radius, point.z + radius});
@@ -603,6 +602,10 @@ bool Plant(PropRole role) {
     return role == PropRole::Tree || role == PropRole::Bush;
 }
 
+bool MarginalPlant(const PropDef& kind) {
+    return kind.look == "reeds";
+}
+
 /// Whether a prop may stand at `point`: on dry ground, off the kept tiles, `clear` metres of open
 /// ground between it and whatever stands there already. Between two plants `spacing` counts instead,
 /// from trunk to trunk (a bush asks for six tenths of it).
@@ -613,7 +616,7 @@ bool Fits(const Zoo& zoo, const Builder& builder, const Site& site, int def, Vec
     const float radius = kind.radiusM * scale;
     const TileCoord tile = World::TileAt(point);
     if (site.kept.contains({tile.z, tile.x}) || !OnDryGround(zoo, site.id, point, radius + 0.1f) ||
-        (Plant(kind.role) && !AboveTheBank(zoo.Map(), point, radius + 0.1f)) ||
+        (Plant(kind.role) && !MarginalPlant(kind) && !AboveTheBank(zoo.Map(), point, radius + 0.1f)) ||
         builder.CheckProp(def, point) != BuildError::None) {
         return false;
     }
@@ -870,6 +873,60 @@ void HabitatPlants(Zoo& zoo, Script& script, const Site& site, const HabitatStyl
     if (density() < target - kCoverBand) {
         script.Problem(std::string(plan.name) + ": planting target not met (" + std::to_string(density()) +
                        " of " + std::to_string(wanted) + ")");
+    }
+}
+
+// Small reed stands root in the lagoon's sloping, still-dry margin. Their whole catalog circle
+// remains outside the water; unlike trees and ordinary bushes they may use ground whose shared
+// corner the pool lowered. Hashes spread them around the shore without consuming the sequence used
+// to stock the flock.
+void LagoonReeds(Zoo& zoo, Script& script, const Site& site) {
+    if (site.plan->species != "flamingo") {
+        return;
+    }
+    const int def = zoo.Definitions().PropIndex("wetland_reeds");
+    if (def < 0) {
+        script.Problem("unknown prop wetland_reeds");
+        return;
+    }
+    const std::uint32_t salt = Salt(zoo, *site.plan) ^ 0x7b91e2d5U;
+    std::vector<TileCoord> bank;
+    for (const TileCoord tile : site.tiles) {
+        if (Interior(zoo, tile, site.id, 0) && !zoo.Map().HasWater(tile) && BedReaches(zoo.Map(), tile) &&
+            !site.kept.contains({tile.z, tile.x})) {
+            bank.push_back(tile);
+        }
+    }
+    std::stable_sort(bank.begin(), bank.end(), [salt](TileCoord a, TileCoord b) {
+        const auto rank = [salt](TileCoord tile) {
+            return HashU32(static_cast<std::uint32_t>(tile.x * 4099 + tile.z), salt);
+        };
+        return rank(a) < rank(b);
+    });
+    const Builder builder = zoo.FreeBuilder();
+    int placed = 0;
+    for (const TileCoord tile : bank) {
+        const std::uint32_t hash =
+            HashU32(static_cast<std::uint32_t>(tile.x * 4099 + tile.z), salt ^ 0x53a0c61bU);
+        const Vec2 offset{(HashFloat(hash, salt) - 0.5f) * 0.5f,
+                          (HashFloat(hash, salt ^ 0xd16ea37bU) - 0.5f) * 0.5f};
+        const Vec2 point = World::TileCenter(tile) + offset;
+        const float scale = 0.85f + 0.3f * HashFloat(hash, salt ^ 0x8f24b6cdU);
+        bool inView = false;
+        for (const Vec2 from : site.watched) {
+            inView = inView || DistanceToLine(point, from, site.middle) < site.sight;
+        }
+        if (inView || !Fits(zoo, builder, site, def, point, scale, 0.35f, 1.6f)) {
+            continue;
+        }
+        const float heading = HashFloat(hash, salt ^ 0x386d941fU) * kTwoPi;
+        if (script.Prop("wetland_reeds", point, heading, scale) && ++placed == 12) {
+            break;
+        }
+    }
+    if (placed < 8) {
+        script.Problem(std::string(site.plan->name) + ": too few reed stands (" + std::to_string(placed) +
+                       ")");
     }
 }
 
@@ -1223,6 +1280,7 @@ void Habitat(Zoo& zoo, Script& script, const HabitatPlan& plan, const VisitorZoo
     }
     Furnish(zoo, script, site, style, poolRadius);
     HabitatPlants(zoo, script, site, style, species.vegetationDensity);
+    LagoonReeds(zoo, script, site);
     Enrich(zoo, script, site, style);
     for (const std::string_view resident : Residents(plan)) {
         if (!Omitted(options, resident)) {

@@ -80,6 +80,12 @@ whatever you take up (`docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `docs/V
   top-down plan and a food-court view were inspected. The changed deterministic routine history
   improves animal stalls to 0.88%, under the unchanged 1.3% limit; seed 1 now has 2,579 props
   (`docs/VISITOR_ZOO.md`, 2026-11-19).
+- Reeds and tall grass now use their previously dormant procedural models and catalog entries.
+  Flamingo Lagoon has twelve non-blocking reed stands rooted in its dry lowered margin, outside
+  water and bench sight lines; non-blocking tall grass forms a lower layer in the open savanna and
+  grassland habitats. Both plan seeds, both fill-hash lengths, all 269 active CTest cases and a
+  real offscreen game load pass;
+  the inspected evidence is `docs/evidence/reeds-grass-j8-2026-11-20.jpg` (J8, 2026-11-20).
 - The stopped G7c audio audit is recovered and finished. Calls now follow `Vocalize`, social,
   play and documented feeding cues rather than a timer; takes do not repeat immediately, spatial
   pan is capped at 0.60, birds fade with daylight, crowd level follows its people, and footsteps
@@ -296,9 +302,10 @@ tests pass. Nobody listened to the audio; preserve that qualification.
 
 ### 4.8 Plan details left from G8 (`docs/VISITOR_ZOO.md` "The zoo's plan")
 
-No dry moat or ha-ha in the catalog; 48 paved tiles on 2 m walks (a zoo's side path is
-2.5 to 3 m); a slender tree may stand 1 m inside a barrier behind a strip (Elephant Valley);
-area per animal is an estimate, not EAZA/AZA figures.
+No dry moat or ha-ha in the catalog; three constrained paved tiles remain only 2 m wide; slender
+front trees remain where a full set-back would cross the vegetation welfare band (Rhino Hollow
+and Red Dune); the hedge fence is still unused by a habitat; area per animal is an estimate, not
+EAZA/AZA figures.
 
 `--stand habitat:<species>` now rejects keeper gates and buildings in the sight line. The
 meerkat view moved from `(177.0, 263.2)`, looking through mesh into the shelter wall, to

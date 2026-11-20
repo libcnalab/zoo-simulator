@@ -555,8 +555,9 @@ TEST_P(VisitorZooPlan, NothingStandsInWaterOrInAnotherThing) {
 }
 
 // A water tile's bed lowers the four corners which it shares with the eight surrounding tiles.
-// The game draws water over that sloping ground, and the catalog has no water plant: no tree or
-// bush may reach a tile whose ground the pool has dug into.
+// Ordinary land plants stay off that sloping ground. Reeds are the deliberate exception: they
+// root in the still-dry margin but their whole catalog circle must remain out of actual water (as
+// NothingStandsInWaterOrInAnotherThing verifies above).
 TEST_P(VisitorZooPlan, NoLandPlantInOrBesideWater) {
     const World& map = zoo_.Map();
     const auto dug = [&map](TileCoord tile) {
@@ -579,9 +580,11 @@ TEST_P(VisitorZooPlan, NoLandPlantInOrBesideWater) {
         const TileCoord low = World::TileAt({prop.position.x - radius, prop.position.z - radius});
         const TileCoord high = World::TileAt({prop.position.x + radius, prop.position.z + radius});
         for (const TileCoord tile : TilesInRect(low, high)) {
-            EXPECT_FALSE(Touches(prop.position, radius, tile) && dug(tile))
-                << kind.id << " at " << prop.position.x << ',' << prop.position.z << " reaches " << tile.x
-                << ',' << tile.z;
+            if (kind.look != "reeds") {
+                EXPECT_FALSE(Touches(prop.position, radius, tile) && dug(tile))
+                    << kind.id << " at " << prop.position.x << ',' << prop.position.z << " reaches " << tile.x
+                    << ',' << tile.z;
+            }
         }
         const TileCoord at = World::TileAt(prop.position);
         const bool bank =
@@ -589,6 +592,36 @@ TEST_P(VisitorZooPlan, NoLandPlantInOrBesideWater) {
         beside += bank ? 1 : 0;
     }
     EXPECT_GT(beside, 0) << "the plan should retain planting on dry banks near water";
+}
+
+TEST_P(VisitorZooPlan, LagoonHasReedsAndOpenHabitatsHaveTallGrass) {
+    int reeds = 0;
+    int grass = 0;
+    for (const Prop& prop : zoo_.Objects().Props()) {
+        const PropDef& kind = KindOf(zoo_, prop);
+        if (kind.id == "wetland_reeds") {
+            const Enclosure* home = zoo_.Habitats().Find(zoo_.Habitats().At(World::TileAt(prop.position)));
+            ASSERT_NE(home, nullptr);
+            EXPECT_EQ(home->name, "Flamingo Lagoon");
+            EXPECT_FALSE(zoo_.Map().HasWater(World::TileAt(prop.position)));
+            const TileCoord at = World::TileAt(prop.position);
+            bool waterBeside = false;
+            for (int dz = -1; dz <= 1; ++dz) {
+                for (int dx = -1; dx <= 1; ++dx) {
+                    waterBeside = waterBeside || zoo_.Map().HasWater({at.x + dx, at.z + dz});
+                }
+            }
+            EXPECT_TRUE(waterBeside);
+            ++reeds;
+        } else if (kind.id == "tall_grass") {
+            const Enclosure* home = zoo_.Habitats().Find(zoo_.Habitats().At(World::TileAt(prop.position)));
+            ASSERT_NE(home, nullptr);
+            EXPECT_NE(home->name, "Flamingo Lagoon");
+            ++grass;
+        }
+    }
+    EXPECT_GE(reeds, 8);
+    EXPECT_GT(grass, 0);
 }
 
 TEST_P(VisitorZooPlan, NoPlantOnAPathOrBeforeABench) {

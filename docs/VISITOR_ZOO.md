@@ -257,9 +257,12 @@ within 5 m of any viewing place. Every trunk also keeps the planted strip's dept
 a slender acacia a metre inside Elephant Valley's cable still put its crown in the view. Where
 that would cross the species' vegetation welfare band, the planting is restored with only massive
 trunks (a metre and more: baobab, bamboo clump) set back; this retains cover in Rhino Hollow and
-Red Dune. A land plant's whole circle also keeps off a water tile and the
+Red Dune. An ordinary land plant's whole circle also keeps off a water tile and the
 eight surrounding tiles whose shared corners the pool bed lowers; ferns no longer stand in the
-flamingo lagoon, while planting remains on its dry bank. Each habitat has a mix of kinds (Bear Falls: pine, spruce, oak,
+flamingo lagoon. Twelve non-blocking reed stands are the deliberate marginal exception: their
+whole circles remain on dry ground, but they root on the lowered bank around the lagoon, away
+from the three bench sight lines. Non-blocking tall-grass tufts now form an herb layer in the
+open savanna and grassland habitats. Each habitat has a mix of kinds (Bear Falls: pine, spruce, oak,
 birch, juniper instead of a block of pines two metres apart). The aim is the species'
 vegetation figure less 0.08 (0.12 above 0.4), which keeps views open; falling short is reported
 as a problem only below the welfare band (figure − 0.15, `Animals.cpp`). Lawn trees in the
@@ -281,6 +284,7 @@ barrier edges. The repaired service side is shown in
 `docs/evidence/red-dune-service-rail-2026-11-19.jpg`.
 
 **Other checks:** `NothingStandsInWaterOrInAnotherThing`, `NoLandPlantInOrBesideWater`,
+`LagoonHasReedsAndOpenHabitatsHaveTallGrass`,
 `NoPlantOnAPathOrBeforeABench`,
 `BenchesStandInShade`, `HoofstockStandsBehindCablesAndRails`, `FoodAndWaterStandInsideAndInView`,
 `MeerkatsHaveADishAndTheLagoonIsShallow`, `TreesStandApartInGroves`,
@@ -292,12 +296,12 @@ Golden hashes of `tests/core/VisitStartTests.cpp`, recorded again for the plan:
 
 | Fill ticks | Seed | At fill | Later |
 |---:|---:|---:|---:|
-| 600 | 1 | 5140635079675569092 | 6462817975072606623 |
-| 600 | 2 | 9583703148097783252 | 1719533382041994960 |
-| 600 | 3 | 8809160853858151918 | 1061726801659542092 |
-| 6000 | 1 | 8783487089822227632 | 14295707183868165875 |
-| 6000 | 2 | 12279120077690340155 | 4912492944997834037 |
-| 6000 | 3 | 12571352418107358502 | 8568775068721366616 |
+| 600 | 1 | 16908303875916853244 | 14731267202063341801 |
+| 600 | 2 | 14092795439250136264 | 4161065727649398171 |
+| 600 | 3 | 6888267011948307956 | 7769725591801234485 |
+| 6000 | 1 | 10119584832427267003 | 12255278480547151749 |
+| 6000 | 2 | 13326900462605982850 | 14793419543629801821 |
+| 6000 | 3 | 6809618643121934778 | 9701693660048525382 |
 
 ## The zoo as the game visits it
 

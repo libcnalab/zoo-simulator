@@ -29,11 +29,27 @@ crown, the wood, a strip under every frond.
 | juniper | three or four tall masses of needle sprays |
 | flower bed | a stone kerb, soil, a cushion of leaves, 30 clumps of flower heads (daisies and umbels, the colour from the material) leaning every way, in patches of one colour |
 | hedge (fence style) | a dark core box a hand inside the leaves, coated with leaf sprays lying against both faces and the top like tiles, the top ones standing a little proud |
-| reeds, grass | tufts of crossed cards over a low heart; **no catalog entry uses them yet** (see "Open") |
+| reeds, grass | tufts of crossed cards over a low heart; catalogued as walk-through `wetland_reeds` and `tall_grass` |
 
 Every individual differs: height, girth, lean, the number of limbs, whorls, fronds and canes,
 where each goes, are drawn from the prop's seed. Trunks and limbs are one smooth skin through
 several points (`MeshWriter::Pipe`) instead of tubes laid end to end.
+
+## Reeds and grass in the visitor zoo (J8, 2026-11-20)
+
+The two existing procedural looks now have catalog props. Both are non-blocking undergrowth:
+animals can walk through stems and blades instead of treating every tuft as a rock. The open
+savanna and grassland planting mixes use `tall_grass`; because it contributes only 2.5 m2 of
+cover per tuft, it makes a visible herb layer between the much larger acacias and shrubs rather
+than replacing their crowns.
+
+Flamingo Lagoon receives twelve deterministic `wetland_reeds` stands. They use dry tiles whose
+corners the adjacent pool bed lowers, which ordinary land plants still reject. Placement checks
+the whole scaled catalog circle against actual water, buildings, other props and the enclosure,
+keeps the shelter and keeper approaches clear, and excludes the three bench-to-lagoon sight
+lines. `VisitorZooPlanTests` verifies this for seeds 1 and 2. A real seed-1 visit builds 2,689
+props and submits 2,201,274 scenery triangles in 461 draw calls; the inspected lagoon and close
+savanna views are in `evidence/reeds-grass-j8-2026-11-20.jpg`.
 
 ## Distance form
 
@@ -125,13 +141,9 @@ second, runs of different rounds): 80 tiles offset by half a grove (the earlier 
 
 ## Open
 
-- Reeds and tall grass are modelled (`look` "reeds", "grass") but no catalog prop uses them and
-  the plan plants none; the water edges (task G1) would be where they go.
 - Cut-out edges far away are aliased (no alpha-to-coverage, no MSAA).
 - The far form forced close shows flat hearts; at the switching distance it does not.
 - Plants are fill-bound as much as triangle-bound: the far form cuts the triangles a frame by
   1.4 million but buys about 1 ms; overlapping alpha-tested cards remain the larger cost.
-- The plan stands some tropical ferns in the flamingo lagoon's water (for example at
-  207.7, 247.1 and 218.8, 270.9 m): placement is the plan's (`VisitorZoo.cpp`).
 - The hedge is in no habitat of the visitor zoo (fence kind "hedge" exists, the plan does not
   use it); it was looked at as a specimen placed by a probe build.
