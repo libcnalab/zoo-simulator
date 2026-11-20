@@ -177,19 +177,39 @@ def lateral_sleep(solver, data, phase):
         pose.r('thigh' + side, ry=-12)
         pose.r('shin' + side, ry=25)
         pose.r('ear' + side, rz=55 if side == '.L' else -55)
-    if data['kind'] == 'elephant':
-        trunk_curl(pose, [3, 5, 9, 13, 16, 18, 20, 22, 24, 26])
     pose.r('chest', ry=.15 * math.sin(4 * math.pi * phase))
     return grounded(solver, pose, data)
 
 
 def elephant_rest(solver, data, phase):
-    if data['variant'] == 'juvenile':
-        return lateral_sleep(solver, data, phase)
     pose = idle_pose(solver, data, phase)
     # A relaxed distal curl keeps the tip clear of the sand throughout the sway.
     trunk_curl(pose, [0, 0, 0, 0, 2, 6, 12, 20, 28, 32], .3 * math.sin(2 * math.pi * phase))
     position = solver.toe_base('HR') + [-.025 * data['height'], 0, .012 * data['height']]
+    pose.plant('HR', position, foot_pitch=3)
+    return pose
+
+
+def elephant_sleep(solver, data, phase):
+    """A weight-saving standing doze: low head, quiet ears and a supported trunk.
+
+    The source rig's nearly columnar legs cannot make a credible lateral recumbency without
+    turning all four soles at the viewer.  Elephants genuinely sleep both standing and lying;
+    this clip models the former and leaves the animal visibly distinct from alert idle/rest.
+    """
+    angle = math.tau * phase
+    breath = math.sin(2 * angle)
+    pose = quad.stand(solver, Pose()).move('hips', dz=(-.024 + .0015 * breath) * data['height'])
+    pose.r('chest', ry=-.35 * breath)
+    pose.r('neck1', ry=4)
+    pose.r('neck2', ry=5)
+    pose.r('head', ry=7 + .25 * breath)
+    # The distal turn lifts the nostrils clear while the middle of the trunk rests low.
+    trunk_curl(pose, [0, 0, 1, 3, 7, 13, 21, 29, 34, 36], .15 * math.sin(angle))
+    for side, sign in (('.L', 1), ('.R', -1)):
+        pose.r('ear' + side, rz=sign * 8, ry=4)
+        pose.r('ear_tip' + side, rz=sign * 5)
+    position = solver.toe_base('HR') + [-.02 * data['height'], 0, .01 * data['height']]
     pose.plant('HR', position, foot_pitch=3)
     return pose
 
@@ -257,7 +277,7 @@ def clips(solver, data):
         result += [Clip('eat', 6, partial(elephant_feed, solver, data, angles_down, angles_up, False)),
                    Clip('drink', 8, partial(elephant_feed, solver, data, angles_down, angles_up, True)),
                    Clip('rest', 12, partial(elephant_rest, solver, data)),
-                   Clip('sleep', 12, partial(lateral_sleep, solver, data))]
+                   Clip('sleep', 12, partial(elephant_sleep, solver, data))]
     else:
         params = quad.Params(gaits=[], head_down=quad.HeadDown(body_pitch=5, crouch=.06 * height,
                              chest=2, neck=(16, 20), head=5),

@@ -364,10 +364,24 @@ def equid_rest_pose(solver, params, scale, sleeping, effort, phase, base=None):
     pose.offset = dict(base.offset)
     pose.feet = dict(base.feet)
     pose = folded_forelegs(solver, pose, scale)
-    pose.move(solver.rig.body, dz=.001 * scale * math.sin(4 * math.pi * phase))
+    breath = math.sin(4 * math.pi * phase)
+    pose.move(solver.rig.body, dz=.001 * scale * breath)
     for bone in solver.rig.neck:
         pose.r(bone, ry=(-10 + 38 * effort if sleeping else -10))
     pose.r(solver.rig.head, ry=(-3 + 18 * effort if sleeping else -3))
+    if not sleeping:
+        # Sternal rest is alert but not rigid: the head slowly ranges across the herd while
+        # breathing travels through the chest.  Sleep retains its independently fitted chin.
+        look = math.sin(2 * math.pi * phase)
+        pose.r(solver.rig.chest, ry=-.7 * breath, rz=.5 * look)
+        pose.r(solver.rig.neck[0], ry=-2 * breath, rz=2.2 * look)
+        pose.r(solver.rig.neck[1], ry=1.2 * breath, rz=2.8 * look)
+        pose.r(solver.rig.head, ry=.8 * breath, rz=2.2 * look)
+        for side, sign in (('.L', 1), ('.R', -1)):
+            flick = quad.bump(phase, .22 if sign > 0 else .68, .045)
+            pose.r('ear' + side, rz=sign * 11 * flick, ry=-5 * flick)
+        for index, bone in enumerate(solver.rig.tail):
+            pose.r(bone, rz=(2 + 1.5 * index) * math.sin(2 * math.pi * phase - .5 * index))
     return pose
 
 

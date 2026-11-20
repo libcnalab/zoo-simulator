@@ -117,7 +117,7 @@ class PachydermTests(unittest.TestCase):
                     if clip.name not in ('rest', 'sleep', 'bathe'):
                         continue
                     world = solver.solve(pose)
-                    standing = clip.name == 'rest' and species in ('elephant', 'elephant_female')
+                    standing = species.startswith('elephant') and clip.name in ('rest', 'sleep')
                     if standing:
                         self.assertGreater(world['chest'][2, 3], .65 * spec.meta['shoulder_height_m'])
                     else:
@@ -126,6 +126,23 @@ class PachydermTests(unittest.TestCase):
                         core = [names.index(n) for n in ('hips', 'spine1', 'spine2', 'chest')]
                         body = spec.sculpt['weights'][:, core].sum(axis=1) > .5
                         self.assertLess(points[body, 2].min(), .04, f'{species}/{clip.name}: floating body')
+
+    def test_elephants_doze_with_a_lower_head_and_one_relaxed_hind_foot(self):
+        for species, solver, clips in self.cases:
+            if not species.startswith('elephant'):
+                continue
+            by = {clip.name: clip for clip in clips}
+            for phase in np.linspace(0, 1, 13):
+                idle = solver.solve(by['idle'].pose(float(phase)))
+                sleep = solver.solve(by['sleep'].pose(float(phase)))
+                height = self.specs[species].meta['shoulder_height_m']
+                self.assertLess(sleep['head'][2, 3], idle['head'][2, 3] - .015 * height)
+                for key, leg in solver.rig.legs.items():
+                    lift = sleep[leg.toes][2, 3] - solver.toe_base(key)[2]
+                    if key == 'HR':
+                        self.assertAlmostEqual(lift, .01 * height, places=6)
+                    else:
+                        self.assertAlmostEqual(lift, 0, places=6, msg=f'{species}/{key}/{phase}')
 
     def test_trunk_reaches_mouth_and_raises_above_head(self):
         for species, solver, clips in self.cases:

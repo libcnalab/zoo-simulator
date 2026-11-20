@@ -262,6 +262,17 @@ the ear still read as the Asian source's from close by (a fold at the back of th
 the viewer), the tusks are a clean white where real ones are stained, the calf keeps mesh
 folds.
 
+The rest/sleep pass J7 replaces the old rolled standing pose used for elephant sleep. That pose
+turned the columnar legs towards the camera, so a sleeping animal looked upside down with four
+round soles spread around its belly. The source rig cannot bend those legs into a sound lateral
+recumbency without deforming the skin. All three variants now use a supported standing doze,
+which is also a real elephant sleep posture: the head drops by more than 1.5 % of shoulder height,
+the ears become quiet, the trunk makes a low relaxed curl, three feet remain planted and one hind
+foot relaxes 1 % of shoulder height above the ground. The ordinary `rest` remains a more alert
+standing posture. The before/after, revised zebra rest and a real 18:00 habitat frame identifying
+Nora as asleep are in `evidence/resting-poses-j7-2026-11-20.jpg`. All 115 animal-pipeline tests
+and all 267 active CTest cases pass.
+
 **Giraffe** (Codex tasks S11 and S11b): the head and neck come from a photogrammetry scan of a
 taxidermy mount ("Giraffe (textured)" by aellis43, CC BY 4.0; `tools/animals/prepare_giraffe.py`,
 `sources/giraffe/`); body, legs, hooves, tail, mane and skeleton are modelled by us in
@@ -302,9 +313,9 @@ static sculpt or scan.
 | `zebra_female` | 28,494 | 33 | 1.30 m | mare: slimmer neck, her own stripe variation |
 | `zebra_juvenile` | 19,500 | 33 | 0.90 m | foal: long legs, short body, brown stripes |
 
-Eight clips each, ours: a four-beat lateral walk with the head nodding, a diagonal trot with
-suspension, lying on the chest with the legs folded under. 53 pipeline tests passed in the
-task's tree, 74 in the main tree with the other species of the day.
+Nine clips each, ours: a four-beat lateral walk with the head nodding, a diagonal trot with
+suspension, lying on the chest with the legs folded under and a dedicated sentry scan. 53 pipeline
+tests passed in the task's tree, 74 in the main tree with the other species of the day.
 
 Seen in the game's viewer and in the savannah habitat (`evidence/zebra-scan-2026-11-13.jpg`:
 before, stallion, mare, foal, the habitat before and after). Honest state: the largest step
@@ -315,6 +326,12 @@ close up; folded legs are chunky and stretch the stripes at shoulder and hip; th
 fluff, only colour; mare and stallion are visibly the same sculpt. The source's stripes were
 kept as they are (broad flank stripes, pale belly) without claiming a subspecies. No foal
 lives in the Visitor Zoo yet, so `zebra_juvenile` is only seen in the viewer.
+
+J7 keeps that grounded sternal silhouette but removes the statue-like hold from `rest`: breathing
+now travels through the chest, the head slowly scans more than 7 % of shoulder height to either
+side, the ears flick independently and the tail sways, while all four folded hooves remain fixed.
+The mare and foal were inspected as well as the stallion; the revised production exports match an
+independent fresh export byte for byte. The comparison is on the J7 evidence sheet linked above.
 
 ### Penguin and flamingo from a scan and a sculpt (2026-11-13)
 

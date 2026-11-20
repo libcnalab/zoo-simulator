@@ -257,6 +257,14 @@ tests pass. Nobody listened to the audio; preserve that qualification.
   all 267 active CTest cases pass. A real game run loaded the model and selected ten-month-old
   Aya. The inspected evidence is `docs/evidence/flamingo-juvenile-j6-2026-11-20.jpg`
   (J6, 2026-11-20).
+- Zebra rest is no longer held like a statue: all three variants breathe, scan, flick their ears
+  and sway their tails while the four folded hooves remain fixed. The elephant family's broken
+  rolled-side sleep (belly towards the visitor, four soles spread around it) is replaced by a
+  supported standing doze with lowered head, quiet ears, relaxed trunk and one unweighted hind
+  foot. Both are real rest strategies within the rigs' limits; the six production GLBs match an
+  independent fresh export, and all 115 animal-pipeline tests and all 267 active CTest cases pass.
+  The inspected before/after, variants and real 18:00 run selecting sleeping Nora are in
+  `docs/evidence/resting-poses-j7-2026-11-20.jpg` (J7, 2026-11-20).
 - Dedicated clips now cover meerkat sentry/dig, penguin and flamingo preening, flamingo filter
   feeding, camel and giraffe rumination, ostrich and elephant dust-bathing, and shallow wallowing
   for bears, tigers and rhinoceroses (elephants reuse their scoop/toss as a wet toss). Penguin

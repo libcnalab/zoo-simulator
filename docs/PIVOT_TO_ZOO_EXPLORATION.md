@@ -191,7 +191,8 @@ which says nothing); the sound by ear; a long play session by a person.
 - Ostrich, kangaroo and polar bear have no call recorded; they are silent.
 - Every young animal used in the Visitor Zoo now has a dedicated age variant
   (`docs/ANIMALS.md`).
-- The resting poses of the zebra and the elephant (forequarters down, head up) look stiff.
+- Zebra rest now breathes and looks around; elephants use a supported standing doze because the
+  source rig cannot make a sound lateral recumbency (`docs/ANIMALS.md`).
 - The ground texture is soft when one looks straight down; distant trees are simple.
 - No third-person view (the brief called it optional).
 - Keepers are not seen: the staff simulation exists as a contract only, care is automatic.

@@ -82,6 +82,17 @@ class ZebraTests(unittest.TestCase):
                             self.assertGreaterEqual(solver.point(world, bone, solver.tail[bone])[2], -.02)
                     self.assertLess(world['chest'][2, 3], .45 * spec.meta['shoulder_height_m'])
 
+    def test_sternal_rest_breathes_and_looks_around_without_sliding(self):
+        for name, spec, solver, clips in self.cases:
+            frames = [solver.solve(clips['rest'].pose(index / 32)) for index in range(32)]
+            head = np.array([solver.point(world, 'head', solver.tail['head']) for world in frames])
+            chest = np.array([world['chest'][:3, 3] for world in frames])
+            self.assertGreater(np.ptp(head[:, 1]), .07 * spec.meta['shoulder_height_m'], name)
+            self.assertGreater(np.ptp(chest[:, 2]), .0008 * spec.meta['shoulder_height_m'], name)
+            for key, leg in solver.rig.legs.items():
+                toes = np.array([world[leg.toes][:3, 3] for world in frames])
+                self.assertTrue(np.allclose(toes, toes[0], atol=1e-7), f'{name}/{key}')
+
     def test_walk_lateral_sequence_and_trot_diagonals(self):
         for name, _, solver, clips in self.cases:
             walk = clips['walk']
