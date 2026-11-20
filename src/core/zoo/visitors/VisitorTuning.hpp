@@ -81,10 +81,10 @@ inline constexpr float kDirectM = 0.4f;
 /// Nearer than this to the place it is bound for it minds nobody (the place is its own).
 inline constexpr float kSettleM = 1.0f;
 /// The people it walks around: those up to kAheadM in front of it and nearer to its line
-/// than kShoulderM (kOwnShoulderM for its own group, who walk closer).
+/// than kShoulderM (kOwnShoulderM for its own group).
 inline constexpr float kAheadM = 1.4f;
 inline constexpr float kShoulderM = 0.55f;
-inline constexpr float kOwnShoulderM = 0.4f;
+inline constexpr float kOwnShoulderM = 0.55f;
 /// Somebody going the same way is followed, and walked around only when nearer than this.
 inline constexpr float kFollowM = 0.5f;
 /// A group walks two abreast, kAbreastM apart, in rows kRowM behind one another.

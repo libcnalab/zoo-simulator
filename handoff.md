@@ -395,6 +395,15 @@ whatever you take up (`docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `docs/V
   staffed week. The combined J41/J42 suite passes all 292 active cases, including the 366.68-second
   animation pipeline, with 21 diagnostics disabled. Changed short and 6,000-tick hashes repeat
   twice for seeds 1–3 (J42, 2026-11-20).
+- J43 gives members of one walking group the same 0.55 m shoulder corridor as unrelated walkers;
+  it replaces the old every-tenth-tick allowance with an every-tick regression. Same-group pairs
+  below 0.3 m fall from 1,422 / 98,545 (1.44%) to 562 / 97,096 (0.58%). An attempted hard
+  collision constraint was rejected because crossing routes could deadlock for hundreds of
+  seconds. The retained tuning keeps the two-day visit healthy: everybody leaves, purchases are
+  195/198, nobody strays off a legal access and longest walking standstills are 2.5/1.9 seconds;
+  all 29 focused visitor/day/walk cases pass. Changed short and 6,000-tick hashes repeat twice for
+  seeds 1–3; the complete suite passes all 292 active cases including the 367.09-second animation
+  pipeline, with 21 diagnostics disabled (J43, 2026-11-20).
 - The stopped G7c audio audit is recovered and finished. Calls now follow `Vocalize`, social,
   play and documented feeding cues rather than a timer; takes do not repeat immediately, spatial
   pan is capped at 0.60, birds fade with daylight, crowd level follows its people, and footsteps

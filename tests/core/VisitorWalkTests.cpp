@@ -127,8 +127,12 @@ TEST(VisitorWalkTests, AWalkingGroupIsPeopleNotOneBody) {
     std::int64_t merged = 0;
     std::int64_t members = 0;
     std::int64_t strayed = 0;
-    for (int step = 0; step < 120; ++step) {
-        Advance(*zoo, 10);
+    float closest = std::numeric_limits<float>::infinity();
+    VisitorId closestA;
+    VisitorId closestB;
+    std::int64_t closestTick = 0;
+    for (int step = 0; step < 1200; ++step) {
+        zoo->Step();
         const std::vector<Visitor>& all = zoo->Guests().All();
         for (std::size_t i = 0; i < all.size(); ++i) {
             const Visitor& a = all[i];
@@ -140,7 +144,14 @@ TEST(VisitorWalkTests, AWalkingGroupIsPeopleNotOneBody) {
                     continue;
                 }
                 ++pairs;
-                if (Distance(a.position, all[k].position) < 0.3f) {
+                const float distance = Distance(a.position, all[k].position);
+                if (distance < closest) {
+                    closest = distance;
+                    closestA = a.id;
+                    closestB = all[k].id;
+                    closestTick = zoo->Time().tick;
+                }
+                if (distance < 0.3f) {
                     ++merged;
                 }
             }
@@ -158,10 +169,12 @@ TEST(VisitorWalkTests, AWalkingGroupIsPeopleNotOneBody) {
         }
     }
     ASSERT_GT(pairs, 2000);
-    // People of a group used to walk on one line to one point and so inside each other; in
-    // rows, two abreast, only those who squeeze past something come that close for a moment.
-    EXPECT_LT(static_cast<double>(merged), 0.03 * static_cast<double>(pairs))
-        << merged << " of " << pairs << " pairs of a walking group were inside each other";
+    // People of a group used to walk on one line to one point and so inside each other. Separate
+    // lanes and extra shoulder room keep the brief crossing-corner exceptions below one percent.
+    EXPECT_LT(static_cast<double>(merged), 0.01 * static_cast<double>(pairs))
+        << merged << " of " << pairs << " pairs of a walking group were inside each other; "
+        << closestA.value << " and " << closestB.value << " came within " << closest << " m at tick "
+        << closestTick;
     EXPECT_LT(static_cast<double>(strayed), 0.05 * static_cast<double>(members))
         << strayed << " of " << members << " walked more than four metres from their leader";
 }

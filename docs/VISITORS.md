@@ -120,8 +120,8 @@ a line:
 - **Giving way.** `Stepper::Dodge` looks `kAheadM` ahead along the tiles the next
   steps reach (per-tile chains of who stands where, rebuilt each tick in
   `BuildFrame`): somebody nearer to the walker's line than `kShoulderM`
-  (`kOwnShoulderM` for its own group) is walked around on the side with more
-  room; somebody going the same way is followed and only passed when nearer
+  (`kOwnShoulderM` is now the same 0.55 m for its own group) is walked around on
+  the side with more room; somebody going the same way is followed and only passed when nearer
   than `kFollowM`; for people coming the other way the walker also slows, never
   below 45 % of its pace. Within `kSettleM` of its own place it minds nobody.
 - **The player.** `Visitors::SetBystander(position)` names somebody who stands on
@@ -171,7 +171,7 @@ All in `VisitorTuning.hpp`; the more important ones:
 | `kElderlyShare`, `kElderlyPace` | 0.12, 0.8 | old people: share of the adults, share of the pace |
 | `kGainSpeed`, `kDropSpeed`, `kBrake` | 2.4, 4.0, 1.2 m/s2 | speeding up, slowing down, braking for one's place |
 | `kTurnWalking`, `kTurnOnTheSpot` | 3.4, +2.6 rad/s | turning at full stride, and more at a standstill |
-| `kAheadM`, `kShoulderM`, `kOwnShoulderM`, `kFollowM` | 1.4, 0.55, 0.4, 0.5 m | whom a walker goes round |
+| `kAheadM`, `kShoulderM`, `kOwnShoulderM`, `kFollowM` | 1.4, 0.55, 0.55, 0.5 m | whom a walker goes round |
 | `kAbreastM`, `kRowM`, `kChildAheadM` | 0.62, 0.85, 1.9 m | a group's formation |
 | `kRoomM`, `kLineKeptClear` | 0.5 m, 16 | room between people who stand; every occupiable queue place kept free |
 | `kAimSpread`, `kAimSeconds`, `kAimEase`, `kAimTurn` | 0.5 rad, 2.5 s, 4 /s, 0.5 rad/s | a watcher's look at an animal |
@@ -369,6 +369,16 @@ cases pass. The combined J41/J42 suite passes all 292 active cases, including th
 366.68-second animation pipeline; 21 diagnostics remain disabled. The changed
 short and 6,000-tick hashes repeat twice for seeds 1–3 (2026-11-20).
 
+J43 gives companions the same shoulder room as unrelated walkers instead of a
+narrower 0.4 m corridor. The group regression now samples every tick rather
+than every tenth: pairs below 0.3 m fall from 1,422 / 98,545 (1.44%) to
+562 / 97,096 (0.58%), while the two-day visit still gets everybody home, buys
+195/198 items, has no astray ticks and keeps its longest walking standstill at
+2.5/1.9 seconds. All 29 focused visitor/day/walk cases pass. The changed short
+and 6,000-tick hashes repeat twice for seeds 1–3; the complete suite passes all
+292 active cases including its 367.09-second animation pipeline, with 21
+diagnostics disabled (2026-11-20).
+
 ## Known limits
 
 - Peak presence is close to the day's arrivals: visits are long against the
@@ -376,5 +386,5 @@ short and 6,000-tick hashes repeat twice for seeds 1–3 (2026-11-20).
 - Walkers go round each other, staff and the player. Most people who stand do
   not step aside for anybody; a watcher is the exception and leaves a viewing
   place if somebody else settles within half a metre.
-- Two walkers of a group can still be inside each other for a moment where a
-  path narrows (about 1 % of the pairs in `VisitorWalkTests`).
+- Two walkers of a group can still cross inside 0.3 m for a moment at a corner
+  (0.58 % of the every-tick pairs in `VisitorWalkTests`, down from 1.44 %).
