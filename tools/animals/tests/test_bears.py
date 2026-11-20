@@ -46,7 +46,7 @@ class BearTests(unittest.TestCase):
                 path = ROOT / 'assets/animals' / (name + '.glb')
                 manifest = json.loads(path.with_suffix('.json').read_text())
                 doc, binary = glb(path)
-                expected = STANDARD | {'bathe'} | ({'swim'} if name.startswith('polar') else set())
+                expected = STANDARD | {'bathe', 'swim'}
                 self.assertEqual(set(clips), expected)
                 self.assertEqual({item['name'] for item in manifest['clips']}, expected)
                 self.assertEqual({item['name'] for item in doc['animations']}, expected)
@@ -71,12 +71,12 @@ class BearTests(unittest.TestCase):
                 if 'juvenile' in name:
                     self.assertEqual(manifest['meta']['variant'], 'juvenile')
                     self.assertEqual(manifest['meta']['variant_of'], name.removesuffix('_juvenile'))
-                if name.startswith('polar'):
-                    water = manifest['meta']['swim']
-                    self.assertEqual(water['clip'], 'swim')
-                    self.assertGreater(water['depth_m'], .8 * spec.meta['shoulder_height_m'])
-                    self.assertAlmostEqual(water['speed_mps'], clips['swim'].speed)
-                    self.assertEqual(clips['swim'].contact_keys, [])
+                water = manifest['meta']['swim']
+                self.assertEqual(water['clip'], 'swim')
+                depth_share = .91 if name.startswith('polar') else .72
+                self.assertAlmostEqual(water['depth_m'], depth_share * spec.meta['shoulder_height_m'])
+                self.assertAlmostEqual(water['speed_mps'], clips['swim'].speed)
+                self.assertEqual(clips['swim'].contact_keys, [])
 
     def test_rest_and_sleep_bones_clear_ground(self):
         for name, (spec, solver, clips) in self.cases.items():

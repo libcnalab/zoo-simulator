@@ -41,9 +41,10 @@ External lower-lip skin is included in jaw closure; a small added jaw-weighted
 lower-lip volume seals the residual gap of the open-mouth sculpt.
 Added opaque tapered fur clumps break the ruff/belly/leg outline. The source normal
 map is retained at reduced strength. The eight land clips are newly authored;
-polar variants additionally have a paddling swim clip. Rest is sternal recumbency;
+all four variants have a paddling swim clip. Rest is sternal recumbency;
 sleep rolls the folded body onto its side and settles the skin above the ground. Water placement uses
-`water surface - meta.swim.depth_m`; speed is `meta.swim.speed_mps`.
+`water surface - meta.swim.depth_m`; the pronounced brown shoulder hump rides at 0.72 of withers
+depth while the polar body retains 0.91. Speed is `meta.swim.speed_mps`.
 
 Reproduction (one Blender process at a time):
 

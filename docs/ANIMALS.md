@@ -333,8 +333,8 @@ neck, a narrower head and a white coat are ours.
 
 | Model | Triangles | Withers | What it is |
 |---|---:|---:|---|
-| `brown_bear` | 30,000 | 1.20 m | adult |
-| `brown_bear_juvenile` | 19,500 | | cub: larger head, collar marking |
+| `brown_bear` | 30,000 | 1.20 m | adult, `swim` (0.86 m under the surface) |
+| `brown_bear_juvenile` | 19,500 | | cub: larger head, collar marking, `swim` |
 | `polar_bear` | 30,000 | 1.49 m | adult, `swim` (1.37 m under the surface) |
 | `polar_bear_juvenile` | 19,500 | | cub, `swim` |
 
@@ -351,6 +351,14 @@ still opens the jaw. J47 gives each Visitor Zoo bear mother a female and male cu
 brown cubs and 0.6-year polar cubs select these dedicated juvenile bodies in the running habitats
 rather than uniformly scaled adults. The two live labels and both inspected bodies are in
 `evidence/bear-families-j47-2026-11-20.jpg`.
+
+J60 gives the brown adult and cub the same authored 1.5 s alternating-paw swim cycle as the
+polar variants instead of playing their land walk below the pool. Their speeds scale with the
+body (0.78 and 0.29 m/s) and the clips declare no foot contacts. A first water preview reused
+the polar depth of 0.91 withers and split the visible brown silhouette into head and rump; it
+was rejected. The brown-specific 0.72 placement keeps its shoulder hump and back continuous at
+the surface. Both fresh exports add 35,348 bytes and are deterministic; the waterline and all
+six phases are in `evidence/brown-bear-swim-j60-2026-11-20.jpg`.
 
 Honest state: **these are improved but still not realistic bears**. They replace the old lofted
 blobs with a real sculpt's head, paws and surface, but the source was an upright roaring brown
@@ -625,7 +633,7 @@ byte.
   clip `swim`. A model may also have `float` for lying still on the water, with its own depth
   (`meta.swim.depth_m` and `meta.float.depth_m`; the penguins have both): under way the animal
   swims, at rest it floats, and the body moves between the two depths smoothly. Rhinoceros,
-  elephant, polar bear and penguin have `swim`; the other species still paddle with their walk
+  elephant, both bears and penguin have `swim`; the other species still paddle with their walk
   clip. Seen at Penguin Cove:
   `evidence/penguin-floating-2026-11-13.jpg` (a resting penguin on the pool: the head above
   the water, the body under it; a real one floats a little higher).

@@ -111,6 +111,14 @@
       "loop": true,
       "name": "bathe",
       "speed": 0.0
+    },
+    {
+      "duration": 1.5,
+      "events": [],
+      "frames": 46,
+      "loop": true,
+      "name": "swim",
+      "speed": 0.78
     }
   ],
   "generator": "tools/animals (zoogen)",
@@ -163,7 +171,13 @@
     "source_author": "Pedro B. Goulart (Pebegou)",
     "source_pose": "Upright roaring brown-bear-like sculpt; species identification is visual",
     "source_title": "Strong Bear",
-    "source_url": "https://sketchfab.com/3d-models/1d1bb459a39a428282ce4cb46bdc3ed5"
+    "source_url": "https://sketchfab.com/3d-models/1d1bb459a39a428282ce4cb46bdc3ed5",
+    "swim": {
+      "clip": "swim",
+      "depth_m": 0.864,
+      "speed_mps": 0.78
+    },
+    "water_origin_convention": "Place the asset origin at water surface - depth_m"
   },
   "name": "brown_bear",
   "skeleton_bounds_animal_space": {

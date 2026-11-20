@@ -588,6 +588,19 @@ whatever you take up (`docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `docs/V
   392.12 seconds, including the 392.11-second animation pipeline, with 21 diagnostics disabled
   (leak detection off for the documented `ptrace` limitation; J59, 2026-11-20). The effect is
   surface displacement, not a claim of discrete particle splashes.
+- J60 gives both brown-bear bodies the 1.5-second alternating-paw swim already authored for the
+  shared polar-bear rig. The adult moves at 0.78 m/s and the cub at 0.29 m/s; neither clip has
+  ground-contact events, so deep water no longer plays their land walk. A first preview copied
+  the polar placement at 0.91 withers and visibly split the brown silhouette into head and rump;
+  it was rejected. The brown-specific 0.72 placement leaves the shoulder hump and back as one
+  continuous surface silhouette (`docs/evidence/brown-bear-swim-j60-2026-11-20.jpg`). Both GLBs
+  retain their mesh, coat and 33-bone skeleton and grow by exactly 35,348 bytes. Independent
+  one-thread exports of both GLBs and manifests are byte-identical. All nine bear tests and all
+  131 animation-pipeline cases pass (10.58 and 353.28 seconds). Release viewers inspected adult
+  and cub at two phases; ASan viewers load
+  and play both 330-track clips, and a real ASan Bear Falls visit loads all 90 animals, runs
+  3,000 fill steps and draws three frames cleanly (leak detection off for the documented
+  `ptrace` limitation; J60, 2026-11-20). Polar assets and simulation history are unchanged.
 - The stopped G7c audio audit is recovered and finished. Calls now follow `Vocalize`, social,
   play and documented feeding cues rather than a timer; takes do not repeat immediately, spatial
   pan is capped at 0.60, birds fade with daylight, crowd level follows its people, and footsteps

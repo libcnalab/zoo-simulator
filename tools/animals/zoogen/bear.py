@@ -346,13 +346,15 @@ def make_bear(name, polar, juvenile, height, edits):
     if juvenile:
         parent = 'polar_bear' if polar else 'brown_bear'
         meta.update(variant_of=parent, variant='juvenile', relative_height=height / (1.5 if polar else 1.2))
-    if polar:
-        meta.update(swim=dict(clip='swim', depth_m=.91 * height, speed_mps=.65 * height),
-                    water_origin_convention='Place the asset origin at water surface - depth_m')
+    # Brown bears carry a pronounced shoulder hump above the water. The deeper
+    # polar placement would split their visible silhouette into a head and rump.
+    swim_depth = (.91 if polar else .72) * height
+    meta.update(swim=dict(clip='swim', depth_m=swim_depth, speed_mps=.65 * height),
+                water_origin_convention='Place the asset origin at water surface - depth_m')
     return Spec(name, data['bones'], fur_parts(data, juvenile),
                 paint=partial(paint, data=data, polar=polar, juvenile=juvenile),
                 texture_size=2048, target_tris=19500 if juvenile else 30000, meta=meta,
-                rig=rig, clips=partial(bear_clips, height=height, polar=polar, juvenile=juvenile),
+                rig=rig, clips=partial(bear_clips, height=height, juvenile=juvenile),
                 key_all_locations=True, sculpt=data)
 
 
@@ -443,7 +445,7 @@ def bathe_pose(solver, rest, height, phase):
     return pose
 
 
-def bear_clips(solver, height, polar, juvenile):
+def bear_clips(solver, height, juvenile):
     from .scan import skin_floor
     solver.rig.extra['height'] = height
     walk_speed = .42 if juvenile else 1.0
@@ -494,10 +496,9 @@ def bear_clips(solver, height, polar, juvenile):
               Clip('sleep', 8, partial(side_sleep_pose, side_sleep_base(solver, params, height, sleeping, lying_base), height)),
               quad.vocalize_clip(solver, params),
               Clip('bathe', 9, partial(bathe_pose, solver, rest, height))]
-    if polar:
-        swim = Clip('swim', 1.5, partial(swim_pose, solver, height), speed=.65 * height)
-        swim.contact_keys = []
-        result.append(swim)
+    swim = Clip('swim', 1.5, partial(swim_pose, solver, height), speed=.65 * height)
+    swim.contact_keys = []
+    result.append(swim)
     return result
 
 
@@ -582,26 +583,26 @@ def model_previews(scene, arm, spec, clips, args):
             still(scene, cam, str(prefix) + '_sleep.png', (8, center[1], 1.6),
                   center - [0, 0, .20 * height], lens=55, resolution=(1400, 900))
             anim.clear_pose(arm)
+            ground_shader = floor.data.materials[0].node_tree.nodes.get('Principled BSDF')
             if polar:
-                ground_shader = floor.data.materials[0].node_tree.nodes.get('Principled BSDF')
                 ground_shader.inputs['Base Color'].default_value = (.65, .76, .81, 1)
                 still(scene, cam, str(prefix) + '_ice.png', (5.2, center[1] - 6.079, 1.6), center,
                       lens=55, resolution=(1600, 1000))
-                set_preview_clip(scene, arm, spec, clips, 'swim')
-                depth = spec.meta['swim']['depth_m']
-                bpy.ops.mesh.primitive_plane_add(size=100, location=(0, 0, depth))
-                water = bpy.context.object
-                mat = bpy.data.materials.new('bear_preview_water')
-                mat.use_nodes = True
-                shader = mat.node_tree.nodes.get('Principled BSDF')
-                shader.inputs['Base Color'].default_value = (.025, .16, .20, 1)
-                shader.inputs['Roughness'].default_value = .22
-                water.data.materials.append(mat)
-                still(scene, cam, str(prefix) + '_swim.png', (5.2, center[1] - 6.079, depth + 1.6),
-                      (center[0], center[1], depth), lens=55, resolution=(1600, 1000))
-                bpy.data.objects.remove(water, do_unlink=True)
-                ground_shader.inputs['Base Color'].default_value = (.578, .485, .305, 1)
-                anim.clear_pose(arm)
+            set_preview_clip(scene, arm, spec, clips, 'swim')
+            depth = spec.meta['swim']['depth_m']
+            bpy.ops.mesh.primitive_plane_add(size=100, location=(0, 0, depth))
+            water = bpy.context.object
+            mat = bpy.data.materials.new('bear_preview_water')
+            mat.use_nodes = True
+            shader = mat.node_tree.nodes.get('Principled BSDF')
+            shader.inputs['Base Color'].default_value = (.025, .16, .20, 1)
+            shader.inputs['Roughness'].default_value = .22
+            water.data.materials.append(mat)
+            still(scene, cam, str(prefix) + '_swim.png', (5.2, center[1] - 6.079, depth + 1.6),
+                  (center[0], center[1], depth), lens=55, resolution=(1600, 1000))
+            bpy.data.objects.remove(water, do_unlink=True)
+            ground_shader.inputs['Base Color'].default_value = (.578, .485, .305, 1)
+            anim.clear_pose(arm)
     wanted = args.clips.split(',') if args.clips else [clip['name'] for clip in clips]
     scene.cycles.samples = 8
     cam.data.lens = 70
