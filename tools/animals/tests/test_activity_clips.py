@@ -40,6 +40,7 @@ EXPECTED = {
     "penguin_juvenile": {"preen": "preen", "huddle": "huddle"},
     "flamingo": {"huddle": "huddle", "preen": "preen", "filter_feed": "filter_feed"},
     "ostrich": {"dust_bathe": "dust_bathe"},
+    "ostrich_juvenile": {"dust_bathe": "dust_bathe"},
     "elephant": {"dust_bathe": "dust_bathe", "bathe": "dust_bathe"},
     "elephant_female": {"dust_bathe": "dust_bathe", "bathe": "dust_bathe"},
     "elephant_juvenile": {"dust_bathe": "dust_bathe", "bathe": "dust_bathe"},
@@ -279,19 +280,20 @@ class BrowsingTests(unittest.TestCase):
 
 class DustBatheTests(unittest.TestCase):
     def test_ostrich_sits_and_sweeps_the_ground_on_both_sides(self):
-        spec, solver, clips = clips_of("ostrich")
-        rest = solver.solve(clips["rest"].pose(0))
-        sides = []
-        for index in range(60):
-            pose = clips["dust_bathe"].pose(index / 60)
-            world = solver.solve(pose)
-            self.assertAlmostEqual(world["hips"][2, 3], rest["hips"][2, 3], places=6)
-            tip = quadruped.muzzle(solver, pose)
-            self.assertGreater(tip[2], .03)
-            if tip[2] < .2:
-                sides.append(np.sign(tip[1]))
-        self.assertIn(1, sides)
-        self.assertIn(-1, sides)
+        for species in ("ostrich", "ostrich_juvenile"):
+            spec, solver, clips = clips_of(species)
+            rest = solver.solve(clips["rest"].pose(0))
+            sides = []
+            for index in range(60):
+                pose = clips["dust_bathe"].pose(index / 60)
+                world = solver.solve(pose)
+                self.assertAlmostEqual(world["hips"][2, 3], rest["hips"][2, 3], places=6)
+                tip = quadruped.muzzle(solver, pose)
+                self.assertGreater(tip[2], .03)
+                if tip[2] < .2:
+                    sides.append(np.sign(tip[1]))
+            self.assertIn(1, sides, species)
+            self.assertIn(-1, sides, species)
 
     def test_elephants_gather_and_throw_over_the_head(self):
         for species in ("elephant", "elephant_female", "elephant_juvenile"):

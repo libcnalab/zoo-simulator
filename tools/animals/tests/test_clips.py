@@ -26,7 +26,7 @@ SPECIES = ["lion", "lion_female", "lion_juvenile", "tiger", "wolf", "wolf_juveni
            "brown_bear_juvenile", "polar_bear_juvenile",
            "zebra", "zebra_female", "zebra_juvenile", "rhino", "camel", "elephant", "giraffe",
            "giraffe_female", "giraffe_juvenile", "meerkat",
-           "penguin", "penguin_juvenile", "ostrich", "flamingo", "kangaroo"]
+           "penguin", "penguin_juvenile", "ostrich", "ostrich_juvenile", "flamingo", "kangaroo"]
 
 
 def make_solver(species):
@@ -211,6 +211,37 @@ class ClipTests(unittest.TestCase):
 
 
 class AnatomyTests(unittest.TestCase):
+    def test_ostrich_chick_has_juvenile_proportions_plumage_and_metadata(self):
+        adult = importlib.import_module("species.ostrich").make_spec()
+        chick = importlib.import_module("species.ostrich_juvenile").make_spec()
+        adult_parts = {part.name: part for part in adult.parts}
+        chick_parts = {part.name: part for part in chick.parts}
+        adult_height = adult.meta["shoulder_height_m"]
+        chick_height = chick.meta["shoulder_height_m"]
+        self.assertGreater(chick_parts["skull"].rings[1].ry / chick_height,
+                           1.35 * adult_parts["skull"].rings[1].ry / adult_height)
+        self.assertGreater(chick_parts["eye.L"].rings[0].ry / chick_height,
+                           1.5 * adult_parts["eye.L"].rings[0].ry / adult_height)
+        adult_neck = np.linalg.norm(np.asarray(adult.bones[6].tail) - np.asarray(adult.bones[3].head))
+        chick_neck = np.linalg.norm(chick.bones[6].tail - chick.bones[3].head)
+        self.assertLess(chick_neck / chick_height, .9 * adult_neck / adult_height)
+        self.assertLess(chick_parts["tail_plume"].rings[1].ry / chick_height,
+                        .7 * adult_parts["tail_plume"].rings[1].ry / adult_height)
+        self.assertEqual(chick.meta["variant_of"], "ostrich")
+        self.assertEqual(chick.meta["variant"], "juvenile")
+        self.assertAlmostEqual(chick.meta["relative_height"], chick_height / adult_height)
+        root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+        with open(os.path.join(root, "assets", "animals", "ostrich_juvenile.json")) as source:
+            manifest = json.load(source)
+        self.assertEqual(manifest["name"], "ostrich_juvenile")
+        self.assertEqual(manifest["meta"], chick.meta)
+        self.assertLessEqual(manifest["triangles"], 15000)
+        clips = {clip["name"]: clip for clip in manifest["clips"]}
+        self.assertEqual(set(clips), {"idle", "walk", "trot", "eat", "drink", "rest",
+                                      "sleep", "vocalize", "dust_bathe"})
+        self.assertAlmostEqual(clips["walk"]["speed"], .75, delta=.02)
+        self.assertAlmostEqual(clips["trot"]["speed"], 2.0, delta=.02)
+
     def test_meerkat_pup_has_juvenile_proportions_and_variant_metadata(self):
         adult = importlib.import_module("species.meerkat").make_spec()
         pup = importlib.import_module("species.meerkat_juvenile").make_spec()
@@ -330,7 +361,8 @@ class AnatomyTests(unittest.TestCase):
                 self.assertLess(abs(float(shoulder[0] - pelvis[0])), .04 * scale)
 
 
-BIPEDS = [species for species in SPECIES if species in ("penguin", "ostrich", "flamingo", "kangaroo")]
+BIPEDS = [species for species in SPECIES
+          if species in ("penguin", "ostrich", "ostrich_juvenile", "flamingo", "kangaroo")]
 
 
 class BipedTests(unittest.TestCase):
@@ -338,21 +370,28 @@ class BipedTests(unittest.TestCase):
         root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
         for species in BIPEDS:
             spec, _ = make_solver(species)
-            with open(os.path.join(root, "data", "species", species + ".json")) as source:
+            data_species = "ostrich" if species == "ostrich_juvenile" else species
+            with open(os.path.join(root, "data", "species", data_species + ".json")) as source:
                 data = json.load(source)
-            self.assertEqual(spec.meta["shoulder_height_m"], data["shoulderHeightM"])
+            if species == "ostrich_juvenile":
+                self.assertEqual(spec.meta["variant_of"], data_species)
+            else:
+                self.assertEqual(spec.meta["shoulder_height_m"], data["shoulderHeightM"])
             vertices = (spec.sculpt['vertices'] if spec.sculpt is not None else
                         np.concatenate([geom.loft(part)[0] for part in geom.expand_parts(spec.parts)]))
-            self.assertAlmostEqual(float(vertices[:, 2].max()), data["shoulderHeightM"],
-                                   delta=.03 * data["shoulderHeightM"], msg=species)
+            expected_height = spec.meta["shoulder_height_m"]
+            self.assertAlmostEqual(float(vertices[:, 2].max()), expected_height,
+                                   delta=.03 * expected_height, msg=species)
             self.assertLessEqual(len(geom.expand_bones(spec.bones)), 60)
 
     def test_manifest_budgets_and_ground_speeds(self):
         root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
         budgets = {"penguin": (6000, 12000), "ostrich": (12000, 24000),
+                   "ostrich_juvenile": (9000, 16000),
                    "flamingo": (8000, 16000), "kangaroo": (12000, 24000)}
         for species in BIPEDS:
-            with open(os.path.join(root, "data", "species", species + ".json")) as source:
+            data_species = "ostrich" if species == "ostrich_juvenile" else species
+            with open(os.path.join(root, "data", "species", data_species + ".json")) as source:
                 data = json.load(source)
             with open(os.path.join(root, "assets", "animals", species + ".json")) as source:
                 manifest = json.load(source)
@@ -362,13 +401,16 @@ class BipedTests(unittest.TestCase):
             clips = {clip["name"]: clip for clip in manifest["clips"]}
             # Activity clips beside the standard eight: tests/test_activity_clips.py.
             activity = {"penguin": {"preen", "huddle"}, "flamingo": {"preen", "filter_feed", "huddle"},
-                        "ostrich": {"dust_bathe"}}
+                        "ostrich": {"dust_bathe"}, "ostrich_juvenile": {"dust_bathe"}}
             self.assertEqual(set(clips),
                              {"idle", "walk", "trot", "eat", "drink", "rest", "sleep", "vocalize"}
                              | ({"swim", "float"} if species == "penguin" else set())
                              | activity.get(species, set()))
-            self.assertAlmostEqual(clips["walk"]["speed"], data["walkSpeed"],
-                                   delta=.1 * data["walkSpeed"])
+            if species == "ostrich_juvenile":
+                self.assertAlmostEqual(clips["walk"]["speed"], .75, delta=.02)
+            else:
+                self.assertAlmostEqual(clips["walk"]["speed"], data["walkSpeed"],
+                                       delta=.1 * data["walkSpeed"])
             self.assertGreaterEqual(clips["trot"]["speed"], 2 * clips["walk"]["speed"])
             self.assertLessEqual(clips["trot"]["speed"], data["runSpeed"])
 
@@ -415,7 +457,7 @@ class BipedTests(unittest.TestCase):
     def test_signature_biped_anatomy(self):
         for species in BIPEDS:
             spec, _ = make_solver(species)
-            if species in ("ostrich", "flamingo"):
+            if species in ("ostrich", "ostrich_juvenile", "flamingo"):
                 self.assertGreaterEqual(len(spec.rig.neck), 5 if species == "flamingo" else 4)
             if species == "penguin":
                 for side in ("L", "R"):

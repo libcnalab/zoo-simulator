@@ -17,6 +17,7 @@ from zoogen.rig import Clip, Rig
 
 NECK = [(.40, 0, 1.43), (.53, 0, 1.65), (.49, 0, 1.87),
         (.53, 0, 2.09), (.65, 0, 2.30)]
+JUVENILE_SCALE = .52
 
 
 def _skeleton():
@@ -74,7 +75,30 @@ def _parts(bones):
     return parts
 
 
-def paint(ctx):
+def paint(ctx, juvenile=False, scale=1.0):
+    if juvenile:
+        # Chicks are cryptic tan rather than miniature black-and-white adult males. Work in
+        # adult coordinates so the down's stripes keep their visual width after scaling.
+        P = ctx.P / scale
+        grain = nz.fbm(P * [1, 1, 3], 46, 3, seed=64)
+        tan = np.array([.48, .37, .23])
+        cream = np.array([.72, .61, .42])
+        brown = np.array([.27, .19, .12])
+        color = tan * (.86 + .24 * grain)[..., None]
+        feather = np.maximum(ctx.tag("body"), np.maximum(ctx.tag("wing"), ctx.tag("plume")))
+        irregular = nz.fbm(P, 7.0, 3, seed=65)
+        stripes = .5 + .5 * np.sin((P[..., 0] + .13 * P[..., 2]) * 31.0 + 2.2 * irregular)
+        stripes = nz.smoothstep(.80, .96, stripes) * feather
+        color = nz.mix(color, brown * (.9 + .2 * grain)[..., None], stripes * .52)
+        color = nz.mix(color, cream * (.92 + .12 * grain)[..., None],
+                       feather * nz.smoothstep(.15, -.75, ctx.N[..., 2]) * .45)
+        bare = np.array([.52, .43, .31]) * (.91 + .13 * grain)[..., None]
+        color = nz.mix(color, bare, np.maximum(ctx.tag("bare"), ctx.tag("digit")))
+        claw = ctx.tag("digit") * nz.smoothstep(.21, .25, P[..., 0])
+        color = nz.mix(color, np.array([.15, .11, .08]), claw)
+        color = nz.mix(color, np.array([.47, .39, .28]), ctx.tag("beak"))
+        color = nz.mix(color, np.array([.045, .025, .012]), ctx.tag("eye"))
+        return color
     black = np.array([.027, .025, .026])
     white = np.array([.84, .82, .73])
     grain = nz.fbm(ctx.P * [1, 1, 4], 40, 2, seed=61)
@@ -91,9 +115,10 @@ def paint(ctx):
     return color
 
 
-def _feeding(solver, effort):
+def _feeding(solver, effort, scale=1.0):
     pose = biped.standing(solver)
-    pose.move("hips", dz=-.32 * effort)
+    drop = .44 if scale < 1.0 else .32
+    pose.move("hips", dz=-drop * scale * effort)
     pose.r("hips", ry=25 * effort)
     angles = [60 - 122 * effort, 100 - 168 * effort, 80 - 158 * effort, 60 - 130 * effort]
     biped.sagittal_profile(solver, pose, solver.rig.neck, angles)
@@ -101,12 +126,12 @@ def _feeding(solver, effort):
     return pose
 
 
-def _sitting(solver, asleep):
+def _sitting(solver, asleep, scale=1.0):
     pose = biped.standing(solver)
-    pose.move("hips", dz=-.72)
+    pose.move("hips", dz=-.72 * scale)
     for key in solver.rig.legs:
         target = solver.toe_base(key)
-        target[0] = .18
+        target[0] = .18 * scale
         pose.plant(key, target, pole=(-1, .60 if key == "L" else -.60, 0))
     if asleep:
         biped.sagittal_profile(solver, pose, solver.rig.neck, [130, 160, 190, 205])
@@ -128,14 +153,20 @@ DUST_BATHE = [
 NECK_LAID = [-35, -60, -35, -10]
 
 
-def _dust_bathe(solver, sitting, phase):
+def _dust_bathe(solver, sitting, phase, juvenile=False):
     """`dust_bathe`: sitting in a dry hollow, the bird rocks from side to side, lays its neck
     along the ground and sweeps it to throw sand over its flank, and shakes its loosened wings."""
     angle = math.tau * phase
     yaw, low, roll, lift, shake = activity.held(phase, DUST_BATHE)
     pose = biped.copy_pose(sitting)
     pose.r("hips", rx=-roll)
-    neutral = [math.degrees(math.atan2(b[2] - a[2], b[0] - a[0])) for a, b in zip(NECK, NECK[1:])]
+    if juvenile:
+        neutral = [math.degrees(math.atan2(solver.tail[name][2] - solver.head[name][2],
+                                           solver.tail[name][0] - solver.head[name][0]))
+                   for name in solver.rig.neck]
+    else:
+        neutral = [math.degrees(math.atan2(b[2] - a[2], b[0] - a[0]))
+                   for a, b in zip(NECK, NECK[1:])]
     biped.sagittal_profile(solver, pose, solver.rig.neck,
                            [a + (b - a) * low for a, b in zip(neutral, NECK_LAID)])
     biped.sagittal_profile(solver, pose, ["head"], [-1 - 9 * low])
@@ -151,16 +182,25 @@ def _dust_bathe(solver, sitting, phase):
     return pose
 
 
-def _clips(solver):
-    clips = [biped.gait_clip(solver, biped.Stride("walk", 1.2, .8, .64, .13,
-                   bob=.012, nod=1.2)),
-             biped.gait_clip(solver, biped.Stride("trot", 3.2, .5, .40, .24,
-                   bob=.035, lean=4, wing=16))]
+def _clips(solver, juvenile=False, scale=1.0):
+    if juvenile:
+        clips = [biped.gait_clip(solver, biped.Stride("walk", .75, .58, .64, .075,
+                       bob=.006, nod=1.2)),
+                 biped.gait_clip(solver, biped.Stride("trot", 2.0, .38, .40, .12,
+                       bob=.018, lean=4, wing=12))]
+    else:
+        clips = [biped.gait_clip(solver, biped.Stride("walk", 1.2, .8, .64, .13,
+                       bob=.012, nod=1.2)),
+                 biped.gait_clip(solver, biped.Stride("trot", 3.2, .5, .40, .24,
+                       bob=.035, lean=4, wing=16))]
     feeding = {}
-    for name, height in (("eat", .075), ("drink", .035)):
-        effort = bisect_effort(lambda value: muzzle(solver, _feeding(solver, value))[2], height, name)
-        feeding[name] = _feeding(solver, effort)
-    postures = {"rest": _sitting(solver, False), "sleep": _sitting(solver, True), **feeding}
+    targets = (("eat", .040), ("drink", .022)) if juvenile else (("eat", .075), ("drink", .035))
+    for name, height in targets:
+        effort = bisect_effort(lambda value: muzzle(solver, _feeding(solver, value, scale))[2],
+                               height, name)
+        feeding[name] = _feeding(solver, effort, scale)
+    postures = {"rest": _sitting(solver, False, scale),
+                "sleep": _sitting(solver, True, scale), **feeding}
     for name in ("idle", "eat", "drink", "rest", "sleep", "vocalize"):
         def pose(phase, clip_name=name):
             angle = math.tau * phase
@@ -178,15 +218,114 @@ def _clips(solver):
                     result.r("wing." + side, rx=sign * (25 + 4 * math.sin(angle)))
             return result
         clips.append(Clip(name, 4, pose))
-    clips.append(Clip("dust_bathe", 10, partial(_dust_bathe, solver, postures["rest"])))
+    clips.append(Clip("dust_bathe", 10,
+                      partial(_dust_bathe, solver, postures["rest"], juvenile=juvenile)))
     return clips
 
 
-def make_spec():
+def _juvenile_shape(spec):
+    scale = JUVENILE_SCALE
+    for bone in spec.bones:
+        bone.head = np.asarray(bone.head, dtype=float) * scale
+        bone.tail = np.asarray(bone.tail, dtype=float) * scale
+    for part in spec.parts:
+        for ring in part.rings:
+            ring.c *= scale
+            ring.ry *= scale
+            ring.up *= scale
+            ring.dn *= scale
+        if part.chain is not None:
+            part.chain = [(name, np.asarray(head) * scale, np.asarray(tail) * scale)
+                          for name, head, tail in part.chain]
+        if part.rough is not None:
+            part.rough = (part.rough[0] * scale, part.rough[1] / scale)
+
+    # A chick has a shorter neck and face, a large round head and eye, downy wings and no
+    # adult male's extravagant white tail and wing plumes.
+    neck_base = np.asarray(NECK[0], dtype=float) * scale
+
+    def shorten_neck(point):
+        point[:] = neck_base + .78 * (point - neck_base)
+
+    for bone in spec.bones:
+        if bone.name.startswith("neck") or bone.name == "head":
+            shorten_neck(bone.head)
+            shorten_neck(bone.tail)
+    for part in spec.parts:
+        if part.name in {"bare_neck", "skull", "broad_bill", "eye.L"}:
+            for ring in part.rings:
+                shorten_neck(ring.c)
+        if part.name == "skull":
+            for ring in part.rings:
+                ring.ry *= 1.34
+                ring.up *= 1.30
+                ring.dn *= 1.30
+        elif part.name == "eye.L":
+            for ring in part.rings:
+                ring.ry *= 1.48
+                ring.up *= 1.48
+                ring.dn *= 1.48
+        elif part.name == "broad_bill":
+            for ring in part.rings:
+                ring.ry *= 1.12
+                ring.up *= 1.10
+                ring.dn *= 1.10
+        elif part.name == "egg_body":
+            for ring in part.rings:
+                ring.ry *= 1.08
+                ring.up *= 1.08
+                ring.dn *= 1.08
+        elif part.name == "folded_wing.L":
+            wing_root = part.rings[0].c[0]
+            for ring in part.rings:
+                ring.c[0] = wing_root + .55 * (ring.c[0] - wing_root)
+                ring.ry *= .90
+                ring.up *= .90
+                ring.dn *= .90
+        elif part.name == "tail_plume":
+            tail_root = part.rings[0].c[0]
+            for ring in part.rings:
+                ring.c[0] = tail_root + .35 * (ring.c[0] - tail_root)
+                ring.ry *= .62
+                ring.up *= .62
+                ring.dn *= .62
+        elif part.name in {"leg.L", "ankle.L"} or part.name.startswith("digit"):
+            for ring in part.rings:
+                ring.ry *= 1.12
+                ring.up *= 1.08
+                ring.dn *= 1.08
+
+    bones = {bone.name: bone for bone in spec.bones}
+    for part in spec.parts:
+        if part.chain is not None:
+            part.chain = [(name, bones[name].head.copy(), bones[name].tail.copy())
+                          for name, _, _ in part.chain]
+    muzzle_bone, muzzle_point = spec.rig.extra["muzzle"]
+    muzzle_point = np.asarray(muzzle_point, dtype=float) * scale
+    shorten_neck(muzzle_point)
+    spec.rig.extra["muzzle"] = (muzzle_bone, muzzle_point)
+
+    spec.name = "ostrich_juvenile"
+    spec.paint = partial(paint, juvenile=True, scale=scale)
+    spec.voxel = .005
+    spec.target_tris = 12000
+    spec.meta.update({"shoulder_height_m": 1.13, "body_length_m": 1.17,
+                      "variant_of": "ostrich", "variant": "juvenile",
+                      "relative_height": 1.13 / 2.4,
+                      "age_shape": "Chick: shorter neck and face, larger head, eye and feet",
+                      "sex": "juvenile"})
+
+
+def make_spec(juvenile=False):
     bones, rig = _skeleton()
-    return Spec("ostrich", bones, _parts(bones), paint=paint, voxel=.009,
-                target_tris=14000, smooth_iters=4, rig=rig, clips=_clips, key_all_locations=True,
+    spec = Spec("ostrich", bones, _parts(bones), paint=paint, voxel=.009,
+                target_tris=14000, smooth_iters=4, rig=rig,
+                clips=partial(_clips, juvenile=True, scale=JUVENILE_SCALE) if juvenile else _clips,
+                key_all_locations=True,
                 meta={"common_name": "Common ostrich", "scientific_name": "Struthio camelus",
                       "shoulder_height_m": 2.4, "body_length_m": 2.1, "sex": "male", "roughness": .93,
                       # The game's clip for a still activity (AnimalRenderer).
                       "activity_clips": {"dust_bathe": "dust_bathe"}})
+    if juvenile:
+        _juvenile_shape(spec)
+    return spec

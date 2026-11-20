@@ -45,7 +45,7 @@ python3 -m unittest discover -s tools/animals/tests
 | `zoogen/sculpt.py`, `bear.py` on a prepared third-party sculpt, rigged by us (below) | brown_bear, brown_bear_juvenile, polar_bear, polar_bear_juvenile |
 | `zoogen/quadruped.py`, `wild_quadruped.py`, `anatomy.py` | wolf, wolf_juvenile, camel, meerkat, meerkat_juvenile |
 | `zoogen/birdscan.py` on a prepared third-party scan or sculpt, rigged by us (below) | penguin, penguin_juvenile, flamingo |
-| `zoogen/biped.py` | ostrich, kangaroo |
+| `zoogen/biped.py` | ostrich, ostrich_juvenile, kangaroo |
 
 Each has the same eight clips, which the game picks from what the animal is doing: `idle`,
 `walk`, `trot` (the fast gait, a hop for the kangaroo), `eat`, `drink`, `rest`, `sleep`,
@@ -87,6 +87,23 @@ shape views and a real habitat frame are in
 `evidence/meerkat-juvenile-j2-2026-11-20.jpg`; the HUD identifies the selected model's animal
 as two-month-old Pavel. The shape reads as a pup, but it inherits the smooth, heavy-bodied
 first-generation meerkat and has neither individual toes nor a normal map.
+
+### Ostrich chick (2026-11-20)
+
+`ostrich_juvenile` replaces the scaled black-and-white adult males previously used for the
+three 0.3-year-old chicks at Ostrich Rise. The 1.13 m chick has a shorter neck and face,
+proportionally larger round head, eyes and feet, compact downy wing and tail forms, and its own
+cryptic tan-and-brown striped coat without the adult male's white plumes. Its walk is 0.75 m/s
+and its trot 2.0 m/s. The model has 14,560 triangles, 19 bones and nine clips: the standard
+eight plus `dust_bathe`, rescaled and re-aimed for the shorter neck.
+
+A fresh adult export remained byte-for-byte identical after the opt-in refactor, and the
+production chick matches an independent fresh export. The same-camera size comparison, four
+shape views and a real habitat frame are in
+`evidence/ostrich-juvenile-j3-2026-11-20.jpg`; the HUD identifies the selected chick as
+four-month-old Anika. It now reads as a chick rather than a miniature cock, but it remains a
+smooth first-generation egg-body model: the down is painted, the stripes are procedural and
+there is no normal map or individual feather geometry.
 
 ### Big cats from a sculpt (2026-11-13)
 
@@ -412,7 +429,7 @@ byte.
   them uses the one model for everybody. A model is scaled by height:
   `species shoulder height x share of its sex x growth / meta.shoulder_height_m` of the model
   drawn, so a variant states its own height. (Lion, elephant, zebra, rhinoceros, giraffe, wolf,
-  meerkat, both bears and penguin have variants so far.)
+  meerkat, ostrich, both bears and penguin have variants so far.)
 - **Swimming.** Where the water is deeper than about 0.6 of the animal's standing height it
   floats: the body rides with `meta.swim_depth_m` (default 0.72 of the model's shoulder height)
   under the surface instead of walking on the pool bed under water, and plays the optional

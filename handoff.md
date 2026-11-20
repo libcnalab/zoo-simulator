@@ -207,7 +207,7 @@ tests pass. Nobody listened to the audio; preserve that qualification.
 - First-generation stylised models still: wolf, camel, meerkat, ostrich, kangaroo; bears are
   sculpt-based but crude (`docs/ANIMALS.md`; pipeline in `tools/animals/`, its tests
   `python3 -m unittest discover -s tools/animals/tests`, about 10 minutes).
-- No juvenile model for ostrich, camel, kangaroo, flamingo (drawn as scaled
+- No juvenile model for camel, kangaroo, flamingo (drawn as scaled
   adults); the brown/polar bear cub models exist but are unused (bears live as pairs).
 - `wolf_juvenile` is now a real older-pup variant rather than a scaled adult: 0.46 m shoulder,
   shorter body and muzzle, broader skull, larger eyes, ears and paws, lighter coat, 15,528
@@ -224,6 +224,13 @@ tests pass. Nobody listened to the audio; preserve that qualification.
   and all 109 pipeline tests pass. A real habitat run loaded the variant and selected
   two-month-old Pavel; the inspected evidence is
   `docs/evidence/meerkat-juvenile-j2-2026-11-20.jpg` (J2, 2026-11-20).
+- `ostrich_juvenile` now replaces the scaled black-and-white adult males used for the three
+  0.3-year-old chicks at Ostrich Rise: 1.13 m head height, shorter neck and face, larger round
+  head, eyes and feet, compact wing/tail forms, brown striped down, 14,560 triangles, 19 bones
+  and nine clips including juvenile-scaled dust bathing. The adult export remained byte-for-byte
+  identical, the production chick matches an independent fresh export, and all 110 pipeline
+  tests pass. A real habitat run loaded the variant and selected four-month-old Anika; the
+  inspected evidence is `docs/evidence/ostrich-juvenile-j3-2026-11-20.jpg` (J3, 2026-11-20).
 - Dedicated clips now cover meerkat sentry/dig, penguin and flamingo preening, flamingo filter
   feeding, camel and giraffe rumination, ostrich and elephant dust-bathing, and shallow wallowing
   for bears, tigers and rhinoceroses (elephants reuse their scoop/toss as a wet toss). Penguin

@@ -1,0 +1,128 @@
+{
+  "bones": 19,
+  "clips": [
+    {
+      "duration": 0.5667,
+      "events": [
+        {
+          "name": "step",
+          "time": 0.0
+        },
+        {
+          "name": "step",
+          "time": 0.2833
+        }
+      ],
+      "frames": 18,
+      "loop": true,
+      "name": "walk",
+      "speed": 0.75
+    },
+    {
+      "duration": 0.3667,
+      "events": [
+        {
+          "name": "step",
+          "time": 0.0
+        },
+        {
+          "name": "step",
+          "time": 0.1833
+        }
+      ],
+      "frames": 12,
+      "loop": true,
+      "name": "trot",
+      "speed": 2.0
+    },
+    {
+      "duration": 4.0,
+      "events": [],
+      "frames": 121,
+      "loop": true,
+      "name": "idle",
+      "speed": 0.0
+    },
+    {
+      "duration": 4.0,
+      "events": [],
+      "frames": 121,
+      "loop": true,
+      "name": "eat",
+      "speed": 0.0
+    },
+    {
+      "duration": 4.0,
+      "events": [],
+      "frames": 121,
+      "loop": true,
+      "name": "drink",
+      "speed": 0.0
+    },
+    {
+      "duration": 4.0,
+      "events": [],
+      "frames": 121,
+      "loop": true,
+      "name": "rest",
+      "speed": 0.0
+    },
+    {
+      "duration": 4.0,
+      "events": [],
+      "frames": 121,
+      "loop": true,
+      "name": "sleep",
+      "speed": 0.0
+    },
+    {
+      "duration": 4.0,
+      "events": [],
+      "frames": 121,
+      "loop": true,
+      "name": "vocalize",
+      "speed": 0.0
+    },
+    {
+      "duration": 10.0,
+      "events": [],
+      "frames": 301,
+      "loop": true,
+      "name": "dust_bathe",
+      "speed": 0.0
+    }
+  ],
+  "generator": "tools/animals (zoogen)",
+  "license": "MIT",
+  "meta": {
+    "activity_clips": {
+      "dust_bathe": "dust_bathe"
+    },
+    "age_shape": "Chick: shorter neck and face, larger head, eye and feet",
+    "body_length_m": 1.17,
+    "common_name": "Common ostrich",
+    "relative_height": 0.4708333333333333,
+    "roughness": 0.93,
+    "scientific_name": "Struthio camelus",
+    "sex": "juvenile",
+    "shoulder_height_m": 1.13,
+    "variant": "juvenile",
+    "variant_of": "ostrich"
+  },
+  "name": "ostrich_juvenile",
+  "skeleton_bounds_animal_space": {
+    "max": [
+      0.4189,
+      0.1924,
+      1.1005
+    ],
+    "min": [
+      -0.6292,
+      -0.1924,
+      0.0
+    ]
+  },
+  "texture": 1024,
+  "triangles": 14560,
+  "vertices": 7290
+}
