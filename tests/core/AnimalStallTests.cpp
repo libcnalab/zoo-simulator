@@ -15,8 +15,8 @@ namespace {
 
 // Tile navigation cannot see blocking props. After waypoints themselves were moved off props,
 // seed 1 still spent 1.49 % of its moving ticks stalled; routine places with two clear exits and
-// trying a sidestep after one second reduce that to 1.08 % and prevent a long-lived pocket from
-// hiding in the total.
+// trying an ordinary-activity sidestep after three quarters of a second reduce the current zoo
+// from 0.81 % to 0.66 % and prevent a long-lived pocket from hiding in the total.
 TEST(AnimalMovementTests, VisitorZooAnimalsDoNotRemainStalledInPropPockets) {
     Zoo zoo(testdata::GameCatalog(), testdata::GameSpecies(), VisitorZooConfig(1));
     BuildVisitorZoo(zoo);
@@ -51,10 +51,10 @@ TEST(AnimalMovementTests, VisitorZooAnimalsDoNotRemainStalledInPropPockets) {
     ASSERT_GT(movingTicks, 0);
     std::cout << "STALL " << stalledTicks << " of " << movingTicks << " moving ticks ("
               << 100.0 * static_cast<double>(stalledTicks) / static_cast<double>(movingTicks) << " %)\n";
-    EXPECT_LT(stalledTicks * 1000, movingTicks * 13)
+    EXPECT_LT(stalledTicks * 400, movingTicks * 3)
         << stalledTicks << " stalled ticks of " << movingTicks << " moving ticks";
     for (const auto& [id, ticks] : longestStall) {
-        EXPECT_LT(ticks, 300) << "animal " << id;
+        EXPECT_LT(ticks, 120) << "animal " << id;
     }
 }
 

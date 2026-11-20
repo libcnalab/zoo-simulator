@@ -115,8 +115,9 @@ where an animal wades. Penguins swim and float with their own clips now, and pol
    deep pools are steep walls (the core digs pools square). The paint still ends square where a
    fence ends or meets a gate.
 5. Animals get stuck less since the plan keeps room between blocking props and routes are
-   kept off them (1.2 to 1.5 % of the moving ticks, was 5.4 %; a regression test holds it under
-   2 %), but the navigator still does not know what plants and rocks block (`docs/ANIMAL_BEHAVIOUR.md` "In the game"). No model
-   has a dedicated paired social-contact clip; lion contact still uses the closest standard pose.
+   kept off them (0.66 % of the moving ticks, was 5.4 %; a regression test holds it under
+   0.75 %), but the navigator still does not know what plants and rocks block
+   (`docs/ANIMAL_BEHAVIOUR.md` "In the game"). No model has a dedicated paired social-contact
+   clip; lion contact still uses the closest standard pose.
    Penguin and flamingo huddling and zebra watch now have dedicated single-animal clips, but
    huddles and social contact are not synchronised between animals.

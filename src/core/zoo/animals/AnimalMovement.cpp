@@ -362,7 +362,11 @@ void AdvanceMovement(Animal& animal, const SpeciesDef& species, const Env& env, 
         animal.stallTicks = 0;
         return;
     }
-    if (++animal.stallTicks <= tuning::kStallTicks) {
+    const std::int32_t stallTicks =
+        animal.activity == AnimalActivity::Eat || animal.activity == AnimalActivity::Drink
+            ? tuning::kNeedStallTicks
+            : tuning::kStallTicks;
+    if (++animal.stallTicks <= stallTicks) {
         return;
     }
     animal.stallBest = -1.0f;

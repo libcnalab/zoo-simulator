@@ -518,6 +518,15 @@ from the Release build, visitor zoo, seed 1, after the visit's fill.
   **Public walks widened (2026-11-19):** changing the later construction stream changes the
   deterministic routines once more; the current result is 2,324 of 263,930 moving ticks (0.88 %),
   with every continuous stall below 300 ticks and the same 1.3 % regression limit.
+  **Earlier ordinary-activity sidesteps (J45, 2026-11-20):** the current zoo first measured
+  2,110 of 262,045 moving ticks stalled (0.805 %). Trying the next deterministic sidestep after
+  15 rather than 20 ticks for ordinary activities lowers that to 1,805 of 271,509 (0.665 %).
+  Essential food and water errands retain the proven 20-tick route: applying the shorter limit
+  to them made either the morning or week-long staffed-care regression fail. The active bound is
+  now below 0.75 %, with every continuous stall below 120 ticks. All 24 focused movement,
+  keeper, day and week-capacity cases pass; changed short and 6,000-tick hashes for seeds 1–3
+  repeat twice. The complete suite passes all 292 active cases including its 368.55-second
+  animation pipeline, with 21 diagnostics disabled.
 - **Golden hashes** of `tests/core/VisitStartTests.cpp` re-recorded for the routines.
 - Pictures: `docs/evidence/animal-routines-2026-11-13.jpg` (lions resting in the shade at
   midday; penguins standing together, one swimming; flamingos at the lagoon after the wader

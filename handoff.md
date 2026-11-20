@@ -411,6 +411,14 @@ whatever you take up (`docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `docs/V
   all four starter-scenario cases pass without changing simulation state. Short and 6,000-tick
   hashes for seeds 1–3 remain unchanged; the complete suite passes all 292 active cases including
   its 365.28-second animation pipeline, with 21 diagnostics disabled (J44, 2026-11-20).
+- J45 prompts the next deterministic animal sidestep after 15 rather than 20 ticks for ordinary
+  activities, while food and water errands retain the proven one-second route. Seed 1's stalled
+  moving ticks fall from 2,110 / 262,045 (0.805%) to 1,805 / 271,509 (0.665%); the regression now
+  requires below 0.75% and no continuous stall of 120 ticks. Applying the shorter limit to every
+  activity was rejected because it failed either morning or week-long staffed care. The scoped
+  version passes all 24 focused movement, keeper, day and week-capacity cases; changed short and
+  6,000-tick hashes for seeds 1–3 repeat twice. The complete suite passes all 292 active cases
+  including its 368.55-second animation pipeline, with 21 diagnostics disabled (J45, 2026-11-20).
 - The stopped G7c audio audit is recovered and finished. Calls now follow `Vocalize`, social,
   play and documented feeding cues rather than a timer; takes do not repeat immediately, spatial
   pan is capped at 0.60, birds fade with daylight, crowd level follows its people, and footsteps

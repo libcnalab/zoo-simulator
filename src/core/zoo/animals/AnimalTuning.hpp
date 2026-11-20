@@ -141,8 +141,10 @@ inline constexpr float kHeadOnFraction = 0.3f;
 inline constexpr float kIntrusionToleranceM2 = 1.0e-5f;
 /// An animal that came no nearer to its waypoint than this, metres, for kStallTicks is stalled.
 inline constexpr float kStallProgressM = 0.02f;
-/// One second at the simulation's 20 Hz: try the next sidestep promptly instead of waiting 1.5 s.
-inline constexpr std::int32_t kStallTicks = 20;
+/// Three quarters of a second at the simulation's 20 Hz: try the next sidestep promptly.
+inline constexpr std::int32_t kStallTicks = 15;
+/// Food and water are essential errands: retain the proven one-second route before a sidestep.
+inline constexpr std::int32_t kNeedStallTicks = 20;
 /// Stalled this near to the waypoint (plus the body radius), metres, counts as arrived.
 inline constexpr float kStallArriveM = 1.0f;
 /// How far outside a blocking prop's clearance a waypoint planned onto it is moved, metres.

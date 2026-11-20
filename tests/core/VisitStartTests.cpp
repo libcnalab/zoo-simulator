@@ -74,16 +74,17 @@ TEST(VisitStart, MatchesGameSequence) {
 // the vegetation welfare margin; dangerous groups use a saved shelter lockout for inside keeper
 // work, public feedings service troughs too, and routine care is requested earlier; watchers
 // yield to unrelated standing visitors, and the cleaner prioritises current litter rather than
-// finishing a stale bin circuit; walking companions receive the full shoulder corridor).
+// finishing a stale bin circuit; walking companions receive the full shoulder corridor;
+// ordinary animal errands try their next sidestep after three quarters of a second).
 void CheckFillHashes(std::int64_t ticks) {
     constexpr std::array<std::array<std::uint64_t, 2>, 3> shortHashes{
-        {{14945301198642152780ULL, 17754304424957272119ULL},
-         {1474396774432585905ULL, 6658203879602414140ULL},
-         {14859300577337031007ULL, 8074694704270786613ULL}}};
+        {{47740673595807817ULL, 10729442071956073616ULL},
+         {12874349535455363094ULL, 13939740726747325860ULL},
+         {7107387359487713471ULL, 2091247644389604810ULL}}};
     constexpr std::array<std::array<std::uint64_t, 2>, 3> fullHashes{
-        {{2681306702032415762ULL, 3347868274867542161ULL},
-         {6689187648754444860ULL, 12719788649751139938ULL},
-         {5833892983409341056ULL, 37302071544291830ULL}}};
+        {{18199350877182038920ULL, 11680604430529833217ULL},
+         {16247285644487222597ULL, 5659534852493129311ULL},
+         {7411936492224911305ULL, 18283857361313614165ULL}}};
     for (const std::uint64_t seed : {1ULL, 2ULL, 3ULL}) {
         Zoo zoo(testdata::GameCatalog(), testdata::GameSpecies(), VisitorZooConfig(seed));
         BuildVisitorZoo(zoo);
