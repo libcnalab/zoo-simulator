@@ -435,6 +435,15 @@ whatever you take up (`docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `docs/V
   scores remain 0.969/0.963; the changed seed-1 history has 1,603 / 303,845 stalled moving ticks
   (0.528%). Short and 6,000-step hashes repeat for seeds 1–3. The complete suite passes all 292
   active cases including the 365.05-second animation pipeline, with 21 diagnostics disabled.
+- J48 keeps scripted public viewpoints clear of the visible tree, not just its collision trunk.
+  A shared sight-blocking radius derives a tree's opaque crown from its existing shade footprint;
+  non-tree props keep their former solid radius. At Bear Falls seed 1, the old sight line missed
+  a spruce trunk by 1.15 m but crossed its 2.15 m crown, filling the `(164.8,57.0)` view with
+  needles. It now chooses the clear water-edge `(154.8,45.0)` position. Lion, meerkat, polar-bear
+  and giraffe control views retain useful public fronts; the opened comparison is
+  `docs/evidence/clear-view-crowns-j48-2026-11-20.jpg`. Two focused radius regressions and all 25
+  game-side tests pass. The complete suite passes all 294 active cases including the 365.53-second
+  animation pipeline, with 21 diagnostics disabled as intended (J48, 2026-11-20).
 - The stopped G7c audio audit is recovered and finished. Calls now follow `Vocalize`, social,
   play and documented feeding cues rather than a timer; takes do not repeat immediately, spatial
   pan is capped at 0.60, birds fade with daylight, crowd level follows its people, and footsteps

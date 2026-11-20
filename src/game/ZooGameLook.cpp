@@ -10,6 +10,7 @@
 #include <optional>
 
 #include "Hud.hpp"
+#include "SightLine.hpp"
 #include "ZooGame.hpp"
 #include "zoo/visitors/VisitorTuning.hpp"
 
@@ -342,7 +343,7 @@ std::optional<ZooGame::Pose> ZooGame::StandPose(std::string_view what) const {
                         0.92f);
                     const float px = from.x + along * sx - prop.position.x;
                     const float pz = from.z + along * sz - prop.position.z;
-                    const float reach = def.radiusM * prop.scale + 0.6f;
+                    const float reach = SightBlockingRadius(def, prop.scale) + 0.6f;
                     if (px * px + pz * pz < reach * reach)
                         return true;
                 }

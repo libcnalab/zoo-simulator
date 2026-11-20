@@ -532,3 +532,10 @@ keeper gate or a convenient service-mesh side for the public front:
 glass and moat edges receive a strong preference, rail and cable a smaller one, and end panels
 are devalued. These are deliberately soft preferences, so a tree-obscured glass panel may still
 lose to an unobstructed animal rather than producing a formally correct but useless photograph.
+Its sight-line test also uses a tree's existing shade/crown footprint rather than only the narrow
+ground-collision trunk. At Bear Falls seed 1, the old ray missed a spruce trunk by 1.15 m and so
+accepted `(164.8,57.0)`, although the 2.15 m crown filled the frame; it now selects the clear
+water-edge position `(154.8,45.0)`. Lion Rock, Meerkat Lookout, Polar Sound and Acacia Plain
+remain useful public-side controls. The before/after and four controls were opened and checked in
+`evidence/clear-view-crowns-j48-2026-11-20.jpg`; two focused sight-radius regressions and all 25
+game-side tests pass (J48, 2026-11-20).

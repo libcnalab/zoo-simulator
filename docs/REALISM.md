@@ -32,6 +32,7 @@ loudspeaker stays muted and nobody has listened to any of it.
 | Penguins on the water | a resting penguin floats, one under way swims, each with its own clip and depth from the model's manifest (they walked upright through the pool before) | `src/game/AnimalRenderer.cpp`, `evidence/penguin-floating-2026-11-13.jpg` |
 | Animals stand in the sun, not in their own shadow | every skinned model was drawn shadowed by itself (an engine defect, `docs/UPSTREAM.md` ZOO-UP-001); lit and shaded now, and normal maps on animals show for the first time | `src/game/SunShadows.cpp`, `evidence/animal-self-shadow-2026-11-13.jpg` |
 | Habitat fronts a zoo would build | elephants and rhinos behind a 4 m planted stand-off with a leaning rail, hoofstock behind 2 m; heavy dark mesh instead of bars at bears and cats; mesh hidden inside a clipped wildlife hedge on the meerkats' service sides; chain-link one looks through; nobody walks on the planting; every tree crown starts behind the full viewing set-back, with low grass and scrub retaining cover at Rhino Hollow and Red Dune | `docs/VISITOR_ZOO.md`, `evidence/habitat-fronts-2026-11-13.jpg`, `evidence/wildlife-hedge-j29-2026-11-20.jpg`, `evidence/open-habitat-fronts-j31-2026-11-20.jpg` |
+| Reproducible public viewpoints | `--stand habitat:<species>` rejects service gates, buildings, extra fences and now the opaque footprint of a tree crown rather than only its narrow collision trunk; Bear Falls seed 1 moves from a spruce-obscured `(164.8,57.0)` to a clear water-edge `(154.8,45.0)`, while lion, meerkat, polar-bear and giraffe control views retain useful public fronts | `src/game/SightLine.hpp`, `docs/VISITOR_ZOO.md`, `evidence/clear-view-crowns-j48-2026-11-20.jpg` |
 | Public walks with room to pass | all ordinary paved tiles now belong to a walk at least 4 m wide (48 isolated 2 m tiles on the original plan, three before J30); the deliberately narrow boardwalk remains exempt | `docs/VISITOR_ZOO.md`, `evidence/wide-walks-j30-2026-11-20.jpg` |
 | People at every habitat | 192 to 260 of 800 stand watching (was 110 to 215) and no habitat is left without watchers (several were, most of the time) | `docs/VISITOR_ZOO.md` "Who watches where" |
 | Trees and shrubs with leaves | every crown and bush was a lumpy green blob; now a dark core that casts the shadow, covered with cut-out sprays of leaves or needles (two painted 512 px atlases, alpha-tested with coverage kept through the mip levels); spruces are tiers of boughs; arm's-length shrubs use finer twig-end sprays and seven visible stems while their far form stays lean | `src/game/FoliageTextures.*`, `src/game/PlantModels.cpp`, `evidence/foliage-2026-11-13.jpg`, `evidence/fine-shrubs-j33-2026-11-20.jpg`, `docs/PERFORMANCE.md` |
@@ -100,7 +101,7 @@ where an animal wades. Penguins swim and float with their own clips now, and pol
    stylised procedural first-generation anatomy. All five now have second-pass coats or plumage
    and species-specific silhouette details, but remain recognisably lofted; the bears now have
    closed resting mouths, softer shoulders and shorter outline fur but remain converted from an
-   upright brown-bear sculpt (the polar anatomy and scaled-adult cub bodies are still crude)
+   upright brown-bear sculpt (the polar anatomy and proportionally edited cub bodies are still crude)
    (`docs/ANIMALS.md`). The cats are believable now but not photographs: the tiger's formerly
    grey three-row cheek comb is a finer layered fringe and the lion's long shingle-like mane is
    denser and compact, but both remain alpha-card hair on converted lioness bodies; individual
@@ -115,7 +116,7 @@ where an animal wades. Penguins swim and float with their own clips now, and pol
    deep pools are steep walls (the core digs pools square). The paint still ends square where a
    fence ends or meets a gate.
 5. Animals get stuck less since the plan keeps room between blocking props and routes are
-   kept off them (0.66 % of the moving ticks, was 5.4 %; a regression test holds it under
+   kept off them (0.53 % of the moving ticks, was 5.4 %; a regression test holds it under
    0.75 %), but the navigator still does not know what plants and rocks block
    (`docs/ANIMAL_BEHAVIOUR.md` "In the game"). No model has a dedicated paired social-contact
    clip; lion contact still uses the closest standard pose.
