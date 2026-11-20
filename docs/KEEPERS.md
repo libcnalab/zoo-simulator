@@ -95,8 +95,8 @@ morning regression now records zero staff/animal body-clearance approaches (75 a
 animal stalls improve to 0.758 % of moving ticks and the staffed week remains no worse than
 automatic care. The same-camera game comparison is inspected in
 `evidence/shy-animal-keeper-j20-2026-11-20.jpg`: the small meerkat beside the hosing keeper in J19
-has left that space in J20. The cast member's face varies between runs as documented below; the
-measured movement test, not the still, proves the response.
+has left that space in J20. The cast member's face varied between runs then; the measured movement
+test, not the still, proves the response. J22 later makes that cast repeatable.
 
 J21 spreads outside work around habitats which have a planted stand-off strip. `BarrierStands`
 used to stop as soon as it found the service gate, even if that left Elephant Valley and Rhino
@@ -107,6 +107,15 @@ and Rhino Hollow only one. The inspected game frame shows keeper 7 checking Elep
 its public dry-moat gallery, with the elephants beyond the separate containment barrier:
 `evidence/safe-barrier-work-j21-2026-11-20.jpg`. All 271 active functional tests pass; the short
 and 6,000-step state hashes repeat for seeds 1–3.
+
+J22 gives the four-person cast a repeatable appearance. It still alternates women and men and uses
+CNA's current avatar catalog, but supplies a fixed per-slot random stream rather than calling the
+process-random `AvatarDescription::CreateRandom`. `KeeperAppearance.CastIsValidDistinctAndRepeatable`
+checks the public 1,021-byte descriptions, body types, validity and distinctness. Two separate game
+processes at the same seed and tick show keeper 7 with the same face, hair, build, height and uniform
+in `evidence/repeatable-staff-cast-j22-2026-11-20.jpg`; the gait differs slightly because the images
+were taken after 30 real-time render frames whose loading times differ. All 22 game-side tests and
+all 272 active functional CTest cases pass.
 
 ## Automatic care stays behind them
 
@@ -131,9 +140,9 @@ one is refused (`StaffFromJson`). A zoo without staff keeps the state hash it ha
 
 ## Drawing them
 
-`KeeperRenderer` makes a cast of four avatars once (women and men in turn), random people as
-the visitors are but all in the uniform: a green polo shirt, khaki cargo trousers, boots and a
-khaki bucket hat. The uniform is written into CNA's avatar description (item and colour bytes
+`KeeperRenderer` makes a repeatable cast of four avatars once (women and men in turn), all in the
+uniform: a green polo shirt, khaki cargo trousers, boots and a khaki bucket hat. The uniform is
+written into CNA's avatar description (item and colour bytes
 as CNA's `docs/avatars.md` lays them out, and its CRC-32); if CNA refuses the result, the
 colours alone are tried, then the person's own clothes, and one log line says so.
 
@@ -173,5 +182,4 @@ the first tick on), not because of the keepers.
 
 - The dangerous species are never entered: no mucking out of the lions' or bears' habitats,
   because the model cannot shut the animals in their house.
-- The faces of the cast are random per run; tools cast no shadow; nobody is drawn beyond
-  150 m or beyond the 8 nearest.
+- Tools cast no shadow; nobody is drawn beyond 150 m or beyond the 8 nearest.

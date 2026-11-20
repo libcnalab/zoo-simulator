@@ -209,6 +209,15 @@ whatever you take up (`docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `docs/V
   habitats still cannot be entered without an animal lock-in model. Short and 6,000-step hashes
   repeat twice for seeds 1–3; all 271 active functional CTest cases pass, as did today's earlier
   separate `zoogen_animation` run (21 diagnostics disabled).
+- J22 makes the four-person staff cast repeatable across processes. `StaffAppearance` feeds CNA's
+  current avatar generator a fixed per-slot stream, keeping the alternating female/male bodies but
+  removing `CreateRandom`'s process entropy. A direct test proves all four public 1,021-byte
+  descriptions are valid, distinct, correctly typed and exactly repeatable; all 22 game-side tests
+  pass. The two separately rendered keeper-7 crops in
+  `docs/evidence/repeatable-staff-cast-j22-2026-11-20.jpg` have the same face, hair, build, height
+  and uniform; only the gait phase differs with real loading time. All 272 active functional CTest
+  cases pass, as did today's earlier separate `zoogen_animation` run (21 diagnostics disabled; J22,
+  2026-11-20).
 - The stopped G7c audio audit is recovered and finished. Calls now follow `Vocalize`, social,
   play and documented feeding cues rather than a timer; takes do not repeat immediately, spatial
   pan is capped at 0.60, birds fade with daylight, crowd level follows its people, and footsteps

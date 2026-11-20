@@ -8,10 +8,10 @@
 
 #include "Microsoft/Xna/Framework/BoundingFrustum.hpp"
 #include "Microsoft/Xna/Framework/BoundingSphere.hpp"
-#include "Microsoft/Xna/Framework/GamerServices/AvatarBodyType.hpp"
 #include "Microsoft/Xna/Framework/GamerServices/AvatarRendererState.hpp"
 
 #include "GroundPaint.hpp"
+#include "KeeperAppearance.hpp"
 #include "zoo/base/Rng.hpp"
 
 namespace zoogame {
@@ -20,7 +20,6 @@ namespace {
 
 using Microsoft::Xna::Framework::BoundingSphere;
 using Microsoft::Xna::Framework::ContainmentType;
-using Microsoft::Xna::Framework::GamerServices::AvatarBodyType;
 using Microsoft::Xna::Framework::GamerServices::AvatarDescription;
 using Microsoft::Xna::Framework::GamerServices::AvatarRenderer;
 using Microsoft::Xna::Framework::GamerServices::AvatarRendererState;
@@ -146,10 +145,9 @@ std::optional<AvatarDescription> Uniformed(const AvatarDescription& person, bool
     return dressed;
 }
 
-/// A random person of the body type, in uniform if CNA takes it (first with the clothes,
-/// then with the colours alone), otherwise as they came.
-AvatarDescription Engage(AvatarBodyType type, bool& uniformed) {
-    AvatarDescription person = AvatarDescription::CreateRandom(type);
+/// A cast member in uniform if CNA takes it (first with the clothes, then with the colours
+/// alone), otherwise as they came.
+AvatarDescription Engage(AvatarDescription person, bool& uniformed) {
     for (const bool items : {true, false}) {
         if (std::optional<AvatarDescription> dressed = Uniformed(person, items)) {
             uniformed = true;
@@ -992,10 +990,9 @@ void KeeperRenderer::PollCast() {
         castMade_ = true;
         std::size_t uniformed = 0;
         for (std::size_t i = 0; i < kCast; ++i) {
-            // Women and men in turn; everything else about them but the clothes is CNA's choice.
-            const AvatarBodyType type = i % 2 == 0 ? AvatarBodyType::Female : AvatarBodyType::Male;
+            // Women and men in turn. The fixed cast makes repeated evidence and saved zoos look alike.
             bool dressed = false;
-            auto member = std::make_unique<Member>(Member{.description = Engage(type, dressed),
+            auto member = std::make_unique<Member>(Member{.description = Engage(StaffAppearance(i), dressed),
                                                           .renderer = nullptr,
                                                           .body = {},
                                                           .height = 1.7f,

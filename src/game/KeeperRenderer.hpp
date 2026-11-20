@@ -26,9 +26,9 @@ namespace zoogame {
 
 /// Draws the zoo's staff (zoo::Staff) at their work, as CNA avatars in the zoo's uniform.
 ///
-/// A small cast of avatars is made once: random people as the visitors are, but all in
-/// the same work clothes (a green polo shirt, khaki cargo trousers, boots and a bucket
-/// hat, see Uniformed in the .cpp), so that a keeper is told from a visitor at a glance.
+/// A small repeatable cast of avatars is made once, all in the same work clothes (a green
+/// polo shirt, khaki cargo trousers, boots and a bucket hat, see Uniformed in the .cpp),
+/// so that a keeper is told from a visitor at a glance and looks the same on another run.
 /// Every member of staff is played by the cast member their `look` picks.
 ///
 /// What they do comes from the simulation: where they are, which way they face, whether
