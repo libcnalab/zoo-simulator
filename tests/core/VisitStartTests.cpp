@@ -79,16 +79,18 @@ TEST(VisitStart, MatchesGameSequence) {
 // habitats become mother-and-two-cub groups using the dedicated juvenile models; animal route
 // searches avoid the blocking trees and rocks of their own habitat, while late-arriving visitors
 // keep hard body room from standing people and the player; dangerous groups visibly walk into
-// their assigned houses while the keeper waits outside).
+// their assigned houses while the keeper waits outside, then leave only after its holding gate
+// visibly slides from a safe-side release operation; followers keep a stable route to a moving
+// group leader's destination rather than restarting that route every second).
 void CheckFillHashes(std::int64_t ticks) {
     constexpr std::array<std::array<std::uint64_t, 2>, 3> shortHashes{
-        {{13461087612218154455ULL, 17660576038377628775ULL},
-         {15150100145980672983ULL, 10172000669998049030ULL},
-         {14475820934606303849ULL, 8975839473971843208ULL}}};
+        {{414202565714264416ULL, 13188991188958867743ULL},
+         {6907198943796647126ULL, 18339378930936977087ULL},
+         {3440853638023193673ULL, 17502331354131211197ULL}}};
     constexpr std::array<std::array<std::uint64_t, 2>, 3> fullHashes{
-        {{10614821072031779345ULL, 11246022742581700838ULL},
-         {3322807479760314359ULL, 6657581641715117170ULL},
-         {7125594301309890975ULL, 4510635397140535472ULL}}};
+        {{12362319587159649188ULL, 12765318755677634735ULL},
+         {4938280952304560860ULL, 7496686625097060890ULL},
+         {11806472967716503989ULL, 3598954821700878123ULL}}};
     for (const std::uint64_t seed : {1ULL, 2ULL, 3ULL}) {
         Zoo zoo(testdata::GameCatalog(), testdata::GameSpecies(), VisitorZooConfig(seed));
         BuildVisitorZoo(zoo);

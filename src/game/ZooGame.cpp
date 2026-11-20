@@ -616,6 +616,7 @@ void ZooGame::UpdateFrame(double seconds) {
         UpdateEditor(seconds);
     else
         UpdateVisit(seconds);
+    scenery_->UpdateHoldingGates(*zoo_, seconds * static_cast<double>(play_.speed));
     // What the update took beyond its timed parts.
     const double took = std::chrono::duration<double>(Bench::Clock::now() - began).count();
     bench_.Add(Bench::Rest, took - (bench_.Timed() - before));

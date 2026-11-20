@@ -69,6 +69,10 @@ constexpr float kThrowFeedS = 9.0f;
 constexpr float kScatterS = 15.0f;
 constexpr float kRakeS = 34.0f;
 constexpr float kDangerousRakeS = 12.0f;
+/// The keeper remains outside while the last assigned house gate completes its closing travel.
+constexpr float kHoldingGateCloseS = 1.2f;
+/// Opening the holding gate: the release occurs halfway through this visible operation.
+constexpr float kReleaseGateS = 2.4f;
 constexpr float kHoseS = 30.0f;
 constexpr float kInspectS = 22.0f;
 constexpr float kSweepS = 24.0f;
@@ -741,8 +745,11 @@ void PlanHabitat(const Env& env, const Animals& animals, StaffMember& member, En
         tasks.insert(tasks.begin() + static_cast<std::ptrdiff_t>(firstInside),
                      Job(StaffActivity::Inspect, StaffActivity::Walk, lockoutPlace, lockoutFacing, 4.0f, id,
                          {}, StaffLockoutAction::Secure));
-        tasks.push_back(Job(StaffActivity::Inspect, StaffActivity::Walk, lockoutPlace, lockoutFacing, 4.0f,
-                            id, {}, StaffLockoutAction::Release));
+        tasks.insert(tasks.begin() + static_cast<std::ptrdiff_t>(firstInside + 1),
+                     Job(StaffActivity::Inspect, StaffActivity::Walk, lockoutPlace, lockoutFacing,
+                         kHoldingGateCloseS, id));
+        tasks.push_back(Job(StaffActivity::Inspect, StaffActivity::Walk, lockoutPlace, lockoutFacing,
+                            kReleaseGateS, id, {}, StaffLockoutAction::Release));
     }
 }
 
@@ -796,7 +803,8 @@ void PlanBin(const Env& env, const Visitors& visitors, StaffMember& member, Prop
     }
     const float along = HashFloat(id.value + member.stopsDone, 17u) * kTwoPi;
     if (litter) {
-        member.tasks.push_back(Job(StaffActivity::Sweep, StaffActivity::Walk, *litter, along, kSweepS, {}, id));
+        member.tasks.push_back(
+            Job(StaffActivity::Sweep, StaffActivity::Walk, *litter, along, kSweepS, {}, id));
     } else if (const auto beside = StandBeside(env, bin->position, HeadingVector(along), 2.5f, {})) {
         member.tasks.push_back(Job(StaffActivity::Sweep, StaffActivity::Walk, beside->place,
                                    WrapAngle(beside->facing + 1.5708f), kSweepS, {}, id));
@@ -1121,11 +1129,10 @@ void Staff::PlanStop(const Env& env, const Animals& animals, const Visitors& vis
             if (bin == nullptr) {
                 continue;
             }
-            const bool dirty = std::any_of(visitors.LitterOnGround().begin(), visitors.LitterOnGround().end(),
-                                           [&](const Litter& piece) {
-                                               return DistanceSquared(piece.position, bin->position) <
-                                                      kLitterReach * kLitterReach;
-                                           });
+            const bool dirty = std::any_of(
+                visitors.LitterOnGround().begin(), visitors.LitterOnGround().end(), [&](const Litter& piece) {
+                    return DistanceSquared(piece.position, bin->position) < kLitterReach * kLitterReach;
+                });
             const float walk = DistanceSquared(member.position, bin->position);
             if (dirty && walk < shortestWalk) {
                 shortestWalk = walk;

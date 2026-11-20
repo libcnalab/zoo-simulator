@@ -466,6 +466,44 @@ TEST(AnimalEthogramTests, CallsAreAnsweredOnceAndJuvenileFollowsLivingMother) {
     EXPECT_FALSE(habitat.animals.Find(AnimalId{4U})->following);
 }
 
+TEST(AnimalEthogramTests, FollowerKeepsRouteToMovingLeaderDestination) {
+    HabitatDay habitat("penguin");
+    Animal* leader = habitat.animals.Find(AnimalId{1U});
+    Animal* follower = habitat.animals.Find(AnimalId{4U});
+    ASSERT_NE(leader, nullptr);
+    ASSERT_NE(follower, nullptr);
+
+    leader->position = World::TileCenter({14, 17});
+    leader->target = World::TileCenter({28, 28});
+    leader->activity = AnimalActivity::Huddle;
+    leader->moving = true;
+
+    follower->position = World::TileCenter({27, 16});
+    follower->target = leader->target + Vec2{-0.5f, 0.5f};
+    follower->activity = AnimalActivity::Huddle;
+    follower->activityLeft = 20 * kTicksPerSecond;
+    follower->moving = true;
+    follower->speed = 0.2f;
+    follower->route = {World::TileCenter({25, 22}), follower->target};
+    follower->routeIndex = 0;
+    const std::vector<Vec2> route = follower->route;
+
+    habitat.env.time.tick = kTicksPerSecond - static_cast<std::int64_t>(follower->id.value);
+    std::vector<std::size_t> neighbors;
+    for (std::size_t index = 0; index < habitat.animals.All().size(); ++index) {
+        neighbors.push_back(index);
+    }
+    std::vector<PropId> props;
+    Rng rng(117U);
+    animal_internal::UpdateSpeciesBehaviour(
+        *follower, habitat.species.All()[static_cast<std::size_t>(habitat.speciesIndex)], habitat.env,
+        habitat.animals.All(), neighbors, 0, rng, props);
+
+    EXPECT_EQ(follower->target, (leader->target + Vec2{-0.5f, 0.5f}));
+    EXPECT_EQ(follower->route, route);
+    EXPECT_EQ(follower->routeIndex, 0U);
+}
+
 TEST(AnimalEthogramTests, DISABLED_MeasureAllSpecies) {
     const auto species = SpeciesCatalog::LoadDirectory(std::string(ZOO_SOURCE_DIR) + "/data/species");
     for (const SpeciesDef& def : species.All()) {

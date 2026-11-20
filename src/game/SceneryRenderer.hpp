@@ -3,6 +3,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <map>
 #include <memory>
 #include <string>
 #include <vector>
@@ -15,6 +16,10 @@
 #include "zoo/build/Catalog.hpp"
 #include "zoo/build/Objects.hpp"
 #include "zoo/world/World.hpp"
+
+namespace zoo {
+class Zoo;
+}
 
 namespace zoogame {
 
@@ -61,6 +66,9 @@ public:
     /// Brings at most `maxCells` out-of-date cells up to date (all of them when
     /// negative); call every frame. Cheap when nothing changed.
     void Update(const zoo::World& world, const zoo::ZooObjects& objects, int maxCells = 2);
+    /// Animates the separately operated holding gates at animal houses while a
+    /// dangerous habitat is recalled, worked in and released.
+    void UpdateHoldingGates(const zoo::Zoo& zoo, double seconds);
     /// Releases the completed far-plant palette's CPU edit data in a read-only visit.
     void DiscardEditCache(bool discardCpuTextureCopies = false);
     /// Submits the scenery as seen from `eye`: the groves far from it in their far form.
@@ -79,6 +87,7 @@ public:
 private:
     struct Cell;
     struct Grove;
+    struct HoldingGate;
 
     void Layout(const zoo::World& world);
     std::uint64_t FenceHash(const zoo::World& world, const Cell& cell) const;
@@ -94,6 +103,9 @@ private:
     Surfaces& surfaces_;
     const zoo::Catalog& catalog_;
     PlantPalette palette_;
+    StaticBatch holdingGateModel_;
+    StaticBatch holdingGateGuides_;
+    std::map<zoo::BuildingId, HoldingGate> holdingGates_;
     std::vector<std::unique_ptr<Cell>> cells_;
     std::vector<std::unique_ptr<Grove>> groves_;
     int width_ = 0;

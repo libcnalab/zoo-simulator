@@ -554,6 +554,24 @@ whatever you take up (`docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `docs/V
   cached-renderer reconstruction factory for buffers. The proposed upstream extension retains
   renderer identity and restricts release to callers which opt out of recovery/readback (J57,
   2026-11-20). The warning-clean build, real 45-frame benchmark and all 30 game-side tests pass.
+- J58 gives every occupied dangerous-animal house a separately operated welded-mesh sliding
+  gate. It closes behind the last assigned resident, remains shut through the keeper's inside
+  rake, and slides open for 1.2 seconds before the lockout releases. The keeper now visibly
+  performs the release task from safe public ground instead of skipping it on the gate crossing; an unreachable
+  exact control still falls back to that safe-side operation. The seven-habitat regression now
+  requires a visible outside release at every one. A lockstep Polar Sound sequence was opened at
+  the open, closed, sliding and released frames: the gate fits the cooled-den portal and all three
+  bears emerge only after it clears. The staffed week remains better than automatic care at 11
+  against 16 animal-hours in need, with longest spells of one against four hours. Changed short
+  and 6,000-step hashes repeat twice for seeds 1–3. The same history exposed a follower restarting
+  its route to a moving leader once per second; comparing against the leader's destination fixes
+  the 179-tick penguin stall and lowers the seed-1 probe from 0.575% to 0.329%, with a focused
+  regression for the route. The complete suite passes all 304 active cases, including the
+  479.96-second animation pipeline, with 21 diagnostics disabled. Under ASan the two gate/lockout
+  tests, focused group-route test and 12,000-step stall regression pass in 532.88 seconds; all 30
+  game-side tests pass in 240.69 seconds. A real Polar Sound visit loads the full 90-animal zoo,
+  runs 3,000 fill steps and draws three frames cleanly (leak detection off for the documented
+  `ptrace` limitation; J58, 2026-11-20).
 - The stopped G7c audio audit is recovered and finished. Calls now follow `Vocalize`, social,
   play and documented feeding cues rather than a timer; takes do not repeat immediately, spatial
   pan is capped at 0.60, birds fade with daylight, crowd level follows its people, and footsteps
@@ -644,7 +662,7 @@ sound unknown); saves there live only in the page's memory.
 
 ### 4.1 to 4.3: done on develop (2026-11-14)
 
-Keepers (`docs/KEEPERS.md`; open: no separate holding-yard gate or release-door animation), ground and water edges
+Keepers (`docs/KEEPERS.md`; J58 closes the holding-gate/release-animation item), ground and water edges
 (`docs/GROUND.md`; open: 25 cm detail outlines and engineered one-tile pool banks), plants (`docs/PLANTS.md`;
 open: far cut-out edges aliased and fill cost of alpha-tested cards). The new first
 priority is memory (section 0).

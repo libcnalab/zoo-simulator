@@ -429,21 +429,25 @@ void Staff::Step(Env& env, Animals& animals, Visitors& visitors) {
         if (member.task >= member.tasks.size()) {
             continue;
         }
-        if (member.role == StaffRole::Cleaner && !member.working && member.route.empty() && member.ticksLeft == 0 &&
-            member.tasks[member.task].work == StaffActivity::Sweep && member.tasks[member.task].prop) {
+        if (member.role == StaffRole::Cleaner && !member.working && member.route.empty() &&
+            member.ticksLeft == 0 && member.tasks[member.task].work == StaffActivity::Sweep &&
+            member.tasks[member.task].prop) {
             RefreshSweep(env, visitors, member);
         }
         const StaffTask task = member.tasks[member.task];
 
         // The exact control point is presentation, not a safety condition. Once the
-        // keeper has crossed out of the habitat, nobody remains exposed inside and
-        // the group must not stay confined merely because a path to that point changed.
-        if (task.lockout == StaffLockoutAction::Release && member.lockout == task.enclosure &&
-            env.enclosures.At(member.position) != task.enclosure) {
-            member.lockout = {};
-            NextTask(member);
-            member.activity = StaffActivity::Rest;
-            continue;
+        // keeper has crossed out of the habitat, operate the release from that safe
+        // side even if a path to its nominal point changed. The effect still happens
+        // halfway through the task, leaving time for the visible holding gate to open.
+        if (!member.working && task.lockout == StaffLockoutAction::Release &&
+            member.lockout == task.enclosure && env.enclosures.At(member.position) != task.enclosure) {
+            member.route.clear();
+            member.routeIndex = 0;
+            member.working = true;
+            member.ticksLeft = std::max(task.ticks, 1);
+            member.speed = 0.0f;
+            member.activity = task.work;
         }
 
         if (member.working) {

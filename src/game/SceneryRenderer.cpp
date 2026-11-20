@@ -13,6 +13,7 @@
 #include "GroundPaint.hpp"
 #include "PlantModels.hpp"
 #include "PropModels.hpp"
+#include "zoo/sim/Zoo.hpp"
 
 namespace zoogame {
 
@@ -97,6 +98,14 @@ struct SceneryRenderer::Grove {
     bool showsFar = false;
 };
 
+struct SceneryRenderer::HoldingGate {
+    Matrix placement;
+    float closed = 0.0f;
+    float slideDirection = 1.0f;
+    bool active = false;
+    bool wantsClosed = false;
+};
+
 SceneryRenderer::SceneryRenderer(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
                                  Surfaces& surfaces, const zoo::Catalog& catalog, int cellTiles)
     : device_(device),
@@ -105,12 +114,19 @@ SceneryRenderer::SceneryRenderer(Microsoft::Xna::Framework::Graphics::GraphicsDe
       palette_(device),
       cellTiles_(std::max(cellTiles, 8)) {
     fullDetail_ = std::getenv("ZOO_PLANTS_FULL_DETAIL") != nullptr;
+    ModelBuilder model;
+    BuildHoldingGate(model);
+    holdingGateModel_.Build(device_, surfaces_, model);
+    ModelBuilder guides;
+    BuildHoldingGateGuides(guides);
+    holdingGateGuides_.Build(device_, surfaces_, guides);
 }
 
 SceneryRenderer::~SceneryRenderer() = default;
 
 void SceneryRenderer::Layout(const zoo::World& world) {
     cells_.clear();
+    holdingGates_.clear();
     width_ = world.Width();
     depth_ = world.Depth();
     for (int z = 0; z < depth_; z += cellTiles_) {
@@ -139,6 +155,94 @@ void SceneryRenderer::Layout(const zoo::World& world) {
     }
     worldRevision_ = 0;
     objectsRevision_ = 0;
+}
+
+void SceneryRenderer::UpdateHoldingGates(const zoo::Zoo& zoo, double seconds) {
+    constexpr float kTravelSeconds = 1.2f;
+
+    for (auto& [id, gate] : holdingGates_) {
+        (void)id;
+        gate.active = false;
+        gate.wantsClosed = false;
+    }
+
+    for (const zoo::StaffMember& member : zoo.Keepers().All()) {
+        if (!member.lockout) {
+            continue;
+        }
+        const zoo::Enclosure* enclosure = zoo.Habitats().Find(member.lockout);
+        if (enclosure == nullptr) {
+            continue;
+        }
+        const zoo::StaffTask* task = member.Task();
+        const bool releasing = member.working && task != nullptr &&
+                               task->lockout == zoo::StaffLockoutAction::Release &&
+                               task->enclosure == member.lockout;
+        for (const zoo::BuildingId id : enclosure->shelters) {
+            const zoo::Building* building = zoo.Objects().FindBuilding(id);
+            if (building == nullptr || !building->open || building->def < 0 ||
+                static_cast<std::size_t>(building->def) >= catalog_.buildings.size()) {
+                continue;
+            }
+            const zoo::BuildingDef& def = catalog_.buildings[static_cast<std::size_t>(building->def)];
+            if (def.role != zoo::BuildingRole::AnimalShelter) {
+                continue;
+            }
+            const zoo::Vec2 front = zoo::World::TileCenter(
+                zoo::FrontTile(def, building->origin, building->facing));
+            bool assigned = false;
+            bool housed = true;
+            for (const zoo::Animal& animal : zoo.Fauna().All()) {
+                if (!animal.InWorld() ||
+                    (animal.home != member.lockout &&
+                     zoo.Habitats().At(animal.position) != member.lockout)) {
+                    continue;
+                }
+                if (animal.shelter == id) {
+                    assigned = true;
+                } else if (animal.activity == zoo::AnimalActivity::Shelter &&
+                           zoo::DistanceSquared(animal.target, front) < 0.01f) {
+                    assigned = true;
+                    housed = false;
+                }
+            }
+
+            const bool wantsClosed = assigned && housed && !releasing;
+            auto [at, inserted] = holdingGates_.try_emplace(id);
+            HoldingGate& gate = at->second;
+            if (inserted) {
+                // A visit may start from a warmed-up or loaded mid-lockout state. Match
+                // that state immediately; ordinary live recalls still start raised.
+                gate.closed = wantsClosed ? 1.0f : 0.0f;
+                gate.slideDirection = def.doorOffset * 2 < def.width ? 1.0f : -1.0f;
+                const zoo::TileCoord size = zoo::FootprintSize(def, building->facing);
+                float ground = zoo.Map().VertexHeight(building->origin.x, building->origin.z);
+                for (int z = 0; z <= size.z; ++z) {
+                    for (int x = 0; x <= size.x; ++x) {
+                        ground = std::max(
+                            ground, zoo.Map().VertexHeight(building->origin.x + x, building->origin.z + z));
+                    }
+                }
+                const zoo::Vec2 inside = zoo::World::TileCenter(
+                    zoo::DoorTile(def, building->origin, building->facing));
+                const zoo::Vec2 doorway = (inside + front) * 0.5f;
+                gate.placement = Placement({doorway.x, ground, doorway.z}, FacingAngle(building->facing));
+            }
+            gate.active = true;
+            gate.wantsClosed = gate.wantsClosed || wantsClosed;
+        }
+    }
+
+    const float travel = static_cast<float>(std::max(seconds, 0.0)) / kTravelSeconds;
+    for (auto at = holdingGates_.begin(); at != holdingGates_.end();) {
+        HoldingGate& gate = at->second;
+        gate.closed = std::clamp(gate.closed + (gate.wantsClosed ? travel : -travel), 0.0f, 1.0f);
+        if (!gate.active && gate.closed <= 0.0f) {
+            at = holdingGates_.erase(at);
+        } else {
+            ++at;
+        }
+    }
 }
 
 std::uint64_t SceneryRenderer::FenceHash(const zoo::World& world, const Cell& cell) const {
@@ -495,6 +599,18 @@ void SceneryRenderer::Submit(CnaEngine::App::Frame& frame, const Vector3& eye) {
         }
         (grove->showsFar ? grove->far : grove->near).Submit(frame);
     }
+    constexpr float kSlide = 1.75f;
+    constexpr float kRailOffset = 0.85f;
+    for (const auto& [id, gate] : holdingGates_) {
+        (void)id;
+        holdingGateGuides_.Submit(
+            frame, Matrix::CreateTranslation(kRailOffset * gate.slideDirection, 0.0f, 0.0f) *
+                       gate.placement);
+        holdingGateModel_.Submit(
+            frame, Matrix::CreateTranslation((1.0f - gate.closed) * kSlide * gate.slideDirection,
+                                             0.0f, 0.0f) *
+                       gate.placement);
+    }
 }
 
 void SceneryRenderer::Submit(CnaEngine::App::Frame& frame) const {
@@ -504,6 +620,18 @@ void SceneryRenderer::Submit(CnaEngine::App::Frame& frame) const {
     }
     for (const auto& grove : groves_) {
         grove->near.Submit(frame);
+    }
+    constexpr float kSlide = 1.75f;
+    constexpr float kRailOffset = 0.85f;
+    for (const auto& [id, gate] : holdingGates_) {
+        (void)id;
+        holdingGateGuides_.Submit(
+            frame, Matrix::CreateTranslation(kRailOffset * gate.slideDirection, 0.0f, 0.0f) *
+                       gate.placement);
+        holdingGateModel_.Submit(
+            frame, Matrix::CreateTranslation((1.0f - gate.closed) * kSlide * gate.slideDirection,
+                                             0.0f, 0.0f) *
+                       gate.placement);
     }
 }
 
@@ -515,6 +643,8 @@ std::size_t SceneryRenderer::Triangles() const {
     for (const auto& grove : groves_) {
         total += grove->near.Triangles();
     }
+    total += holdingGates_.size() *
+             (holdingGateModel_.Triangles() + holdingGateGuides_.Triangles());
     return total;
 }
 
@@ -607,6 +737,7 @@ std::size_t SceneryRenderer::DrawCalls() const {
     for (const auto& grove : groves_) {
         total += grove->near.Pieces();
     }
+    total += holdingGates_.size() * (holdingGateModel_.Pieces() + holdingGateGuides_.Pieces());
     return total;
 }
 

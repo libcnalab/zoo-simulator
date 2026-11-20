@@ -21,4 +21,12 @@ void BuildBuilding(ModelBuilder& model, const zoo::BuildingDef& def);
 /// frame: the gateway along x, centred on the origin, the outside towards +z.
 void BuildEntranceArch(ModelBuilder& model, float width);
 
+/// A separately operated sliding gate at an animal house: welded mesh inside a
+/// steel frame, in its own frame with the doorway centred on x = 0 and +z outside.
+/// Its bottom is at y = 0.08 and the caller moves the whole leaf sideways to open it.
+void BuildHoldingGate(ModelBuilder& model);
+
+/// The fixed overhead rail along which BuildHoldingGate travels.
+void BuildHoldingGateGuides(ModelBuilder& model);
+
 }  // namespace zoogame

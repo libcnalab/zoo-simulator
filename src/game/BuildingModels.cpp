@@ -791,4 +791,37 @@ void BuildEntranceArch(ModelBuilder& model, float width) {
     }
 }
 
+void BuildHoldingGate(ModelBuilder& model) {
+    constexpr float halfWidth = 0.84f;
+    constexpr float bottom = 0.08f;
+    constexpr float top = 2.52f;
+    constexpr float rail = 0.055f;
+
+    // The mesh is a little proud of the frame so its transparency cannot fight
+    // the metal in the depth buffer. It remains legible from inside and outside.
+    MeshWriter& mesh = model.Use({0.22f, 0.25f, 0.25f}, Pattern::WeldMesh);
+    mesh.QuadTwoSided({-halfWidth, bottom, 0.025f}, {halfWidth, bottom, 0.025f},
+                      {halfWidth, top, 0.025f}, {-halfWidth, top, 0.025f});
+
+    MeshWriter& steel = model.Use(kSteel, Pattern::Metal);
+    steel.Box({-halfWidth - rail, bottom, -0.025f}, {-halfWidth + rail, top, 0.055f});
+    steel.Box({halfWidth - rail, bottom, -0.025f}, {halfWidth + rail, top, 0.055f});
+    steel.Box({-halfWidth, bottom, -0.025f}, {halfWidth, bottom + rail * 2.0f, 0.055f});
+    steel.Box({-halfWidth, top - rail * 2.0f, -0.025f}, {halfWidth, top, 0.055f});
+    steel.Beam({-halfWidth + 0.08f, bottom + 0.12f, 0.065f},
+               {halfWidth - 0.08f, top - 0.12f, 0.065f}, 0.055f, 0.045f);
+
+    // A high-contrast operating plate distinguishes it from ordinary exhibit mesh.
+    model.Use({0.88f, 0.61f, 0.07f}, Pattern::Metal)
+        .Box({-0.17f, 1.25f, 0.075f}, {0.17f, 1.47f, 0.115f});
+}
+
+void BuildHoldingGateGuides(ModelBuilder& model) {
+    MeshWriter& steel = model.Use(kSteel, Pattern::Metal);
+    steel.Box({-1.85f, 2.58f, -0.055f}, {1.85f, 2.69f, 0.075f});
+    for (const float x : {-1.55f, 0.0f, 1.55f}) {
+        steel.Box({x - 0.04f, 2.69f, -0.025f}, {x + 0.04f, 2.94f, 0.065f});
+    }
+}
+
 }  // namespace zoogame

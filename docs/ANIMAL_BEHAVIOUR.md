@@ -541,6 +541,13 @@ from the Release build, visitor zoo, seed 1, after the visit's fill.
   297 active cases, including its 374.83-second animation pipeline, with 21 diagnostics disabled.
   J50's real dangerous-habitat recalls add long, converging shelter walks to the same measurement;
   the current result is 967 of 269,129 moving ticks (0.359 %), still below both unchanged bounds.
+  **Moving group destinations (J58, 2026-11-20):** a follower already walking toward a moving
+  leader's destination used to compare that destination with the leader's current position once
+  per second. It repeatedly discarded a valid route before the 15-tick sidestep recovery could
+  begin; one penguin remained still for 179 consecutive moving ticks. Followers now compare with
+  the leader's destination while it is moving. The same probe measures 813 of 247,355 moving ticks
+  (0.329 %), with every continuous stall below the unchanged 120-tick bound; a focused regression
+  preserves the route across the social update.
 - **Golden hashes** of `tests/core/VisitStartTests.cpp` re-recorded for the routines.
 - Pictures: `docs/evidence/animal-routines-2026-11-13.jpg` (lions resting in the shade at
   midday; penguins standing together, one swimming; flamingos at the lagoon after the wader

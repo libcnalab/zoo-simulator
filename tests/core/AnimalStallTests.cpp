@@ -15,7 +15,7 @@ namespace {
 
 // After waypoints themselves were moved off props, seed 1 still spent 1.49 % of its moving ticks
 // stalled; routine places with two clear exits, early sidesteps and finally route searches that
-// include the route corridor's blocking trees and rocks reduce the current zoo below 0.29 % and
+// include the route corridor's blocking trees and rocks reduce the current zoo below 0.35 % and
 // prevent a long-lived pocket from hiding in the total.
 TEST(AnimalMovementTests, VisitorZooAnimalsDoNotRemainStalledInPropPockets) {
     Zoo zoo(testdata::GameCatalog(), testdata::GameSpecies(), VisitorZooConfig(1));

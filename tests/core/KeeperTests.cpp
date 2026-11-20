@@ -280,6 +280,8 @@ TEST(Keeper, DangerousHabitatsHaveOutsideServiceAndLockoutWorkInside) {
     std::map<std::uint32_t, int> active;
     std::map<std::uint32_t, int> entered;
     std::map<std::uint32_t, int> visibleRecall;
+    std::map<std::uint32_t, int> operatedClose;
+    std::map<std::uint32_t, int> operatedRelease;
     std::map<std::uint32_t, int> activeStreak;
     std::map<std::uint32_t, int> longestActive;
     for (int i = 0; i < 50000; ++i) {
@@ -299,6 +301,19 @@ TEST(Keeper, DangerousHabitatsHaveOutsideServiceAndLockoutWorkInside) {
                     }
                 }
                 visibleRecall[member.lockout.value] += recalling;
+                const StaffTask* task = member.Task();
+                const bool closesGate = member.working && member.task > 0 && task != nullptr &&
+                                        task->lockout == StaffLockoutAction::None &&
+                                        member.tasks[member.task - 1].lockout == StaffLockoutAction::Secure;
+                operatedClose[member.lockout.value] += closesGate;
+                if (closesGate) {
+                    EXPECT_NE(zoo->Habitats().At(World::TileAt(member.position)), member.lockout)
+                        << "keeper entered habitat " << member.lockout.value
+                        << " before its holding gate closed";
+                }
+                operatedRelease[member.lockout.value] +=
+                    member.working && task != nullptr && task->lockout == StaffLockoutAction::Release &&
+                    zoo->Habitats().At(World::TileAt(member.position)) != member.lockout;
                 activeNow.insert(member.lockout.value);
             }
             for (const StaffTask& task : member.tasks) {
@@ -332,6 +347,8 @@ TEST(Keeper, DangerousHabitatsHaveOutsideServiceAndLockoutWorkInside) {
         EXPECT_GT(active[id], 0) << enclosure->name;
         EXPECT_GT(entered[id], 0) << enclosure->name;
         EXPECT_GT(visibleRecall[id], 0) << enclosure->name << " did not show its recall";
+        EXPECT_GT(operatedClose[id], 0) << enclosure->name << " did not wait for its holding gate";
+        EXPECT_GT(operatedRelease[id], 0) << enclosure->name << " did not show its release operation";
         EXPECT_LT(longestActive[id], 1500) << enclosure->name << " remained secured too long";
     }
 }

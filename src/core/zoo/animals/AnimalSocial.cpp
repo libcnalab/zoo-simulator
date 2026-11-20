@@ -232,8 +232,9 @@ void UpdateSpeciesBehaviour(Animal& animal, const SpeciesDef& species, Env& env,
     } else if (!asleep && leader != nullptr && leader->id != animal.id && profile->spreadM > 0.0f &&
                animal.hunger < tuning::kHungerUrgent && animal.thirst < tuning::kThirstUrgent) {
         const float limit = profile->spreadM * 1.5f + species.bodyRadiusM * 2.0f;
+        const Vec2 leaderPlace = leader->moving ? leader->target : leader->position;
         if (DistanceSquared(animal.position, leader->position) > limit * limit &&
-            (!animal.moving || DistanceSquared(animal.target, leader->position) > limit * limit)) {
+            (!animal.moving || DistanceSquared(animal.target, leaderPlace) > limit * limit)) {
             AnimalActivity next =
                 RestingActivity(leader->activity) ? leader->activity : AnimalActivity::Wander;
             const Vec2 place = RoutinePlace(animal, species, *profile, next, *enclosure, env, animals,

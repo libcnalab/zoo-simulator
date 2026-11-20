@@ -48,12 +48,14 @@ zoo happens half way through the job.
   night. A habitat dirtier than 0.25 is raked whatever the hour.
 - **Dangerous species.** Feeding, watering, fence checks and sweeping remain on the public
   side. When dirt reaches 0.18 (and periodically every third visit), the keeper operates a
-  four-second lockout at the service gate. Every animal in the habitat must fit into an open,
+  four-second secure control at the service gate. Every animal in the habitat must fit into an open,
   registered shelter whose door its species can use; a loose resident, missing door or short
   capacity or disconnected route makes the whole operation fail without moving any animal. On
   success the assigned group remains visible while walking to those doors. The keeper waits at
-  the outside control until the last dangerous resident is hidden, crosses the same registered
-  gate for one twelve-second rake at its inside tile, returns outside and only then releases it.
+  the outside control until the last dangerous resident is hidden and its separately drawn welded
+  holding gate has slid shut, crosses the same registered service gate for one twelve-second rake
+  at its inside tile, returns outside, visibly slides the holding gate open for 1.2 seconds and only
+  then releases the group.
   If the way out changes, the animals stay secured and the keeper retries rather than completing
   the release remotely.
 - **The gardener** waters a bed every third stop, kneels and tends it with a trowel, and
@@ -160,6 +162,24 @@ house in `evidence/animated-lockout-j50-2026-11-20.png`. Changed short and 6,000
 repeat for seeds 1–3. The complete suite passes all 298 active cases including the 466.17-second
 animation pipeline, with 21 diagnostics disabled (2026-11-20).
 
+J58 completes the visible lockout at the animal-house end. Each registered house assigned an
+animal receives a welded-mesh sliding leaf with a steel frame, fixed overhead rail, diagonal brace
+and yellow operating plate. Empty houses remain open; an assigned leaf closes only after its last
+resident has crossed the threshold. On the return journey the keeper no longer skips the release
+task as soon as they reach public ground: they operate it from that safe side, the leaf slides open
+over 1.2 seconds, and the saved lockout releases at the task's midpoint. If the exact outside control is
+unreachable, that safe-side operation remains the fallback, so presentation cannot strand the
+animals or relax the entry guard. `Keeper.DangerousHabitatsHaveOutsideServiceAndLockoutWorkInside`
+now requires every dangerous habitat to show this outside release operation. A lockstep Polar
+Sound run was opened at the open, closed, sliding and released frames; the three bears emerge
+only after the doorway is clear. The staffed week remains better than automatic care at 11 against
+16 animal-hours in need, with longest spells of one against four hours. Changed short and
+6,000-step hashes repeat twice for seeds 1–3. The complete suite passes all 304 active cases,
+including the 479.96-second animation pipeline, with 21 diagnostics disabled. Under ASan the
+two gate/lockout tests, the focused group-route test, the 12,000-step stall regression and all 30
+game-side tests pass; a real three-frame Polar Sound visit after 3,000 fill steps also completes
+cleanly (leak detection off for the documented `ptrace` limitation; J58, 2026-11-20).
+
 J21 spreads outside work around habitats which have a planted stand-off strip. `BarrierStands`
 used to stop as soon as it found the service gate, even if that left Elephant Valley and Rhino
 Hollow with one place for every feeding, fence check and sweep. It now keeps both the direct gate
@@ -260,6 +280,4 @@ the first tick on), not because of the keepers.
 
 ## Open
 
-- The visible recall uses each registered shelter door; there is no separately operated holding-yard
-  gate, and release returns residents at that door without an opening-door animation.
 - Nobody is drawn beyond 150 m or beyond the 12 nearest.
