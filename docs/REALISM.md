@@ -42,6 +42,7 @@ loudspeaker stays muted and nobody has listened to any of it.
 | Keepers, a gardener and a cleaner at work | nine people in a green polo, khaki trousers and a bucket hat go about the zoo all day: keepers fill feeders and troughs, scatter feed at two public feedings a habitat (the board says when: "Keeper feeds 10:30 and 16:00, next at 10:30"), muck out with a rake and a wheelbarrow, hose at the water's edge and check fences with a clipboard; they come in through the keeper gates over the service aprons, never wade and never enter a lion's or a bear's habitat (they work from the barrier there); the gardener kneels at the beds and waters them, the cleaner empties bins and sweeps. Automatic care stays behind them; no animal fares worse (a week: 10 against 15 animal-hours in need) | `docs/KEEPERS.md`, `evidence/keepers-g5-2026-11-14.jpg` |
 | Animals with a species' day | each species has its own shares of resting, feeding, walking and a signature activity (browse, ruminate, bathe, dust bathe, preen, sentinel, dig, filter feed, patrol, huddle), chooses its place in the habitat (shade at midday, high ground for the sentry, the group), and keeps them through a save; lions rest 70 % of the day, elephants move or feed 62 %, a meerkat sentry is posted 85 % of daylight | `docs/ANIMAL_BEHAVIOUR.md`, `evidence/animal-routines-2026-11-13.jpg` |
 | Signature activities move | dedicated pipeline clips now show the meerkat standing sentry and digging, adult and young penguins preening and huddling, flamingos preening, huddling and sweeping their inverted bills while filter-feeding, an ostrich dust-bathing, all three elephant variants gathering and tossing dust or wet mud, camels chewing the cud, all three giraffe variants chewing the cud and browsing both sides of a crown, bears, tigers and rhinoceroses wallowing, and all three zebra variants holding a high-headed watch; the exact remaining fallbacks are listed rather than hidden | `docs/ANIMALS.md`, `evidence/animal-clips-a1-2026-11-14.jpg`, `evidence/animal-clips-a2-2026-11-20.jpg`, `evidence/animal-clips-a3-2026-11-20.jpg`, `evidence/animal-clips-a4-2026-11-20.jpg`, `evidence/animal-clips-a5-2026-11-20.jpg` |
+| Wolf pup with juvenile proportions | the one-year-old animal at Wolf Ridge now uses a dedicated 0.46 m pup: shorter body and muzzle, broader skull, larger eyes, ears and paws, lighter coat and shorter-stride locomotion instead of a uniformly scaled adult | `docs/ANIMALS.md`, `evidence/wolf-juvenile-j1-2026-11-20.jpg` |
 
 ### Light from the sky and the ground (2026-11-13)
 
@@ -81,8 +82,8 @@ where an animal wades. Penguins swim and float with their own clips now, and pol
 
 1. Animals: five of fifteen species (wolf, camel, meerkat, ostrich, kangaroo) are still the stylised first generation; the bears are sculpt-based but crude
    (`docs/ANIMALS.md`). The cats are believable now but not photographs (the tiger's cheek
-   ruff reads as a grey comb, the mane's cards show close up). Meerkat pups, ostrich chicks, wolf
-   pups, camel and kangaroo young and flamingo juveniles have no juvenile model and are drawn as
+   ruff reads as a grey comb, the mane's cards show close up). Meerkat pups, ostrich chicks,
+   camel and kangaroo young and flamingo juveniles have no juvenile model and are drawn as
    scaled adults.
 2. Habitat fronts: the catalog has no dry moat or ha-ha. Trees keep the planted strip's depth
    behind the barrier except where that would cross the species' vegetation welfare band (Rhino

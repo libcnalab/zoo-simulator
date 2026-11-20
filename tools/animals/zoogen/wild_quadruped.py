@@ -22,6 +22,12 @@ def make_wild_quadruped(config):
     zebra = kind == "zebra"
     tiger = kind == "tiger"
     wolf = kind == "wolf"
+    skull_scale = config.get("skull_scale", 1.0)
+    muzzle_width_scale = config.get("muzzle_width_scale", 1.0)
+    muzzle_length_scale = config.get("muzzle_length_scale", 1.0)
+    ear_scale = config.get("ear_scale", 1.0)
+    eye_scale = config.get("eye_scale", 1.0)
+    paw_scale = config.get("paw_scale", 1.0)
     body_z = height * (0.70 if bear else 0.72 if zebra else 0.70)
     front_x = length * 0.20
     hip_x = -length * 0.27
@@ -145,10 +151,12 @@ def make_wild_quadruped(config):
 
     skull_width = height * (0.12 if kind == "polar_bear" else 0.17 if kind == "brown_bear"
                             else 0.105 if wolf else 0.12 if zebra else 0.15 if tiger else 0.13)
+    skull_width *= skull_scale
     muzzle_x = nose_x - (0.20 if wolf else 0.18 if kind == "polar_bear"
-                         else 0.08 if zebra else 0.10 if bear else 0.075) * length
+                         else 0.08 if zebra else 0.10 if bear else 0.075) * length * muzzle_length_scale
     muzzle_width = height * (0.08 if wolf else 0.095 if zebra else 0.09 if bear
                              else 0.11 if tiger else 0.10)
+    muzzle_width *= muzzle_width_scale
     parts.append(Part("skull", [
         R((nose_x - 0.22 * length, 0, head_z), 0.70 * skull_width, 0.11 * height),
         R((nose_x - 0.145 * length, 0, head_z - 0.005 * height), skull_width,
@@ -160,7 +168,8 @@ def make_wild_quadruped(config):
           0.05 * height, n=2.6),
     ], weights={"head": 1.0}, tag="head", segments=20, cap_scale=0.45))
     parts.append(Part("jaw", [
-        R((nose_x - 0.15 * length, 0, head_z - 0.08 * height - brown_face_drop),
+        R((nose_x - 0.15 * length * muzzle_length_scale, 0,
+          head_z - 0.08 * height - brown_face_drop),
           0.70 * muzzle_width,
           0.035 * height),
         R((nose_x - 0.04 * length, 0, head_z - 0.115 * height - brown_face_drop),
@@ -168,20 +177,21 @@ def make_wild_quadruped(config):
           0.03 * height),
     ], weights={"jaw": 1.0}, tag="jaw", segments=16, cap_scale=0.4))
     ear_height = (0.20 * height if wolf else 0.15 * height if zebra else
-                  0.075 * height if bear else 0.10 * height if tiger else 0.11 * height)
+                  0.075 * height if bear else 0.10 * height if tiger else 0.11 * height) * ear_scale
     ear_x = nose_x - 0.20 * length
     parts.append(Part("ear.L", [
         R((ear_x, 0.09 * height, head_z + 0.03 * height),
-          (0.058 if wolf or zebra else 0.045) * height, 0.04 * height),
+          (0.058 if wolf or zebra else 0.045) * height * ear_scale, 0.04 * height * ear_scale),
         R((ear_x - 0.01 * length, 0.11 * height, head_z + 0.65 * ear_height),
-          (0.052 if wolf or zebra else 0.04) * height, 0.045 * height),
+          (0.052 if wolf or zebra else 0.04) * height * ear_scale, 0.045 * height * ear_scale),
         R((ear_x - 0.02 * length, 0.12 * height, head_z + ear_height),
-          0.004 * height if wolf or zebra else 0.018 * height,
-          0.006 * height if wolf or zebra else 0.012 * height),
+          (0.004 * height if wolf or zebra else 0.018 * height) * ear_scale,
+          (0.006 * height if wolf or zebra else 0.012 * height) * ear_scale),
     ], weights={"ear.L": 1.0}, tag="ear", segments=12, mirror=True, side_ref=(0.25, 1, 0),
        cap_scale=0.3))
     eye = np.array([nose_x - 0.155 * length, 0.075 * height, head_z + 0.015 * height])
-    parts.append(Part("eye.L", [R(eye, 0.018 * height, 0.018 * height)], weights={"head": 1.0},
+    parts.append(Part("eye.L", [R(eye, 0.018 * height * eye_scale, 0.018 * height * eye_scale)],
+                      weights={"head": 1.0},
                       tag="eye", segments=12, subdiv=1, fuse=False, mirror=True))
     parts.append(Part("nose", [
         R((nose_x - 0.015 * length, 0, head_z - 0.035 * height - brown_face_drop),
@@ -216,8 +226,8 @@ def make_wild_quadruped(config):
     paw_x = front_x + (0.18 if bear else 0.09) * height
     paw_back_x = front_x - 0.12 * height if bear else front_x + 0.015 * length
     hind_paw_back = hip_x - 0.12 * height if bear else hip_x + 0.015 * length
-    paw_rx = (0.13 if bear else 0.075 if zebra else 0.085) * height
-    paw_ry = (0.10 if bear else 0.07 if zebra else 0.067) * height
+    paw_rx = (0.13 if bear else 0.075 if zebra else 0.085) * height * paw_scale
+    paw_ry = (0.10 if bear else 0.07 if zebra else 0.067) * height * paw_scale
     hoof_tag = "hoof" if zebra else "paw"
     paw_seg = 8 if zebra else 16
     parts.extend([
@@ -294,9 +304,10 @@ def make_wild_quadruped(config):
             coat = nz.mix(coat, np.array([0.08, 0.055, 0.045]), ctx.tag("nose"))
             coat = nz.mix(coat, np.array([0.035, 0.03, 0.028]), ctx.tag("jaw") * 0.7)
         elif wolf:
-            grey = np.array([0.40, 0.36, 0.30])
-            pale = np.array([0.76, 0.70, 0.59])
-            dark = np.array([0.20, 0.19, 0.17])
+            juvenile = config.get("juvenile", False)
+            grey = np.array([0.44, 0.40, 0.34]) if juvenile else np.array([0.40, 0.36, 0.30])
+            pale = np.array([0.80, 0.75, 0.65]) if juvenile else np.array([0.76, 0.70, 0.59])
+            dark = np.array([0.25, 0.23, 0.20]) if juvenile else np.array([0.20, 0.19, 0.17])
             noise = nz.fbm(P, 19.0, 4, seed=18)
             saddle = nz.smoothstep(0.32, 0.72, ctx.N[..., 2])
             saddle *= nz.smoothstep(0.30, 0.48, ctx.z)
@@ -389,7 +400,7 @@ def make_wild_quadruped(config):
         if zebra:
             head_down = quad.HeadDown(body_pitch=30.0, crouch=0.0, chest=10.0,
                                       neck=(25.0, 15.0), head=5.0)
-        head_down = config.get("head_down", head_down)
+        head_down = config.get("head_down") or head_down
         params = quad.Params(gaits=[walk, fast],
                              lie=quad.Lie(drop=config.get("lie_drop", 0.42 if bear else 0.48),
                                           hind_tuck=config.get("hind_tuck", 0.10),
@@ -408,11 +419,14 @@ def make_wild_quadruped(config):
                              call_head=config.get("call_head", -14.0))
         return quad.standard_clips(solver, params)
 
+    meta = {"common_name": config["common_name"],
+            "scientific_name": config["scientific_name"],
+            "shoulder_height_m": height,
+            "body_length_m": length,
+            "roughness": 0.9}
+    meta.update(config.get("meta", {}))
     return Spec(name=name, bones=bones, parts=parts, paint=paint, texture_size=1024,
-                voxel=0.010 if height < 1.1 else 0.012, target_tris=18000,
-                smooth_iters=8, meta={"common_name": config["common_name"],
-                                      "scientific_name": config["scientific_name"],
-                                      "shoulder_height_m": height,
-                                      "body_length_m": length,
-                                      "roughness": 0.9},
+                voxel=config.get("voxel", 0.010 if height < 1.1 else 0.012),
+                target_tris=config.get("target_tris", 18000),
+                smooth_iters=8, meta=meta,
                 rig=rig, clips=clips, validate_mesh=config.get("validate_mesh", False))

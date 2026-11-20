@@ -43,7 +43,7 @@ python3 -m unittest discover -s tools/animals/tests
 | `zoogen/scan.py` on a prepared third-party static sculpt, rigged by us (below) | zebra, zebra_female, zebra_juvenile |
 | `zoogen/giraffe2.py` on a prepared head-and-neck scan, body modelled by us (below) | giraffe, giraffe_female, giraffe_juvenile |
 | `zoogen/sculpt.py`, `bear.py` on a prepared third-party sculpt, rigged by us (below) | brown_bear, brown_bear_juvenile, polar_bear, polar_bear_juvenile |
-| `zoogen/quadruped.py`, `wild_quadruped.py`, `anatomy.py` | wolf, camel, meerkat |
+| `zoogen/quadruped.py`, `wild_quadruped.py`, `anatomy.py` | wolf, wolf_juvenile, camel, meerkat |
 | `zoogen/birdscan.py` on a prepared third-party scan or sculpt, rigged by us (below) | penguin, penguin_juvenile, flamingo |
 | `zoogen/biped.py` | ostrich, kangaroo |
 
@@ -54,6 +54,23 @@ Each has the same eight clips, which the game picks from what the animal is doin
 by the species file. The first-generation models (the last two rows) are stylised, not
 photorealistic; what each is weak at is listed in
 [`PIVOT_TO_ZOO_EXPLORATION.md`](PIVOT_TO_ZOO_EXPLORATION.md).
+
+### Grey wolf pup (2026-11-20)
+
+`wolf_juvenile` replaces the scaled-adult wolf used for animals below half the species'
+age of maturity. It is an older pup with a 0.46 m shoulder, 0.78 m body, a proportionally
+broader skull, larger eyes, ears and paws, and a muzzle shortened to 66 % of the adult
+generator's proportion. Its lighter coat is separate from the adult's. The model has 15,528
+triangles, 33 bones and the standard eight clips; its short-stride walk is 0.72 m/s and its
+trot is 1.65 m/s.
+
+The generator changes are opt-in: a fresh adult wolf export remained byte-for-byte identical
+to the production model, and the production pup matches a separate fresh export. The viewer
+comparison and a real Wolf Ridge frame are in
+`evidence/wolf-juvenile-j1-2026-11-20.jpg`; the latter shows the game selecting the pup for
+one-year-old Rosa. The proportions read as young, especially beside an adult, but this is still
+the same stylised loft-and-tube first-generation model rather than a furred or scan-based wolf;
+the large paws are deliberate and there is no normal map.
 
 ### Big cats from a sculpt (2026-11-13)
 
@@ -378,7 +395,8 @@ byte.
   animal younger than half its species' age of maturity with the juvenile one; a species without
   them uses the one model for everybody. A model is scaled by height:
   `species shoulder height x share of its sex x growth / meta.shoulder_height_m` of the model
-  drawn, so a variant states its own height. (Lion, elephant, zebra, rhinoceros, giraffe, both bears and penguin have variants so far.)
+  drawn, so a variant states its own height. (Lion, elephant, zebra, rhinoceros, giraffe, wolf,
+  both bears and penguin have variants so far.)
 - **Swimming.** Where the water is deeper than about 0.6 of the animal's standing height it
   floats: the body rides with `meta.swim_depth_m` (default 0.72 of the model's shoulder height)
   under the surface instead of walking on the pool bed under water, and plays the optional

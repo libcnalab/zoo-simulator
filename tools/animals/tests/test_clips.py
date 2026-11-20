@@ -20,7 +20,8 @@ from zoogen import geom, quadruped  # noqa: E402
 from zoogen.rig import Pose, Solver, quat_from_matrix, rot_x, rot_y, rot_z  # noqa: E402
 
 CATS = ["lion", "lion_female", "lion_juvenile", "tiger"]
-SPECIES = ["lion", "lion_female", "lion_juvenile", "tiger", "wolf", "brown_bear", "polar_bear",
+SPECIES = ["lion", "lion_female", "lion_juvenile", "tiger", "wolf", "wolf_juvenile",
+           "brown_bear", "polar_bear",
            "brown_bear_juvenile", "polar_bear_juvenile",
            "zebra", "zebra_female", "zebra_juvenile", "rhino", "camel", "elephant", "giraffe",
            "giraffe_female", "giraffe_juvenile", "meerkat",
@@ -209,6 +210,36 @@ class ClipTests(unittest.TestCase):
 
 
 class AnatomyTests(unittest.TestCase):
+    def test_wolf_pup_has_juvenile_proportions_and_variant_metadata(self):
+        adult = importlib.import_module("species.wolf").make_spec()
+        pup = importlib.import_module("species.wolf_juvenile").make_spec()
+        adult_parts = {part.name: part for part in adult.parts}
+        pup_parts = {part.name: part for part in pup.parts}
+        adult_height = adult.meta["shoulder_height_m"]
+        pup_height = pup.meta["shoulder_height_m"]
+        self.assertGreater(pup_parts["skull"].rings[1].ry / pup_height,
+                           1.2 * adult_parts["skull"].rings[1].ry / adult_height)
+        self.assertGreater(pup_parts["front_paw.L"].rings[-1].ry / pup_height,
+                           1.15 * adult_parts["front_paw.L"].rings[-1].ry / adult_height)
+        adult_muzzle = adult_parts["skull"].rings[-1].c[0] - adult_parts["skull"].rings[2].c[0]
+        pup_muzzle = pup_parts["skull"].rings[-1].c[0] - pup_parts["skull"].rings[2].c[0]
+        self.assertLess(pup_muzzle / pup.meta["body_length_m"],
+                        .8 * adult_muzzle / adult.meta["body_length_m"])
+        self.assertEqual(pup.meta["variant_of"], "wolf")
+        self.assertEqual(pup.meta["variant"], "juvenile")
+        self.assertAlmostEqual(pup.meta["relative_height"], pup_height / adult_height)
+        root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+        with open(os.path.join(root, "assets", "animals", "wolf_juvenile.json")) as source:
+            manifest = json.load(source)
+        self.assertEqual(manifest["name"], "wolf_juvenile")
+        self.assertEqual(manifest["meta"], pup.meta)
+        self.assertLessEqual(manifest["triangles"], 17000)
+        clips = {clip["name"]: clip for clip in manifest["clips"]}
+        self.assertEqual(set(clips),
+                         {"idle", "walk", "trot", "eat", "drink", "rest", "sleep", "vocalize"})
+        self.assertAlmostEqual(clips["walk"]["speed"], .72, delta=.02)
+        self.assertAlmostEqual(clips["trot"]["speed"], 1.65, delta=.02)
+
     def test_pillar_feet_have_flat_round_soles(self):
         from zoogen.anatomy import round_foot
         foot = round_foot("foot.L", 1.0, .5, .3, .28, "toes.L")

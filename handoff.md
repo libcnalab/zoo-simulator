@@ -207,8 +207,15 @@ tests pass. Nobody listened to the audio; preserve that qualification.
 - First-generation stylised models still: wolf, camel, meerkat, ostrich, kangaroo; bears are
   sculpt-based but crude (`docs/ANIMALS.md`; pipeline in `tools/animals/`, its tests
   `python3 -m unittest discover -s tools/animals/tests`, about 10 minutes).
-- No juvenile model for meerkat, ostrich, wolf, camel, kangaroo, flamingo (drawn as scaled
+- No juvenile model for meerkat, ostrich, camel, kangaroo, flamingo (drawn as scaled
   adults); the brown/polar bear cub models exist but are unused (bears live as pairs).
+- `wolf_juvenile` is now a real older-pup variant rather than a scaled adult: 0.46 m shoulder,
+  shorter body and muzzle, broader skull, larger eyes, ears and paws, lighter coat, 15,528
+  triangles, 33 bones and eight clips with pup-scaled motion. The adult wolf remained
+  byte-for-byte identical after the opt-in generator change, and the production pup matches an
+  independent fresh export. All 108 animal-pipeline tests pass; a real Wolf Ridge run selected
+  the model for one-year-old Rosa. The inspected comparison and habitat evidence is
+  `docs/evidence/wolf-juvenile-j1-2026-11-20.jpg` (J1, 2026-11-20).
 - Dedicated clips now cover meerkat sentry/dig, penguin and flamingo preening, flamingo filter
   feeding, camel and giraffe rumination, ostrich and elephant dust-bathing, and shallow wallowing
   for bears, tigers and rhinoceroses (elephants reuse their scoop/toss as a wet toss). Penguin
