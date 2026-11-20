@@ -52,7 +52,9 @@ whatever you take up (`docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `docs/V
   frame were clean, as was the equivalent three-frame ASan/UBSan game smoke. J54 also drops the
   smaller CPU mip staging levels after their GPU upload on desktop Linux only: the same profile
   falls 2,799 -> 2,760 MB (heap 2,457 -> 2,405), and the animal mark 2,550 -> 2,486 MB. Other
-  platforms retain context recovery and readback.
+  platforms retain context recovery and readback. J55 applies the same completed-GPU-chain
+  operation to the read-only desktop terrain: the immediate sample falls 2,760 -> 2,665 MB
+  (heap 2,405 -> 2,301). The editor and other platforms retain their staging.
   The complete suite after these changes is 302 active tests passed, with 21 long-running
   measurement/diagnostic tests disabled as intended.
 - Animal models are now submitted only when a generous body-and-shadow sphere intersects the
@@ -515,6 +517,17 @@ whatever you take up (`docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `docs/V
   distant pixels, and a real ASan/UBSan visit loads all 33 variants and draws 65 of 90 animals
   cleanly. The complete C++ suite passes all 302 active cases in 366.28 seconds, with 21
   diagnostics disabled (J54, 2026-11-20).
+- J55 releases the smaller CPU mip staging levels of the 100 terrain chunks, three ground-detail
+  textures and the apron after a desktop Linux visit has uploaded them. A shared helper preserves
+  the texture wrapper's address, renderer and complete mip count, so existing materials keep
+  valid pointers; the editor and context-recovering platforms remain unchanged. The immediate
+  software-GL profile falls 2,760 -> 2,665 MB resident and 2,405 -> 2,301 MB heap. All four
+  alternate visit modes also move down, while the unchanged editor is noisy. The direct 95 MB
+  observation exceeds the removed allocations, so only their 37.7 MiB logical size is attributed.
+  All 30 game-side tests and six ASan texture tests pass. A real
+  ASan/UBSan visit completes 6,000 steps cleanly, and the inspected Lion Rock image keeps the
+  terrain intact. The animation pipeline passes all 131 cases, and the complete C++ suite passes
+  all 302 active cases in 253.16 seconds with 21 diagnostics disabled (J55, 2026-11-20).
 - The stopped G7c audio audit is recovered and finished. Calls now follow `Vocalize`, social,
   play and documented feeding cues rather than a timer; takes do not repeat immediately, spatial
   pan is capped at 0.60, birds fade with daylight, crowd level follows its people, and footsteps

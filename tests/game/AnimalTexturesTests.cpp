@@ -116,6 +116,7 @@ TEST(AnimalTextures, DiscardedCpuMipCopiesKeepTheWholeGpuChain) {
 
     auto variants = GiveMaterialMipmaps(materials, true);
     EXPECT_TRUE(variants.empty());
+    EXPECT_EQ(material.baseTexture, source.get());
     EXPECT_TRUE(source->GetCpuPixelsWeak().expired());
     const auto expected = Graphics::BuildMipChain(image, {.rounding = Graphics::MipRounding::Nearest,
                                                         .srgb = true, .alphaTestReference = {}});

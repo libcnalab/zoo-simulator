@@ -12,6 +12,8 @@
 
 #include "CnaEngine/Graphics/Image.hpp"
 
+#include "StaticTexture.hpp"
+
 namespace zoogame {
 
 namespace {
@@ -50,13 +52,7 @@ std::unique_ptr<Xna::Texture2D> Mipmapped(const Xna::Texture2D& texture, bool sr
         // Context recovery is deliberately unavailable in a desktop visit. UploadTexture has
         // already released level zero there, but CNA retains the smaller levels as CPU staging.
         // Re-wrap the same completed renderer without those copies; GPU sampling stays intact.
-        auto renderer = made->GetRendererWeak().lock();
-        if (renderer) {
-            auto thin = std::make_unique<Xna::Texture2D>(Xna::Texture2D::ReconstructFromCache(
-                *device, made->getWidthProperty(), made->getHeightProperty(), made->getFormatProperty(),
-                made->getLevelCountProperty(), std::move(renderer), {}));
-            return thin;
-        }
+        DiscardCpuTextureCopies(*made);
     }
     return made;
 }

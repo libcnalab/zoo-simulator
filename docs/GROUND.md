@@ -2,7 +2,7 @@
 
 What the ground of Greenhill Zoo is drawn from, how the banks of its pools are shaped, the
 height lookup everything standing on the ground uses, what it costs, and what is open.
-Tasks G1 (2026-11-13), G1b and G1c (2026-11-14), J51 and J52 (2026-11-20). Code:
+Tasks G1 (2026-11-13), G1b and G1c (2026-11-14), J51, J52 and J55 (2026-11-20). Code:
 `src/game/GroundPaint.{hpp,cpp}`
 (colours and heights), `src/game/GroundDetail.{hpp,cpp}` (the detail layer's textures),
 `src/game/TerrainRenderer.{hpp,cpp}` (meshes, textures, drawing). Evidence:
@@ -19,8 +19,10 @@ Tasks G1 (2026-11-13), G1b and G1c (2026-11-14), J51 and J52 (2026-11-20). Code:
   rounded free ends and blended turns instead of tile-square cuts; a soil verge along paths,
   stones kicked off gravel paths; bare rock where the ground is steep.
   The editor retains the CPU image and tile signatures so it can repaint changed chunks.
-  A read-only visitor zoo discards that 100 MB edit cache after upload; animated water keeps
-  updating, while a later load builds a fresh renderer and cache before discarding it again.
+  A read-only visitor zoo discards that 100 MB edit cache after upload. On desktop Linux it also
+  releases about 38 MiB of CPU staging for the smaller levels of the completed chunk, detail and
+  apron mip chains, while keeping the GPU textures; animated water keeps updating. The editor and
+  platforms which retain context recovery keep those copies.
 - **Soft, irregular borders.** Kinds of ground and paths are spread over the tiles with a
   quadratic B-spline (a field that is smooth across tile sides), then pushed about by noise;
   the winner takes the colour over a narrow soft edge. No border follows a tile's side.

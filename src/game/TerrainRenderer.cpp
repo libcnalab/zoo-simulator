@@ -22,6 +22,7 @@
 #include "Microsoft/Xna/Framework/Graphics/Texture2D.hpp"
 
 #include "GroundPaint.hpp"
+#include "StaticTexture.hpp"
 
 namespace zoogame {
 
@@ -792,7 +793,21 @@ void TerrainRenderer::DiscardEditCache() {
     for (auto& chunk : chunks_) {
         chunk->image = Image();
         std::vector<std::uint32_t>().swap(chunk->signatures);
+#if defined(__linux__) && !defined(__ANDROID__)
+        // A visit cannot repaint its chunks and desktop context recovery is disabled. Keep the
+        // uploaded chain, without retaining another copy of every smaller mip on the CPU.
+        if (chunk->texture)
+            DiscardCpuTextureCopies(*chunk->texture);
+#endif
     }
+#if defined(__linux__) && !defined(__ANDROID__)
+    for (auto& texture : detailTextures_) {
+        if (texture)
+            DiscardCpuTextureCopies(*texture);
+    }
+    if (apronTexture_)
+        DiscardCpuTextureCopies(*apronTexture_);
+#endif
     editCacheDiscarded_ = true;
 #if defined(__GLIBC__)
     // The hundred one-megabyte images otherwise remain as free pages in glibc's arenas.

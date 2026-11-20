@@ -42,7 +42,8 @@ public:
     /// Paints and cuts the meshes on several threads, each chunk by itself, so
     /// the result does not depend on how many threads there are.
     void Build(const zoo::World& world);
-    /// Releases the CPU paint images and tile signatures after building a read-only world.
+    /// Releases the CPU paint images and tile signatures after building a read-only world. On
+    /// desktop Linux, where visits disable context recovery, also releases static texture staging.
     /// Afterwards Update still advances animated water, but ignores map and fence revisions.
     /// A later Build restores the editable state.
     void DiscardEditCache();

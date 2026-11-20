@@ -516,12 +516,23 @@ unchanged. With glibc's free arenas trimmed, the ground `StartMark` fell from 87
 conservative **49 MB resident**. The whole-run sampler read 2,682 MB (only 5 MB below the prior
 run, within heap variation), and a zebra screenshot remains visually correct.
 
-The existing 400-frame save/load script reached both reloads, saved again and made its final
-screenshot without a renderer failure, although the 180 s software-rendering limit stopped it at
-frame 277 before its Quit click. It also exposed an unresolved reload spike: old static GPU
-resources remain resident while replacements are built, reaching about 3.1 GB; the first terrain
-rebuild took 107 s. Static context-recovery copies are now disabled around every `Adopt`, not only
-the initial load, but the spike remains and is not claimed as fixed.
+The same read-only desktop path now releases the CPU staging vectors for every smaller mip after
+the complete GPU chains of the 100 chunks, three detail textures and apron have been uploaded.
+Their logical total is 37.7 MiB; the texture wrapper addresses and GPU renderers stay fixed,
+so material pointers remain valid. The immediate same-machine sample fell 2,760 -> 2,665 MB
+resident and 2,405 -> 2,301 MB heap. That observation exceeds the allocations removed because of
+short-run allocator noise, so only the 37.7 MiB logical release is attributed. The editor and
+context-recovering platforms remain unchanged. Six focused texture tests pass under ASan, a
+real 6,000-step sanitized visit completes cleanly, and the inspected Lion Rock terrain is intact.
+The full animation pipeline passes all 131 cases, and the complete C++ suite passes all 302 active
+cases with 21 intended diagnostics disabled.
+
+The reload spike exposed by the original 400-frame script is fixed on the game side. A visit now
+compares all render-relevant terrain, fence and placed-object fields and retains its uploaded
+ground and scenery when a loaded save has the same static scene; animal actors reset but their
+species resources remain. In a two-reload check, neither `Adopt` repeated static or animal
+loading, the run ended at 3,033 MB instead of the earlier 3,120 MB sample, and the second reload
+added 9 MB. An editor load or an actual geometry change still rebuilds normally.
 
 Audio files are now decoded on first use instead of all 53 during `Soundscape` construction. The
 library contains 22.71 MB of decoded PCM (12.79 MB ambience, 9.42 MB calls and 0.50 MB footsteps),

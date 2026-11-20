@@ -455,3 +455,29 @@ and drew 65 of 90 animals without an ASan/UBSan finding. Leak detection remains 
 this managed ptrace session. The final complete C++ suite passes all **302 active cases** in
 366.28 seconds, with 21 intended diagnostics disabled; the unchanged Python animation pipeline
 passed in the immediately preceding full run.
+
+## Terrain mip staging memory (2026-11-20)
+
+The read-only visitor terrain has one complete 512 px mip chain for each of its 100 chunks,
+three 1024 px ground-detail chains and a 512 px apron. CNA already releases their level-zero CPU
+pixels when desktop context recovery is disabled, but retained every smaller level after upload.
+Those smaller staging vectors total 37.7 MiB logically. `DiscardEditCache` now re-wraps the
+same completed GPU renderers without those vectors, preserving each wrapper's address so all
+material pointers remain valid. This is restricted to desktop Linux visits: the editor keeps its
+paint cache and staging, and platforms which retain context recovery are unchanged.
+
+Immediately after J54, the same `tools/bench/memory.sh 2 --bench --lockstep` software-GL profile
+moved from **2,760 to 2,665 MB** resident and 2,405 to **2,301 MB** heap. All four alternate visit
+modes also moved down, by 50, 15, 23 and 14 MB; the unchanged editor path moved up by 49 MB in
+short-run allocator noise. The direct 95 MB observation is larger than the allocations removed,
+so only the 37.7 MiB logical release is attributed to the change; the samples corroborate its
+direction but remain sandbox measurements rather than Radeon absolute figures.
+
+The common in-place operation is covered by the texture regression, including wrapper identity,
+GPU renderer lifetime and complete mip count. All 30 game-side tests pass, as do the six texture
+tests under AddressSanitizer. A real sanitized visit completed its 6,000-step fill and rendered
+65 of 90 animals without an ASan/UBSan finding. A matched 3,000-tick Lion Rock image remains
+visually intact; 13,253 of 921,600 pixels (1.44%) differ from J54, localized by the difference
+image to moving people and animals rather than the terrain. The full animation pipeline passes
+all 131 cases in 442.306 seconds, and the complete C++ suite passes all 302 active cases in
+253.16 seconds, with 21 intended diagnostics disabled.
