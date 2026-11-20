@@ -223,15 +223,14 @@ const AnimalRenderer::Kind* AnimalRenderer::Load(const std::string& model) {
     return slot.get();
 }
 
-const AnimalRenderer::Look& AnimalRenderer::LookOf(const zoo::SpeciesDef& def, int index) {
+const AnimalRenderer::Look& AnimalRenderer::LookOf(const zoo::SpeciesDef& def, int index, bool needsFemale,
+                                                   bool needsJuvenile) {
     Look& look = looks_[static_cast<std::size_t>(index)];
     if (!look.resolved) {
         look.resolved = true;
         look.kind = Load(def.model);
-        if (look.kind != nullptr) {
-            look.female = Load(def.model + "_female");
-            look.juvenile = Load(def.model + "_juvenile");
-        } else {
+        look.own = look.kind != nullptr;
+        if (look.kind == nullptr) {
             const std::string standIn = StandInFor(def);
             look.kind = Load(standIn);
             if (look.kind != nullptr) {
@@ -242,6 +241,17 @@ const AnimalRenderer::Look& AnimalRenderer::LookOf(const zoo::SpeciesDef& def, i
                 std::printf("zoo: animals: %s cannot be drawn\n", def.id.c_str());
             }
         }
+    }
+    // Alternate bodies are often large in memory. In particular the Visitor Zoo has no bear
+    // cubs, so do not import their two otherwise unused models merely because an adult exists.
+    // A female model is also needed to scale a young female consistently with an adult one.
+    if (look.own && needsFemale && !look.femaleResolved) {
+        look.femaleResolved = true;
+        look.female = Load(def.model + "_female");
+    }
+    if (look.own && needsJuvenile && !look.juvenileResolved) {
+        look.juvenileResolved = true;
+        look.juvenile = Load(def.model + "_juvenile");
     }
     return look;
 }
@@ -283,13 +293,14 @@ void AnimalRenderer::Update(const zoo::Zoo& zoo, float seconds, float tickFracti
         if (animal.species < 0 || animal.species >= static_cast<int>(looks_.size()))
             continue;
         const zoo::SpeciesDef& def = species_.All()[static_cast<std::size_t>(animal.species)];
-        const Look& look = LookOf(def, animal.species);
-        if (look.kind == nullptr)
-            continue;
         const bool female = animal.sex == zoo::Sex::Female;
         const float grown = zoo::AgeYears(animal, now) / std::max(0.001f, def.maturityYears);
+        const bool juvenile = grown < kJuvenileShare;
+        const Look& look = LookOf(def, animal.species, female, juvenile);
+        if (look.kind == nullptr)
+            continue;
         const Kind* kind = look.kind;
-        if (look.juvenile != nullptr && grown < kJuvenileShare)
+        if (look.juvenile != nullptr && juvenile)
             kind = look.juvenile;
         else if (female && look.female != nullptr)
             kind = look.female;

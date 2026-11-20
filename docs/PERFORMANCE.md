@@ -372,3 +372,22 @@ kept four voices audible (one crowd take is positioned twice), and reported no f
 footstep surfaces therefore cost nothing until selected. The full-run sample moved 2,682 ->
 2,711 MB in this run, opposite to the isolated phase because heap sampling varies; it is not used
 as evidence of a regression or a saving.
+
+## Animal variants on demand (2026-11-20)
+
+`AnimalRenderer` used to import a species' adult, female and juvenile GLBs together as soon as it
+met the first animal. Greenhill has adult brown- and polar-bear pairs but no cubs, so their 5.12 MB
+and 5.78 MB compressed juvenile files, decoded meshes, clips and textures stayed resident without
+ever producing an actor. Female and juvenile variants are now imported independently on the first
+animal that needs each one; a later birth follows the same path on the next update.
+
+With `ZOO_LOAD_TIMING=1`, the normal visit loads 31 models rather than 33. The sum of per-model
+import/view and mipmap times in one matched one-frame run fell from 1.443 + 1.584 s to
+1.307 + 1.441 s, a 0.279 s reduction. The same immediate before/after
+`tools/bench/memory.sh 2 --bench --lockstep` software-GL sample fell from 2,796 to 2,736 MB
+resident (heap 2,461 -> 2,394 MB). That **60 MB** is a matched sandbox reduction, not a Radeon
+absolute figure; the other five script modes moved in the same direction by 77 to 101 MB but are
+reported only as corroboration because short-run heap variation is large. A final off-screen
+Brown Bear habitat load imported both adult bear models, neither cub model, and completed cleanly.
+The warning-clean game build and all 272 active functional CTest cases pass; 21 diagnostics remain
+disabled.

@@ -226,6 +226,15 @@ whatever you take up (`docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `docs/V
   pass is deliberately not used for these small CPU-built tools. A targeted off-screen run finds
   keeper 6 raking at tick 12,000 and all 272 active functional CTest cases pass (21 diagnostics
   disabled; today's separate `zoogen_animation` run already passed).
+- J24 removes two unused animal-model allocations from the ordinary visit. Female and juvenile GLBs
+  are now imported independently on the first current animal which needs them, rather than both on
+  first sight of the species; later births still take the same path. Greenhill has no bear cubs, so
+  `brown_bear_juvenile` and `polar_bear_juvenile` are no longer among its imports: 33 -> 31 models,
+  model import/mipmap time 3.027 -> 2.748 s in the matched one-frame logs. The immediate
+  `tools/bench/memory.sh 2 --bench --lockstep` software-GL run fell 2,796 -> 2,736 MB resident and
+  2,461 -> 2,394 MB heap. Treat that 60 MB as a matched sandbox saving, not a Radeon absolute
+  figure. The warning-clean game build and all 272 active functional CTest cases pass (21
+  diagnostics disabled; J24, 2026-11-20).
 - The stopped G7c audio audit is recovered and finished. Calls now follow `Vocalize`, social,
   play and documented feeding cues rather than a timer; takes do not repeat immediately, spatial
   pan is capped at 0.60, birds fade with daylight, crowd level follows its people, and footsteps

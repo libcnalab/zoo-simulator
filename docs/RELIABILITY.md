@@ -498,6 +498,15 @@ Animal takes and footstep surfaces remain unloaded until selected. The whole-run
 2,711 MB in this run, higher than the prior 2,682 MB through heap variance, so no total-peak
 reduction is claimed from that noisy number.
 
+Animal sex/age variants are now lazy as well. The renderer formerly imported `_female` and
+`_juvenile` beside the base model on first sight of a species. The Visitor Zoo consequently kept
+`brown_bear_juvenile` and `polar_bear_juvenile` although its two bear habitats contain only adult
+pairs. It now resolves each alternate on first demand (including a later birth), reducing the
+ordinary visit from 33 imported animal models to 31. An immediate matched software-GL sample fell
+2,796 -> 2,736 MB resident and 2,461 -> 2,394 MB heap; model import plus mip generation fell by
+0.279 s. The 60 MB resident difference is the conservative result quoted here; absolute figures
+still do not describe the owner's Radeon.
+
 ## The bench
 
 **Not run in this audit** (`./zoo-simulator --bench --frames 300`, three times, was the last item

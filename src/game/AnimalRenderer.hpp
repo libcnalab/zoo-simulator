@@ -33,7 +33,8 @@ enum class AnimalPose : std::uint8_t {
 
 /// Draws the zoo's animals: one skinned model per species (assets/animals,
 /// loaded when the first animal of the species appears), one animator per
-/// animal. A species may have two more models beside `<model>.glb`:
+/// animal. A species may have two more models beside `<model>.glb`, loaded
+/// only when an animal that needs that body appears:
 /// `<model>_female.glb` for its adult females and `<model>_juvenile.glb` for
 /// its young (their own proportions, not the adult scaled down); without
 /// them the one model serves all. An animal in water deeper than it can
@@ -111,7 +112,7 @@ private:
 
     struct Look;
     /// The models of a species: its own, or a stand-in; no kind when not even that loads.
-    const Look& LookOf(const zoo::SpeciesDef& def, int index);
+    const Look& LookOf(const zoo::SpeciesDef& def, int index, bool needsFemale, bool needsJuvenile);
     const Kind* Load(const std::string& model);
     AnimalPose Choose(const zoo::Animal& animal, const Actor& actor) const;
 
@@ -125,6 +126,9 @@ private:
         const Kind* female = nullptr;    ///< adult females, or nullptr
         const Kind* juvenile = nullptr;  ///< the young, or nullptr
         bool resolved = false;
+        bool own = false;  ///< kind is this species' model, so its named alternates may exist
+        bool femaleResolved = false;
+        bool juvenileResolved = false;
     };
     std::vector<Look> looks_;
     std::unordered_map<zoo::AnimalId, std::unique_ptr<Actor>> actors_;

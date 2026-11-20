@@ -611,6 +611,11 @@ byte.
   `species shoulder height x share of its sex x growth / meta.shoulder_height_m` of the model
   drawn, so a variant states its own height. (Lion, elephant, zebra, rhinoceros, giraffe, wolf,
   meerkat, ostrich, both bears and penguin have variants so far.)
+  Since J24 each alternate is imported only when a current animal needs it; a later birth or an
+  animal growing into its adult female body loads that model on the following renderer update.
+  Greenhill's adult-only brown- and polar-bear pairs therefore no longer retain their two unused
+  cub models. The ordinary visit imports 31 animal models rather than 33 without changing a body
+  that is actually present.
 - **Swimming.** Where the water is deeper than about 0.6 of the animal's standing height it
   floats: the body rides with `meta.swim_depth_m` (default 0.72 of the model's shoulder height)
   under the surface instead of walking on the pool bed under water, and plays the optional
