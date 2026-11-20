@@ -348,9 +348,11 @@ constexpr Resident Young(Sex sex, float age, int mother) {
 }
 
 // Who lives where, as zoos keep them: a breeding group with this season's young for the social
-// species, a pair for the solitary ones. The first of each family is its sire. The youngest are
-// under a quarter of their species' age of maturity and stay under it for a week of the calendar
-// and more: they suckle, keep to their mothers and are drawn as juveniles (below half of maturity).
+// species, a pair for tigers, and a mother with cubs for the bears. The first of each family is
+// its sire, except in the bear and elephant mother groups where the sire lives elsewhere. The
+// youngest are under a quarter of their species' age of maturity and stay under it for a week of
+// the calendar and more: they suckle, keep to their mothers and are drawn as juveniles (below half
+// of maturity).
 // Older daughters are female so that no second adult male grows up into a fight. The kangaroos'
 // joeys are the exception: under half a year they would be in the pouch, which the simulation does
 // not have, so theirs are young at foot, past the quarter and still drawn young.
@@ -401,11 +403,11 @@ std::span<const Resident> Family(std::string_view species) {
         return family;
     }
     if (species == "brown_bear") {
-        static constexpr Resident family[] = {Adult(m, 12.0f), Adult(f, 10.0f)};
+        static constexpr Resident family[] = {Adult(f, 10.0f), Young(f, 0.7f, 0), Young(m, 0.7f, 0)};
         return family;
     }
     if (species == "polar_bear") {
-        static constexpr Resident family[] = {Adult(m, 11.0f), Adult(f, 9.0f)};
+        static constexpr Resident family[] = {Adult(f, 9.0f), Young(f, 0.6f, 0), Young(m, 0.6f, 0)};
         return family;
     }
     if (species == "penguin") {

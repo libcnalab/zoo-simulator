@@ -299,8 +299,8 @@ const std::map<std::string, std::vector<Named>> kFamilies{
     {"wolf",
      {Grown(kMale, 6.0f), Grown(kFemale, 5.0f), Child(kFemale, 1.3f), Child(kMale, 0.25f),
       Child(kFemale, 0.25f), Child(kMale, 0.25f)}},
-    {"brown_bear", {Grown(kMale, 12.0f), Grown(kFemale, 10.0f)}},
-    {"polar_bear", {Grown(kMale, 11.0f), Grown(kFemale, 9.0f)}},
+    {"brown_bear", {Grown(kFemale, 10.0f), Child(kFemale, 0.7f), Child(kMale, 0.7f)}},
+    {"polar_bear", {Grown(kFemale, 9.0f), Child(kFemale, 0.6f), Child(kMale, 0.6f)}},
     {"penguin",
      {Grown(kMale, 5.0f), Grown(kMale, 8.0f), Grown(kMale, 11.0f), Grown(kMale, 6.0f), Grown(kMale, 14.0f),
       Grown(kFemale, 6.0f), Grown(kFemale, 9.0f), Grown(kFemale, 12.0f), Grown(kFemale, 5.0f),
@@ -462,8 +462,8 @@ void ExpectFamilies(const Zoo& zoo, float aged) {
             EXPECT_EQ(mother->species, animal.species);
             EXPECT_EQ(mother->home, animal.home);
             EXPECT_TRUE(IsAdult(*mother, def, zoo.Time()));
-            if (species == "elephant") {
-                EXPECT_EQ(father, nullptr);  // cow group; the sire is not resident here
+            if (species == "elephant" || species == "brown_bear" || species == "polar_bear") {
+                EXPECT_EQ(father, nullptr);  // mother group; the sire is not resident here
             } else {
                 ASSERT_NE(father, nullptr) << i;
                 EXPECT_EQ(father, group.front());
@@ -496,7 +496,7 @@ TEST_P(VisitorZooPlan, FamiliesWithTheirYoungOnTheOpeningDay) {
             youngest += AgeYears(*animal, zoo_.Time()) < def.maturityYears * 0.25f ? 1 : 0;
         }
         sucklings += youngest;
-        const bool pair = species == "tiger" || species == "brown_bear" || species == "polar_bear";
+        const bool pair = species == "tiger";
         // A joey under half a year lives in the pouch, which the simulation has not: the zoo's
         // joeys are young at foot, past their first quarter of maturity.
         const bool pouch = species == "kangaroo";
@@ -509,7 +509,7 @@ TEST_P(VisitorZooPlan, FamiliesWithTheirYoungOnTheOpeningDay) {
         EXPECT_GE(static_cast<int>(group.size()), def.groupMin) << species;
         EXPECT_LE(static_cast<int>(group.size()), def.groupMax) << species;
     }
-    EXPECT_EQ(sucklings, 21);
+    EXPECT_EQ(sucklings, 25);
 }
 
 TEST_P(VisitorZooPlan, FamiliesAreWholeWhenTheVisitBegins) {

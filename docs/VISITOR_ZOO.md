@@ -28,7 +28,7 @@ combine elliptical lobes. Every habitat has a keeper gate, shelter, stocked feed
 enrichment, a public information board and benches. Planting concentrates behind the open
 viewing ground, with woods between habitats and around the perimeter.
 
-The seed-1 zoo contains **88 animals in 14 habitats, 41 buildings and 2,752 props** when
+The seed-1 zoo contains **90 animals in 14 habitats, 41 buildings and 2,806 props** when
 every species is included (74 animals and 2,817 props before the plan's rework of
 2026-11-14, below). The farthest public path tile is **75.1 m** walking distance
 from a visitor facility. `VisitorZooTests.DISABLED_PrintPlan` prints these measurements. Families
@@ -54,8 +54,8 @@ diagnostics remain disabled).
 | Lion Rock | Lion 7 (4) | 2,236 | 319 | Glass S/W | Heavy welded mesh | 0 |
 | Tiger Forest | Tiger 2 | 1,788 | 894 | High glass S/W | Heavy welded mesh | 0 |
 | Wolf Wood | Wolf 6 (4) | 1,788 | 298 | Glass S/W | Tall mesh | 0 |
-| Bear Falls | Brown bear 2 | 2,236 | 1,118 | High glass S/E | Heavy welded mesh | 0 |
-| Polar Sound | Polar bear 2 | 2,812 | 1,406 | High glass S/E | Heavy welded mesh; cooled den | 0 |
+| Bear Falls | Brown bear 3 (2) | 2,236 | 745 | High glass S/E | Heavy welded mesh | 0 |
+| Polar Sound | Polar bear 3 (2) | 2,812 | 937 | High glass S/E | Heavy welded mesh; cooled den | 0 |
 | Penguin Cove | Penguin 13 (3) | 1,044 | 80 | Glass S/E | Wire mesh | 0 |
 | Elephant Valley | Elephant 5 (2) | 5,436 | 1,087 | Public rail, scrubbed dry moat S/E | Cable service side | 2 tiles / 4 m |
 | Rhino Hollow | Rhino 4 (1) | 1,692 | 423 | Public rail, scrubbed dry moat S/E | Cable service side | 2 tiles / 4 m |
@@ -187,9 +187,9 @@ finished, reviewed and measured by the lead. All of it is in `VisitorZoo.cpp`; t
 `tests/core/VisitorZooPlanTests.cpp` (both seeds unless said otherwise).
 
 **Families.** Each habitat is stocked as a zoo keeps the species (`Family()`): a breeding group
-with this season's young for the social species, a pair for tigers and both bears. The first
-of a family is its sire (Elephant Valley is a cow group: the calf's sire lives elsewhere and is
-left unset). Ages in years on the opening day:
+with this season's young for the social species, a pair for tigers, and a mother with two cubs for
+each bear species. The first of a family is its sire except in Elephant Valley and the bear mother
+groups, where the sire lives elsewhere and is left unset. Ages in years on the opening day:
 
 | Species | Adults | Young (mother) |
 |---|---|---|
@@ -199,7 +199,9 @@ left unset). Ages in years on the opening day:
 | Zebra | M 8, F 6, 9, 12 | F 1.2, M 0.4 |
 | Ostrich | M 7, F 6, 8, 5 | M, F, F 0.3 |
 | Lion | M 7, F 6, F 9 | F 2.6; M, F, F 0.6 |
-| Tiger, brown bear, polar bear | a pair | none |
+| Tiger | M 7, F 6 | none |
+| Brown bear | F 10 | F, M 0.7 (F 10) |
+| Polar bear | F 9 | F, M 0.6 (F 9) |
 | Wolf | M 6, F 5 | F 1.3; M, F, M 0.25 |
 | Penguin | M 5, 8, 11, 6, 14; F 6, 9, 12, 5, 10 | F, M, F 0.25 |
 | Elephant | F 26, F 38, F 22 | F 7 (F 26), M 1.5 (F 38) |
@@ -216,7 +218,9 @@ sucklings for a simulated week, which `TheYoungAreStillYoungAndFedAfterAWeek` ch
 health above 0.8, hunger below 0.9, mother in the same habitat). The kangaroos are the
 exception: a joey under half a year lives in the pouch, which the simulation does not have, so
 their joeys are young at foot (0.65 and 0.7 years), past the suckling quarter and drawn young.
-Older daughters are female, so that no second adult male grows up into a fight.
+Older daughters are female, so that no second adult male grows up into a fight. Both live bear
+labels and both dedicated cub bodies are shown in
+`evidence/bear-families-j47-2026-11-20.jpg`.
 
 **Barriers for hoofstock.** Nothing hoofed stands behind chain-link any more. Two catalog rows
 were added (`data/construction/fences.json`): `paddock_rail` (kind 13, timber, 2.4 m,
@@ -286,9 +290,9 @@ inside each keeper gate are kept clear.
 plus 1 m apart, so that no pocket forms that an animal walks into and not out of
 (`BlockingPropsLeaveAnAdultWidthPlusOneMetre`). `ClearPlace` also rejects a routine destination
 unless an animal has two body-wide, prop-free ways out of it. The seed-1 stall probe of
-`docs/ANIMAL_BEHAVIOUR.md` now counts 2,988 stalled of 293,364 moving ticks (1.019 %; 1.49 %
-before pocket rejection, 5.4 % on the old plan), with no continuous stall reaching 300 ticks.
-An animal that makes no progress tries a sidestep after one second rather than 1.5 seconds. This
+`docs/ANIMAL_BEHAVIOUR.md` now counts 1,603 stalled of 303,845 moving ticks (0.528 %; 1.49 %
+before pocket rejection, 5.4 % on the old plan), with no continuous stall reaching 120 ticks.
+An animal on an ordinary errand that makes no progress tries a sidestep after 0.75 seconds. This
 is enforced by `AnimalMovementTests.VisitorZooAnimalsDoNotRemainStalledInPropPockets`.
 
 **Planting.** Plants stand in groves with glades between them (smooth noise some eight metres
@@ -345,18 +349,18 @@ Golden hashes of `tests/core/VisitStartTests.cpp`, recorded again for the plan:
 
 | Fill ticks | Seed | At fill | Later |
 |---:|---:|---:|---:|
-| 600 | 1 | 16908303875916853244 | 14731267202063341801 |
-| 600 | 2 | 14092795439250136264 | 4161065727649398171 |
-| 600 | 3 | 6888267011948307956 | 7769725591801234485 |
-| 6000 | 1 | 10119584832427267003 | 12255278480547151749 |
-| 6000 | 2 | 13326900462605982850 | 14793419543629801821 |
-| 6000 | 3 | 6809618643121934778 | 9701693660048525382 |
+| 600 | 1 | 17379813876368075708 | 1298426449307882789 |
+| 600 | 2 | 10600911180101923765 | 8099999131585360788 |
+| 600 | 3 | 9339430514828864002 | 10524783387007761817 |
+| 6000 | 1 | 2806996443957579519 | 16979534985110762881 |
+| 6000 | 2 | 11368583421750564472 | 7145817024063048249 |
+| 6000 | 3 | 17926869522992866043 | 16824584070955396852 |
 
 ## The zoo as the game visits it
 
 The game builds this scenario without any species that has no model in `assets/animals/`
 (`withoutSpecies`); such a habitat would stand finished but empty. Since 2026-11-12 all fifteen
-species have one, so a seed-1 visit has all **88 animals in fourteen habitats**.
+species have one, so a seed-1 visit has all **90 animals in fourteen habitats**.
 
 The ice-cream kiosk formerly in the narrow Elephant Valley/Kangaroo gap is relocated
 near entrance coordinates `(-5,18)`, facing north, to keep refreshment access around the wider

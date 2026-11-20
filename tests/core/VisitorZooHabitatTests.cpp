@@ -326,8 +326,9 @@ void ExpectFronts(const Zoo& zoo) {
     std::cout << "STRIPS seed=" << zoo.Config().seed << " tiles=" << marked << " props=" << planted << '\n';
 }
 
-// Recorded on the unmodified layout for both seeds; retain the same space margin,
-// habitat welfare, and mean smoothed animal welfare after the 600-step fill.
+// Recorded on the unmodified layout for both seeds; the two filled bear values were re-recorded
+// for J47's mother-and-two-cub groups. Retain the same space margin and habitat welfare, and the
+// population's mean smoothed animal welfare after the 600-step fill.
 struct HabitatBaseline {
     float area;
     float habitat;
@@ -340,8 +341,8 @@ const std::map<std::string, HabitatBaseline> kBefore{
     {"lion", {2236.0f, 0.970187545f, 0.938474238f}},
     {"tiger", {1788.0f, 0.976001620f, 0.902444363f}},
     {"wolf", {1788.0f, 0.978674769f, 0.927070796f}},
-    {"brown_bear", {2236.0f, 0.969099939f, 0.976925611f}},
-    {"polar_bear", {2812.0f, 0.962766051f, 0.976536632f}},
+    {"brown_bear", {2236.0f, 0.969099939f, 0.936167955f}},
+    {"polar_bear", {2812.0f, 0.962766051f, 0.935733318f}},
     {"elephant", {5436.0f, 0.952969968f, 0.937010646f}},
     {"rhino", {1692.0f, 0.976396203f, 0.969400227f}},
     {"camel", {1616.0f, 0.985593915f, 0.975913942f}},

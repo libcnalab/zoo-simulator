@@ -347,7 +347,10 @@ do not change: the brown adult/cub GLBs are 5.58/5.12 MB and the polar adult/cub
 All four production files match independent fresh exports byte for byte with the deterministic
 command above. Same-camera comparisons and the two running habitats are in
 `evidence/bear-anatomy-j15-2026-11-20.jpg`; separate close checks confirmed that `vocalize`
-still opens the jaw.
+still opens the jaw. J47 gives each Visitor Zoo bear mother a female and male cub: the 0.7-year
+brown cubs and 0.6-year polar cubs select these dedicated juvenile bodies in the running habitats
+rather than uniformly scaled adults. The two live labels and both inspected bodies are in
+`evidence/bear-families-j47-2026-11-20.jpg`.
 
 Honest state: **these are improved but still not realistic bears**. They replace the old lofted
 blobs with a real sculpt's head, paws and surface, but the source was an upright roaring brown

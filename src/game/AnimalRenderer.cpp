@@ -242,9 +242,9 @@ const AnimalRenderer::Look& AnimalRenderer::LookOf(const zoo::SpeciesDef& def, i
             }
         }
     }
-    // Alternate bodies are often large in memory. In particular the Visitor Zoo has no bear
-    // cubs, so do not import their two otherwise unused models merely because an adult exists.
-    // A female model is also needed to scale a young female consistently with an adult one.
+    // Alternate bodies are often large in memory. Do not import a juvenile model merely because
+    // an adult exists: species without young in the current zoo do not need it. A female model is
+    // also needed to scale a young female consistently with an adult one.
     if (look.own && needsFemale && !look.femaleResolved) {
         look.femaleResolved = true;
         look.female = Load(def.model + "_female");

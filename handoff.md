@@ -425,6 +425,16 @@ whatever you take up (`docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `docs/V
   regression now requires the planned seven keepers, gardener and cleaner. A warning-clean game
   build, real 626-visitor offscreen smoke and all 32 active keeper/Walker integration cases pass;
   its captured frame was opened and checked (J46, 2026-11-20).
+- J47 brings the two already-authored bear-cub bodies into Greenhill. Bear Falls and Polar Sound
+  now each hold a mother, a 0.6/0.7-year female cub and a male cub; the sire lives elsewhere, as
+  in a real mother group. The population is 90 and both three-animal groups remain inside their
+  catalog capacity and welfare bands. Both family seeds, opening/day/week capacity, identity and
+  feeding checks pass; live habitat runs load the dedicated juvenile models, and both cub viewers
+  were opened and checked in `docs/evidence/bear-families-j47-2026-11-20.jpg`
+  (J47, 2026-11-20). The 600-step smoothed family means are 0.936/0.936 while the direct habitat
+  scores remain 0.969/0.963; the changed seed-1 history has 1,603 / 303,845 stalled moving ticks
+  (0.528%). Short and 6,000-step hashes repeat for seeds 1–3. The complete suite passes all 292
+  active cases including the 365.05-second animation pipeline, with 21 diagnostics disabled.
 - The stopped G7c audio audit is recovered and finished. Calls now follow `Vocalize`, social,
   play and documented feeding cues rather than a timer; takes do not repeat immediately, spatial
   pan is capped at 0.60, birds fade with daylight, crowd level follows its people, and footsteps
@@ -553,8 +563,9 @@ tests pass. Nobody listened to the audio; preserve that qualification.
   a second-pass resting face, shoulders and outline fur, but remain visibly converted from an
   upright brown-bear sculpt (`docs/ANIMALS.md`; pipeline in `tools/animals/`, its tests
   `python3 -m unittest discover -s tools/animals/tests`, about 10 minutes).
-- Every young animal used in the Visitor Zoo has a dedicated variant; the brown/polar bear cub
-  models exist but are unused (bears live as pairs).
+- Every young animal used in the Visitor Zoo has a dedicated variant. J47 puts the brown and polar
+  juvenile bodies into their three-animal mother-and-cub groups; six other young species still use
+  dedicated variants with adult proportions because no separate source body exists.
 - `wolf_juvenile` is now a real older-pup variant rather than a scaled adult: 0.46 m shoulder,
   shorter body and muzzle, broader skull, larger eyes, ears and paws, lighter coat, 15,528
   triangles, 33 bones and eight clips with pup-scaled motion. That J1 production pup matched an

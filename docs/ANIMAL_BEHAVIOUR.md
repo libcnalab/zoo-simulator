@@ -526,7 +526,9 @@ from the Release build, visitor zoo, seed 1, after the visit's fill.
   now below 0.75 %, with every continuous stall below 120 ticks. All 24 focused movement,
   keeper, day and week-capacity cases pass; changed short and 6,000-tick hashes for seeds 1–3
   repeat twice. The complete suite passes all 292 active cases including its 368.55-second
-  animation pipeline, with 21 diagnostics disabled.
+  animation pipeline, with 21 diagnostics disabled. J47's two additional bear cubs change the
+  deterministic history and the current 90-animal measurement to 1,603 of 303,845 moving ticks
+  (0.528 %), still with every continuous stall below 120 ticks.
 - **Golden hashes** of `tests/core/VisitStartTests.cpp` re-recorded for the routines.
 - Pictures: `docs/evidence/animal-routines-2026-11-13.jpg` (lions resting in the shade at
   midday; penguins standing together, one swimming; flamingos at the lagoon after the wader

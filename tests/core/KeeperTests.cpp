@@ -565,7 +565,7 @@ Welfare WithoutStaff(std::uint32_t seed, float hour, int pace, std::int64_t tick
 /// The two runs are different histories (a feeder filled at another moment sends the
 /// animals to it at another moment), so single animals fare a little differently in them:
 /// the sum of the hours in need may differ by a twentieth, the longest spell of one animal
-/// by a few hours and the single worst moment of one of 88 animals can move more while remaining
+/// by a few hours and the single worst moment of one of 90 animals can move more while remaining
 /// below the welfare issue line. Keep the tighter comparison whenever automatic care is near it.
 /// As measured after the habitat-front planting change (2026-11-19): over a week 11 against 36
 /// animal-hours in need, 3 against 10 hours, hunger at worst 0.751 against 0.989 and thirst 0.712
