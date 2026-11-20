@@ -594,9 +594,11 @@ class BipedTests(unittest.TestCase):
                         "flamingo": {"preen", "filter_feed", "huddle"},
                         "flamingo_juvenile": {"preen", "filter_feed", "huddle"},
                         "ostrich": {"dust_bathe"}, "ostrich_juvenile": {"dust_bathe"}}
+            water = {"penguin": {"swim", "float"},
+                     "flamingo": {"swim"}, "flamingo_juvenile": {"swim"}}
             self.assertEqual(set(clips),
                              {"idle", "walk", "trot", "eat", "drink", "rest", "sleep", "vocalize"}
-                             | ({"swim", "float"} if species == "penguin" else set())
+                             | water.get(species, set())
                              | activity.get(species, set()))
             if species == "ostrich_juvenile":
                 self.assertAlmostEqual(clips["walk"]["speed"], .75, delta=.02)
@@ -1026,6 +1028,34 @@ class SculptCatTests(unittest.TestCase):
                             for mesh in document["meshes"] for primitive in mesh["primitives"])
             self.assertEqual(triangles, manifest["triangles"])
             self.assertEqual({animation["name"] for animation in document["animations"]}, set(clips))
+
+
+class DeepWaterManifestTests(unittest.TestCase):
+    def test_every_deep_water_species_and_variant_has_a_swim_clip(self):
+        root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+        species_dir = os.path.join(root, "data", "species")
+        assets_dir = os.path.join(root, "assets", "animals")
+        deep_models = []
+        for filename in sorted(os.listdir(species_dir)):
+            if not filename.endswith(".json"):
+                continue
+            with open(os.path.join(species_dir, filename)) as source:
+                species = json.load(source)
+            if species.get("needsDeepWater", False):
+                deep_models.append(species["model"])
+        self.assertGreater(len(deep_models), 0)
+        for model in deep_models:
+            variants = [model]
+            for suffix in ("_female", "_juvenile"):
+                if os.path.isfile(os.path.join(assets_dir, model + suffix + ".json")):
+                    variants.append(model + suffix)
+            for variant in variants:
+                with self.subTest(species=model, model=variant):
+                    with open(os.path.join(assets_dir, variant + ".json")) as source:
+                        manifest = json.load(source)
+                    clips = {clip["name"] for clip in manifest["clips"]}
+                    self.assertIn("swim", clips)
+                    self.assertEqual(manifest["meta"]["swim"]["clip"], "swim")
 
 
 if __name__ == "__main__":

@@ -31,6 +31,7 @@ def make_spec(juvenile=False):
             # The game's clip for a still activity (AnimalRenderer).
             'activity_clips': {'huddle': 'huddle', 'preen': 'preen',
                                'filter_feed': 'filter_feed'},
+            'swim': {'clip': 'swim', 'depth_m': .72 * scale, 'speed': .45 * scale},
             'neck_centerline_m': float(scale * sum(np.linalg.norm(b-a)
                 for a, b in zip(birdscan.FLAMINGO_NECK, birdscan.FLAMINGO_NECK[1:])))}
     if juvenile:

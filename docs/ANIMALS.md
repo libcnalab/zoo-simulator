@@ -490,7 +490,7 @@ legs juvenile grey tones. The Smithsonian National Zoo describes first-birthday 
 light pink and notes that the darker adult colour takes another one or two years. The walk is
 0.60 m/s and the trot 1.25 m/s.
 
-The model retains all eleven adult clips, including one-leg rest and sleep, `preen`, `filter_feed`
+The model retains all twelve adult clips, including one-leg rest and sleep, `preen`, `filter_feed`
 and `huddle`; every target distance and gait displacement is scaled with the bird. A fresh adult
 export remained byte-for-byte identical after the opt-in change, and the production juvenile
 matches an independent fresh export. The same-camera comparison, four scan views and a real
@@ -498,6 +498,18 @@ Flamingo Lagoon binocular frame are in `evidence/flamingo-juvenile-j6-2026-11-20
 identifies selected Aya as female and ten months old. The age and coat now read correctly, but the
 variant deliberately shares the coarse feather ridges, folded-leg limitations and lack of a normal
 map of the adult sculpt.
+
+**Flamingo swimming (J62, 2026-11-21).** Adult and first-year birds now add a 1.4 s surface
+`swim` rather than taking their land walk through the deep heart of Flamingo Lagoon. The upright
+neck and folded wings balance a buoyant, level trunk while the long legs scull alternately below
+and behind it; the clip declares no ground contacts. Adult speed is 0.45 m/s and immersion is
+0.72 m; both values scale to 0.387 m/s and 0.619 m for the 86 % juvenile. Both production GLBs
+and manifests match independent one-thread exports byte for byte. Calibrated adult and juvenile
+waterlines and six phases are in `evidence/flamingo-swim-j62-2026-11-21.jpg`. A cross-system
+regression now derives every `needsDeepWater` species from the catalog and requires `swim` on its
+base model and every available female or juvenile variant. All 134 animation-pipeline tests pass;
+ASan viewers played more than one cycle for both variants, and a real ASan Flamingo Lagoon visit
+loaded all 90 animals, ran 3,000 fill steps and drew three frames cleanly.
 
 The penguins have ten clips: the usual eight, `swim` (flying under water with the flippers,
 0.45 m of the bird under the surface, 1.5 m/s) and `float` (resting on the surface, 0.25 m
@@ -642,8 +654,9 @@ byte.
   clip `swim`. A model may also have `float` for lying still on the water, with its own depth
   (`meta.swim.depth_m` and `meta.float.depth_m`; the penguins have both): under way the animal
   swims, at rest it floats, and the body moves between the two depths smoothly. Rhinoceros,
-  elephant, both bears, tiger and penguin have `swim`; the other species still paddle with their walk
-  clip. Seen at Penguin Cove:
+  elephant, both bears, tiger, penguin and flamingo have `swim`. Every species currently marked
+  `needsDeepWater`, including every available female or juvenile model, now has the clip. Species
+  with only shallow water still use their land gait there. Seen at Penguin Cove:
   `evidence/penguin-floating-2026-11-13.jpg` (a resting penguin on the pool: the head above
   the water, the body under it; a real one floats a little higher).
 - **Water displaced by animals.** Any animal moving through more than 4 cm of water now leaves

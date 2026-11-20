@@ -617,6 +617,19 @@ whatever you take up (`docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `docs/V
   happened to be resting, so they are not claimed as swim evidence (leak detection off for the
   documented `ptrace` limitation; J61, 2026-11-21). Lion assets and simulation history are
   unchanged.
+- J62 closes the remaining deep-water animation gap: adult and first-year flamingos now use a
+  1.4-second surface swim instead of their land walk in the deep heart of Flamingo Lagoon. The
+  level trunk and upright neck ride at a 0.72 m adult waterline while the long legs scull
+  alternately beneath and behind it; the 0.45 m/s speed, depth and complete pose scale to the
+  86-percent juvenile, and neither clip declares ground contacts. Both GLBs retain 12,354
+  triangles and 29 bones, grow from 11 to 12 clips, and match independent one-thread GLB and JSON
+  exports byte for byte. The calibrated adult/juvenile water views and six phases are in
+  `docs/evidence/flamingo-swim-j62-2026-11-21.jpg`. A new catalog-level regression derives every
+  `needsDeepWater` model and requires `swim` on its base and every available female/juvenile
+  variant; this now passes for all such species. All 134 animation-pipeline tests pass in 322.16
+  seconds. ASan viewers played more than one cycle for both flamingo bodies, and a real ASan
+  Flamingo Lagoon visit loaded all 90 animals, ran 3,000 fill steps and drew three frames cleanly
+  (leak detection off for the documented `ptrace` limitation; J62, 2026-11-21).
 - The stopped G7c audio audit is recovered and finished. Calls now follow `Vocalize`, social,
   play and documented feeding cues rather than a timer; takes do not repeat immediately, spatial
   pan is capped at 0.60, birds fade with daylight, crowd level follows its people, and footsteps

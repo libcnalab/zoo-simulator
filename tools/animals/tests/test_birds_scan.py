@@ -64,21 +64,22 @@ class BirdScanTests(unittest.TestCase):
             self.assertLessEqual(manifest['triangles'], limit)
             self.assertEqual(manifest['license'], 'CC-BY-4.0')
             self.assertEqual(manifest['meta'], spec.meta)
-            # Both preen (an activity clip, tests/test_activity_clips.py); penguins also swim.
+            # Both preen (an activity clip, tests/test_activity_clips.py); both birds swim.
             activities = {'preen', 'huddle'} | ({'filter_feed'}
                                                 if name.startswith('flamingo') else set())
-            expected = STANDARD | activities | ({'swim', 'float'} if name.startswith('penguin') else set())
+            water = {'swim', 'float'} if name.startswith('penguin') else {'swim'}
+            expected = STANDARD | activities | water
             self.assertEqual(set(clips), expected)
             exported = {clip['name']: clip for clip in manifest['clips']}
             self.assertEqual(set(exported), expected)
             if name.startswith('penguin'):
                 self.assertEqual(manifest['meta']['source_species'], 'Spheniscus magellanicus')
-                for water in ('swim', 'float'):
-                    metadata = manifest['meta'][water]
-                    self.assertEqual(metadata['clip'], water)
-                    self.assertGreater(metadata['depth_m'], 0)
-                    self.assertLess(metadata['depth_m'], spec.meta['shoulder_height_m'])
-                    self.assertAlmostEqual(metadata['speed'], exported[water]['speed'], places=4)
+            for water_clip in water:
+                metadata = manifest['meta'][water_clip]
+                self.assertEqual(metadata['clip'], water_clip)
+                self.assertGreater(metadata['depth_m'], 0)
+                self.assertLess(metadata['depth_m'], spec.meta['shoulder_height_m'])
+                self.assertAlmostEqual(metadata['speed'], exported[water_clip]['speed'], places=4)
             if name.endswith('juvenile'):
                 self.assertEqual(manifest['meta']['variant_of'], name.removesuffix('_juvenile'))
                 self.assertEqual(manifest['meta']['variant'], 'juvenile')
@@ -99,6 +100,29 @@ class BirdScanTests(unittest.TestCase):
                 flipper.append(solver.point(world, 'flipper3.L', solver.tail['flipper3.L']))
             self.assertGreater(np.ptp(np.array(flipper)[:, 1]), .06 * spec.rig.extra['scale'])
             self.assertGreater(np.ptp(np.array(flipper)[:, 2]), .06 * spec.rig.extra['scale'])
+
+    def test_flamingo_swim_keeps_its_head_up_and_sculls_below_the_body(self):
+        for name in ('flamingo', 'flamingo_juvenile'):
+            spec, solver, clips = self.cases[name]
+            scale = spec.rig.extra['scale']
+            clip = clips['swim']
+            self.assertEqual(clip.contact_keys, [])
+            self.assertAlmostEqual(clip.speed, .45 * scale)
+            feet = {'L': [], 'R': []}
+            for phase in np.arange(24) / 24:
+                world = solver.solve(clip.pose(float(phase)))
+                self.assertGreater(world['head'][2, 3], 1.15 * scale)
+                for side in feet:
+                    foot = world['toes.' + side][:3, 3]
+                    feet[side].append(foot)
+                    self.assertLess(foot[2], world['hips'][2, 3] - .30 * scale)
+                    self.assertLess(foot[0], world['hips'][0, 3] - .12 * scale)
+            for side in feet:
+                track = np.array(feet[side])
+                self.assertGreater(np.ptp(track[:, 0]), .25 * scale)
+                self.assertGreater(np.ptp(track[:, 2]), .07 * scale)
+            separation = np.linalg.norm(np.array(feet['L']) - np.array(feet['R']), axis=1)
+            self.assertGreater(separation.max(), .30 * scale)
 
     def test_standing_bones_clear_ground(self):
         for name, (spec, solver, clips) in self.cases.items():

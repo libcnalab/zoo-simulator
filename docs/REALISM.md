@@ -31,7 +31,7 @@ loudspeaker stays muted and nobody has listened to any of it.
 | Big cats, second pass: the sculpt's own colour and normal maps, a mane of hair cards | the male has a lion's head and a mane instead of a lioness's head in a collar; eyes, nose and lips are the sculptor's; irregular tiger stripes | `docs/ANIMALS.md`, `evidence/big-cats-s7-2026-11-14.jpg` |
 | Rhinoceros and elephant on rigged models (CC BY 4.0 as published; authorship unconfirmed, `assets/ATTRIBUTION.md`) | photographic skin with normal maps, real proportions, bull, cow and calves; the elephant's second pass (2026-11-14) made it grey in the game's light with tusks of a believable length | `docs/ANIMALS.md`, `evidence/rhino-elephant-rigged-2026-11-13.jpg` |
 | Zebra stallion, mare and foal from a static sculpt (CC BY 4.0), rigged by us | a real horse's body and stripes instead of a striped barrel; lying reads as lying; mirror-symmetric stripes from the front | `docs/ANIMALS.md`, `evidence/zebra-scan-2026-11-13.jpg` |
-| Penguin (adult and juvenile) from a museum scan and flamingo from a sculpt (both CC BY 4.0), rigged by us | real birds' shapes instead of bowling pins; penguins have `swim` and `float` clips; the adult African plumage is painted on a Magellanic specimen's shape and labelled so | `docs/ANIMALS.md`, `assets/ATTRIBUTION.md`, `evidence/penguin-flamingo-scan-2026-11-13.jpg` |
+| Penguin (adult and juvenile) from a museum scan and flamingo from a sculpt (both CC BY 4.0), rigged by us | real birds' shapes instead of bowling pins; penguins have `swim` and `float`, while adult and first-year flamingos keep the neck upright and alternately scull their long legs in deep water; the adult African-penguin plumage is painted on a Magellanic specimen's shape and labelled so | `docs/ANIMALS.md`, `assets/ATTRIBUTION.md`, `evidence/penguin-flamingo-scan-2026-11-13.jpg`, `evidence/flamingo-swim-j62-2026-11-21.jpg` |
 | Penguins on the water | a resting penguin floats, one under way swims, each with its own clip and depth from the model's manifest (they walked upright through the pool before) | `src/game/AnimalRenderer.cpp`, `evidence/penguin-floating-2026-11-13.jpg` |
 | Tigers swim rather than walk under water | a 1.2 s, 0.90 m/s clip alternates the forepaw pulls, trails the hind paws and waves the tail; its 0.70-withers waterline keeps the head and back continuous above the surface | `tools/animals/zoogen/bigcat.py`, `evidence/tiger-swim-j61-2026-11-21.jpg` |
 | Animals stand in the sun, not in their own shadow | every skinned model was drawn shadowed by itself (an engine defect, `docs/UPSTREAM.md` ZOO-UP-001); lit and shaded now, and normal maps on animals show for the first time | `src/game/SunShadows.cpp`, `evidence/animal-self-shadow-2026-11-13.jpg` |
@@ -101,7 +101,9 @@ animal in more than 4 cm of water makes body-scaled rings while moving, and a fl
 a quiet disturbance at rest: a swimmer stretches the rings into a wake and a flamingo disturbs
 its shallow shelf. This is a soft surface effect rather than particle
 spray, so feet and bodies still do not throw discrete splashes. Penguins swim and float with
-their own clips, and both bear species and tigers swim with theirs.
+their own clips; both bear species, tigers and flamingos swim with theirs. Every catalog species
+which requires deep water, including its available female and juvenile variants, is covered by a
+manifest regression.
 
 ## Open (in the order they hurt)
 
@@ -117,8 +119,7 @@ their own clips, and both bear species and tigers swim with theirs.
 2. Plants: cut-out edges far away are aliased (no alpha-to-coverage, no MSAA); the scenery still
    costs about 7 ms at the entrance, mostly overlapping
    alpha-tested cards (fill), which the far form does not reduce (`docs/PLANTS.md`).
-3. Only penguin, tiger, brown and polar bears, rhinoceros and elephant have swimming clips. Loading about 8 s with
-   the visit's fill on this machine, 1.6 s of it the ground. Deep-pool
+3. Loading takes about 8 s with the visit's fill on this machine, 1.6 s of it the ground. Deep-pool
    banks are broader now but remain engineered one-tile slopes rather than natural beaches.
 4. Animals get stuck less since the plan keeps room between blocking props and animal route
    searches now include the trees and rocks along their route corridor (0.33 % of the moving

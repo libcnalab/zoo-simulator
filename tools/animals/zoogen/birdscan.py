@@ -474,6 +474,29 @@ def flamingo_huddle(solver, phase):
     return pose
 
 
+def flamingo_swim(solver, phase):
+    """Surface swimming: an upright neck above a buoyant trunk, with the long legs
+    sculling alternately beneath and behind it rather than replaying the land gait."""
+    scale = solver.rig.extra['scale']
+    angle = math.tau * phase
+    pose = Pose().move('hips', dz=.006 * scale * math.cos(2 * angle))
+    pose.r('hips', rx=1.2 * math.sin(angle), ry=-2)
+    pose.r('chest', rx=-.8 * math.sin(angle))
+    pose.r('neck1', rz=2.5 * math.sin(angle + .3))
+    pose.r('head', rz=-1.5 * math.sin(angle + .3))
+    pose.r('tail1', ry=3 * math.sin(2 * angle))
+    pose.r('wing.L', rx=2.5 + 1.2 * math.sin(angle))
+    pose.r('wing.R', rx=-2.5 + 1.2 * math.sin(angle))
+    for side, offset in [('L', 0), ('R', math.pi)]:
+        stroke = angle + offset
+        target = np.array((-.43 + .15 * math.sin(stroke),
+                           .077 if side == 'L' else -.077,
+                           .34 + .045 * math.cos(stroke))) * scale
+        pose.plant(side, target, foot_pitch=-64 + 10 * math.sin(stroke),
+                   toe_pitch=-42 + 8 * math.sin(stroke), pole=(1, 0, 0))
+    return pose
+
+
 def flamingo_clips(solver):
     from .quadruped import bisect_effort, muzzle
     scale = solver.rig.extra['scale']
@@ -521,6 +544,9 @@ def flamingo_clips(solver):
     clips.append(Clip('preen', 10, partial(flamingo_preen, solver)))
     clips.append(Clip('filter_feed', 7, partial(flamingo_filter_feed, solver, feeding['drink'])))
     clips.append(Clip('huddle', 9, partial(flamingo_huddle, solver)))
+    swim = Clip('swim', 1.4, partial(flamingo_swim, solver), speed=.45 * scale)
+    swim.contact_keys = []
+    clips.append(swim)
     return clips
 
 
