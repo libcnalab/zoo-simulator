@@ -324,6 +324,13 @@ whatever you take up (`docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `docs/V
   the core and 365.72-second animation passes immediately before this game-only change, the suite
   has 282 active passes and 21 disabled diagnostics. The opened crop is
   `docs/evidence/fine-shrubs-j33-2026-11-20.jpg` (J33, 2026-11-20).
+- J34 puts every player collision shape on the ground that is actually drawn. Fences, buildings
+  and props now use `DrawnGroundHeight`; deep-water blocks extend above the water surface rather
+  than a fixed distance above their bed; and `Walker` watches `World::NavRevision`, so a later
+  terrain or water edit rebuilds collision on the next update. The expanded regression failed
+  before the fix with 227/240 steps in a legal 3 m pool and a closest approach of 6.7 cm through
+  a visible rock whose required body clearance is 0.86 m. It passes after the correction, as do
+  all 23 game-side tests / 13 Walker cases (J34, 2026-11-20).
 - The stopped G7c audio audit is recovered and finished. Calls now follow `Vocalize`, social,
   play and documented feeding cues rather than a timer; takes do not repeat immediately, spatial
   pan is capped at 0.60, birds fade with daylight, crowd level follows its people, and footsteps
@@ -415,8 +422,7 @@ sound unknown); saves there live only in the page's memory.
 ### 4.1 to 4.3: done on develop (2026-11-14)
 
 Keepers (`docs/KEEPERS.md`; open: dangerous habitats never entered), ground and water edges
-(`docs/GROUND.md`; open: steep banks at deep pools, props'
-collision floor still at the simulation's height in `Walker.cpp`), plants (`docs/PLANTS.md`;
+(`docs/GROUND.md`; open: steep banks at deep pools), plants (`docs/PLANTS.md`;
 open: far cut-out edges aliased and fill cost of alpha-tested cards). The new first
 priority is memory (section 0).
 

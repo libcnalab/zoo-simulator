@@ -102,10 +102,20 @@ machine was loaded); against the mesh, 470,320 sample points agree within 0.11 m
 
 Users: `AnimalRenderer` (the ground under and in front of and behind each animal; a
 swimmer's surface stays the world's water level), `VisitorRenderer` (feet), `Walker` (the
-player's collision field at tile resolution from `DrawnVertexHeight`, and the start position),
-`SceneryRenderer` (ordinary props and both plant detail forms), and `KeeperRenderer` (feet).
+player's collision field at tile resolution from `DrawnVertexHeight`, the start position and
+the floors of fences, buildings and props), `SceneryRenderer` (ordinary props and both plant
+detail forms), and `KeeperRenderer` (feet).
 Still at `World::HeightAt`: sounds, the binoculars' aim and the editor's tools. The simulation
 itself keeps its heights.
+
+J34 also anchors an unwadeable water collision block's top to the water surface, rather than a
+fixed three metres above its bed, and makes `Walker` watch `World::NavRevision`. A pool or terrain
+edit made after the player entered therefore rebuilds the collision world on the next update.
+The regression first builds the collision world, then adds a legal 3 m pool; before J34 the body
+spent 227 of 240 steps in deep water. It also places a half-scale sandstone rock on the adjacent
+dry bank, whose drawn centre is over 1.2 m above the simulation height; the old below-ground
+cylinder let the body pass 6.7 cm from its centre, while the corrected collider preserves the
+0.86 m body-plus-rock clearance.
 
 Fallen leaves added in J9 are part of each broadleaf tree's near procedural model, rather than
 paint baked into the terrain. That gives the painter-independent feature the exact tree position

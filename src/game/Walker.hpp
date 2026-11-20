@@ -67,6 +67,7 @@ private:
     CnaEngine::Collision::CharacterController body_;
     std::uint32_t objectsRevision_ = 0;
     std::uint32_t fenceRevision_ = 0;
+    std::uint32_t navRevision_ = 0;
     bool built_ = false;
     float yaw_ = 3.14159265f;
     float pitch_ = 0.0f;

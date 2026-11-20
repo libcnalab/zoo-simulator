@@ -388,12 +388,14 @@ the wall and exposed the space beyond it; the same offscreen contact picture aft
 is wall across the full frame. A normal `--stand habitat:lion` picture showed no depth fighting
 or other visible projection regression (2026-11-19).
 
-### What is still open in the walk
-
-- `Walker::Update` rebuilds its collision world when objects or fences change (their revision
-  counters), not when the ground or the water is edited. The visit changes neither, so nothing
-  is stale today; a mode that sculpts the ground while the player walks (the editor has its own
-  camera) would have to tell the walker.
+J34 aligns the remaining static collision shapes with the ground the player sees. Fences,
+buildings and props use `DrawnGroundHeight`; an unwadeable water block reaches three metres above
+the surface rather than above its possibly three-metre-deep bed. `Walker` also watches the map's
+navigation revision, so height and water edits after entry rebuild the collision world on the
+next update. The expanded slope/water/build regression fails before the correction with 227/240
+steps in a legal 3 m pool and a 6.7 cm closest approach through a visible half-scale rock on its
+raised dry bank; after it, water entries are zero and the rock keeps the required 0.86 m clearance.
+All 23 game-side tests, including all 13 Walker cases, pass (2026-11-20).
 
 ## Lifetimes and render resources
 

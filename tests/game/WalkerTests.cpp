@@ -19,6 +19,7 @@
 #include <string>
 #include <vector>
 
+#include "GroundPaint.hpp"
 #include "TestData.hpp"
 #include "Walker.hpp"
 #include "zoo/base/Rng.hpp"
@@ -863,9 +864,10 @@ TEST(Walker, SlopesWaterAndWhatIsBuiltOnTheWay) {
         for (int x = -1; x <= 1; ++x)
             deep.push_back({pool.x + x, pool.z + z});
     }
-    ASSERT_TRUE(builder.PlaceWater(deep, 1.2f).Ok());
     const Vec2 shore{World::TileCenter(pool).x, World::TileCenter(pool).z - 2.0f * zoo::kTileSize};
     walker.Enter(zoo, shore, 0.0f);
+    walker.Update(zoo, {}, kFrame);
+    ASSERT_TRUE(builder.PlaceWater(deep, 3.0f).Ok());
     int wet = 0;
     for (int i = 0; i < 240; ++i) {
         walker.Update(zoo, {.ahead = 1.0f, .run = true}, kFrame);
@@ -873,6 +875,24 @@ TEST(Walker, SlopesWaterAndWhatIsBuiltOnTheWay) {
     }
     EXPECT_EQ(wet, 0) << "the body walks into water " << map.WaterDepthAt(walker.Position()) << " m deep";
     EXPECT_TRUE(GetsAway(walker, zoo));
+
+    // The pool digs the simulation corners of its dry bank down to the bed, while the drawn
+    // bank keeps them above the water. A low rock's collision cylinder must begin on that drawn
+    // ground too; on the simulation floor the whole cylinder lies beneath the player's feet.
+    const TileCoord bank{pool.x, pool.z - 1};
+    const Vec2 rock = World::TileCenter(bank);
+    ASSERT_GT(DrawnGroundHeight(map, rock) - map.HeightAt(rock), 1.2f);
+    const int rockDef = zoo.Definitions().PropIndex("sandstone_rock");
+    ASSERT_GE(rockDef, 0);
+    ASSERT_TRUE(builder.PlaceProp(rockDef, rock, 0.0f, 0.5f).Ok());
+    const float keep = zoo.Definitions().props[static_cast<std::size_t>(rockDef)].radiusM * 0.5f + kBody;
+    walker.Enter(zoo, {rock.x, rock.z - 2.0f}, 0.0f);
+    float nearest = std::numeric_limits<float>::max();
+    for (int i = 0; i < 90; ++i) {
+        walker.Update(zoo, {.ahead = 1.0f}, kFrame);
+        nearest = std::min(nearest, Metres(walker.Position(), rock));
+    }
+    EXPECT_GE(nearest, keep - kSlack) << "the visible rock's collider was left below its bank";
 
     // A fence across the way while the body stands before it: Update notices by itself.
     const TileCoord spot{middle.x, middle.z - 6};

@@ -110,8 +110,8 @@ void Walker::Rebuild(const zoo::Zoo& zoo) {
     const float tile = zoo::kTileSize;
     const auto wall = [&](float x0, float z0, float x1, float z1, float height) {
         // From under the lower end's ground to `height` above the higher end's.
-        const float a = map.HeightAt({x0, z0});
-        const float b = map.HeightAt({x1, z1});
+        const float a = DrawnGroundHeight(map, {x0, z0});
+        const float b = DrawnGroundHeight(map, {x1, z1});
         constexpr float kHalf = 0.11f;
         world_.AddBox(BoundingBox(Vector3(std::min(x0, x1) - kHalf, std::min(a, b) - 1.0f, std::min(z0, z1) - kHalf),
                                   Vector3(std::max(x0, x1) + kHalf, std::max(a, b) + height,
@@ -152,11 +152,12 @@ void Walker::Rebuild(const zoo::Zoo& zoo) {
             const zoo::Vec2 centre = zoo::World::TileCenter({x, z});
             if (!map.HasWater({x, z}) || map.WaterDepthAt(centre) < kWadeDepth)
                 continue;
-            const float floor = map.HeightAt(centre);
+            const float floor = DrawnGroundHeight(map, centre);
+            const float surface = map.At({x, z}).waterLevel;
             const float x0 = static_cast<float>(x) * tile;
             const float z0 = static_cast<float>(z) * tile;
             world_.AddBox(BoundingBox(Vector3(x0 + 0.2f, floor - 2.0f, z0 + 0.2f),
-                                      Vector3(x0 + tile - 0.2f, floor + 3.0f, z0 + tile - 0.2f)));
+                                      Vector3(x0 + tile - 0.2f, surface + 3.0f, z0 + tile - 0.2f)));
         }
     }
 
@@ -167,7 +168,7 @@ void Walker::Rebuild(const zoo::Zoo& zoo) {
         const float z0 = static_cast<float>(building.origin.z) * tile;
         const float x1 = x0 + static_cast<float>(size.x) * tile;
         const float z1 = z0 + static_cast<float>(size.z) * tile;
-        const float floor = map.HeightAt({(x0 + x1) * 0.5f, (z0 + z1) * 0.5f});
+        const float floor = DrawnGroundHeight(map, {(x0 + x1) * 0.5f, (z0 + z1) * 0.5f});
         // A little inside the footprint: eaves and counters reach out to it, walls do not.
         constexpr float kInset = 0.25f;
         world_.AddBox(BoundingBox(Vector3(x0 + kInset, floor - 2.0f, z0 + kInset),
@@ -179,7 +180,7 @@ void Walker::Rebuild(const zoo::Zoo& zoo) {
         const float radius = PlayerPropRadius(def) * (def.blocksWalking ? prop.scale : 1.0f);
         if (radius <= 0.0f)
             continue;
-        const float floor = map.HeightAt(prop.position);
+        const float floor = DrawnGroundHeight(map, prop.position);
         world_.AddCylinder(Vector3(prop.position.x, floor - 0.5f, prop.position.z), radius,
                            std::max(def.heightM * prop.scale, 0.6f) + 0.5f);
     }
@@ -197,6 +198,7 @@ void Walker::Rebuild(const zoo::Zoo& zoo) {
 
     objectsRevision_ = zoo.Objects().Revision();
     fenceRevision_ = map.FenceRevision();
+    navRevision_ = map.NavRevision();
     built_ = true;
 }
 
@@ -212,7 +214,8 @@ void Walker::Enter(const zoo::Zoo& zoo, zoo::Vec2 at, float yaw, float pitch) {
 }
 
 void Walker::Update(const zoo::Zoo& zoo, const Input& input, float seconds) {
-    if (!built_ || objectsRevision_ != zoo.Objects().Revision() || fenceRevision_ != zoo.Map().FenceRevision())
+    if (!built_ || objectsRevision_ != zoo.Objects().Revision() ||
+        fenceRevision_ != zoo.Map().FenceRevision() || navRevision_ != zoo.Map().NavRevision())
         Rebuild(zoo);
 
     // To the right is clockwise seen from above: the heading falls.
