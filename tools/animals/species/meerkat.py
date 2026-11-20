@@ -145,9 +145,9 @@ def _bend_legs(spec):
     spec.parts = [part for part in spec.parts if part.name not in
                   ("torso", "front_leg.L", "hind_leg.L", "front_paw.L", "hind_paw.L")]
     spec.parts.append(Part("torso", [
-        R((-.15, 0, .17), .025, .035, .04), R((-.11, 0, .17), .049, .06, .065),
-        R((-.055, 0, .17), .053, .075, .07), R((.005, 0, .17), .047, .08, .065),
-        R((.055, 0, .17), .04, .078, .055), R((.078, 0, .17), .026, .06, .04)],
+        R((-.15, 0, .17), .023, .032, .037), R((-.11, 0, .17), .045, .056, .060),
+        R((-.055, 0, .17), .048, .069, .065), R((.005, 0, .17), .043, .073, .060),
+        R((.055, 0, .17), .037, .071, .052), R((.078, 0, .17), .024, .055, .037)],
         chain=chain(spec.bones, "hips", "spine1", "spine2", "chest"), segments=20))
     for front, x in ((True, .065), (False, -.10)):
         y = .039
@@ -159,12 +159,25 @@ def _bend_legs(spec):
         joint = points[2] if front else points[1]
         label = "front" if front else "hind"
         spec.parts.append(Part(label + "_leg.L", [
-            R(points[1] if front else points[0], .023, .028),
-            R(joint, .018, .022), R((x, y, .025), .012, .014)],
+            R(points[1] if front else points[0], .020, .025),
+            R(joint, .015, .019), R((x, y, .025), .010, .012)],
             chain=limb_chain, mirror=True, segments=12, tag="leg"))
         spec.parts.append(Part(label + "_paw.L", [R((x, y, .015), .014, .012),
             R((x + .035, y, .012), .017, .01)], chain=limb_chain[-2:],
             mirror=True, segments=12, tag="paw", cap_scale=.3))
+        foot_bone = "fingers.L" if front else "toes.L"
+        for digit, offset in enumerate((-.014, -.0047, .0047, .014)):
+            spec.parts.append(Part(f"{label}_toe.{digit}.L", [
+                R((x + .026, y + offset, .013), .006, .0055, .005),
+                R((x + .045, y + offset, .011), .005, .0045, .004)],
+                weights={foot_bone: 1.0}, mirror=True, fuse=False, segments=8,
+                tag="toe", cap_start="flat", cap_end="flat"))
+            claw_length = .014 if front else .009
+            spec.parts.append(Part(f"{label}_claw.{digit}.L", [
+                R((x + .045, y + offset, .011), .0045, .004, .004),
+                R((x + .045 + claw_length, y + offset, .007), .0015, .0015, .0015)],
+                weights={foot_bone: 1.0}, mirror=True, fuse=False, segments=8,
+                tag="claw", cap_start="flat", cap_end="point"))
 
 
 
@@ -187,8 +200,21 @@ def _paint(ctx, scale=1.0, juvenile=False):
     coat = nz.mix(coat, np.array([.06,.045,.035]), ctx.tag("nose"))
     coat = nz.mix(coat, dark*.72, ctx.tag("ear")*.5)
     coat = nz.mix(coat, np.array([.10,.07,.045]), ctx.tag("tail_tip"))
+    coat = nz.mix(coat, np.array([.11, .075, .045]), ctx.tag("toe") * .55)
+    coat = nz.mix(coat, np.array([.035, .025, .018]), ctx.tag("claw"))
     coat *= (.92 + .14 * nz.fbm(P,70.0,3,seed=23))[...,None]
     return coat
+
+
+def _surface_height(ctx, scale=1.0):
+    """Short guard hairs aligned along the body, excluding the bare face details and claws."""
+    P = ctx.P / scale
+    fine = nz.fbm(P * np.array([.42, 1.10, 1.75]), 135.0, 3, seed=33)
+    clumps = nz.fbm(P, 44.0, 3, seed=34)
+    fur = .88 * fine + .12 * clumps
+    smooth = np.clip(ctx.tag("eye") * 4.0 + ctx.tag("nose") * 3.0
+                     + ctx.tag("claw") * 2.0, 0.0, 1.0)
+    return .5 + (fur - .5) * (1.0 - smooth)
 
 
 def _juvenile_shape(spec):
@@ -259,6 +285,7 @@ def _juvenile_shape(spec):
     spec.voxel = .0025
     spec.target_tris = 8000
     spec.paint = partial(_paint, scale=scale, juvenile=True)
+    spec.surface_height = partial(_surface_height, scale=scale)
     spec.meta.update({"shoulder_height_m": .17, "body_length_m": .238,
                       "variant_of": "meerkat", "variant": "juvenile",
                       "relative_height": scale,
@@ -289,10 +316,13 @@ def make_spec(juvenile=False):
             part.rings = [R((.119, .026, .231), .0035, .0035),
                           R((.123, .026, .231), .0035, .0035)]
     spec.paint = _paint
+    spec.surface_height = _surface_height
+    spec.surface_strength = 1.05
     spec.voxel = .0035
     spec.target_tris = 8000
     spec.smooth_iters = 4
     spec.meta["roughness"] = .91
+    spec.meta["surface_detail"] = "anisotropic short-coat normal map"
     def clips(solver):
         return quad.standard_clips(solver, quad.Params(
             gaits=[quad.Gait("walk", walk_period, walk_speed * walk_period * .64, .64, quad.WALK,

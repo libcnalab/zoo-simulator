@@ -135,6 +135,7 @@
     "roughness": 0.91,
     "scientific_name": "Suricata suricatta",
     "shoulder_height_m": 0.17,
+    "surface_detail": "anisotropic short-coat normal map",
     "variant": "juvenile",
     "variant_of": "meerkat"
   },
@@ -152,6 +153,6 @@
     ]
   },
   "texture": 1024,
-  "triangles": 8576,
-  "vertices": 4296
+  "triangles": 11648,
+  "vertices": 5896
 }

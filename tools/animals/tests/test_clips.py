@@ -350,12 +350,46 @@ class AnatomyTests(unittest.TestCase):
             manifest = json.load(source)
         self.assertEqual(manifest["name"], "meerkat_juvenile")
         self.assertEqual(manifest["meta"], pup.meta)
-        self.assertLessEqual(manifest["triangles"], 10000)
+        self.assertLessEqual(manifest["triangles"], 13000)
         clips = {clip["name"]: clip for clip in manifest["clips"]}
         self.assertEqual(set(clips), {"idle", "walk", "trot", "eat", "drink", "rest",
                                       "sleep", "vocalize", "sentry", "dig"})
         self.assertAlmostEqual(clips["walk"]["speed"], .42, delta=.02)
         self.assertAlmostEqual(clips["trot"]["speed"], 1.05, delta=.02)
+
+    def test_meerkats_have_four_separate_toes_and_claws_on_every_foot(self):
+        for species in ("meerkat", "meerkat_juvenile"):
+            spec = importlib.import_module("species." + species).make_spec()
+            toes = [part for part in spec.parts if "_toe." in part.name]
+            claws = [part for part in spec.parts if "_claw." in part.name]
+            self.assertEqual(len(toes), 8)
+            self.assertEqual(len(claws), 8)
+            self.assertTrue(all(part.mirror and part.tag == "toe" for part in toes))
+            self.assertTrue(all(part.mirror and part.tag == "claw" for part in claws))
+            self.assertIsNotNone(spec.surface_height)
+            self.assertEqual(spec.meta["surface_detail"],
+                             "anisotropic short-coat normal map")
+
+    def test_meerkat_exports_carry_the_coat_normal_map_and_tangents(self):
+        root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+        for species in ("meerkat", "meerkat_juvenile"):
+            glb = os.path.join(root, "assets", "animals", species + ".glb")
+            with open(glb, "rb") as source:
+                self.assertEqual(source.read(4), b"glTF")
+                source.read(8)
+                length, _ = struct.unpack("<II", source.read(8))
+                document = json.loads(source.read(length))
+            self.assertLess(os.path.getsize(glb), 3_000_000)
+            self.assertEqual(len(document["images"]), 2)
+            self.assertIn("normalTexture", document["materials"][0])
+            for mesh in document["meshes"]:
+                for primitive in mesh["primitives"]:
+                    self.assertIn("TANGENT", primitive["attributes"])
+            with open(os.path.join(root, "assets", "animals", species + ".json")) as source:
+                manifest = json.load(source)
+            self.assertLessEqual(manifest["triangles"], 13000)
+            self.assertEqual(manifest["meta"]["surface_detail"],
+                             "anisotropic short-coat normal map")
 
     def test_wolf_pup_has_juvenile_proportions_and_variant_metadata(self):
         adult = importlib.import_module("species.wolf").make_spec()

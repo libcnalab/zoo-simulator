@@ -96,8 +96,21 @@ A fresh adult export remained byte-for-byte identical after the variant refactor
 production pup matches an independent fresh export. The same-camera size comparison, four
 shape views and a real habitat frame are in
 `evidence/meerkat-juvenile-j2-2026-11-20.jpg`; the HUD identifies the selected model's animal
-as two-month-old Pavel. The shape reads as a pup, but it inherits the smooth, heavy-bodied
-first-generation meerkat and has neither individual toes nor a normal map.
+as two-month-old Pavel. The shape reads as a pup.
+
+A second pass improves both ages without moving the skeleton or foot targets used by sentry and
+dig. The middle torso and limb lofts are 8-15 % leaner, replacing the barrel body and swollen
+legs. Every foot now has four separate toes and four non-retractile claws; the front claws are
+longer for digging. An anisotropic tangent-space normal map adds short longitudinal guard-hair
+relief while keeping eyes, nose and claws smooth. Both variants now have 11,648 triangles, 33
+bones and the same ten clips; the adult GLB is 2.46 MB and the pup 2.53 MB. Both production
+exports match independent fresh builds. The grounded sentry tripod and alternating dig stroke
+were inspected again after the change.
+
+The same-camera comparisons and a seed-1 Meerkat Lookout run after 3,000 simulation ticks are in
+`evidence/meerkat-coat-j12-2026-11-20.jpg`. The body and working feet read more like a meerkat,
+but the head and underlying lofted anatomy remain stylised and the coat has no individual hair
+cards.
 
 ### Ostrich chick (2026-11-20)
 

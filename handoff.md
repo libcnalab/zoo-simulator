@@ -109,6 +109,15 @@ whatever you take up (`docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `docs/V
   run after 3,000 ticks are inspected in
   `docs/evidence/camel-coat-j11-2026-11-20.jpg` (J11, 2026-11-20). The face and base anatomy
   remain stylised.
+- Adult and juvenile meerkats now have a second-pass short coat and working feet. Leaner torso
+  and limb lofts replace the barrel body; every foot has four separate toes and four
+  non-retractile claws, with longer front digging claws; an anisotropic normal map supplies short
+  guard-hair relief. Both models have 11,648 triangles, 33 bones and ten clips; the 2.46 / 2.53
+  MB production GLBs match independent fresh exports. All 124 animal-pipeline tests and all 270
+  active CTest cases pass (21 diagnostics disabled). Sentry and dig were visually rechecked, and
+  the same-camera viewers plus a real Meerkat Lookout run after 3,000 ticks are inspected in
+  `docs/evidence/meerkat-coat-j12-2026-11-20.jpg` (J12, 2026-11-20). The head and base anatomy
+  remain stylised.
 - The stopped G7c audio audit is recovered and finished. Calls now follow `Vocalize`, social,
   play and documented feeding cues rather than a timer; takes do not repeat immediately, spatial
   pan is capped at 0.60, birds fade with daylight, crowd level follows its people, and footsteps
@@ -233,9 +242,9 @@ tests pass. Nobody listened to the audio; preserve that qualification.
 
 ### 4.6 Animals
 
-- First-generation stylised anatomy still: wolf, camel, meerkat, ostrich, kangaroo. Wolf and
-  camel have second-pass coats and silhouette details, but are not scan-based. Bears are
-  sculpt-based but crude (`docs/ANIMALS.md`; pipeline in `tools/animals/`, its tests
+- First-generation stylised anatomy still: wolf, camel, meerkat, ostrich, kangaroo. The wolf,
+  camel and meerkat have second-pass coats and silhouette details, but are not scan-based. Bears
+  are sculpt-based but crude (`docs/ANIMALS.md`; pipeline in `tools/animals/`, its tests
   `python3 -m unittest discover -s tools/animals/tests`, about 10 minutes).
 - Every young animal used in the Visitor Zoo has a dedicated variant; the brown/polar bear cub
   models exist but are unused (bears live as pairs).
