@@ -708,6 +708,8 @@ TEST(Keeper, TheCleanerSweepsRealLitterBeforeMidnight) {
     std::size_t mostLitter = zoo->Guests().LitterOnGround().size();
     bool appliedSweep = false;
     bool removedLitter = false;
+    bool sweepKnowsBin = false;
+    float closestSweep = std::numeric_limits<float>::infinity();
     for (int step = 0; step < 12000 && !removedLitter; ++step) {
         const std::size_t before = zoo->Guests().LitterOnGround().size();
         bool appliesNow = false;
@@ -717,6 +719,10 @@ TEST(Keeper, TheCleanerSweepsRealLitterBeforeMidnight) {
                 task->work == StaffActivity::Sweep &&
                 member.ticksLeft == (std::max(task->ticks, 1) + 1) / 2) {
                 appliesNow = true;
+                sweepKnowsBin |= static_cast<bool>(task->prop);
+                for (const Litter& litter : zoo->Guests().LitterOnGround()) {
+                    closestSweep = std::min(closestSweep, Distance(task->place, litter.position));
+                }
             }
         }
         zoo->Step();
@@ -728,7 +734,9 @@ TEST(Keeper, TheCleanerSweepsRealLitterBeforeMidnight) {
     EXPECT_EQ(zoo->Time().Day(), day) << "the night shift, not the cleaner, removed the litter";
     EXPECT_GT(mostLitter, 0U) << "the run never exercised litter";
     EXPECT_TRUE(appliedSweep) << "the run never reached the cleaner's sweep effect";
-    EXPECT_TRUE(removedLitter) << "a visible daytime sweep removed no litter";
+    EXPECT_TRUE(sweepKnowsBin) << "the cleaner's sweep did not retain its bin";
+    EXPECT_TRUE(removedLitter) << "a visible daytime sweep removed no litter; closest was " << closestSweep
+                               << " m";
 }
 
 // How often a visitor finds a keeper at a habitat: figures for docs/KEEPERS.md, not a check.

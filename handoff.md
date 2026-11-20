@@ -379,6 +379,22 @@ whatever you take up (`docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `docs/V
   two-day visitor simulation retains normal purchases and sub-three-second longest standstill
   (J40, 2026-11-20). The complete suite passes all 291 active cases, including the 363.81-second
   animation test, with 21 diagnostics disabled.
+- J41 keeps a late-arriving watcher out of somebody already standing at a habitat front. Viewing
+  slots now reject every unrelated current or reserved position within 0.5 m; if somebody settles
+  there after the plan was made, the watching group yields and chooses another view. The new
+  6,000-tick every-frame regression first caught a watcher 0.257 m from a visitor who had just
+  finished eating and now keeps all inspected pairs at least 0.5 m apart. All 29 focused
+  visitor/day/walk cases pass without disturbing purchases, path discipline or standstill bounds
+  (J41, 2026-11-20).
+- J42 makes the visible cleaner react to fresh litter instead of carrying out a stale sweep plan.
+  The cleaner now goes next to the nearest bin whose 25 m catchment contains litter, retains that
+  bin on the sweep task and refreshes the exact target before leaving and on arrival. This was a
+  real gap exposed by J41's changed crowd history: the existing public regression saw a closest
+  sweep of 39.69 m while litter lay 0.23 m from a bin. It now removes a piece before midnight
+  again; all 13 keeper cases pass, including deterministic twins, mid-round save/load and the
+  staffed week. The combined J41/J42 suite passes all 292 active cases, including the 366.68-second
+  animation pipeline, with 21 diagnostics disabled. Changed short and 6,000-tick hashes repeat
+  twice for seeds 1–3 (J42, 2026-11-20).
 - The stopped G7c audio audit is recovered and finished. Calls now follow `Vocalize`, social,
   play and documented feeding cues rather than a timer; takes do not repeat immediately, spatial
   pan is capped at 0.60, birds fade with daylight, crowd level follows its people, and footsteps

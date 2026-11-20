@@ -72,6 +72,8 @@ constexpr float kDangerousRakeS = 12.0f;
 constexpr float kHoseS = 30.0f;
 constexpr float kInspectS = 22.0f;
 constexpr float kSweepS = 24.0f;
+/// How far from a bin its cleaner picks a litter target, in metres.
+constexpr float kLitterReach = 25.0f;
 constexpr float kEmptyBinS = 10.0f;
 constexpr float kTendS = 30.0f;
 constexpr float kWaterS = 16.0f;
@@ -782,7 +784,6 @@ void PlanBin(const Env& env, const Visitors& visitors, StaffMember& member, Prop
     member.tasks.push_back(
         Job(StaffActivity::EmptyBin, StaffActivity::Walk, stand->place, stand->facing, kEmptyBinS, {}, id));
 
-    constexpr float kLitterReach = 25.0f;
     std::optional<Vec2> litter;
     float nearest = kLitterReach * kLitterReach;
     for (const Litter& piece : visitors.LitterOnGround()) {
@@ -794,10 +795,10 @@ void PlanBin(const Env& env, const Visitors& visitors, StaffMember& member, Prop
     }
     const float along = HashFloat(id.value + member.stopsDone, 17u) * kTwoPi;
     if (litter) {
-        member.tasks.push_back(Job(StaffActivity::Sweep, StaffActivity::Walk, *litter, along, kSweepS));
+        member.tasks.push_back(Job(StaffActivity::Sweep, StaffActivity::Walk, *litter, along, kSweepS, {}, id));
     } else if (const auto beside = StandBeside(env, bin->position, HeadingVector(along), 2.5f, {})) {
         member.tasks.push_back(Job(StaffActivity::Sweep, StaffActivity::Walk, beside->place,
-                                   WrapAngle(beside->facing + 1.5708f), kSweepS));
+                                   WrapAngle(beside->facing + 1.5708f), kSweepS, {}, id));
     }
 }
 
@@ -947,6 +948,30 @@ void RoundOf(std::vector<PropStop>& stops, Vec2 from, std::size_t most) {
 
 }  // namespace
 
+void staff_detail::RefreshSweep(const Env& env, const Visitors& visitors, StaffMember& member) {
+    if (member.task >= member.tasks.size()) {
+        return;
+    }
+    StaffTask& task = member.tasks[member.task];
+    const Prop* bin = task.prop ? env.objects.FindProp(task.prop) : nullptr;
+    if (task.work != StaffActivity::Sweep || bin == nullptr) {
+        return;
+    }
+
+    float nearest = kLitterReach * kLitterReach;
+    std::optional<Vec2> best;
+    for (const Litter& piece : visitors.LitterOnGround()) {
+        const float distance = DistanceSquared(piece.position, bin->position);
+        if (distance < nearest && Standable(env, piece.position, {})) {
+            nearest = distance;
+            best = piece.position;
+        }
+    }
+    if (best) {
+        task.place = *best;
+    }
+}
+
 bool KeepersMayEnter(const Env& env, const Animals& animals, EnclosureId enclosure) {
     const Enclosure* found = env.enclosures.Find(enclosure);
     if (found == nullptr || HoldsDanger(env, animals, enclosure)) {
@@ -1084,6 +1109,26 @@ void Staff::PlanStop(const Env& env, const Animals& animals, const Visitors& vis
                     feeding = true;
                     break;
                 }
+            }
+        }
+    } else if (member.role == StaffRole::Cleaner) {
+        // Fresh litter should not wait for a complete circuit of a large zoo. Prefer the
+        // next bin which has a piece within the same 25 m catchment used by PlanBin.
+        float shortestWalk = std::numeric_limits<float>::infinity();
+        for (std::size_t i = 0; i < stops; ++i) {
+            const Prop* bin = env.objects.FindProp(member.round[i].prop);
+            if (bin == nullptr) {
+                continue;
+            }
+            const bool dirty = std::any_of(visitors.LitterOnGround().begin(), visitors.LitterOnGround().end(),
+                                           [&](const Litter& piece) {
+                                               return DistanceSquared(piece.position, bin->position) <
+                                                      kLitterReach * kLitterReach;
+                                           });
+            const float walk = DistanceSquared(member.position, bin->position);
+            if (dirty && walk < shortestWalk) {
+                shortestWalk = walk;
+                next = i;
             }
         }
     }

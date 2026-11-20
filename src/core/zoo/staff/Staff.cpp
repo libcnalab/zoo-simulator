@@ -429,6 +429,10 @@ void Staff::Step(Env& env, Animals& animals, Visitors& visitors) {
         if (member.task >= member.tasks.size()) {
             continue;
         }
+        if (member.role == StaffRole::Cleaner && !member.working && member.route.empty() && member.ticksLeft == 0 &&
+            member.tasks[member.task].work == StaffActivity::Sweep && member.tasks[member.task].prop) {
+            RefreshSweep(env, visitors, member);
+        }
         const StaffTask task = member.tasks[member.task];
 
         // The exact control point is presentation, not a safety condition. Once the
@@ -575,6 +579,18 @@ void Staff::Step(Env& env, Animals& animals, Visitors& visitors) {
         member.activity = task.approach;
         if (const Vec2 moved = after - before; LengthSquared(moved) > 1.0e-8f) {
             member.heading = TurnTowards(member.heading, HeadingOf(moved), kTurnRate * kTickSeconds);
+        }
+        if (arrived && member.role == StaffRole::Cleaner && task.work == StaffActivity::Sweep && task.prop) {
+            RefreshSweep(env, visitors, member);
+            if (Distance(after, member.tasks[member.task].place) > 0.05f) {
+                // Litter may have appeared while the cleaner was walking to the place selected
+                // at the bin. Walk to the fresh target before beginning the visible sweep.
+                member.route.clear();
+                member.routeIndex = 0;
+                member.ticksLeft = 0;
+                member.speed = 0.0f;
+                continue;
+            }
         }
         if (arrived) {
             member.route.clear();

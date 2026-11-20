@@ -47,7 +47,8 @@ and is saved with the zoo. The game draws each visitor as a CNA avatar.
   cooldown cannot repeat it for a second crowd.
 - **Litter.** Wrappers go into a bin when one is within `kBinSearchM`, on the
   ground otherwise. Litter in sight lowers happiness. The cleaner empties bins
-  on its daytime round and sweeps the nearest ground litter within 25 m of each;
+  on its daytime round, prioritises the nearest bin with ground litter within
+  25 m, and refreshes that target when it arrives;
   with `autoCare`, the midnight shift remains a safety net for anything left.
 
 ## Time
@@ -140,7 +141,10 @@ a line:
   when that fails, or when the places of the group fell on top of one another,
   each member finds its own.
 - **Watching.** Places at a fence are 0.5 m apart, the front row 0.34 m from the
-  rail. `Stepper::Aim` gives each watcher an animal of the enclosure to look at
+  rail. A group only reserves places which also keep `kRoomM` from unrelated
+  people already standing or walking there. If somebody settles inside that
+  space later, the watchers leave the crowded place and choose another view.
+  `Stepper::Aim` gives each watcher an animal of the enclosure to look at
   (within `kAimSpread` of the straight line across the fence; mostly the one
   its group looks at, sometimes its own; the nearer the likelier), anew every
   `kAimSeconds` at a moment of its own, and the watcher turns to it at
@@ -299,12 +303,13 @@ particular fps increase.
 
 ## Tests
 
-`tests/core/VisitorWalkTests.cpp` (seven cases: walkers neither snap round nor
+`tests/core/VisitorWalkTests.cpp` (nine cases: walkers neither snap round nor
 jolt and cover the ground their speed says, the members of a walking group are
 not inside each other and stay with their leader, watchers look at an animal
-and never away from the fence, people who stand keep apart, a sitter is on its
-seat facing out with its neighbours beside it, somebody standing on the path is
-walked around, children and old people are slower),
+and never away from the fence, people who stand keep apart, a live stall queue
+waits for an unrelated standing person, watchers keep half a metre from one, a
+sitter is on its seat facing out with its neighbours beside it, somebody
+standing on the path is walked around, children and old people are slower),
 `tests/core/VisitorTests.cpp` (seventeen cases: the gate's hours, the price and
 the weather, an empty zoo, determinism, groups, places at the fence and on
 seats, saving and loading, a torn-up path, a loose lion and its saved alarm
@@ -347,12 +352,29 @@ at least 0.3 m from eating, watching, reading and idle visitors (2026-11-20).
 The complete suite passes all 291 active cases, including the 363.81-second
 animation test; 21 diagnostics remain disabled.
 
+J41 closes the corresponding late-arrival gap at a viewing rail. A viewing
+place is rejected when it lies within `kRoomM` of any unrelated person's
+current or reserved destination; because somebody can still settle after that
+choice, an active watcher also gives up the crowded place and replans. The
+6,000-tick every-frame regression first reproduced a watcher 0.257 m from a
+visitor who had just finished eating and now holds every such pair at least
+0.5 m apart. All 29 focused visitor/day/walk cases pass (2026-11-20).
+
+J42 keeps J38's visible daytime cleanup reliable under that changed crowd
+history. Instead of completing a full bin circuit while fresh litter waits,
+the cleaner goes next to the nearest bin whose 25 m catchment contains a piece
+and refreshes the saved sweep target before the walk and on arrival. The public
+regression removes real litter before midnight again, and all 13 focused keeper
+cases pass. The combined J41/J42 suite passes all 292 active cases, including the
+366.68-second animation pipeline; 21 diagnostics remain disabled. The changed
+short and 6,000-tick hashes repeat twice for seeds 1–3 (2026-11-20).
+
 ## Known limits
 
 - Peak presence is close to the day's arrivals: visits are long against the
   opening hours.
-- Walkers go round each other, staff and the player; people who stand do not
-  step aside for anybody, and a watcher who comes to a fence after somebody
-  began to eat right behind the rail may stand within arm's length of them.
+- Walkers go round each other, staff and the player. Most people who stand do
+  not step aside for anybody; a watcher is the exception and leaves a viewing
+  place if somebody else settles within half a metre.
 - Two walkers of a group can still be inside each other for a moment where a
   path narrows (about 1 % of the pairs in `VisitorWalkTests`).

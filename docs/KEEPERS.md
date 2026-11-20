@@ -55,8 +55,10 @@ zoo happens half way through the job.
   at its inside tile, returns outside and only then releases it. If the way out changes, the
   animals stay secured and the keeper retries rather than completing the release remotely.
 - **The gardener** waters a bed every third stop, kneels and tends it with a trowel, and
-  rests now and then; **the cleaner** empties the bin and then sweeps the nearest litter
-  within 25 m, or the path beside the bin.
+  rests now and then; **the cleaner** gives priority to the nearest bin with litter within
+  25 m, empties it and then sweeps that litter, or the path beside the bin. The sweep target
+  is refreshed before the walk and again on arrival, so a wrapper dropped after the stop was
+  first planned does not wait for a complete circuit of the zoo.
 
 ## Where they walk and stand
 
@@ -128,6 +130,16 @@ visit produces ground litter, the regression waits for the exact midpoint of a v
 observes the count fall before the day changes; automatic midnight cleaning remains only the net
 behind anything the round did not reach. The complete suite passes all 289 active cases, including
 the 362.86-second animation test; 21 diagnostics remain disabled.
+
+J42 makes that daytime effect independent of when the public happens to drop its wrappers. A
+cleaner now chooses the nearest dirty bin catchment before continuing the ordinary round, retains
+the bin on its sweep task, and refreshes the exact litter target before setting out and on arrival.
+The J38 public-visit regression had regressed after an unrelated crowd correction: its closest
+scheduled sweep was 39.69 m from any litter although one piece lay 0.23 m from a bin. It now
+removes real litter before midnight again; all 13 focused keeper cases pass, including equal-run
+determinism, a mid-round save/load and the staffed week. The combined J41/J42 suite passes all
+292 active cases, including the 366.68-second animation pipeline; 21 diagnostics remain disabled.
+Both short and 6,000-tick state hashes repeat twice for seeds 1–3 (J42, 2026-11-20).
 
 J21 spreads outside work around habitats which have a planted stand-off strip. `BarrierStands`
 used to stop as soon as it found the service gate, even if that left Elephant Valley and Rhino

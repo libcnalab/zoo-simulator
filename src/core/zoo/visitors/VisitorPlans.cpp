@@ -509,15 +509,38 @@ bool Stepper::TryWatch(Group g) {
         plan.enclosure = site.enclosure;
         const Vec2 toward = ToVec(Step(best->side));
         int slot = 0;
+        bool enoughRoom = true;
         for (int k = 0; k < size; ++k) {
-            while (slot < kSlotsPerViewingTile - 1 && (taken & (1u << slot)) != 0) {
+            Vec2 place;
+            bool available = false;
+            while (slot < kSlotsPerViewingTile) {
+                place = ViewingPosition(*best, slot);
+                available = (taken & (1u << slot)) == 0;
+                for (std::size_t i = 0; i < all.visitors_.size() && available; ++i) {
+                    if ((i >= g.first && i < g.end) || all.visitors_[i].activity == VisitorActivity::Inside) {
+                        continue;
+                    }
+                    const Visitor& other = all.visitors_[i];
+                    const Vec2 reserved = Travelling(other.activity) ? other.target : other.position;
+                    available = DistanceSquared(place, reserved) >= kRoomM * kRoomM;
+                }
+                if (available) {
+                    break;
+                }
                 ++slot;
+            }
+            if (!available) {
+                enoughRoom = false;
+                break;
             }
             taken |= 1u << slot;
             const std::size_t m = static_cast<std::size_t>(k);
-            plan.place[m] = ViewingPosition(*best, slot);
+            plan.place[m] = place;
             plan.face[m] = HeadingOf(toward);
             plan.slot[m] = static_cast<std::uint8_t>(slot);
+        }
+        if (!enoughRoom) {
+            continue;
         }
         std::uint8_t& standing = scr.watchers[sites.TileIndex(best->tile)];
         standing = static_cast<std::uint8_t>(std::min(255, standing + size));

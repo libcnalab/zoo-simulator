@@ -8,6 +8,9 @@ namespace zoo::staff_detail {
 /// How staff walk: anywhere dry, through keeper gates, preferring paths.
 inline constexpr NavProfile kStaffProfile = NavProfile::Staff();
 
+/// Updates a bin's not-yet-started sweep to litter which appeared after the stop was planned.
+void RefreshSweep(const Env& env, const Visitors& visitors, StaffMember& member);
+
 /// Does a dangerous animal live in this habitat, or stand in it right now?
 bool HoldsDanger(const Env& env, const Animals& animals, EnclosureId enclosure);
 

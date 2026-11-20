@@ -280,6 +280,48 @@ TEST(VisitorWalkTests, AStallQueueWaitsForAnUnrelatedStandingVisitor) {
                              << " for " << ToString(otherGoal) << ") at tick " << closestTick;
 }
 
+TEST(VisitorWalkTests, AWatcherChoosesRoomAwayFromUnrelatedStandingVisitors) {
+    const std::unique_ptr<Zoo> zoo = StarterZoo();
+    AdvanceToHour(*zoo, 11.0f);
+    float closest = std::numeric_limits<float>::infinity();
+    VisitorId watcher;
+    VisitorId other;
+    VisitorActivity otherActivity = VisitorActivity::Count;
+    VisitorGoal otherPreviousGoal = VisitorGoal::Count;
+    std::int64_t closestTick = 0;
+    std::int64_t checked = 0;
+    for (int step = 0; step < 6000; ++step) {
+        zoo->Step();
+        const std::vector<Visitor>& all = zoo->Guests().All();
+        for (const Visitor& atFence : all) {
+            if (atFence.activity != VisitorActivity::Watching) {
+                continue;
+            }
+            for (const Visitor& standing : all) {
+                if (standing.group == atFence.group || standing.activity == VisitorActivity::Inside ||
+                    standing.activity == VisitorActivity::Watching || Travelling(standing) || standing.seat ||
+                    standing.speed != 0.0f) {
+                    continue;
+                }
+                ++checked;
+                const float distance = Distance(atFence.position, standing.position);
+                if (distance < closest) {
+                    closest = distance;
+                    watcher = atFence.id;
+                    other = standing.id;
+                    otherActivity = standing.activity;
+                    otherPreviousGoal = standing.previousGoal;
+                    closestTick = zoo->Time().tick;
+                }
+            }
+        }
+    }
+    EXPECT_GT(checked, 1000);
+    EXPECT_GE(closest, kRoomM) << "watcher " << watcher.value << " came within " << closest
+                               << " m of visitor " << other.value << " (" << ToString(otherActivity)
+                               << " after " << ToString(otherPreviousGoal) << ") at tick " << closestTick;
+}
+
 TEST(VisitorWalkTests, ASitterSitsOnItsSeatAndFacesOut) {
     const std::unique_ptr<Zoo> zoo = StarterZoo();
     AdvanceToHour(*zoo, 11.0f);

@@ -525,6 +525,21 @@ void Stepper::Act(Group g) {
     // People who look at animals follow them with their eyes, unhurried.
     const bool watching = lead.goal == VisitorGoal::Watch;
     if (watching) {
+        // Somebody can settle here after this viewing place was reserved.  Give them room and
+        // choose another view instead of continuing to stand shoulder to shoulder.
+        for (std::size_t i = g.first; i < g.end; ++i) {
+            for (std::size_t k = 0; k < list.size(); ++k) {
+                const Visitor& other = list[k];
+                if ((k >= g.first && k < g.end) || other.activity == VisitorActivity::Inside ||
+                    Travelling(other.activity) || other.seat || other.speed != 0.0f) {
+                    continue;
+                }
+                if (DistanceSquared(list[i].position, other.position) < kRoomM * kRoomM) {
+                    Finish(g);
+                    return;
+                }
+            }
+        }
         Aim(g);
     }
     for (std::size_t i = g.first; i < g.end; ++i) {

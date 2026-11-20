@@ -72,16 +72,18 @@ TEST(VisitStart, MatchesGameSequence) {
 // mesh-backed wildlife hedge instead of exposed wire mesh; every ordinary public walk is at
 // least four metres wide; habitat trees keep the full viewing set-back while low cover preserves
 // the vegetation welfare margin; dangerous groups use a saved shelter lockout for inside keeper
-// work, public feedings service troughs too, and routine care is requested earlier).
+// work, public feedings service troughs too, and routine care is requested earlier; watchers
+// yield to unrelated standing visitors, and the cleaner prioritises current litter rather than
+// finishing a stale bin circuit).
 void CheckFillHashes(std::int64_t ticks) {
     constexpr std::array<std::array<std::uint64_t, 2>, 3> shortHashes{
-        {{12080672554484292643ULL, 9758341793471327809ULL},
-         {11088966625971319769ULL, 4445196529499393920ULL},
-         {4883456111034529366ULL, 13513627041716576339ULL}}};
+        {{6776617107328918238ULL, 14034960050957291421ULL},
+         {702568538293610378ULL, 6613964628338134637ULL},
+         {13387613185849898106ULL, 4745053952348623435ULL}}};
     constexpr std::array<std::array<std::uint64_t, 2>, 3> fullHashes{
-        {{13294833563110516530ULL, 18281523683389025830ULL},
-         {11825789820700567331ULL, 15436640618414102508ULL},
-         {7455558949014992433ULL, 4288200548114374703ULL}}};
+        {{16782157436113624548ULL, 4729679785067756006ULL},
+         {12893520723049548657ULL, 8300041214610808813ULL},
+         {13278249381426860837ULL, 13525133014315892065ULL}}};
     for (const std::uint64_t seed : {1ULL, 2ULL, 3ULL}) {
         Zoo zoo(testdata::GameCatalog(), testdata::GameSpecies(), VisitorZooConfig(seed));
         BuildVisitorZoo(zoo);
