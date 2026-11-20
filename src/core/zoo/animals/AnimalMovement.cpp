@@ -82,7 +82,7 @@ void KeepWaypointsOffProps(std::vector<Vec2>& route, Vec2 start, float girth, co
 
 void AdvanceMovement(Animal& animal, const SpeciesDef& species, const Env& env, int& pathCalls,
                      std::span<const Animal> animals, std::span<const std::size_t> neighbors,
-                     std::vector<PropId>& propScratch) {
+                     std::vector<PropId>& propScratch, std::vector<NavObstacle>& navScratch) {
     if (!animal.InWorld() || animal.shelter) {
         animal.speed = 0.0f;
         return;
@@ -174,7 +174,35 @@ void AdvanceMovement(Animal& animal, const SpeciesDef& species, const Env& env, 
         animal.route.push_back(animal.target);
         animal.routeIndex = 0;
     } else if (animal.route.empty() && animal.position != animal.target) {
-        if (env.nav.Walkable(animal.position, animal.target, profile)) {
+        navScratch.clear();
+        const EnclosureId home = env.enclosures.At(animal.position);
+        const float girth = species.bodyRadiusM * bodyScale * tuning::kBodyWidthFraction;
+        if (home) {
+            const TileCoord from = World::TileAt(animal.position);
+            const TileCoord to = World::TileAt(animal.target);
+            const int margin = tuning::kRouteObstacleMarginTiles;
+            const TileCoord low{std::max(0, std::min(from.x, to.x) - margin),
+                                std::max(0, std::min(from.z, to.z) - margin)};
+            const TileCoord high{std::min(env.world.Width() - 1, std::max(from.x, to.x) + margin),
+                                 std::min(env.world.Depth() - 1, std::max(from.z, to.z) + margin)};
+            env.objects.PropsInTiles(low, high, propScratch);
+            for (const PropId id : propScratch) {
+                const Prop* prop = std::as_const(env.objects).FindProp(id);
+                if (prop == nullptr || env.enclosures.At(prop->position) != home || prop->def < 0 ||
+                    static_cast<std::size_t>(prop->def) >= env.catalog.props.size()) {
+                    continue;
+                }
+                const PropDef& def = env.catalog.props[static_cast<std::size_t>(prop->def)];
+                if (!def.blocksWalking) {
+                    continue;
+                }
+                const float clearance = prop->id == animal.targetProp
+                                            ? def.radiusM
+                                            : def.radiusM + girth + tuning::kObstacleClearanceM;
+                navScratch.push_back({prop->position, clearance});
+            }
+        }
+        if (env.nav.Walkable(animal.position, animal.target, profile, navScratch)) {
             animal.route.push_back(animal.target);
         } else {
             if (pathCalls >= tuning::kPathCallsPerStep) {
@@ -188,7 +216,7 @@ void AdvanceMovement(Animal& animal, const SpeciesDef& species, const Env& env, 
             }
             ++pathCalls;
             if (!env.nav.FindPath(animal.position, animal.target, profile, animal.route,
-                                  tuning::kPathExpansionLimit)) {
+                                  tuning::kPathExpansionLimit, navScratch)) {
                 animal.moving = false;
                 animal.route.clear();
                 animal.routeIndex = 0;

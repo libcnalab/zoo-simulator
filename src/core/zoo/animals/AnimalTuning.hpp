@@ -198,6 +198,7 @@ inline constexpr int kPacingSides = 4;                           // enclosure bo
 inline constexpr int kDestinationAttempts = 8;                   // candidate positions per decision
 inline constexpr int kTreeCoolingSamples = 8;                    // candidate offsets around a tree
 inline constexpr float kObstacleSearchRadiusM = 2.0f;            // extra prop query radius in metres
+inline constexpr int kRouteObstacleMarginTiles = 3;              // six-metre A* corridor margin
 inline constexpr float kMotherFollowRadiusM = 4.0f;              // juvenile wander radius from its mother
 inline constexpr float kSocialWanderRadiusM = 8.0f;              // group attraction radius
 inline constexpr float kSocialWanderMinimumPreference = 0.35f;   // distant group preference multiplier

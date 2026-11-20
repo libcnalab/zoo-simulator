@@ -48,7 +48,7 @@ and is saved with the zoo. The game draws each visitor as a CNA avatar.
 - **Litter.** Wrappers go into a bin when one is within `kBinSearchM`, on the
   ground otherwise. Litter in sight lowers happiness. The cleaner empties bins
   on its daytime round, prioritises the nearest bin with ground litter within
-  25 m, and refreshes that target when it arrives;
+  30 m, and refreshes that target when it arrives;
   with `autoCare`, the midnight shift remains a safety net for anything left.
 
 ## Time
@@ -123,11 +123,13 @@ a line:
   (`kOwnShoulderM` is now the same 0.55 m for its own group) is walked around on
   the side with more room; somebody going the same way is followed and only passed when nearer
   than `kFollowM`; for people coming the other way the walker also slows, never
-  below 45 % of its pace. Within `kSettleM` of its own place it minds nobody.
+  below 45 % of its pace. Within `kSettleM` of its own place it normally settles directly,
+  but a person who arrived after the route was planned remains a hard obstruction.
 - **The player.** `Visitors::SetBystander(position)` names somebody who stands on
   the paths and is no visitor (the game passes the walking player every frame,
   `ClearBystander()` otherwise). Walkers go round it like round a standing
-  visitor. It is not saved and not part of `StateHash()`: a zoo that is watched
+  visitor, with a 0.36 m hard body floor beneath the steering so nobody clips through it.
+  It is not saved and not part of `StateHash()`: a zoo that is watched
   from within is no longer bit-identical to one that is not.
 - **Staff.** Before the visitor step, the zoo supplies every keeper, gardener and cleaner as a
   transient steering obstacle. A walker gives them an adult's shoulder room, whether the member
@@ -384,7 +386,7 @@ diagnostics disabled (2026-11-20).
 - Peak presence is close to the day's arrivals: visits are long against the
   opening hours.
 - Walkers go round each other, staff and the player. Most people who stand do
-  not step aside for anybody; a watcher is the exception and leaves a viewing
-  place if somebody else settles within half a metre.
+  not step aside for anybody; occupied late-arrival destinations are not entered, and a watcher
+  is the exception which leaves a viewing place if somebody else settles within half a metre.
 - Two walkers of a group can still cross inside 0.3 m for a moment at a corner
   (0.58 % of the every-tick pairs in `VisitorWalkTests`, down from 1.44 %).

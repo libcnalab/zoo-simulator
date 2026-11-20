@@ -444,6 +444,18 @@ whatever you take up (`docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `docs/V
   `docs/evidence/clear-view-crowns-j48-2026-11-20.jpg`. Two focused radius regressions and all 25
   game-side tests pass. The complete suite passes all 294 active cases including the 365.53-second
   animation pipeline, with 21 diagnostics disabled as intended (J48, 2026-11-20).
+- J49 makes animal route searches include blocking scenery in a six-metre start/target corridor.
+  A generic per-route circle overlay is checked on A* edges and again while simplifying straight
+  segments; visitors, staff and cached world components keep their old profiles, while a body
+  loaded inside old scenery may still walk out. Two navigator regressions and a lion-around-an-oak
+  integration pass; Greenhill's seed-1 stall probe improves from 1,603 / 303,845 (0.528%) to 819 / 287,191
+  (0.285%) without relaxing its 0.75% or 120-tick bounds. The changed visitor history exposed and
+  fixed three general late conflicts: arrivals no longer snap into a newly occupied destination,
+  walkers have a sliding 0.36 m floor around the player, and the cleaner's overlapping 30 m bin
+  catchments close its narrow unswept ring. The affected queue, standing, player, cleaner and
+  short/full hash regressions pass; both hash sets repeat for seeds 1–3. The complete suite passes
+  all 297 active cases including the 374.83-second animation pipeline, with 21 diagnostics disabled
+  as intended (J49, 2026-11-20).
 - The stopped G7c audio audit is recovered and finished. Calls now follow `Vocalize`, social,
   play and documented feeding cues rather than a timer; takes do not repeat immediately, spatial
   pan is capped at 0.60, birds fade with daylight, crowd level follows its people, and footsteps

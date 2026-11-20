@@ -17,7 +17,7 @@ Vec2 RoutinePlace(const Animal& animal, const SpeciesDef& species, const Behavio
                   std::vector<PropId>& propScratch, int viewers = 0);
 void AdvanceMovement(Animal& animal, const SpeciesDef& species, const Env& env, int& pathCalls,
                      std::span<const Animal> animals, std::span<const std::size_t> neighbors,
-                     std::vector<PropId>& propScratch);
+                     std::vector<PropId>& propScratch, std::vector<NavObstacle>& navScratch);
 void AdvanceNeeds(Animal& animal, const SpeciesDef& species, Env& env, const EnclosureStats* enclosure,
                   int viewers, const Animal* mother, bool predatorPresent);
 void DecideActivity(Animal& animal, const SpeciesDef& species, Env& env, std::span<const Animal> animals,

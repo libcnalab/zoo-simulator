@@ -183,11 +183,42 @@ void Stepper::Move(Group g) {
         }
         const bool last = index + 1 == count;
         const Vec2 way = distance > 1.0e-4f ? to * (1.0f / distance) : HeadingVector(v.heading);
-        // Steers at the waypoint and around the people in the way; nobody is in the way of
-        // somebody who is nearly at its own place.
+        const auto entersBystander = [&](Vec2 next) {
+            return all.hasBystander_ &&
+                   DistanceSquared(next, all.bystander_) < kBystanderBodyM * kBystanderBodyM &&
+                   DistanceSquared(next, all.bystander_) < DistanceSquared(v.position, all.bystander_);
+        };
+        const auto entersStandingVisitor = [&](Vec2 next) {
+            const Sites& sites = scr.sites;
+            const TileCoord low = World::TileAt(next - Vec2{kQueueBodyM, kQueueBodyM});
+            const TileCoord high = World::TileAt(next + Vec2{kQueueBodyM, kQueueBodyM});
+            for (int z = std::max(0, low.z); z <= std::min(sites.depth - 1, high.z); ++z) {
+                for (int x = std::max(0, low.x); x <= std::min(sites.width - 1, high.x); ++x) {
+                    const std::size_t tile = sites.TileIndex({x, z});
+                    for (std::int32_t n = scr.cellHead[tile]; n >= 0;
+                         n = scr.cellNext[static_cast<std::size_t>(n)]) {
+                        const std::size_t otherIndex = static_cast<std::size_t>(n);
+                        if ((otherIndex >= g.first && otherIndex < g.end) ||
+                            list[otherIndex].activity == VisitorActivity::Inside ||
+                            Travelling(list[otherIndex].activity)) {
+                            continue;
+                        }
+                        const Vec2 other = list[otherIndex].position;
+                        if (DistanceSquared(next, other) < kQueueBodyM * kQueueBodyM &&
+                            DistanceSquared(next, other) < DistanceSquared(v.position, other)) {
+                            return true;
+                        }
+                    }
+                }
+            }
+            return false;
+        };
+        // Steers at the waypoint and around people in the way. Near its own place it normally
+        // settles directly, unless that place has become occupied since the route was planned.
         float slow = 1.0f;
         Vec2 wish = way;
-        if (!last || distance > kSettleM) {
+        if (!last || distance > kSettleM || entersBystander(v.route[index]) ||
+            entersStandingVisitor(v.route[index])) {
             const float push = Dodge(i, g, way, slow);
             wish = Normalized(way + Vec2{-way.z, way.x} * (0.9f * push), way);
         }
@@ -203,7 +234,8 @@ void Stepper::Move(Group g) {
         const float turn = (fleeing ? 2.0f : 1.0f) * (kTurnWalking + kTurnOnTheSpot * standing);
         v.heading = TurnTowards(v.heading, wishHeading, turn * kTickSeconds);
         const float stride = v.speed * kTickSeconds;
-        if (last && distance <= std::max(stride, 0.03f)) {
+        if (last && distance <= std::max(stride, 0.03f) && !entersBystander(v.route[index]) &&
+            !entersStandingVisitor(v.route[index])) {
             v.position = v.route[index];
             v.speed = 0.0f;
             index = count;
@@ -224,6 +256,21 @@ void Stepper::Move(Group g) {
                 const Vec2 first = xFirst ? alongX : alongZ;
                 const Vec2 second = xFirst ? alongZ : alongX;
                 next = !InPlanting(first) ? first : !InPlanting(second) ? second : v.position;
+            }
+            if (entersBystander(next)) {
+                const Vec2 away = v.position - all.bystander_;
+                const Vec2 radial = Normalized(away);
+                const Vec2 step = next - v.position;
+                const float inward = Dot(step, radial);
+                next = inward < 0.0f ? next - radial * inward : next;
+                if (DistanceSquared(next, all.bystander_) < kBystanderBodyM * kBystanderBodyM) {
+                    next = v.position;
+                }
+                v.speed = Distance(v.position, next) / kTickSeconds;
+            }
+            if (entersStandingVisitor(next)) {
+                next = v.position;
+                v.speed = 0.0f;
             }
             v.position = next;
             everybody = false;
@@ -391,6 +438,26 @@ void Stepper::GroupArrived(Group g) {
     Rng& rng = all.rng_;
     for (std::size_t i = g.first; i < g.end; ++i) {
         list[i].speed = 0.0f;
+    }
+    const bool needsStandingRoom = lead.goal == VisitorGoal::Watch || lead.goal == VisitorGoal::Eat ||
+                                   lead.goal == VisitorGoal::Rest || lead.goal == VisitorGoal::Read;
+    if (needsStandingRoom) {
+        for (std::size_t i = g.first; i < g.end; ++i) {
+            if (list[i].seat) {
+                continue;
+            }
+            for (std::size_t k = 0; k < list.size(); ++k) {
+                const Visitor& other = list[k];
+                if ((k >= g.first && k < g.end) || other.activity == VisitorActivity::Inside || other.seat ||
+                    Travelling(other.activity)) {
+                    continue;
+                }
+                if (DistanceSquared(list[i].position, other.position) < kRoomM * kRoomM) {
+                    Finish(g);
+                    return;
+                }
+            }
+        }
     }
     switch (lead.goal) {
         case VisitorGoal::Enter:

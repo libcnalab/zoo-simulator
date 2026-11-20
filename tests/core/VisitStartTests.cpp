@@ -76,16 +76,18 @@ TEST(VisitStart, MatchesGameSequence) {
 // yield to unrelated standing visitors, and the cleaner prioritises current litter rather than
 // finishing a stale bin circuit; walking companions receive the full shoulder corridor;
 // ordinary animal errands try their next sidestep after three quarters of a second; both bear
-// habitats become mother-and-two-cub groups using the dedicated juvenile models).
+// habitats become mother-and-two-cub groups using the dedicated juvenile models; animal route
+// searches avoid the blocking trees and rocks of their own habitat, while late-arriving visitors
+// keep hard body room from standing people and the player).
 void CheckFillHashes(std::int64_t ticks) {
     constexpr std::array<std::array<std::uint64_t, 2>, 3> shortHashes{
-        {{17379813876368075708ULL, 1298426449307882789ULL},
-         {10600911180101923765ULL, 8099999131585360788ULL},
-         {9339430514828864002ULL, 10524783387007761817ULL}}};
+        {{17597158985869688674ULL, 17189011008774180777ULL},
+         {9287239994964723878ULL, 6727593421641448210ULL},
+         {6576441127946601590ULL, 8502655758918551990ULL}}};
     constexpr std::array<std::array<std::uint64_t, 2>, 3> fullHashes{
-        {{2806996443957579519ULL, 16979534985110762881ULL},
-         {11368583421750564472ULL, 7145817024063048249ULL},
-         {17926869522992866043ULL, 16824584070955396852ULL}}};
+        {{12073229470195552745ULL, 15546514649474444436ULL},
+         {9470112430556706287ULL, 9569142588409985417ULL},
+         {16002877825299846789ULL, 5515866005143762710ULL}}};
     for (const std::uint64_t seed : {1ULL, 2ULL, 3ULL}) {
         Zoo zoo(testdata::GameCatalog(), testdata::GameSpecies(), VisitorZooConfig(seed));
         BuildVisitorZoo(zoo);

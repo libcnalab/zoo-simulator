@@ -1149,7 +1149,8 @@ void Animals::StepAnimals(Env& env, const std::vector<Enclosure>& enclosures, in
                 }
             }
         }
-        animal_internal::AdvanceMovement(animal, species, env, pathCalls, animals_, neighbors, propScratch_);
+        animal_internal::AdvanceMovement(animal, species, env, pathCalls, animals_, neighbors, propScratch_,
+                                         navScratch_);
         animal.heading = TurnTowards(previousHeading, animal.heading,
                                      tuning::kTurnRadiansPerSecond * tuning::kMotionSecondsPerTick);
         if ((animal.activity == AnimalActivity::Shelter || animal.activity == AnimalActivity::Sleep) &&

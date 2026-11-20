@@ -72,8 +72,9 @@ constexpr float kDangerousRakeS = 12.0f;
 constexpr float kHoseS = 30.0f;
 constexpr float kInspectS = 22.0f;
 constexpr float kSweepS = 24.0f;
-/// How far from a bin its cleaner picks a litter target, in metres.
-constexpr float kLitterReach = 25.0f;
+/// How far from a bin its cleaner picks a litter target, in metres. This overlaps
+/// neighbouring bin catchments after accounting for the cleaner's stand beside a bin.
+constexpr float kLitterReach = 30.0f;
 constexpr float kEmptyBinS = 10.0f;
 constexpr float kTendS = 30.0f;
 constexpr float kWaterS = 16.0f;

@@ -56,9 +56,10 @@ zoo happens half way through the job.
   animals stay secured and the keeper retries rather than completing the release remotely.
 - **The gardener** waters a bed every third stop, kneels and tends it with a trowel, and
   rests now and then; **the cleaner** gives priority to the nearest bin with litter within
-  25 m, empties it and then sweeps that litter, or the path beside the bin. The sweep target
-  is refreshed before the walk and again on arrival, so a wrapper dropped after the stop was
-  first planned does not wait for a complete circuit of the zoo.
+  30 m, empties it and then sweeps that litter, or the path beside the bin. The overlapping
+  catchments include the cleaner's stand beside a bin and no longer leave a narrow unswept ring.
+  The sweep target is refreshed before the walk and again on arrival, so a wrapper dropped after
+  the stop was first planned does not wait for a complete circuit of the zoo.
 
 ## Where they walk and stand
 

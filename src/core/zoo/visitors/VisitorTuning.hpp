@@ -137,6 +137,9 @@ inline constexpr float kQueuePatienceSeconds = 24.0f;
 inline constexpr float kQueueSpacingM = 0.7f;
 inline constexpr float kQueueBodyM = 0.3f;  ///< a line waits rather than entering a standing person
 inline constexpr int kQueuePlaces = 18;
+/// A walking visitor never steps inside the player on foot even when steering has not
+/// yet turned far enough to clear them.
+inline constexpr float kBystanderBodyM = 0.36f;
 /// Seats and bins farther than this from where a group stands are not looked for.
 inline constexpr float kSeatSearchM = 30.0f;
 inline constexpr float kBinSearchM = 24.0f;

@@ -58,6 +58,31 @@ bool EdgeOpen(const World& world, TileCoord from, Dir direction, const NavProfil
     return profile.useGates;
 }
 
+bool ClearsObstacles(Vec2 from, Vec2 to, std::span<const NavObstacle> obstacles) {
+    const Vec2 travel = to - from;
+    const float travelSquared = LengthSquared(travel);
+    for (const NavObstacle& obstacle : obstacles) {
+        if (obstacle.radius <= 0.0f) {
+            continue;
+        }
+        const float radiusSquared = obstacle.radius * obstacle.radius;
+        const Vec2 relative = from - obstacle.position;
+        const float startSquared = LengthSquared(relative);
+        // A damaged save or newly grown body may begin inside scenery. It must be
+        // allowed to move monotonically out, just as the movement collision does.
+        if (startSquared < radiusSquared && Dot(travel, relative) >= 0.0f &&
+            DistanceSquared(to, obstacle.position) > startSquared) {
+            continue;
+        }
+        const float along =
+            travelSquared > 0.0f ? std::clamp(-Dot(relative, travel) / travelSquared, 0.0f, 1.0f) : 0.0f;
+        if (DistanceSquared(from + travel * along, obstacle.position) < radiusSquared) {
+            return false;
+        }
+    }
+    return true;
+}
+
 }  // namespace
 
 Navigator::Navigator(const World& world) : world_(&world) {
@@ -94,7 +119,8 @@ bool Navigator::CanStep(TileCoord from, Dir direction, const NavProfile& profile
     return Passable(from, profile) && Passable(to, profile) && EdgeOpen(*world_, from, direction, profile);
 }
 
-bool Navigator::Walkable(Vec2 from, Vec2 to, const NavProfile& profile) const {
+bool Navigator::Walkable(Vec2 from, Vec2 to, const NavProfile& profile,
+                         std::span<const NavObstacle> obstacles) const {
     if (!std::isfinite(from.x) || !std::isfinite(from.z) || !std::isfinite(to.x) || !std::isfinite(to.z)) {
         return false;
     }
@@ -236,11 +262,12 @@ bool Navigator::Walkable(Vec2 from, Vec2 to, const NavProfile& profile) const {
             }
         }
     }
-    return Passable(World::TileAt(from), profile) && Passable(World::TileAt(to), profile);
+    return Passable(World::TileAt(from), profile) && Passable(World::TileAt(to), profile) &&
+           ClearsObstacles(from, to, obstacles);
 }
 
 bool Navigator::FindPath(Vec2 from, Vec2 to, const NavProfile& profile, std::vector<Vec2>& out,
-                         int maxExpansions) const {
+                         int maxExpansions, std::span<const NavObstacle> obstacles) const {
     out.clear();
     const TileCoord start = World::TileAt(from);
     const TileCoord goal = World::TileAt(to);
@@ -248,8 +275,11 @@ bool Navigator::FindPath(Vec2 from, Vec2 to, const NavProfile& profile, std::vec
         return false;
     }
     if (start == goal) {
-        out.push_back(to);
-        return true;
+        if (Walkable(from, to, profile, obstacles)) {
+            out.push_back(to);
+            return true;
+        }
+        return false;
     }
     ++generation_;
     if (generation_ == 0) {
@@ -303,6 +333,9 @@ bool Navigator::FindPath(Vec2 from, Vec2 to, const NavProfile& profile, std::vec
             if (!CanStep(tile, direction, profile)) {
                 continue;
             }
+            if (!ClearsObstacles(World::TileCenter(tile), World::TileCenter(next), obstacles)) {
+                continue;
+            }
             const float length = 1.0f;
             const float nextCost =
                 current.g +
@@ -326,6 +359,9 @@ bool Navigator::FindPath(Vec2 from, Vec2 to, const NavProfile& profile, std::vec
                 if (!CanStep(tile, horizontal, profile) || !CanStep(tile, vertical, profile) ||
                     !CanStep(horizontalTile, vertical, profile) ||
                     !CanStep(verticalTile, horizontal, profile)) {
+                    continue;
+                }
+                if (!ClearsObstacles(World::TileCenter(tile), World::TileCenter(next), obstacles)) {
                     continue;
                 }
                 const float nextCost =
@@ -374,7 +410,7 @@ bool Navigator::FindPath(Vec2 from, Vec2 to, const NavProfile& profile, std::vec
         std::size_t farthest = candidate;
         for (std::size_t test = rawSize; test > candidate; --test) {
             const Vec2 end = test == rawSize ? to : out[test - 1];
-            if (Walkable(anchor, end, profile) && avoidsCostlyWater(anchor, end)) {
+            if (Walkable(anchor, end, profile, obstacles) && avoidsCostlyWater(anchor, end)) {
                 farthest = test - 1;
                 break;
             }

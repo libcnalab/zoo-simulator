@@ -2,6 +2,7 @@
 #include <gtest/gtest.h>
 
 #include <algorithm>
+#include <array>
 #include <vector>
 
 #include "zoo/animals/AnimalTuning.hpp"
@@ -69,6 +70,60 @@ TEST(AnimalMovementTests, WanderMovesWithinItsEnclosureWithoutSnappingHeading) {
         previousSpeed = animal->speed;
     }
     EXPECT_TRUE(moved);
+}
+
+TEST(AnimalMovementTests, APlannedRouteGoesAroundBlockingHabitatScenery) {
+    World world(22, 14);
+    ZooObjects objects;
+    const Catalog catalog = Catalog::LoadDirectory(std::string(ZOO_SOURCE_DIR) + "/data/construction");
+    const SpeciesCatalog species =
+        SpeciesCatalog::LoadDirectory(std::string(ZOO_SOURCE_DIR) + "/data/species");
+    const int fence = catalog.FindFence("high_glass_wall")->kind;
+    for (int x = 1; x <= 20; ++x) {
+        world.SetFence({x, 1, true}, {static_cast<std::uint8_t>(fence), false, 1.0f});
+        world.SetFence({x, 12, true}, {static_cast<std::uint8_t>(fence), false, 1.0f});
+    }
+    for (int z = 1; z <= 11; ++z) {
+        world.SetFence({1, z, false}, {static_cast<std::uint8_t>(fence), false, 1.0f});
+        world.SetFence({21, z, false}, {static_cast<std::uint8_t>(fence), false, 1.0f});
+    }
+    const int oak = catalog.PropIndex("oak");
+    ASSERT_GE(oak, 0);
+    const Vec2 tree = World::TileCenter({10, 6});
+    objects.AddProp({.id = {}, .def = oak, .position = tree});
+    Enclosures enclosures;
+    enclosures.Rebuild(world, objects, catalog);
+    Navigator nav(world);
+    Animals animals(31U);
+    Env env{world, objects, enclosures, catalog, species, nav, nullptr, nullptr, {}, {}};
+    const int lion = species.IndexOf("lion");
+    const Vec2 start = World::TileCenter({3, 6});
+    const Vec2 target = World::TileCenter({17, 6});
+    const AnimalId id = animals.Add(env, lion, Sex::Female, 5.0f, start);
+    ASSERT_TRUE(id);
+    Animal* animal = animals.Find(id);
+    animal->activity = AnimalActivity::Wander;
+    animal->activityLeft = 1000;
+    animal->moving = true;
+    animal->target = target;
+    animal->hunger = 0.0f;
+    animal->thirst = 0.0f;
+
+    animals.Step(env);
+    animal = animals.Find(id);
+    ASSERT_NE(animal, nullptr);
+    ASSERT_GE(animal->route.size(), 2u);
+    const SpeciesDef& lionDef = species.All()[static_cast<std::size_t>(lion)];
+    const float clearance = catalog.props[static_cast<std::size_t>(oak)].radiusM +
+                            lionDef.bodyRadiusM * tuning::kBodyWidthFraction + tuning::kObstacleClearanceM;
+    const std::array<NavObstacle, 1> obstacle = {{{tree, clearance}}};
+    const NavProfile profile = NavProfile::Animal(0.0f, lionDef.canSwim);
+    Vec2 previous = animal->position;
+    for (std::size_t i = animal->routeIndex; i < animal->route.size(); ++i) {
+        EXPECT_TRUE(nav.Walkable(previous, animal->route[i], profile, obstacle));
+        previous = animal->route[i];
+    }
+    EXPECT_EQ(animal->route.back(), target);
 }
 
 TEST(AnimalMovementTests, ShyAnimalsRetreatFromAVisibleKeeperButBoldAnimalsDoNot) {

@@ -58,6 +58,14 @@ struct NavProfile {
     }
 };
 
+/// A circular solid supplied for one route. The World owns permanent tile and edge
+/// obstructions; callers use these for movable or freely placed scenery without
+/// putting simulation objects into the generic navigator.
+struct NavObstacle {
+    Vec2 position;
+    float radius = 0.0f;
+};
+
 /// Pathfinding on the tile grid of a World.
 ///
 /// Walkers move between the centres of neighbouring tiles: the four axis
@@ -91,12 +99,13 @@ public:
     /// Step cost: distance in tiles (1 or sqrt 2) times the mean of the two tiles'
     /// cost factors. Ties are broken deterministically.
     bool FindPath(Vec2 from, Vec2 to, const NavProfile& profile, std::vector<Vec2>& out,
-                  int maxExpansions = 60000) const;
+                  int maxExpansions = 60000, std::span<const NavObstacle> obstacles = {}) const;
 
     /// Can the walker go from `a` to `b` in a straight line: every tile the segment
     /// passes through is passable and it crosses no blocked edge (a segment through
     /// a grid vertex counts as touching all four tiles around it).
-    bool Walkable(Vec2 a, Vec2 b, const NavProfile& profile) const;
+    bool Walkable(Vec2 a, Vec2 b, const NavProfile& profile,
+                  std::span<const NavObstacle> obstacles = {}) const;
 
     /// Length in metres of the route FindPath would return, or a negative value.
     float PathLength(Vec2 from, Vec2 to, const NavProfile& profile) const;

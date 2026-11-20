@@ -140,6 +140,38 @@ TEST(Navigator, VertexTraversalCornerCuttingAndDeterminism) {
     EXPECT_FALSE(cornerNavigator.Walkable(World::TileCenter({1, 1}), World::TileCenter({2, 2}), {}));
 }
 
+TEST(Navigator, PerRouteCircularObstaclesAreWalkedAroundDeterministically) {
+    World world(12, 9);
+    Navigator navigator(world);
+    const Vec2 start = World::TileCenter({1, 4});
+    const Vec2 end = World::TileCenter({10, 4});
+    const std::array<NavObstacle, 1> obstacles = {{{World::TileCenter({5, 4}), 1.3f}}};
+    EXPECT_TRUE(navigator.Walkable(start, end, {}));
+    EXPECT_FALSE(navigator.Walkable(start, end, {}, obstacles));
+
+    std::vector<Vec2> first;
+    std::vector<Vec2> second;
+    ASSERT_TRUE(navigator.FindPath(start, end, {}, first, 60000, obstacles));
+    ASSERT_TRUE(navigator.FindPath(start, end, {}, second, 60000, obstacles));
+    EXPECT_EQ(first, second);
+    ASSERT_GE(first.size(), 2u);
+    EXPECT_EQ(first.back(), end);
+    Vec2 previous = start;
+    for (const Vec2 point : first) {
+        EXPECT_TRUE(navigator.Walkable(previous, point, {}, obstacles));
+        previous = point;
+    }
+}
+
+TEST(Navigator, ARouteMayLeadOutOfAnObstacleItAlreadyStartsInside) {
+    World world(8, 8);
+    Navigator navigator(world);
+    const Vec2 start = World::TileCenter({2, 2});
+    const std::array<NavObstacle, 1> obstacles = {{{start, 1.0f}}};
+    EXPECT_TRUE(navigator.Walkable(start, World::TileCenter({4, 2}), {}, obstacles));
+    EXPECT_FALSE(navigator.Walkable(World::TileCenter({1, 2}), World::TileCenter({3, 2}), {}, obstacles));
+}
+
 TEST(Navigator, FenceCacheInvalidationDistanceFieldAndExpansionLimit) {
     World world(8, 8);
     Navigator navigator(world);

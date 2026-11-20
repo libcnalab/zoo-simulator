@@ -382,6 +382,7 @@ private:
     std::vector<EnclosureId> staffLockouts_;  // current input, sorted, not simulation state
     std::vector<std::vector<std::size_t>> enclosureScratch_;
     std::vector<PropId> propScratch_;
+    std::vector<NavObstacle> navScratch_;
     std::vector<HabitatCache> habitatScratch_;
     void GroupAnimals(const Env& env);
     void UpdateEnclosureDirt(const Env& env);

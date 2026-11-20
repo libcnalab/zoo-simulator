@@ -529,6 +529,16 @@ from the Release build, visitor zoo, seed 1, after the visit's fill.
   animation pipeline, with 21 diagnostics disabled. J47's two additional bear cubs change the
   deterministic history and the current 90-animal measurement to 1,603 of 303,845 moving ticks
   (0.528 %), still with every continuous stall below 120 ticks.
+  **Prop-aware routes (J49, 2026-11-20):** a route may now carry per-search circular obstacles.
+  Animal searches use the object spatial index to supply every blocking tree and rock in a
+  six-metre corridor around start and target, including body girth and clearance; both A* edges
+  and simplified straight segments reject those circles. The generic world navigator,
+  visitor/staff profiles and their component caches remain unchanged,
+  and an animal already overlapping old scenery may still walk monotonically out. A lion-route
+  integration and two geometry/determinism regressions cover the new path. The current seed-1
+  probe falls again to 819 of 287,191 moving ticks (0.285 %), with the unchanged 0.75 % and
+  120-tick limits. Short and 6,000-step hashes for seeds 1–3 repeat. The complete suite passes all
+  297 active cases, including its 374.83-second animation pipeline, with 21 diagnostics disabled.
 - **Golden hashes** of `tests/core/VisitStartTests.cpp` re-recorded for the routines.
 - Pictures: `docs/evidence/animal-routines-2026-11-13.jpg` (lions resting in the shade at
   midday; penguins standing together, one swimming; flamingos at the lagoon after the wader
