@@ -98,6 +98,16 @@ automatic care. The same-camera game comparison is inspected in
 has left that space in J20. The cast member's face varies between runs as documented below; the
 measured movement test, not the still, proves the response.
 
+J21 spreads outside work around habitats which have a planted stand-off strip. `BarrierStands`
+used to stop as soon as it found the service gate, even if that left Elephant Valley and Rhino
+Hollow with one place for every feeding, fence check and sweep. It now keeps both the direct gate
+stands and every reachable public viewing bay. A 12,000-tick regression sees at least two distinct
+safe work places at every dangerous habitat; before the change Lion Rock had two, Elephant Valley
+and Rhino Hollow only one. The inspected game frame shows keeper 7 checking Elephant Valley from
+its public dry-moat gallery, with the elephants beyond the separate containment barrier:
+`evidence/safe-barrier-work-j21-2026-11-20.jpg`. All 271 active functional tests pass; the short
+and 6,000-step state hashes repeat for seeds 1–3.
+
 ## Automatic care stays behind them
 
 The game's time is compressed (a game hour is thirty seconds of walking, `docs/VISITORS.md`
@@ -163,6 +173,5 @@ the first tick on), not because of the keepers.
 
 - The dangerous species are never entered: no mucking out of the lions' or bears' habitats,
   because the model cannot shut the animals in their house.
-- A strip-ringed dangerous habitat may have a single place at its barrier to work from.
 - The faces of the cast are random per run; tools cast no shadow; nobody is drawn beyond
   150 m or beyond the 8 nearest.

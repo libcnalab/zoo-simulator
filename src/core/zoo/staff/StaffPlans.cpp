@@ -148,7 +148,9 @@ std::optional<Stand> StandBeside(const Env& env, Vec2 target, Vec2 wish, float r
 }
 
 /// Where the habitat can be served from outside: public ground right at its barrier
-/// (the keeper gate, the viewing bays); failing that, the places visitors watch from.
+/// (usually the keeper gate), and the places visitors watch from.  A stand-off strip can
+/// leave one service-gate point directly beside the habitat; keep the viewing bays as well
+/// so work does not all happen at that one hidden point.
 void BarrierStands(const Env& env, const Enclosure& enclosure, std::vector<Stand>& out) {
     out.clear();
     for (int z = enclosure.min.z; z <= enclosure.max.z; ++z) {
@@ -167,9 +169,6 @@ void BarrierStands(const Env& env, const Enclosure& enclosure, std::vector<Stand
                 out.push_back({World::TileCenter(outside) + inward * 0.4f, HeadingOf(inward)});
             }
         }
-    }
-    if (!out.empty()) {
-        return;
     }
     for (const ViewingSpot& spot : enclosure.viewing) {
         if (Reachable(env, spot.tile)) {

@@ -132,6 +132,33 @@ TEST(Keeper, TheVisitorZooHasItsCrew) {
     EXPECT_EQ(staff.KeeperOf(EnclosureId{9999}), nullptr);
 }
 
+// A planted stand-off strip leaves the service gate as the only place directly beside a
+// dangerous habitat.  The public viewing bays are safe working places too: without them a
+// keeper repeats a whole round at one or two points hidden behind the habitat.
+TEST(Keeper, DangerousHabitatsHaveSeveralSafeBarrierWorkPlaces) {
+    const auto zoo = VisitorZoo();
+    zoo->Guests().SetOpen(false);
+    const std::set<std::uint32_t> dangerous = DangerousHabitats(*zoo);
+    std::map<std::uint32_t, std::set<std::pair<float, float>>> places;
+    for (int i = 0; i < 12000; ++i) {
+        zoo->Step();
+        for (const StaffMember& member : zoo->Keepers().All()) {
+            for (const StaffTask& task : member.tasks) {
+                if (!dangerous.contains(task.enclosure.value)) {
+                    continue;
+                }
+                EXPECT_EQ(zoo->Habitats().RegionAt(World::TileAt(task.place)), Region::Public);
+                places[task.enclosure.value].insert({task.place.x, task.place.z});
+            }
+        }
+    }
+    for (const std::uint32_t id : dangerous) {
+        const Enclosure* enclosure = zoo->Habitats().Find(EnclosureId{id});
+        ASSERT_NE(enclosure, nullptr);
+        EXPECT_GE(places[id].size(), 2u) << enclosure->name;
+    }
+}
+
 TEST(Keeper, NextFeedingIsTheNextOneOfToday) {
     const auto zoo = VisitorZoo();
     const Staff& staff = zoo->Keepers();

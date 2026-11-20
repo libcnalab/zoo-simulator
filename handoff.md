@@ -200,6 +200,15 @@ whatever you take up (`docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `docs/V
   hashes repeat for seeds 1–3; all 270 active functional CTest cases pass, as did today's separate
   six-minute `zoogen_animation` run (21 diagnostics disabled). Dangerous habitats still cannot be
   entered and bold species at or below 0.3 do not retreat.
+- J21 fixes the single-position outside round at strip-ringed dangerous habitats. Barrier work now
+  draws from both the direct service-gate stands and every reachable public viewing bay instead of
+  returning after the first category. In the new 12,000-tick regression Elephant Valley and Rhino
+  Hollow rise from one distinct work place to at least two (Lion Rock already had two), while all
+  positions remain on public ground. Keeper 7 checking Elephant Valley from its dry-moat gallery is
+  inspected in `docs/evidence/safe-barrier-work-j21-2026-11-20.jpg` (J21, 2026-11-20). Dangerous
+  habitats still cannot be entered without an animal lock-in model. Short and 6,000-step hashes
+  repeat twice for seeds 1–3; all 271 active functional CTest cases pass, as did today's earlier
+  separate `zoogen_animation` run (21 diagnostics disabled).
 - The stopped G7c audio audit is recovered and finished. Calls now follow `Vocalize`, social,
   play and documented feeding cues rather than a timer; takes do not repeat immediately, spatial
   pan is capped at 0.60, birds fade with daylight, crowd level follows its people, and footsteps
@@ -290,8 +299,8 @@ sound unknown); saves there live only in the page's memory.
 
 ### 4.1 to 4.3: done on develop (2026-11-14)
 
-Keepers (`docs/KEEPERS.md`; open: no collision with animals and visitors, dangerous habitats
-never entered), ground and water edges (`docs/GROUND.md`; open: steep banks at deep pools, props'
+Keepers (`docs/KEEPERS.md`; open: dangerous habitats never entered), ground and water edges
+(`docs/GROUND.md`; open: steep banks at deep pools, props'
 collision floor still at the simulation's height in `Walker.cpp`), plants (`docs/PLANTS.md`;
 open: far cut-out edges aliased, reeds unused, fill cost of alpha-tested cards). The new first
 priority is memory (section 0).

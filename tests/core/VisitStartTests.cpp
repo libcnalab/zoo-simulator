@@ -67,16 +67,17 @@ TEST(VisitStart, MatchesGameSequence) {
 // 2026-11-20: reeds root on the lagoon's dry margin and tall grass grows in open habitats;
 // Elephant Valley and Rhino Hollow gain graded dry moats along their public fronts; staff and
 // visitors steer around one another, walking staff slide around animals in their region, and
-// shy animals retreat from staff who enter a safe habitat).
+// shy animals retreat from staff who enter a safe habitat; outside work at dangerous habitats
+// uses both the service gate and the public viewing bays).
 void CheckFillHashes(std::int64_t ticks) {
     constexpr std::array<std::array<std::uint64_t, 2>, 3> shortHashes{
-        {{8801170182747433667ULL, 16778304922443866158ULL},
-         {12126289439374370423ULL, 1765319246314384743ULL},
-         {4915969937924421980ULL, 9664439059704426161ULL}}};
+        {{1287693775433826047ULL, 16458272985143021940ULL},
+         {12326371914518996492ULL, 9472595831242533631ULL},
+         {4178110618692488884ULL, 14214950077934312682ULL}}};
     constexpr std::array<std::array<std::uint64_t, 2>, 3> fullHashes{
-        {{7664142362756614569ULL, 8663768684550131465ULL},
-         {5067580972273304818ULL, 9690940403163032169ULL},
-         {16376064390776752809ULL, 17566644428365207998ULL}}};
+        {{2609457543749151601ULL, 13832911272696242744ULL},
+         {6825237569979487382ULL, 13520355053782767291ULL},
+         {17919000829323028449ULL, 837116035961180710ULL}}};
     for (const std::uint64_t seed : {1ULL, 2ULL, 3ULL}) {
         Zoo zoo(testdata::GameCatalog(), testdata::GameSpecies(), VisitorZooConfig(seed));
         BuildVisitorZoo(zoo);
