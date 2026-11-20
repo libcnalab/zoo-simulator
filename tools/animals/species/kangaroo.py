@@ -6,6 +6,7 @@ meta.shoulder_height_m uses that same 1.6 m measurement. Feet are 0.35 m long,
 with a five-bone muscular support tail about 1.2 m long behind the pelvis.
 """
 import math
+from functools import partial
 
 import numpy as np
 
@@ -47,7 +48,7 @@ def _skeleton():
 
 
 def _parts(bones):
-    return [Part("pear_body", [R((-.16, 0, .34), .12, .14, .16),
+    parts = [Part("pear_body", [R((-.16, 0, .34), .12, .14, .16),
         R((-.15, 0, .48), .22, .24, .25), R((-.11, 0, .65), .24, .26, .25),
         R((-.04, 0, .84), .18, .19, .21), R((.05, 0, 1.04), .13, .14, .16),
         R((.12, 0, 1.16), .085, .10, .11), R((.21, 0, 1.30), .067, .075, .085)],
@@ -80,11 +81,33 @@ def _parts(bones):
         Part("small_hand.L", [R((.22, .13, .67), .025, .022),
             R((.25, .13, .63), .028, .020), R((.29, .13, .61), .023, .017)],
              chain=biped.chain(bones, "hand.L", "fingers.L"), mirror=True,
-             segments=16, tag="hand", cap_scale=.3),
-        Part("muscular_tail", [R(point, radius, radius) for point, radius in
+             segments=16, tag="hand", cap_scale=.3)]
+    # Kangaroo feet are not smooth paddles: digit IV carries most of the long foot, digit V is
+    # smaller outside it, and the tiny syndactylous II/III pair forms an inner grooming toe.
+    for name, y, length, width in (("IV", .170, .175, .020),
+                                    ("V", .207, .145, .013),
+                                    ("IIIII", .136, .118, .010)):
+        parts.append(Part(f"hind_digit.{name}.L", [
+            R((.025, y, .028), width, .015),
+            R((length * .70, y, .024), width * .75, .011),
+            R((length, y, .023), width * .28, .006)],
+            weights={"toes.L": 1}, mirror=True, fuse=False, segments=10,
+            tag="hind_digit", cap_start="flat", cap_end="point"))
+    # Five narrow fingers replace each mitten. Their distal colour supplies the dark claws
+    # without adding a second set of tiny overlapping meshes.
+    for index, (y, length) in enumerate(zip((.093, .111, .130, .149, .167),
+                                            (.048, .061, .068, .060, .045))):
+        parts.append(Part(f"finger.{index}.L", [
+            R((.275, y, .620), .0075, .0085),
+            R((.275 + length * .72, y, .606), .0065, .0065),
+            R((.275 + length, y, .600), .0025, .0030)],
+            weights={"fingers.L": 1}, mirror=True, fuse=False, segments=8,
+            tag="finger", cap_start="flat", cap_end="point"))
+    parts.append(Part("muscular_tail", [R(point, radius, radius) for point, radius in
             zip(TAIL, (.14, .115, .080, .049, .029, .019))],
              chain=biped.chain(bones, "tail1", "tail2", "tail3", "tail4", "tail5"),
-             segments=24, tag="tail", cap_scale=.25)]
+             segments=24, tag="tail", cap_scale=.25))
+    return parts
 
 
 def paint(ctx):
@@ -105,6 +128,9 @@ def paint(ctx):
     color = nz.mix(color, np.array([.88, .79, .64]), light)
     inner_ear = ctx.tag("ear") * nz.smoothstep(-.1, .6, ctx.N[..., 0])
     color = nz.mix(color, np.array([.47, .28, .23]), inner_ear)
+    claw = (ctx.tag("hind_digit") * nz.smoothstep(.105, .155, ctx.x)
+            + ctx.tag("finger") * nz.smoothstep(.295, .335, ctx.x))
+    color = nz.mix(color, np.array([.12, .075, .045]), np.clip(claw, 0, 1))
     color *= (.92 + .13 * grain)[..., None]
     color = nz.mix(color, np.array([.045, .032, .022]), ctx.tag("eye") + ctx.tag("nose"))
     return color
@@ -130,9 +156,23 @@ def paint_juvenile(ctx):
     color = nz.mix(color, np.array([.88, .80, .68]), light)
     inner_ear = ctx.tag("ear") * nz.smoothstep(-.1, .6, ctx.N[..., 0])
     color = nz.mix(color, np.array([.48, .31, .29]), inner_ear)
+    claw = (ctx.tag("hind_digit") * nz.smoothstep(.105, .155, P[..., 0])
+            + ctx.tag("finger") * nz.smoothstep(.295, .335, P[..., 0]))
+    color = nz.mix(color, np.array([.13, .09, .065]), np.clip(claw, 0, 1))
     color *= (.92 + .13 * grain)[..., None]
     color = nz.mix(color, np.array([.045, .032, .022]), ctx.tag("eye") + ctx.tag("nose"))
     return color
+
+
+def surface_height(ctx, scale=1.0):
+    """Dense short-fur relief, excluding the nose, eyes and smooth distal digits."""
+    P = ctx.P / scale
+    directional = nz.fbm(P * np.array([.42, 1.15, 1.90]), 112.0, 3, seed=90)
+    clumps = nz.fbm(P, 37.0, 3, seed=91)
+    coat = .86 * directional + .14 * clumps
+    smooth = np.clip(ctx.tag("eye") * 4.0 + ctx.tag("nose") * 3.0
+                     + ctx.tag("hind_digit") * 2.0 + ctx.tag("finger") * 2.0, 0.0, 1.0)
+    return .5 + (coat - .5) * (1.0 - smooth)
 
 
 def _juvenile_shape(spec):
@@ -207,6 +247,13 @@ def _juvenile_shape(spec):
                 ring.ry *= 1.15
                 ring.up *= 1.15
                 ring.dn *= 1.15
+        elif part.name.startswith("hind_digit.") or part.name.startswith("finger."):
+            root = part.rings[0].c.copy()
+            for ring in part.rings:
+                ring.c[:] = root + 1.15 * (ring.c - root)
+                ring.ry *= 1.15
+                ring.up *= 1.15
+                ring.dn *= 1.15
 
     ear_base = np.array([.185, .064, 1.38]) * scale
     ear = next(bone for bone in spec.bones if bone.name == "ear.L")
@@ -246,6 +293,7 @@ def _juvenile_shape(spec):
 
     spec.name = "kangaroo_juvenile"
     spec.paint = paint_juvenile
+    spec.surface_height = partial(surface_height, scale=scale)
     spec.voxel = .005
     spec.target_tris = 14000
     spec.meta.update({"shoulder_height_m": .89, "body_length_m": .82,
@@ -461,12 +509,14 @@ def _juvenile_clips(solver):
 
 def make_spec(juvenile=False):
     bones, rig = _skeleton()
-    spec = Spec("kangaroo", bones, _parts(bones), paint=paint, voxel=.007,
+    spec = Spec("kangaroo", bones, _parts(bones), paint=paint,
+                surface_height=surface_height, surface_strength=1.0, voxel=.007,
                 target_tris=14500, smooth_iters=4, rig=rig,
                 clips=_juvenile_clips if juvenile else _clips, key_all_locations=True,
                 meta={"common_name": "Red kangaroo", "scientific_name": "Osphranter rufus",
                       "shoulder_height_m": 1.6, "body_length_m": 1.5,
-                      "sex": "male", "roughness": .9})
+                      "sex": "male", "roughness": .9,
+                      "surface_detail": "anisotropic short-fur normal map"})
     if juvenile:
         _juvenile_shape(spec)
     return spec

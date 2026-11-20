@@ -103,6 +103,7 @@
     "scientific_name": "Osphranter rufus",
     "sex": "juvenile",
     "shoulder_height_m": 0.89,
+    "surface_detail": "anisotropic short-fur normal map",
     "variant": "juvenile",
     "variant_of": "kangaroo"
   },
@@ -120,6 +121,6 @@
     ]
   },
   "texture": 1024,
-  "triangles": 16304,
-  "vertices": 8164
+  "triangles": 19384,
+  "vertices": 9736
 }

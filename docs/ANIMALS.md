@@ -31,10 +31,14 @@ Every species has a model in `assets/animals/<id>.glb` with a description beside
 `tools/animals/species/`, so a model is rebuilt, not edited:
 
 ```bash
-blender -b --factory-startup --python tools/animals/build_animal.py -- \
+OMP_NUM_THREADS=1 blender -b --factory-startup --python tools/animals/build_animal.py -- \
     --species lion --out assets/animals --preview build-probe/animal-previews
 python3 -m unittest discover -s tools/animals/tests
 ```
+
+The one-thread OpenMP setting makes Blender's tangent calculation reproducible: parallel runs can
+otherwise differ in the last rounded tangent component while geometry, textures and animations
+remain identical.
 
 | Generator | Species |
 |---|---|
@@ -185,8 +189,20 @@ identical after the opt-in generator change, and the production joey matches an 
 export. A real Kangaroo Grove run loaded the variant and selected eight-month-old Nadia. The
 same-camera comparison, four shape views and habitat frame are in
 `evidence/kangaroo-juvenile-j5-2026-11-20.jpg`. The silhouette now reads as a joey, but it still
-inherits the smooth first-generation kangaroo: the fur is painted without a normal map, the paws
-have no separate digits and the face remains simple up close.
+inherits the simple first-generation face and lofted anatomy.
+
+A second pass improves both ages without moving their skeleton, synchronized hind-foot hop or
+five-point crawl support. Each hind foot now shows the dominant fourth digit, smaller fifth digit
+and tiny syndactylous inner II/III grooming pair; each forepaw has five separate fingers. Their
+dark distal tips read as claws instead of extending the old mitten and paddle silhouettes. An
+anisotropic tangent-space normal map adds dense short-fur relief while keeping the nose, eyes and
+digits smooth. The adult now has 19,884 triangles and the joey 19,384; both retain 28 bones and
+eight clips. Their 3.01 / 3.03 MB production GLBs match independent single-threaded fresh exports.
+
+The same-camera comparisons and a seed-1 Kangaroo Grove run after 3,000 simulation ticks are in
+`evidence/kangaroo-coat-j14-2026-11-20.jpg`. Hop and crawl phases plus close views of all digits
+were inspected after integration. The feet and coat now carry species detail, but the face and
+underlying lofted body remain stylised and the coat has no individual hair cards.
 
 ### Big cats from a sculpt (2026-11-13)
 

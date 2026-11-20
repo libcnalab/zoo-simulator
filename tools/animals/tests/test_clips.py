@@ -697,6 +697,39 @@ class BipedTests(unittest.TestCase):
         self.assertAlmostEqual(clips["walk"]["speed"], .58, delta=.02)
         self.assertAlmostEqual(clips["trot"]["speed"], 2.2, delta=.02)
 
+    def test_kangaroos_have_species_specific_hind_toes_fingers_and_short_fur(self):
+        for species in ("kangaroo", "kangaroo_juvenile"):
+            spec = importlib.import_module("species." + species).make_spec()
+            hind = [part for part in spec.parts if part.name.startswith("hind_digit.")]
+            fingers = [part for part in spec.parts if part.name.startswith("finger.")]
+            self.assertEqual({part.name.split(".")[1] for part in hind}, {"IV", "V", "IIIII"})
+            self.assertEqual(len(fingers), 5)
+            self.assertTrue(all(part.mirror and part.tag == "hind_digit" for part in hind))
+            self.assertTrue(all(part.mirror and part.tag == "finger" for part in fingers))
+            self.assertIsNotNone(spec.surface_height)
+            self.assertEqual(spec.meta["surface_detail"], "anisotropic short-fur normal map")
+
+    def test_kangaroo_exports_carry_short_fur_normal_map_and_tangents(self):
+        root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+        for species, triangle_limit in (("kangaroo", 22000), ("kangaroo_juvenile", 20000)):
+            glb = os.path.join(root, "assets", "animals", species + ".glb")
+            with open(glb, "rb") as source:
+                self.assertEqual(source.read(4), b"glTF")
+                source.read(8)
+                length, _ = struct.unpack("<II", source.read(8))
+                document = json.loads(source.read(length))
+            self.assertLess(os.path.getsize(glb), 3_300_000)
+            self.assertEqual(len(document["images"]), 2)
+            self.assertIn("normalTexture", document["materials"][0])
+            for mesh in document["meshes"]:
+                for primitive in mesh["primitives"]:
+                    self.assertIn("TANGENT", primitive["attributes"])
+            with open(os.path.join(root, "assets", "animals", species + ".json")) as source:
+                manifest = json.load(source)
+            self.assertLessEqual(manifest["triangles"], triangle_limit)
+            self.assertEqual(manifest["meta"]["surface_detail"],
+                             "anisotropic short-fur normal map")
+
     def test_flamingo_one_leg_and_inverted_feeding(self):
         if "flamingo" not in BIPEDS:
             return

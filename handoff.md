@@ -127,6 +127,16 @@ whatever you take up (`docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `docs/V
   the same-camera viewers plus a real Ostrich Rise run after 3,000 ticks are inspected in
   `docs/evidence/ostrich-feathers-j13-2026-11-20.jpg` (J13, 2026-11-20). The egg-body anatomy
   remains stylised.
+- Adult and juvenile red kangaroos now have a second-pass short coat and species-specific digits.
+  Each hind foot has a dominant fourth digit, smaller fifth and tiny syndactylous inner II/III
+  pair; five separate fingers replace each forepaw mitten. An anisotropic tangent-space normal map
+  adds dense short-fur relief while the distal digits stay smooth and dark. The adult has 19,884
+  triangles and the joey 19,384; both retain 28 bones and eight clips. Their 3.01 / 3.03 MB
+  production GLBs match independent `OMP_NUM_THREADS=1` exports byte for byte. All 128
+  animal-pipeline tests and all 270 active CTest cases pass (21 diagnostics disabled); hop, crawl
+  and close digit views were inspected, along with a real Kangaroo Grove run after 3,000 ticks in
+  `docs/evidence/kangaroo-coat-j14-2026-11-20.jpg` (J14, 2026-11-20). The face and lofted body
+  remain stylised.
 - The stopped G7c audio audit is recovered and finished. Calls now follow `Vocalize`, social,
   play and documented feeding cues rather than a timer; takes do not repeat immediately, spatial
   pan is capped at 0.60, birds fade with daylight, crowd level follows its people, and footsteps
@@ -251,9 +261,8 @@ tests pass. Nobody listened to the audio; preserve that qualification.
 
 ### 4.6 Animals
 
-- First-generation stylised anatomy still: wolf, camel, meerkat, ostrich, kangaroo. The wolf,
-  camel, meerkat and ostrich have second-pass coats or plumage and silhouette details, but are
-  not scan-based. Bears
+- First-generation stylised anatomy still: wolf, camel, meerkat, ostrich, kangaroo. All five now
+  have second-pass coats or plumage and silhouette details, but are not scan-based. Bears
   are sculpt-based but crude (`docs/ANIMALS.md`; pipeline in `tools/animals/`, its tests
   `python3 -m unittest discover -s tools/animals/tests`, about 10 minutes).
 - Every young animal used in the Visitor Zoo has a dedicated variant; the brown/polar bear cub

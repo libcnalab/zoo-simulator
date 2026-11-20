@@ -100,7 +100,8 @@
     "roughness": 0.9,
     "scientific_name": "Osphranter rufus",
     "sex": "male",
-    "shoulder_height_m": 1.6
+    "shoulder_height_m": 1.6,
+    "surface_detail": "anisotropic short-fur normal map"
   },
   "name": "kangaroo",
   "skeleton_bounds_animal_space": {
@@ -116,6 +117,6 @@
     ]
   },
   "texture": 1024,
-  "triangles": 16804,
-  "vertices": 8414
+  "triangles": 19884,
+  "vertices": 9986
 }
