@@ -180,6 +180,12 @@ const AnimalRenderer::Kind* AnimalRenderer::Load(const std::string& model) {
     }
     kind->skeleton = Enhanced::SkeletonFromSkinningData(*skin);
     kind->clips = Enhanced::ClipsFromSkinningData(*skin);
+    // ClipsFromSkinningData makes the engine-neutral timelines every Actor plays. The imported
+    // SkinningData remains owned by ContentManager so the Model's buffers, effects and textures
+    // stay alive, but AnimalRenderer never asks its XNA timelines to animate the Model directly.
+    // Do not retain both deep copies of every bone key for the lifetime of the visit.
+    auto& importedClips = const_cast<Xna::SkinningData*>(skin)->AnimationClips;
+    decltype(skin->AnimationClips){}.swap(importedClips);
     for (std::size_t i = 0; i < kClipNames.size(); ++i) {
         for (const auto& clip : kind->clips) {
             if (clip.name == kClipNames[i])

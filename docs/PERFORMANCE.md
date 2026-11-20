@@ -407,3 +407,26 @@ reported only as corroboration because short-run heap variation is large. A fina
 Brown Bear habitat load imported both adult bear models, neither cub model, and completed cleanly.
 The warning-clean game build and all 272 active functional CTest cases pass; 21 diagnostics remain
 disabled.
+
+## Imported animal timelines (2026-11-20)
+
+Each glTF import owns XNA `SkinningData` timelines, and `AnimalRenderer` used to retain those after
+deep-copying every bone track into the engine-neutral clips its actors actually play. Once that
+conversion succeeds, the renderer now releases the imported timelines while retaining the model,
+GPU buffers, materials, textures, skeleton and converted clips. The content-manager copy is safe
+to consume here: one `AnimalRenderer` owns all animal use in a game, and its per-model cache serves
+every later actor and save reload.
+
+J47's bear families mean the current visit legitimately imports 33 variants rather than J24's 31.
+On that current zoo, an immediate matched `tools/bench/memory.sh 2 --bench --lockstep` software-GL
+run fell from 2,848 to **2,799 MB** resident and from 2,499 to **2,457 MB** heap. The animal loading
+mark fell 2,601 -> 2,550 MB. The five corroborating modes moved by 64, 59, 43, 20 and 16 MB; the
+small editor result is expected because its starter zoo imports fewer species. These are
+same-machine short-run figures, not Radeon absolutes.
+
+A real Lion Rock run after 3,000 simulation ticks completed 60 frames, selected a resting lion and
+produced a visually intact frame. The same warm-up plus a three-frame game run passed under
+AddressSanitizer and UndefinedBehaviorSanitizer. All 29 game-side C++ tests pass; leak detection
+was disabled for the sanitizer smoke because it is unavailable under this managed ptrace session.
+The complete C++ suite passes all 301 active cases in 311.90 seconds, with 21 intended diagnostics
+disabled; the unchanged Python animation pipeline passed in the immediately preceding full run.

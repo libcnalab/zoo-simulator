@@ -45,7 +45,11 @@ whatever you take up (`docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `docs/V
   46 -> 0 MB; a 60-frame run decoded 3 recordings,
   played 4 audible voices and had no failure. The noisy whole-run sample was 2,711 MB, so do not
   claim a total-peak cut from it. Do not quote the sandbox's absolute number as a Radeon
-  measurement.
+  measurement. J47's bear cubs now make all 33 currently needed animal variants legitimate.
+  J53 releases each importer's bone timelines after copying them into the clips the actors use:
+  the current matched software-GL sample fell 2,848 -> 2,799 MB resident (heap 2,499 -> 2,457),
+  and the isolated animal loading mark fell 2,601 -> 2,550 MB. A 3,000-tick Lion Rock run and its
+  frame were clean, as was the equivalent three-frame ASan/UBSan game smoke.
   The complete suite after these changes is 267 active tests passed, with 21 long-running
   measurement/diagnostic tests disabled as intended.
 - Animal models are now submitted only when a generous body-and-shadow sphere intersects the
@@ -487,6 +491,16 @@ whatever you take up (`docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `docs/V
   Tiger Forest frames were inspected without cracks, flooding or renderer errors. The complete
   C++ suite passes all 301 active cases in 281.86 seconds, with 21 diagnostics disabled; the
   unchanged animation pipeline passed in the immediately preceding full run (J52, 2026-11-20).
+- J53 removes the second resident copy of every animal animation timeline. The importer-owned XNA
+  tracks are released only after `AnimalRenderer` has deep-copied them into its engine-neutral
+  skeleton clips; model buffers, materials, textures and the converted clips remain alive. On the
+  current 90-animal zoo, which now legitimately loads all 33 variants because J47 added bear cubs,
+  the immediate matched software-GL profile falls 2,848 -> 2,799 MB resident and 2,499 -> 2,457 MB
+  heap; the animal load mark falls 2,601 -> 2,550 MB. All five alternate memory modes corroborate
+  the direction. All 29 game-side tests pass, a 3,000-tick/60-frame Lion Rock run is visually
+  intact, and the same warm-up plus three frames completes without ASan or UBSan findings (J53,
+  2026-11-20). The complete C++ suite passes all 301 active cases in 311.90 seconds, with 21
+  diagnostics disabled; the unchanged animation pipeline passed in the preceding full run.
 - The stopped G7c audio audit is recovered and finished. Calls now follow `Vocalize`, social,
   play and documented feeding cues rather than a timer; takes do not repeat immediately, spatial
   pan is capped at 0.60, birds fade with daylight, crowd level follows its people, and footsteps
@@ -578,7 +592,7 @@ sound unknown); saves there live only in the page's memory.
 ### 4.1 to 4.3: done on develop (2026-11-14)
 
 Keepers (`docs/KEEPERS.md`; open: no separate holding-yard gate or release-door animation), ground and water edges
-(`docs/GROUND.md`; open: steep banks at deep pools), plants (`docs/PLANTS.md`;
+(`docs/GROUND.md`; open: 25 cm detail outlines and engineered one-tile pool banks), plants (`docs/PLANTS.md`;
 open: far cut-out edges aliased and fill cost of alpha-tested cards). The new first
 priority is memory (section 0).
 
