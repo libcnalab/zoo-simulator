@@ -224,7 +224,7 @@ eight clips are ours, as for every other species.
 | `lion` | 41,854 | 1.15 m | male with a compact curved-card mane over an opaque backing |
 | `lion_female` | 32,398 | 1.05 m | the game draws it for every female lion |
 | `lion_juvenile` | 23,122 | 0.45 m | drawn below half of the age of maturity |
-| `tiger` | 32,702 | 1.00 m | longer body, broad paws, striped coat, layered cheek ruff |
+| `tiger` | 32,702 | 1.00 m | longer body, broad paws, striped coat, layered cheek ruff, `swim` |
 
 (Triangles after S7, except the tiger after J16 and male lion after J17.)
 
@@ -261,6 +261,15 @@ unchanged. The production GLB and JSON match a separate deterministic export byt
 Same-camera, close-crop, `vocalize`, `bathe` and seed-1 Tiger Forest checks are in
 `evidence/tiger-ruff-j16-2026-11-20.jpg`. All 130 animal-pipeline tests and all 270 active
 CTest cases pass (21 diagnostics remain disabled as intended).
+
+**Tiger swimming (J61, 2026-11-21).** Deep water now selects an authored 1.2 s paddle at
+0.90 m/s instead of the land walk. The level spine carries alternating 36 cm forepaw pulls,
+the hind paws trail clear of the bed and the tail sends a small wave down its four bones; the
+clip declares no ground contacts. A 0.70 m waterline leaves the head and a continuous strip of
+the back above the surface. The production 33-bone GLB and manifest match an independent
+one-thread export byte for byte and the extra clip adds 35,204 bytes. The calibrated water
+view and all eight phases are in `evidence/tiger-swim-j61-2026-11-21.jpg`. All 132
+animation-pipeline tests pass.
 
 Honest state: the ruff is now a compact irregular fringe rather than three broad teeth, but it is
 still alpha-tested card hair and the underlying body is still the lioness sculpt converted into
@@ -633,7 +642,7 @@ byte.
   clip `swim`. A model may also have `float` for lying still on the water, with its own depth
   (`meta.swim.depth_m` and `meta.float.depth_m`; the penguins have both): under way the animal
   swims, at rest it floats, and the body moves between the two depths smoothly. Rhinoceros,
-  elephant, both bears and penguin have `swim`; the other species still paddle with their walk
+  elephant, both bears, tiger and penguin have `swim`; the other species still paddle with their walk
   clip. Seen at Penguin Cove:
   `evidence/penguin-floating-2026-11-13.jpg` (a resting penguin on the pool: the head above
   the water, the body under it; a real one floats a little higher).

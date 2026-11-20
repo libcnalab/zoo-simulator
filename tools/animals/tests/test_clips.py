@@ -952,6 +952,21 @@ class SculptCatTests(unittest.TestCase):
                 previous = current
             self.assertEqual(contacts, ["HL", "FL", "HR", "FR"], species)
 
+    def test_tiger_swim_has_alternating_airborne_paw_strokes(self):
+        spec, solver = make_solver("tiger")
+        swim = next(clip for clip in spec.clips(solver) if clip.name == "swim")
+        self.assertEqual(swim.contact_keys, [])
+        self.assertAlmostEqual(swim.speed, .9)
+        front_x = {key: [] for key in ("FL", "FR")}
+        for phase in np.linspace(0, 1, 17, endpoint=False):
+            world = solver.solve(swim.pose(float(phase)))
+            for key, leg in solver.rig.legs.items():
+                self.assertGreater(world[leg.toes][2, 3], solver.toe_base(key)[2] + .08)
+                if key in front_x:
+                    front_x[key].append(world[leg.toes][0, 3])
+        for positions in front_x.values():
+            self.assertGreater(max(positions) - min(positions), .30)
+
     def test_cat_manifests_and_export_budgets(self):
         root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
         for species in CATS:
@@ -964,7 +979,7 @@ class SculptCatTests(unittest.TestCase):
             clips = {clip["name"]: clip for clip in manifest["clips"]}
             expected = {"idle", "walk", "trot", "eat", "drink", "rest", "sleep", "vocalize"}
             if species == "tiger":
-                expected.add("bathe")
+                expected.update(("bathe", "swim"))
             self.assertEqual(set(clips), expected)
             expected_height = dict(lion=1.15, lion_female=1.05, lion_juvenile=.45, tiger=1.0)[species]
             self.assertAlmostEqual(manifest["meta"]["shoulder_height_m"], expected_height)
@@ -976,6 +991,10 @@ class SculptCatTests(unittest.TestCase):
             if species == "lion_juvenile":
                 self.assertAlmostEqual(clips["walk"]["speed"], .6, delta=.02)
                 self.assertAlmostEqual(clips["trot"]["speed"], 1.5, delta=.02)
+            if species == "tiger":
+                self.assertEqual(manifest["meta"]["swim"]["clip"], "swim")
+                self.assertAlmostEqual(manifest["meta"]["swim"]["depth_m"], .70)
+                self.assertAlmostEqual(manifest["meta"]["swim"]["speed_mps"], .90)
             with open(os.path.join(root, "assets", "animals", species + ".glb"), "rb") as source:
                 header = source.read(12)
                 self.assertEqual(header[:4], b"glTF")

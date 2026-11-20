@@ -111,6 +111,14 @@
       "loop": true,
       "name": "bathe",
       "speed": 0.0
+    },
+    {
+      "duration": 1.2,
+      "events": [],
+      "frames": 37,
+      "loop": true,
+      "name": "swim",
+      "speed": 0.9
     }
   ],
   "generator": "tools/animals (zoogen)",
@@ -200,7 +208,13 @@
     "shoulder_height_m": 1.0,
     "source_author": "Pedro B. Goulart (Pebegou)",
     "source_title": "Free strong lioness - 4k",
-    "source_url": "https://sketchfab.com/3d-models/free-strong-lioness-4k-84d56e6cfcf247cb8fe468312f371677"
+    "source_url": "https://sketchfab.com/3d-models/free-strong-lioness-4k-84d56e6cfcf247cb8fe468312f371677",
+    "swim": {
+      "clip": "swim",
+      "depth_m": 0.7,
+      "speed_mps": 0.9
+    },
+    "water_origin_convention": "Place the asset origin at water surface - depth_m"
   },
   "name": "tiger",
   "skeleton_bounds_animal_space": {

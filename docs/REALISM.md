@@ -33,6 +33,7 @@ loudspeaker stays muted and nobody has listened to any of it.
 | Zebra stallion, mare and foal from a static sculpt (CC BY 4.0), rigged by us | a real horse's body and stripes instead of a striped barrel; lying reads as lying; mirror-symmetric stripes from the front | `docs/ANIMALS.md`, `evidence/zebra-scan-2026-11-13.jpg` |
 | Penguin (adult and juvenile) from a museum scan and flamingo from a sculpt (both CC BY 4.0), rigged by us | real birds' shapes instead of bowling pins; penguins have `swim` and `float` clips; the adult African plumage is painted on a Magellanic specimen's shape and labelled so | `docs/ANIMALS.md`, `assets/ATTRIBUTION.md`, `evidence/penguin-flamingo-scan-2026-11-13.jpg` |
 | Penguins on the water | a resting penguin floats, one under way swims, each with its own clip and depth from the model's manifest (they walked upright through the pool before) | `src/game/AnimalRenderer.cpp`, `evidence/penguin-floating-2026-11-13.jpg` |
+| Tigers swim rather than walk under water | a 1.2 s, 0.90 m/s clip alternates the forepaw pulls, trails the hind paws and waves the tail; its 0.70-withers waterline keeps the head and back continuous above the surface | `tools/animals/zoogen/bigcat.py`, `evidence/tiger-swim-j61-2026-11-21.jpg` |
 | Animals stand in the sun, not in their own shadow | every skinned model was drawn shadowed by itself (an engine defect, `docs/UPSTREAM.md` ZOO-UP-001); lit and shaded now, and normal maps on animals show for the first time | `src/game/SunShadows.cpp`, `evidence/animal-self-shadow-2026-11-13.jpg` |
 | Habitat fronts a zoo would build | elephants and rhinos behind a 4 m planted stand-off with a leaning rail, hoofstock behind 2 m; heavy dark mesh instead of bars at bears and cats; mesh hidden inside a clipped wildlife hedge on the meerkats' service sides; chain-link one looks through; nobody walks on the planting; every tree crown starts behind the full viewing set-back, with low grass and scrub retaining cover at Rhino Hollow and Red Dune | `docs/VISITOR_ZOO.md`, `evidence/habitat-fronts-2026-11-13.jpg`, `evidence/wildlife-hedge-j29-2026-11-20.jpg`, `evidence/open-habitat-fronts-j31-2026-11-20.jpg` |
 | Reproducible public viewpoints | `--stand habitat:<species>` rejects service gates, buildings, extra fences and now the opaque footprint of a tree crown rather than only its narrow collision trunk; Bear Falls seed 1 moves from a spruce-obscured `(164.8,57.0)` to a clear water-edge `(154.8,45.0)`, while lion, meerkat, polar-bear and giraffe control views retain useful public fronts | `src/game/SightLine.hpp`, `docs/VISITOR_ZOO.md`, `evidence/clear-view-crowns-j48-2026-11-20.jpg` |
@@ -100,7 +101,7 @@ animal in more than 4 cm of water makes body-scaled rings while moving, and a fl
 a quiet disturbance at rest: a swimmer stretches the rings into a wake and a flamingo disturbs
 its shallow shelf. This is a soft surface effect rather than particle
 spray, so feet and bodies still do not throw discrete splashes. Penguins swim and float with
-their own clips, and both bear species swim with theirs.
+their own clips, and both bear species and tigers swim with theirs.
 
 ## Open (in the order they hurt)
 
@@ -116,7 +117,7 @@ their own clips, and both bear species swim with theirs.
 2. Plants: cut-out edges far away are aliased (no alpha-to-coverage, no MSAA); the scenery still
    costs about 7 ms at the entrance, mostly overlapping
    alpha-tested cards (fill), which the far form does not reduce (`docs/PLANTS.md`).
-3. Only penguin, brown and polar bears, rhinoceros and elephant have swimming clips. Loading about 8 s with
+3. Only penguin, tiger, brown and polar bears, rhinoceros and elephant have swimming clips. Loading about 8 s with
    the visit's fill on this machine, 1.6 s of it the ground. Deep-pool
    banks are broader now but remain engineered one-tile slopes rather than natural beaches.
 4. Animals get stuck less since the plan keeps room between blocking props and animal route

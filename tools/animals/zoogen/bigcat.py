@@ -8,7 +8,7 @@ import numpy as np
 
 from . import activity, quadruped as quad
 from .geom import Part, R, Spec
-from .rig import Clip, Leg, Rig
+from .rig import Clip, Leg, Pose, Rig
 from .sculpt import prepare_instance
 
 SOURCE = Path(__file__).resolve().parents[1] / 'sources/bigcat/sculpt.npz'
@@ -102,6 +102,9 @@ def clips(solver, height, walk_speed, trot_speed, kind, lie_drop):
     if kind == 'tiger':
         rest = next(clip for clip in result if clip.name == 'rest')
         result.append(Clip('bathe', 8, partial(_bathe, solver, rest, height)))
+        swim = Clip('swim', 1.2, partial(_swim, solver, height), speed=.9 * height)
+        swim.contact_keys = []
+        result.append(swim)
     return result
 
 
@@ -130,6 +133,29 @@ def _bathe(solver, rest, height, phase):
         pose.move(solver.rig.body, dz=lift)
         for target in pose.feet.values():
             target.pos[2] += lift
+    return pose
+
+
+def _swim(solver, height, phase):
+    """A level tiger paddle with alternating forepaw pulls and a trailing tail."""
+    angle = math.tau * phase
+    pose = Pose().move('hips', dz=-.015 * height)
+    pose.r('hips', rx=1.2 * math.sin(angle))
+    pose.r('spine1', rx=-.8 * math.sin(angle))
+    pose.r('neck1', ry=-7).r('neck2', ry=-4).r('head', ry=-4)
+    for key in solver.rig.legs:
+        foot = solver.toe_base(key)
+        side = 1 if key.endswith('L') else -1
+        stroke = angle + (0 if side > 0 else math.pi)
+        if key.startswith('F'):
+            foot += height * np.array([.18 * math.sin(stroke), side * .03 * math.cos(stroke),
+                                      .25 + .08 * math.cos(stroke)])
+            pose.plant(key, foot, foot_pitch=-12 + 18 * math.sin(stroke), toe_pitch=-8)
+        else:
+            foot += height * np.array([-.13, side * .025 * math.sin(stroke), .17])
+            pose.plant(key, foot, foot_pitch=-12, toe_pitch=-8)
+    for index, tail in enumerate(solver.rig.tail):
+        pose.r(tail, rz=(4 - .6 * index) * math.sin(angle - .45 * index))
     return pose
 
 
@@ -178,6 +204,9 @@ def make_cat(name, kind, height, edits, walk_speed, trot_speed, meta=None):
         metadata['mane_card_locks'] = 2199
     if kind == 'tiger':
         metadata['activity_clips'] = {'bathe': 'bathe'}
+        metadata['swim'] = {'clip': 'swim', 'depth_m': .70 * height,
+                            'speed_mps': .9 * height}
+        metadata['water_origin_convention'] = 'Place the asset origin at water surface - depth_m'
         metadata['cheek_ruff_revision'] = 'Layered warm cream locks with irregular roots'
         metadata['cheek_ruff_cards'] = 150
     body_budget = 23000 if kind == 'juvenile' else 36000 if kind == 'male' else 33000

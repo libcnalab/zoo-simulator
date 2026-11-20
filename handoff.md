@@ -601,6 +601,22 @@ whatever you take up (`docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `docs/V
   and play both 330-track clips, and a real ASan Bear Falls visit loads all 90 animals, runs
   3,000 fill steps and draws three frames cleanly (leak detection off for the documented
   `ptrace` limitation; J60, 2026-11-20). Polar assets and simulation history are unchanged.
+- J61 gives the tiger its own 1.2-second, 0.90 m/s deep-water paddle instead of playing the land
+  walk below the pool. Alternating forepaws each travel 36 cm, the hind paws trail clear of the
+  bed, a small wave travels down the four-bone tail and the clip declares no contacts. A direct
+  17-phase regression requires both front strokes to exceed 30 cm and every toe to remain at
+  least 8 cm above its rest level. The 0.70-withers waterline was opened in a calibrated render:
+  head and back remain one continuous surface silhouette, and all eight held phases are shown in
+  `docs/evidence/tiger-swim-j61-2026-11-21.jpg`. Mesh, coat, two materials, 32,702 triangles and
+  33-bone skeleton are unchanged; the GLB grows by 35,204 bytes and a separate one-thread GLB
+  and manifest export is byte-identical. All 132 animation-pipeline tests pass in 351.67 seconds
+  (the 49-case shared clip suite before the new focused case passed in 167.51 seconds). An ASan
+  viewer plays more than a complete cycle over 80 lockstep frames, and a real ASan Tiger Forest
+  visit loads all 90 animals, runs 3,000 fill steps and draws three frames cleanly. Release
+  Tiger Forest checks at 3,000 and 6,000 ticks exercised ordinary land rendering; both tigers
+  happened to be resting, so they are not claimed as swim evidence (leak detection off for the
+  documented `ptrace` limitation; J61, 2026-11-21). Lion assets and simulation history are
+  unchanged.
 - The stopped G7c audio audit is recovered and finished. Calls now follow `Vocalize`, social,
   play and documented feeding cues rather than a timer; takes do not repeat immediately, spatial
   pan is capped at 0.60, birds fade with daylight, crowd level follows its people, and footsteps
