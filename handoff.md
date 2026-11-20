@@ -59,6 +59,10 @@ whatever you take up (`docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `docs/V
   discards the palette's source image and miniatures. Exact known CPU allocations removed are
   10.33 MiB; contradictory short-run RSS samples are not claimed as a saving. Water animation,
   editor mutation and same-zoo reloads remain intact.
+  J57 identifies the next large floor: CNA retains CPU shadows for write-only static vertex and
+  index buffers. The new `--bench` line measures 1,023 owned meshes, 112.2 MiB vertex and 20.7 MiB
+  index data (132.9 MiB total, excluding imported borrowed buffers). Zoo cannot safely release
+  these without a CNA API; ZOO-UP-004 specifies one.
   The complete suite after these changes is 303 active tests passed, with 21 long-running
   measurement/diagnostic tests disabled as intended.
 - Animal models are now submitted only when a generous body-and-shadow sphere intersects the
@@ -542,6 +546,14 @@ whatever you take up (`docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `docs/V
   real ASan/UBSan visit completes cleanly, and both an editor smoke and the two-reload end-to-end
   script pass. The complete suite passes all 303 active tests in 420.97 seconds, including the
   animation pipeline, with 21 diagnostics disabled (J56, 2026-11-20).
+- J57 adds exact owned mesh-buffer accounting to `--bench` and records ZOO-UP-004. The normal
+  Visitor Zoo owns 1,023 `GpuMesh` instances with 112.2 MiB of vertex and 20.7 MiB of index data.
+  CNA retains matching CPU shadows even though the buffers are write-only and static; 132.9 MiB
+  is therefore the measured lower bound, before imported animal buffers which the counter does
+  not own. No memory reduction is claimed: CNA exposes neither a shadow-release method nor a
+  cached-renderer reconstruction factory for buffers. The proposed upstream extension retains
+  renderer identity and restricts release to callers which opt out of recovery/readback (J57,
+  2026-11-20). The warning-clean build, real 45-frame benchmark and all 30 game-side tests pass.
 - The stopped G7c audio audit is recovered and finished. Calls now follow `Vocalize`, social,
   play and documented feeding cues rather than a timer; takes do not repeat immediately, spatial
   pan is capped at 0.60, birds fade with daylight, crowd level follows its people, and footsteps

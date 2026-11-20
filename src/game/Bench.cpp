@@ -5,6 +5,8 @@
 #include <cstring>
 #include <fstream>
 
+#include "CnaEngine/Graphics/RenderStatistics.hpp"
+
 namespace zoogame {
 
 namespace {
@@ -79,6 +81,10 @@ void Bench::Print(const char* what) const {
                     static_cast<double>(primitives_) / static_cast<double>(drawnFrames_));
     std::printf("zoo: bench %s: memory %.0f MB resident, %.0f MB at most\n", what, StatusMegabytes("VmRSS"),
                 StatusMegabytes("VmHWM"));
+    const CnaEngine::Graphics::GpuMemoryStatistics gpu = CnaEngine::Graphics::CurrentGpuMemory();
+    std::printf("zoo: bench %s: owned GPU meshes %lld, vertex %.1f MiB, index %.1f MiB\n", what,
+                static_cast<long long>(gpu.meshes), static_cast<double>(gpu.vertexBytes) / (1024.0 * 1024.0),
+                static_cast<double>(gpu.indexBytes) / (1024.0 * 1024.0));
 }
 
 }  // namespace zoogame

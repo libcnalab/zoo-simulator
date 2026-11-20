@@ -507,3 +507,17 @@ animals without a finding. The editor starts cleanly, and the 400-frame end-to-e
 saves, loads the same zoo twice, saves again and exits through its menu without rebuilding the
 discarded static cache. The complete suite passes all **303 active tests** in 420.97 seconds,
 including the animation pipeline, with 21 intended diagnostics disabled.
+
+## Static mesh CPU shadows (2026-11-20)
+
+`--bench` now prints the process-wide `GpuMesh` ownership totals beside RSS. In the ordinary
+Visitor Zoo it reports **1,023 meshes, 112.2 MiB of vertex buffers and 20.7 MiB of index buffers**.
+CNA retains a complete CPU shadow for both buffer kinds even though `GpuMesh::Upload` creates them
+`WriteOnly`, so their `GetData` is unavailable and these static meshes are never updated. The
+132.9 MiB is only a lower bound because imported animal-model buffers are borrowed and not present
+in this ownership counter.
+
+This is documented as ZOO-UP-004 in `docs/UPSTREAM.md`, not worked around with private state in the
+game. CNA currently exposes no operation that preserves a buffer's GPU renderer while releasing
+its shadow. The new counter is diagnostic only and does not change memory use or drawing. Its
+warning-clean build, real 45-frame benchmark and all 30 game-side tests pass.

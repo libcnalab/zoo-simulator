@@ -70,3 +70,31 @@ the mouth seen through the body), although the file's winding agrees with its no
 `Material::frontFace`, which defaults to `FrontFace::Clockwise` (XNA's), while glTF front faces
 are counter-clockwise. Not investigated further. **What the game does meanwhile:** every animal
 model is exported double-sided, so nothing is culled; the cost is the back faces' fragments.
+
+## ZOO-UP-004: write-only static buffers retain an unusable full CPU shadow
+
+Found 2026-11-20 in CNA's `VertexBuffer` and `IndexBuffer`. Both allocate a byte-for-byte
+`cpuShadow_` at construction and retain the last uploaded contents. `GpuMesh::Upload` creates both
+buffers with `BufferUsage::WriteOnly`, for which CNA correctly rejects `GetData`; Zoo Simulator's
+static meshes are also never updated after upload. The shadow is therefore neither readable nor
+used by the game. The GPU renderer object remains alive across ordinary drawing independently of
+the vector, just as it does for the static textures whose recovery copies the game can already
+release.
+
+The current Visitor Zoo's new `--bench` counter reports **1,023** `GpuMesh` owners with **112.2
+MiB** of vertex data and **20.7 MiB** of index data. CNA's shadows therefore cost at least **132.9
+MiB** of CPU memory. This is a lower bound: the counter intentionally excludes buffers borrowed
+from imported animal models and buffers created directly rather than through `GpuMesh`.
+
+**Suggested correction in CNA** (not applied from here): add an explicit extension on vertex and
+index buffers which releases `cpuShadow_` while retaining the renderer, limited to a write-only
+buffer after its last upload. A subsequent partial `SetData` can either reject the discarded state
+or re-create a complete shadow according to a documented contract; `GetData` already rejects a
+write-only buffer. The useful higher-level operation is `GpuMesh::DiscardCpuShadowsEXT()`, so a
+game does not need to reach through both owned buffers. It should be covered by a draw-before/draw-
+after image test, retained buffer identity/capacity checks, and a test that non-write-only and
+context-recovering callers keep their former behaviour.
+
+**What the game does meanwhile.** It reports the exact owned mesh-buffer totals at the end of
+`--bench`, but retains the shadows. The game cannot reproduce the texture workaround because
+buffers expose neither a cached-renderer reconstruction factory nor a shadow-release method.
