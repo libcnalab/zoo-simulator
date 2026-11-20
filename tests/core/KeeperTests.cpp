@@ -476,7 +476,7 @@ TEST(Keeper, AtWorkAmongVisitorsAfterTheMorningFill) {
               << " close animal steps; nearest walking visitor " << closestWalkingVisitor << " m\n";
     EXPECT_GT(working * 5, all * 2) << "the staff are at a job less than two fifths of the time";
     EXPECT_GT(visitorEncounters, 10) << "the run did not exercise walking through a crowd";
-    EXPECT_GT(animalEncounters, 0) << "the run did not exercise walking among animals";
+    EXPECT_EQ(animalEncounters, 0) << "a shy animal let staff enter its body clearance";
     EXPECT_GT(closestWalkingVisitor, 0.2f) << "a visitor walked through a member of staff";
 }
 

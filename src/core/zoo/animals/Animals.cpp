@@ -2,6 +2,7 @@
 #include "zoo/animals/Animals.hpp"
 
 #include <algorithm>
+#include <array>
 #include <bit>
 #include <cmath>
 #include <iterator>
@@ -719,6 +720,73 @@ int Animals::Viewers(EnclosureId enclosure) const {
     return 0;
 }
 
+bool Animals::AvoidKeeper(Animal& animal, const SpeciesDef& species, const Env& env,
+                          EnclosureId enclosure, bool urgentNeed) {
+    if (!enclosure || animal.shelter || animal.loose || urgentNeed ||
+        animal.activity == AnimalActivity::BreakOut || species.shyness <= tuning::kKeeperShynessThreshold) {
+        return false;
+    }
+    const KeeperPresence* nearest = nullptr;
+    float nearestDistance = std::numeric_limits<float>::max();
+    for (const KeeperPresence& keeper : keepers_) {
+        if (keeper.enclosure != enclosure) {
+            continue;
+        }
+        const float distance = DistanceSquared(animal.position, keeper.position);
+        if (distance < nearestDistance) {
+            nearest = &keeper;
+            nearestDistance = distance;
+        }
+    }
+    if (nearest == nullptr) {
+        return false;
+    }
+    const float scale = BodyScale(animal, species, env.time);
+    const float flight = species.bodyRadiusM * scale + tuning::kKeeperFlightBaseM +
+                         species.shyness * tuning::kKeeperFlightShynessM;
+    if (nearestDistance >= flight * flight) {
+        return false;
+    }
+    // Do not choose a fresh point every tick while the existing retreat still leads farther away.
+    if (animal.moving && DistanceSquared(animal.target, nearest->position) > nearestDistance + 1.0f &&
+        Dot(animal.target - animal.position, animal.position - nearest->position) > 0.0f) {
+        return true;
+    }
+    Vec2 away = animal.position - nearest->position;
+    if (LengthSquared(away) < 1.0e-6f) {
+        const float angle = 2.0f * kPi * HashFloat(animal.id.value, 0x4b454550U);
+        away = {std::sin(angle), std::cos(angle)};
+    } else {
+        away = Normalized(away);
+    }
+    const float wadeDepth = species.canSwim
+                                ? tuning::kWadingShoulderFraction * species.shoulderHeightM * scale
+                                : 0.0f;
+    const NavProfile profile = NavProfile::Animal(wadeDepth, species.canSwim);
+    constexpr std::array<float, 7> turns{0.0f, 0.45f, -0.45f, 0.9f, -0.9f, 1.35f, -1.35f};
+    for (const float turn : turns) {
+        const float sine = std::sin(turn);
+        const float cosine = std::cos(turn);
+        const Vec2 direction{away.x * cosine - away.z * sine, away.x * sine + away.z * cosine};
+        const Vec2 target = animal.position + direction * tuning::kKeeperRetreatM;
+        if (env.enclosures.At(target) != enclosure ||
+            !env.nav.Passable(World::TileAt(target), profile) ||
+            !env.nav.Walkable(animal.position, target, profile)) {
+            continue;
+        }
+        animal.activity = AnimalActivity::Wander;
+        animal.target = target;
+        animal.targetProp = {};
+        animal.activityLeft = tuning::kKeeperRetreatSeconds * kTicksPerSecond;
+        animal.activityTicks = 0;
+        animal.moving = true;
+        animal.route.clear();
+        animal.routeIndex = 0;
+        return true;
+    }
+    return false;
+}
+
 void Animals::StepAnimals(Env& env, const std::vector<Enclosure>& enclosures, int& pathCalls) {
     for (std::size_t index = 0; index < animals_.size();) {
         Animal& animal = animals_[index];
@@ -919,6 +987,7 @@ void Animals::StepAnimals(Env& env, const std::vector<Enclosure>& enclosures, in
                                             Viewers(enclosureId));
             animal.nextNeedCheck = env.time.tick + 2 * kTicksPerSecond;
         }
+        AvoidKeeper(animal, species, env, enclosureId, urgentDrink || urgentEat);
         if ((animal.activity == AnimalActivity::Eat || animal.activity == AnimalActivity::Drink ||
              animal.activity == AnimalActivity::Play) &&
             animal.targetProp) {

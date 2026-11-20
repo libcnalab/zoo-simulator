@@ -271,6 +271,15 @@ public:
     /// Advances every animal by one tick.
     void Step(Env& env);
 
+    /// Staff currently inside habitats. This is an input rebuilt by Zoo before Step(), not saved,
+    /// compared or hashed; shy animals use it to retreat from a keeper in their own enclosure.
+    void ClearKeepers() { keepers_.clear(); }
+    void SetKeeper(EnclosureId enclosure, Vec2 position) {
+        if (enclosure) {
+            keepers_.push_back({enclosure, position});
+        }
+    }
+
     /// The full report for one animal, evaluated now.
     WelfareReport Welfare(const Env& env, const Animal& animal) const;
 
@@ -351,9 +360,14 @@ private:
         std::uint32_t worldRevision = 0;
         std::int64_t refreshHour = -1;
     };
+    struct KeeperPresence {
+        EnclosureId enclosure;
+        Vec2 position;
+    };
 
     std::vector<Animal> animals_;      // ascending id
     std::vector<EnclosureCare> care_;  // ascending id
+    std::vector<KeeperPresence> keepers_;  // current input, not simulation state
     std::vector<std::vector<std::size_t>> enclosureScratch_;
     std::vector<PropId> propScratch_;
     std::vector<HabitatCache> habitatScratch_;
@@ -363,6 +377,8 @@ private:
                                    const WelfareReport* cachedHabitat = nullptr) const;
     const WelfareReport& CachedHabitat(const Env& env, const Animal& animal, const GroupInfo& group);
     void StepAnimals(Env& env, const std::vector<Enclosure>& enclosures, int& pathCalls);
+    bool AvoidKeeper(Animal& animal, const SpeciesDef& species, const Env& env, EnclosureId enclosure,
+                     bool urgentNeed);
     void AdvanceLife(Env& env);
     void ForgetAnimalReferences(AnimalId id);
     std::uint32_t nextId_ = 1;

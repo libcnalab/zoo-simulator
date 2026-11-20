@@ -217,6 +217,13 @@ inline constexpr float kMinimumSleepHours = 1.0f;                // game hours p
 inline constexpr float kEnrichmentAreaScaleM2 = 500.0f;          // enclosure area for enrichment scaling
 inline constexpr float kVegetationCrowdRelief = 0.5f;            // crowd stress reduction at full cover
 inline constexpr float kHealthyNeedThreshold = 0.7f;             // need fraction for health recovery
+/// A species above this shyness leaves room for staff inside its habitat (the same threshold
+/// used when crowds bias routine places away from the viewing front).
+inline constexpr float kKeeperShynessThreshold = 0.3f;
+inline constexpr float kKeeperFlightBaseM = 0.7f;      // personal space beyond the body
+inline constexpr float kKeeperFlightShynessM = 2.0f;  // extra metres at shyness 1
+inline constexpr float kKeeperRetreatM = 4.0f;         // length of a clear retreat
+inline constexpr std::int32_t kKeeperRetreatSeconds = 6;
 inline constexpr float kLifespanVariationBase = 0.85f;           // lifespan multiplier
 inline constexpr float kLifespanVariationRange = 0.3f;           // additional lifespan multiplier
 inline constexpr float kShelterStressMultiplier = 0.5f;          // stress target while sheltered

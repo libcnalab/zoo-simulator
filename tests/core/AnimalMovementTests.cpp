@@ -71,6 +71,56 @@ TEST(AnimalMovementTests, WanderMovesWithinItsEnclosureWithoutSnappingHeading) {
     EXPECT_TRUE(moved);
 }
 
+TEST(AnimalMovementTests, ShyAnimalsRetreatFromAVisibleKeeperButBoldAnimalsDoNot) {
+    World world(40, 40);
+    ZooObjects objects;
+    Catalog catalog = Catalog::LoadDirectory(std::string(ZOO_SOURCE_DIR) + "/data/construction");
+    SpeciesCatalog species = SpeciesCatalog::LoadDirectory(std::string(ZOO_SOURCE_DIR) + "/data/species");
+    const int fence = catalog.FindFence("high_glass_wall")->kind;
+    for (int x = 8; x <= 30; ++x) {
+        world.SetFence({x, 8, true}, {static_cast<std::uint8_t>(fence), false, 1.0f});
+        world.SetFence({x, 31, true}, {static_cast<std::uint8_t>(fence), false, 1.0f});
+    }
+    for (int z = 8; z <= 30; ++z) {
+        world.SetFence({8, z, false}, {static_cast<std::uint8_t>(fence), false, 1.0f});
+        world.SetFence({31, z, false}, {static_cast<std::uint8_t>(fence), false, 1.0f});
+    }
+    Enclosures enclosures;
+    enclosures.Rebuild(world, objects, catalog);
+    Navigator nav(world);
+    Animals animals(101U);
+    Env env{world, objects, enclosures, catalog, species, nav, nullptr, nullptr, {}, {}};
+    const AnimalId shy =
+        animals.Add(env, species.IndexOf("zebra"), Sex::Female, 5.0f, World::TileCenter({18, 18}));
+    const AnimalId bold =
+        animals.Add(env, species.IndexOf("flamingo"), Sex::Female, 5.0f, World::TileCenter({24, 24}));
+    ASSERT_TRUE(shy);
+    ASSERT_TRUE(bold);
+    const EnclosureId enclosure = enclosures.At(animals.Find(shy)->position);
+    ASSERT_TRUE(enclosure);
+    const Vec2 shyKeeper = animals.Find(shy)->position + Vec2{-1.0f, 0.0f};
+    const Vec2 boldKeeper = animals.Find(bold)->position + Vec2{-1.0f, 0.0f};
+    animals.SetKeeper(enclosure, shyKeeper);
+    animals.SetKeeper(enclosure, boldKeeper);
+    for (const AnimalId id : {shy, bold}) {
+        Animal* animal = animals.Find(id);
+        animal->activity = AnimalActivity::Rest;
+        animal->activityLeft = 10000;
+        animal->hunger = 0.1f;
+        animal->thirst = 0.1f;
+    }
+    const Vec2 boldStart = animals.Find(bold)->position;
+    for (int tick = 0; tick < 120; ++tick) {
+        env.time.tick = tick;
+        animals.Step(env);
+    }
+    EXPECT_GT(Distance(animals.Find(shy)->position, shyKeeper), 3.0f);
+    EXPECT_EQ(enclosures.At(animals.Find(shy)->position), enclosure);
+    EXPECT_EQ(animals.Find(shy)->activity, AnimalActivity::Wander);
+    EXPECT_EQ(animals.Find(bold)->position, boldStart);
+    EXPECT_EQ(animals.Find(bold)->activity, AnimalActivity::Rest);
+}
+
 TEST(AnimalMovementTests, RoundedFenceEndpointCannotBecomeOrdinaryWalkingGround) {
     const Catalog catalog = Catalog::LoadDirectory(std::string(ZOO_SOURCE_DIR) + "/data/construction");
     const SpeciesCatalog species =

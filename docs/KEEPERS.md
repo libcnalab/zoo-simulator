@@ -78,7 +78,7 @@ staff positions as stationary steering obstacles for that tick. Positions on opp
 habitat fence do not interact. These obstacles are derived each step, not saved and not hashed;
 the paths taken because of them remain ordinary simulation state.
 
-The seed-1 morning regression starts with 249 visitors and follows all nine staff for another
+At J19 the seed-1 morning regression started with 249 visitors and followed all nine staff for another
 3,600 ticks. It exercised 2,653 staff/visitor and 75 staff/animal close approaches. No walking
 member reduced a current separation below the 0.68 m adult clearance (or the animal's scaled
 body clearance), and the closest moving visitor remained 0.383 m from the staff position it was
@@ -86,6 +86,17 @@ steering around. The inspected game frames show a keeper among the meerkats and 
 bin beside the moving public: `evidence/staff-personal-space-j19-2026-11-20.jpg`. A still image is
 context rather than collision proof; `Keeper.AtWorkAmongVisitorsAfterTheMorningFill` is the
 measured check.
+
+J20 adds the other half for animals that are shy enough to care. Before the animal step, staff
+positions inside safe habitats are supplied to `Animals`; a species with `shyness > 0.3` chooses a
+clear four-metre retreat when a keeper enters its body-scaled flight distance. An urgent journey
+to food or water is not interrupted, and staff outside the habitat cannot trigger it. The same
+morning regression now records zero staff/animal body-clearance approaches (75 after J19), while
+animal stalls improve to 0.758 % of moving ticks and the staffed week remains no worse than
+automatic care. The same-camera game comparison is inspected in
+`evidence/shy-animal-keeper-j20-2026-11-20.jpg`: the small meerkat beside the hosing keeper in J19
+has left that space in J20. The cast member's face varies between runs as documented below; the
+measured movement test, not the still, proves the response.
 
 ## Automatic care stays behind them
 
@@ -150,8 +161,6 @@ the first tick on), not because of the keepers.
 
 ## Open
 
-- Shy animals do not keep their distance from a keeper; the animal model has no input for it
-  (a per-enclosure `Animals::SetKeeper` would be the hook).
 - The dangerous species are never entered: no mucking out of the lions' or bears' habitats,
   because the model cannot shut the animals in their house.
 - A strip-ringed dangerous habitat may have a single place at its barrier to work from.

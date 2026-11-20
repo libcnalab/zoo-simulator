@@ -90,9 +90,19 @@ and dust bathing favor dirt and sand. Bathing seeks water, with shallow limits
 for wallowing and filter feeding; absent suitable water, it falls back to a dry
 routine. Penguins alternate land and water destinations during commuting bouts.
 Large crowds bias shy animals away from the first registered viewing front.
-This is an enclosure-level proxy: `Env` supplies no individual visitor or keeper
-positions, and no keeper feeding appointment. Gate anticipation is therefore
-not implemented; a future feeding-time/keeper-position input belongs in `Env`.
+This is an enclosure-level proxy: `Env` supplies no individual visitor positions. The zoo does
+provide the current positions of staff who are actually inside a habitat as a separate transient
+input. A species with `shyness > 0.3` retreats when a keeper crosses its scaled flight distance
+(body radius + 0.7 m + shyness x 2 m), choosing the first clear four-metre route away. An existing
+retreat is kept rather than replanned every tick. Urgent food and water, shelter occupancy, escape
+and loose-animal behaviour take priority; positions across a fence or in another habitat do not
+count. The list is rebuilt before every animal step and is not saved or hashed.
+
+`AnimalMovementTests.ShyAnimalsRetreatFromAVisibleKeeperButBoldAnimalsDoNot` holds a zebra and a
+flamingo at rest with staff one metre away: the zebra moves beyond three metres while the flamingo
+stays put. In the seed-1 morning integration, staff/animal approaches inside body clearance fell
+from 75 over 3,600 ticks after J19 to zero after J20. Gate anticipation is still not implemented;
+there is no feeding-time input.
 Rain and dangerous temperature shelter priority remain ahead of routines.
 
 The lowest-id visible adult female leads a social group, falling back to the

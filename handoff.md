@@ -190,6 +190,16 @@ whatever you take up (`docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `docs/V
   (21 diagnostics disabled). The two inspected runtime contexts are in
   `docs/evidence/staff-personal-space-j19-2026-11-20.jpg` (J19, 2026-11-20). Shy animals still do
   not avoid staff, and dangerous habitats still cannot be entered.
+- J20 resolves J19's remaining shy-animal limit. Staff positions inside a habitat are a transient
+  input to `Animals`; species above 0.3 shyness choose a clear four-metre retreat when a keeper
+  enters their body-scaled flight distance, without interrupting urgent food or water. A direct
+  zebra/flamingo regression proves the threshold, the seed-1 morning's staff/animal approaches
+  inside body clearance fall 75 -> 0, stalls improve to 0.758 %, and the staffed week remains no
+  worse than automatic care. The same-camera runtime comparison is inspected in
+  `docs/evidence/shy-animal-keeper-j20-2026-11-20.jpg` (J20, 2026-11-20). Short and 6,000-step
+  hashes repeat for seeds 1–3; all 270 active functional CTest cases pass, as did today's separate
+  six-minute `zoogen_animation` run (21 diagnostics disabled). Dangerous habitats still cannot be
+  entered and bold species at or below 0.3 do not retreat.
 - The stopped G7c audio audit is recovered and finished. Calls now follow `Vocalize`, social,
   play and documented feeding cues rather than a timer; takes do not repeat immediately, spatial
   pan is capped at 0.60, birds fade with daylight, crowd level follows its people, and footsteps
