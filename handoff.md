@@ -79,7 +79,7 @@ whatever you take up (`docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `docs/V
   widen only across unobstructed public lawn. Both seeds report the same three coordinates; the
   top-down plan and a food-court view were inspected. The changed deterministic routine history
   improves animal stalls to 0.88%, under the unchanged 1.3% limit; seed 1 had 2,579 props before
-  the later reed and tall-grass planting brought the current total to 2,689
+  the later reed and tall-grass planting brought the then-current total to 2,689
   (`docs/VISITOR_ZOO.md`, 2026-11-19).
 - Reeds and tall grass now use their previously dormant procedural models and catalog entries.
   Flamingo Lagoon has twelve non-blocking reed stands rooted in its dry lowered margin, outside
@@ -281,6 +281,20 @@ whatever you take up (`docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `docs/V
   runtime views are in `docs/evidence/wildlife-hedge-j29-2026-11-20.jpg`. The full suite passes:
   277 active tests including the six-minute animation pipeline, with 21 diagnostics disabled as
   intended (J29, 2026-11-20).
+- J30 removes the last three ordinary 2 m path remnants. The food-court ellipse extends one tile,
+  the public rail recesses around one outer planting tile to make the shared Elephant Valley /
+  Kangaroo Grove approach at least 4 m wide without moving either habitat, and an accidental
+  diagonal path spur is closed through Ostrich Rise's planted stand-off. Both seeds now report
+  zero narrow ordinary tiles (down from the original 48); Kangaroo Grove retains 1,136 m², 64
+  viewing tiles and seven residents, all 14 habitat areas remain unchanged, and the farthest
+  facility stays at 75.1 m. Walker traverses all 5,013 path tiles / 10,024 neighbour hops. The
+  changed crowd exposed two staff-avoidance gaps: final arrival steps now avoid bodies, composed
+  slides receive a last all-body check, and staff wait inside a shy animal's 8 cm reaction margin.
+  The morning regression again has zero animal contact without relaxing assertions. Short and
+  6,000-step hashes repeat twice for seeds 1–3; a separate plan regression preserves the recessed
+  lane, its two planted buffers and two rails. The full suite passes: 279 active tests including
+  the 364.99-second animation pipeline, with 21 diagnostics disabled as intended. Opened views are
+  recorded in `docs/evidence/wide-walks-j30-2026-11-20.jpg` (J30, 2026-11-20).
 - The stopped G7c audio audit is recovered and finished. Calls now follow `Vocalize`, social,
   play and documented feeding cues rather than a timer; takes do not repeat immediately, spatial
   pan is capped at 0.60, birds fade with daylight, crowd level follows its people, and footsteps
@@ -499,10 +513,10 @@ tests pass. Nobody listened to the audio; preserve that qualification.
 
 ### 4.8 Plan details left from G8 (`docs/VISITOR_ZOO.md` "The zoo's plan")
 
-Three constrained paved tiles remain only 2 m wide; slender
-front trees remain where a full set-back would cross the vegetation welfare band (Rhino Hollow
-and Red Dune); area per animal is an estimate, not EAZA/AZA figures. J18 closed the dry-moat item
-and J29 puts a containment-rated hedge around Meerkat Lookout's service sides.
+Slender front trees remain where a full set-back would cross the vegetation welfare band (Rhino
+Hollow and Red Dune); area per animal is an estimate, not EAZA/AZA figures. J18 closed the
+dry-moat item, J29 puts a containment-rated hedge around Meerkat Lookout's service sides, and J30
+widens or removes all three remaining ordinary 2 m path remnants.
 
 `--stand habitat:<species>` now rejects keeper gates and buildings in the sight line. The
 meerkat view moved from `(177.0, 263.2)`, looking through mesh into the shelter wall, to

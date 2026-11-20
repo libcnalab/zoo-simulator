@@ -98,6 +98,14 @@ automatic care. The same-camera game comparison is inspected in
 has left that space in J20. The cast member's face varied between runs then; the measured movement
 test, not the still, proves the response. J22 later makes that cast repeatable.
 
+J30 closes two layout-dependent gaps in the walking guard. A member now applies body avoidance to
+the final arrival step as well as intermediate route steps, then validates the combined prop/body
+slide against every visitor, animal and colleague; a later tangent can no longer undo an earlier
+one. If a shy animal has just entered its clearance plus an 8 cm reaction margin, staff wait for
+its keeper-retreat route instead of walking away through the overlap. The changed wide-walk plan's
+morning run exercises 3,289 close staff/visitor steps, records zero staff/animal approaches, and
+keeps the nearest moving visitor 0.253 m away; the zero-contact assertions were not relaxed.
+
 J21 spreads outside work around habitats which have a planted stand-off strip. `BarrierStands`
 used to stop as soon as it found the service gate, even if that left Elephant Valley and Rhino
 Hollow with one place for every feeding, fence check and sweep. It now keeps both the direct gate

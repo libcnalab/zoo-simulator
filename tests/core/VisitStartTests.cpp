@@ -69,16 +69,17 @@ TEST(VisitStart, MatchesGameSequence) {
 // visitors steer around one another, walking staff slide around animals in their region, and
 // shy animals retreat from staff who enter a safe habitat; outside work at dangerous habitats
 // uses both the service gate and the public viewing bays; the meerkats' back and sides use a
-// mesh-backed wildlife hedge instead of exposed wire mesh).
+// mesh-backed wildlife hedge instead of exposed wire mesh; every ordinary public walk is at
+// least four metres wide).
 void CheckFillHashes(std::int64_t ticks) {
     constexpr std::array<std::array<std::uint64_t, 2>, 3> shortHashes{
-        {{1287693775433826047ULL, 16458272985143021940ULL},
-         {12326371914518996492ULL, 9472595831242533631ULL},
-         {4178110618692488884ULL, 14214950077934312682ULL}}};
+        {{15056301161949404809ULL, 6290015796891621664ULL},
+         {17420587684363512343ULL, 1045740791732874050ULL},
+         {11926063864469466928ULL, 9801592877205674851ULL}}};
     constexpr std::array<std::array<std::uint64_t, 2>, 3> fullHashes{
-        {{8740185681907171847ULL, 18390708263405793782ULL},
-         {6825237569979487382ULL, 13520355053782767291ULL},
-         {1479602844446766411ULL, 3995025891797621353ULL}}};
+        {{1841699992070855733ULL, 2824813617764069291ULL},
+         {7551829702075433428ULL, 4247192674491169501ULL},
+         {1884035997097648101ULL, 1122505658487957816ULL}}};
     for (const std::uint64_t seed : {1ULL, 2ULL, 3ULL}) {
         Zoo zoo(testdata::GameCatalog(), testdata::GameSpecies(), VisitorZooConfig(seed));
         BuildVisitorZoo(zoo);

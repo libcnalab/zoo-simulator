@@ -28,13 +28,14 @@ combine elliptical lobes. Every habitat has a keeper gate, shelter, stocked feed
 enrichment, a public information board and benches. Planting concentrates behind the open
 viewing ground, with woods between habitats and around the perimeter.
 
-The seed-1 zoo contains **88 animals in 14 habitats, 41 buildings and 2,689 props** when
+The seed-1 zoo contains **88 animals in 14 habitats, 41 buildings and 2,705 props** when
 every species is included (74 animals and 2,817 props before the plan's rework of
 2026-11-14, below). The farthest public path tile is **75.1 m** walking distance
 from a visitor facility. `VisitorZooTests.DISABLED_PrintPlan` prints these measurements. Families
 are written out in "The zoo's plan" below. **S** = south; **W/E** = west/east.
-The principal fronts face south and the zoo's centre. The habitat footprints are unchanged:
-the public walks and rails move outward, preserving all space and habitat provisions.
+The principal fronts face south and the zoo's centre. Habitat areas are unchanged: the public
+walks and rails move outward, preserving all space and habitat provisions. J30 recesses one outer
+corner of the rail between Elephant Valley and Kangaroo Grove without moving either habitat.
 
 The two boards flanking the entrance are visitor boards rather than habitat boards. They welcome
 the visitor, give the 9:00–19:00 opening hours and 16:30 last admission, count the current animals
@@ -253,14 +254,21 @@ views were opened and are recorded in `evidence/wildlife-hedge-j29-2026-11-20.jp
 shelf round it: 74 of its 103 water tiles are under 0.45 m. A dry bank stays between the water
 and every fence: digging at the back fence lowered vertices shared with the boardwalk and left
 a wheelchair-steep edge in its paving (`WalksAreWideAndLevel` allows 5 %; the steepest paved
-tile is 2.8 % in seed 1, 2.7 % in seed 2). The same test counts path widths: only 3 paved tiles
-(not boardwalk) remain on a walk one tile, 2 m, wide, down from 48; most paving is 6 m and wider.
+tile is 2.8 % in seed 1, 2.7 % in seed 2). The same test counts path widths: no ordinary paved
+tile remains on a walk only one tile, 2 m, wide, down from 48; most paving is 6 m and wider.
 Facility approaches are laid 4 m wide only after every building has chosen its site, so widening
 does not push a later kiosk away or lengthen access (the farthest facility walk is 75.1 m, under
 the 85 m limit). Paved shade-tree islands keep a two-tile ring, dead raster teeth are removed, and
-a one-tile run gains a parallel row only when the whole row is unobstructed public lawn. The three
-constrained remnants are printed by `WalksAreWideAndLevel`; widening them would open a habitat
-front or require moving an enclosure.
+a one-tile run gains a parallel row only when the whole row is unobstructed public lawn. J30
+closes the last three exceptions: the food-court ellipse grows one tile west, the public rail
+recesses around one outer planting tile between Elephant Valley and Kangaroo Grove to add a lane,
+and a lone diagonal path tile is removed from Ostrich Rise's planted stand-off. A one-tile planted
+buffer remains before both containment fences. `WalksAreWideAndLevel` now requires zero ordinary
+2 m remnants in both seeds; `ElephantKangarooWalkKeepsItsPlantedBuffersAndRails` separately fixes
+the lane, two adjacent planted tiles and their two rails in the plan contract. Kangaroo Grove
+retains its original position, 64 viewing tiles, all fourteen habitat areas and resident groups
+are unchanged, and the before/after plan plus opened kangaroo and ostrich views are in
+`evidence/wide-walks-j30-2026-11-20.jpg`.
 Flamingos stand and feed in the shallows (`FlamingosUseTheShallowShelfDuringAVisit`; the stall
 probe counted 11 of 12 in the shallows after 6,000 ticks; seen in the game).
 
@@ -344,8 +352,9 @@ species have one, so a seed-1 visit has all **88 animals in fourteen habitats**.
 
 The ice-cream kiosk formerly in the narrow Elephant Valley/Kangaroo gap is relocated
 near entrance coordinates `(-5,18)`, facing north, to keep refreshment access around the wider
-walks. Three explicit planting tiles at `(20,28)`, `(21,29)` and `(22,30)` close diagonal
-slivers between Ostrich Rise and Flamingo Lagoon; the lagoon's containment is preserved.
+walks. Four explicit planting tiles at `(14,27)`, `(20,28)`, `(21,29)` and `(22,30)` close the
+southern stand-off spur and diagonal slivers between Ostrich Rise and Flamingo Lagoon; the
+lagoon's containment is preserved.
 
 The visitor system opens at 09:00. A visit starts at 10:30: the game steps the zoo from the
 opening before the first frame, then `Zoo::SpreadVisitors()` sets the groups that have arrived

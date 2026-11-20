@@ -47,8 +47,8 @@ Flamingo Lagoon receives twelve deterministic `wetland_reeds` stands. They use d
 corners the adjacent pool bed lowers, which ordinary land plants still reject. Placement checks
 the whole scaled catalog circle against actual water, buildings, other props and the enclosure,
 keeps the shelter and keeper approaches clear, and excludes the three bench-to-lagoon sight
-lines. `VisitorZooPlanTests` verifies this for seeds 1 and 2. A real seed-1 visit builds 2,689
-props and submits 2,201,274 scenery triangles in 461 draw calls; the inspected lagoon and close
+lines. `VisitorZooPlanTests` verifies this for seeds 1 and 2. The J8 seed-1 visit built 2,689
+props and submitted 2,201,274 scenery triangles in 461 draw calls; the inspected lagoon and close
 savanna views are in `evidence/reeds-grass-j8-2026-11-20.jpg`.
 
 ## Fallen leaves under broadleaf trees (J9, 2026-11-20)

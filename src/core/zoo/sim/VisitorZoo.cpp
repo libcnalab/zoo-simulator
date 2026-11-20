@@ -78,9 +78,9 @@ int StandOffDepth(std::string_view species) {
 
 std::vector<TileCoord> StripCorners(const Script& script, const HabitatPlan& plan) {
     if (plan.species == "ostrich") {
-        // Close three one-tile diagonal gaps against Flamingo Lagoon deliberately,
-        // before they could become fenced, unnamed pockets in the region model.
-        return {script.Tile(20, 28), script.Tile(21, 29), script.Tile(22, 30)};
+        // Close three diagonal gaps against Flamingo Lagoon before they become fenced,
+        // unnamed pockets, and keep the southern path outside the planted stand-off.
+        return {script.Tile(14, 27), script.Tile(20, 28), script.Tile(21, 29), script.Tile(22, 30)};
     }
     return {};
 }
@@ -1384,6 +1384,44 @@ void GradeDryMoats(Zoo& zoo, Script& script) {
     }
 }
 
+// Elephant Valley and Kangaroo Grove nearly touch at one diagonal corner. Recess the public rail
+// around the outermost planted tile there, making the shared walk 4 m wide without moving either
+// habitat or reducing the one-tile planted buffer that remains before both containment fences.
+void WidenElephantKangarooWalk(Zoo& zoo, Script& script) {
+    const TileCoord lane = script.Tile(-21, 37);
+    Builder builder = zoo.FreeBuilder();
+    const std::array<TileCoord, 1> tiles{lane};
+    const BuildPlan unmarked = builder.PlaceStandOff(tiles, false);
+    if (!unmarked.Ok() || unmarked.skipped > 0) {
+        script.Problem("Elephant Valley/Kangaroo Grove: could not recess the public rail");
+        return;
+    }
+
+    std::vector<EdgeRef> remove;
+    std::vector<EdgeRef> add;
+    for (const Dir side : {Dir::North, Dir::East, Dir::South, Dir::West}) {
+        const EdgeRef edge = EdgeOf(lane, side);
+        const Fence fence = zoo.Map().FenceAt(edge);
+        const FenceDef* def = zoo.Definitions().FenceByKind(fence.kind);
+        const bool rail = def != nullptr && def->id == "stand_off_rail";
+        const TileCoord next = lane + Step(side);
+        if (zoo.Map().InBounds(next) && zoo.Map().At(next).standOff) {
+            if (!fence.Exists()) {
+                add.push_back(edge);
+            }
+        } else if (rail) {
+            remove.push_back(edge);
+        }
+    }
+    const BuildPlan removed = builder.RemoveFence(remove);
+    const BuildPlan paved = builder.PlacePath(tiles, PathKind::Gravel);
+    const BuildPlan railed = builder.PlaceFence(add, script.FenceKind("stand_off_rail"));
+    if (!removed.Ok() || !paved.Ok() || !railed.Ok() || removed.skipped > 0 || paved.skipped > 0 ||
+        railed.skipped > 0) {
+        script.Problem("Elephant Valley/Kangaroo Grove: incomplete widened viewing bay");
+    }
+}
+
 struct ServiceApron {
     TileCoord low;
     TileCoord high;
@@ -1744,7 +1782,7 @@ void WidenThinWalks(Zoo& zoo, Script& script) {
 
 void Facilities(Zoo& zoo, Script& script) {
     std::vector<ServiceApron> serviceAprons;
-    script.PathTiles(script.Ellipse(13, 74, 9.0f, 4.0f), PathKind::Cobblestone);
+    script.PathTiles(script.Ellipse(13, 74, 10.0f, 4.0f), PathKind::Cobblestone);
     // Trunks stand on unpaved islands; the broad crowns shade the two rows of tables.
     for (int e = 6; e <= 21; e += 3) {
         script.PathTiles({script.Tile(e, 74)}, PathKind::None);
@@ -1947,6 +1985,7 @@ ScenarioReport BuildVisitorZoo(Zoo& zoo, const VisitorZooOptions& options) {
     for (const HabitatPlan& plan : kHabitats) {
         Habitat(zoo, script, plan, options);
     }
+    WidenElephantKangarooWalk(zoo, script);
     // What follows stands outside the habitats and asks about none of their figures.
     script.Hold();
     StripPlants(zoo, script);

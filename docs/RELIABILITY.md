@@ -321,8 +321,8 @@ Release 31 s, and under ASan, UBSan and the leak check: 12 of 12, no report.
 
 | Asked | Result |
 |---|---|
-| Every path tile the visitors use can be walked, tile to tile | 4,962 tiles, 9,922 steps between neighbours, none closed to the player; feet never more than 0.33 mm off the ground; the steepest path tile rises 5.7 cm |
-| No habitat and no planted strip can be entered, from any side, walking or running, straight or at 45 degrees along the barrier | 1,498 barrier edges (wire mesh 73, mesh-backed hedge 20, tall mesh 51, glass 201, cable 2, high glass 171, heavy mesh 228, stand-off rail 748, paddock rail 2, tall cable 2), 14 of them gates: no trespass; the fastest frame was 8.80 m/s |
+| Every path tile the visitors use can be walked, tile to tile | 5,013 tiles, 10,024 steps between neighbours, none closed to the player; feet never more than 0.20 mm off the ground; the steepest path tile rises 5.7 cm |
+| No habitat and no planted strip can be entered, from any side, walking or running, straight or at 45 degrees along the barrier | 1,496 barrier edges (wire mesh 73, mesh-backed hedge 20, tall mesh 51, glass 201, cable 2, high glass 171, heavy mesh 228, stand-off rail 746, paddock rail 2, tall cable 2), 14 of them gates: no trespass; the fastest frame was 8.80 m/s |
 | Keepers' gates stay shut | 14 gates, 8 with public ground before them: none passed |
 | Buildings are solid from all sides | 41 buildings, 28 reachable on public ground, 424 runs at them from 16 directions: no body inside (beyond the 5.2 cm a round body cuts a square corner by design) |
 | The furniture of a viewing place cannot be squeezed into | 42 groups of bench, lamp, board or bin; 495 runs: caught 0 |

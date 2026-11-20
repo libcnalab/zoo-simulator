@@ -1023,10 +1023,36 @@ TEST_P(VisitorZooPlan, WalksAreWideAndLevel) {
     }
     std::cout << std::endl;
     EXPECT_LE(steepest, 0.05f);
-    // One-tile ways to kiosk doors, paving around bench islands and dead-end raster teeth are all
-    // under a zoo side path's useful width. A few constrained viewing or between-habitat tips may
-    // remain where widening would open a new habitat front or require moving a whole enclosure.
-    EXPECT_LE(narrow, 3);
+    // The remaining 2 m tile is part of the boardwalk, which is excluded above. Every ordinary
+    // paved tile belongs to a walk at least 4 m wide.
+    EXPECT_EQ(narrow, 0);
+}
+
+TEST_P(VisitorZooPlan, ElephantKangarooWalkKeepsItsPlantedBuffersAndRails) {
+    const TileCoord entrance = zoo_.Map().EntranceTile();
+    const TileCoord lane{entrance.x - 21, entrance.z - 37};
+    ASSERT_TRUE(zoo_.Map().InBounds(lane));
+    EXPECT_EQ(zoo_.Map().At(lane).path, PathKind::Gravel);
+    EXPECT_FALSE(zoo_.Map().At(lane).standOff);
+    EXPECT_FALSE(zoo_.Habitats().At(lane));
+
+    int plantedBuffers = 0;
+    int rails = 0;
+    for (const Dir side : {Dir::North, Dir::East, Dir::South, Dir::West}) {
+        const TileCoord next = lane + Step(side);
+        if (!zoo_.Map().InBounds(next) || !zoo_.Map().At(next).standOff) {
+            continue;
+        }
+        ++plantedBuffers;
+        EXPECT_FALSE(zoo_.Habitats().At(next));
+        const FenceDef* rail = zoo_.Definitions().FenceByKind(zoo_.Map().FenceOn(lane, side).kind);
+        ASSERT_NE(rail, nullptr);
+        if (rail->id == "stand_off_rail") {
+            ++rails;
+        }
+    }
+    EXPECT_EQ(plantedBuffers, 2);
+    EXPECT_EQ(rails, 2);
 }
 
 // A week on the calendar with the gates shut: nobody dies, the young are still young and still fed.

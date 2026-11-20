@@ -6,6 +6,7 @@
 #include <cmath>
 #include <span>
 
+#include "zoo/animals/AnimalTuning.hpp"
 #include "zoo/staff/StaffInternal.hpp"
 
 namespace zoo {
@@ -49,6 +50,8 @@ constexpr float kPropClearance = 0.3f;
 constexpr float kStaffRadius = 0.32f;
 constexpr float kVisitorRadius = 0.28f;
 constexpr float kBodyClearance = 0.08f;
+/// A shy animal gets one further body-clearance of reaction room while it retreats from staff.
+constexpr float kShyAnimalYieldMargin = 0.08f;
 
 struct Hasher {
     std::uint64_t value = 0xcbf29ce484222325ULL;
@@ -170,8 +173,16 @@ Vec2 AroundBodies(const Env& env, const Animals& animals, const Visitors& visito
             }
             const SpeciesDef& species = env.species.All()[static_cast<std::size_t>(animal.species)];
             const float radius = species.bodyRadiusM * BodyScale(animal, species, env.time) * 0.75f;
-            consider(animal.position, kStaffRadius + radius + kBodyClearance,
-                     animal.id.value % 2 == 0 ? -1.0f : 1.0f, pass);
+            const bool shy = species.shyness > tuning::kKeeperShynessThreshold;
+            const float clearance =
+                kStaffRadius + radius + kBodyClearance + (shy ? kShyAnimalYieldMargin : 0.0f);
+            // The animal movement runs before staff movement. If a shy animal stepped into the
+            // margin this tick, wait in place and let its existing keeper-retreat route clear it.
+            if (shy && DistanceSquared(from, animal.position) < clearance * clearance) {
+                blocked = true;
+                continue;
+            }
+            consider(animal.position, clearance, animal.id.value % 2 == 0 ? -1.0f : 1.0f, pass);
         }
         for (std::size_t other = 0; other < members.size(); ++other) {
             if (other == self || env.enclosures.At(World::TileAt(members[other].position)) != region) {
@@ -179,6 +190,37 @@ Vec2 AroundBodies(const Env& env, const Animals& animals, const Visitors& visito
             }
             consider(members[other].position, 2.0f * kStaffRadius + kBodyClearance,
                      members[other].id.value % 2 == 0 ? -1.0f : 1.0f, pass);
+        }
+    }
+    // A later obstacle can bend the step back into an earlier one. Validate the composed slide;
+    // waiting for one tick is safer than letting the last avoidance undo the first.
+    const auto unsafe = [&](Vec2 obstacle, float clearance) {
+        return DistanceSquared(from + step, obstacle) < clearance * clearance &&
+               DistanceSquared(from + step, obstacle) < DistanceSquared(from, obstacle) - 1.0e-5f;
+    };
+    for (const Visitor& visitor : visitors.All()) {
+        if (!visitor.inside && env.enclosures.At(World::TileAt(visitor.position)) == region &&
+            unsafe(visitor.position, kStaffRadius + kVisitorRadius + kBodyClearance)) {
+            blocked = true;
+        }
+    }
+    for (const Animal& animal : animals.All()) {
+        if (!animal.InWorld() || animal.shelter || animal.species < 0 ||
+            static_cast<std::size_t>(animal.species) >= env.species.All().size() ||
+            env.enclosures.At(World::TileAt(animal.position)) != region) {
+            continue;
+        }
+        const SpeciesDef& species = env.species.All()[static_cast<std::size_t>(animal.species)];
+        const float radius = species.bodyRadiusM * BodyScale(animal, species, env.time) * 0.75f;
+        const float margin = species.shyness > tuning::kKeeperShynessThreshold ? kShyAnimalYieldMargin : 0.0f;
+        if (unsafe(animal.position, kStaffRadius + radius + kBodyClearance + margin)) {
+            blocked = true;
+        }
+    }
+    for (std::size_t other = 0; other < members.size(); ++other) {
+        if (other != self && env.enclosures.At(World::TileAt(members[other].position)) == region &&
+            unsafe(members[other].position, 2.0f * kStaffRadius + kBodyClearance)) {
+            blocked = true;
         }
     }
     return blocked ? from : from + step;
@@ -378,12 +420,10 @@ void Staff::Step(Env& env, Animals& animals, Visitors& visitors) {
         const Vec2 before = member.position;
         Vec2 after = before;
         std::size_t index = member.routeIndex;
-        const bool arrived =
-            member.route.empty() || FollowPath(member.route, index, after, speed * kTickSeconds);
-        if (!arrived && index < member.route.size()) {
-            Vec2 aside = AroundProps(env, after, member.route[index], speed * kTickSeconds, scratch);
-            aside = AroundBodies(env, animals, visitors, members_, memberIndex, before, aside,
-                                 member.route[index], speed * kTickSeconds);
+        bool arrived = member.route.empty() || FollowPath(member.route, index, after, speed * kTickSeconds);
+        const Vec2 goal = index < member.route.size() ? member.route[index] : task.place;
+        if (DistanceSquared(before, after) > 1.0e-8f) {
+            Vec2 aside = AroundProps(env, after, goal, speed * kTickSeconds, scratch);
             // No further aside in a tick than a brisk step: who starts within a bush's
             // reach walks out of it and is not thrown out.
             const float reach = speed * kTickSeconds * 1.5f;
@@ -393,6 +433,11 @@ void Staff::Step(Env& env, Animals& animals, Visitors& visitors) {
             if (!(aside == after) && MayStep(env, animals, before, aside)) {
                 after = aside;
             }
+            after = AroundBodies(env, animals, visitors, members_, memberIndex, before, after, goal,
+                                 speed * kTickSeconds);
+        }
+        if (arrived && Distance(after, task.place) > 0.05f) {
+            arrived = false;
         }
         if (!MayStep(env, animals, before, after)) {
             // The way is shut (the world changed under the route, a step aside left the
