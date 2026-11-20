@@ -265,6 +265,7 @@ bool LookOf(const zoo::Catalog& catalog, zoo::Fence fence, FenceLook& out) {
     if (!fence.Exists()) {
         return false;
     }
+    out = {};
     if (fence.kind == zoo::kPerimeterFence) {
         out.style = zoo::FenceStyle::Wall;
         out.height = zoo::kPerimeterHeightM;
@@ -284,6 +285,7 @@ bool LookOf(const zoo::Catalog& catalog, zoo::Fence fence, FenceLook& out) {
     out.perimeter = false;
     out.heavy = def->style == zoo::FenceStyle::Mesh && def->strength >= 4;
     out.handrail = def->id == "stand_off_rail";
+    out.meshBacked = def->id == "mesh_backed_hedge";
     return true;
 }
 
@@ -496,6 +498,12 @@ void BuildFencePanel(ModelBuilder& model, const FenceLook& look, const Vector3& 
                 break;
             }
             BuildHedge(model, a, b, h, look.color, seed);
+            if (look.meshBacked) {
+                // The foliage hides most of the real barrier, but glimpses at the base and in
+                // gaps explain why this hedge can contain an animal when the decorative one cannot.
+                MeshWriter& wire = model.Use(look.postColor, Pattern::WeldMesh);
+                wire.Quad(a - Up(0.22f), b - Up(0.22f), b + Up(h - 0.05f), a + Up(h - 0.05f));
+            }
             break;
         }
         case zoo::FenceStyle::Moat: {

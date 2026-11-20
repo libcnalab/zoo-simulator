@@ -15,7 +15,8 @@ namespace zoo {
 /// message, older ones are migrated on load (see ZooFromJson).
 inline constexpr const char* kSaveFormat = "zoo-simulator-save";
 // Version 2 reserves stand-off ground; old readers must not reinterpret it as habitats.
-inline constexpr int kSaveVersion = 2;
+// Version 3 may store the mesh-backed wildlife hedge (stable fence kind 16).
+inline constexpr int kSaveVersion = 3;
 /// Derived summary cache beside a save. Missing or stale files fall back to the save itself.
 inline constexpr const char* kSaveSummarySuffix = ".summary";
 

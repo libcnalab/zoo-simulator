@@ -68,16 +68,17 @@ TEST(VisitStart, MatchesGameSequence) {
 // Elephant Valley and Rhino Hollow gain graded dry moats along their public fronts; staff and
 // visitors steer around one another, walking staff slide around animals in their region, and
 // shy animals retreat from staff who enter a safe habitat; outside work at dangerous habitats
-// uses both the service gate and the public viewing bays).
+// uses both the service gate and the public viewing bays; the meerkats' back and sides use a
+// mesh-backed wildlife hedge instead of exposed wire mesh).
 void CheckFillHashes(std::int64_t ticks) {
     constexpr std::array<std::array<std::uint64_t, 2>, 3> shortHashes{
         {{1287693775433826047ULL, 16458272985143021940ULL},
          {12326371914518996492ULL, 9472595831242533631ULL},
          {4178110618692488884ULL, 14214950077934312682ULL}}};
     constexpr std::array<std::array<std::uint64_t, 2>, 3> fullHashes{
-        {{2609457543749151601ULL, 13832911272696242744ULL},
+        {{8740185681907171847ULL, 18390708263405793782ULL},
          {6825237569979487382ULL, 13520355053782767291ULL},
-         {17919000829323028449ULL, 837116035961180710ULL}}};
+         {1479602844446766411ULL, 3995025891797621353ULL}}};
     for (const std::uint64_t seed : {1ULL, 2ULL, 3ULL}) {
         Zoo zoo(testdata::GameCatalog(), testdata::GameSpecies(), VisitorZooConfig(seed));
         BuildVisitorZoo(zoo);

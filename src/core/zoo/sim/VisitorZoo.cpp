@@ -176,7 +176,7 @@ struct HabitatStyle {
 // Each is a barrier the species' own figures accept (Containment); a dry moat is not in the catalog.
 HabitatStyle Style(std::string_view species) {
     if (species == "meerkat") {
-        return {Terrain::Sand,    "wire_mesh",
+        return {Terrain::Sand,    "mesh_backed_hedge",
                 "glass_wall",     "small_shelter",
                 "insect_feeder",  "desert_scrub",
                 "sandstone_rock", {"termite_mound", "log_pile", "termite_mound", "termite_mound"},

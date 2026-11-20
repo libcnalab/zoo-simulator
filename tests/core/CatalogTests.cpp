@@ -20,7 +20,7 @@ Json Entry(std::string_view plural, Json value) {
 TEST(CatalogTests, ShippedDataLoadsAndHasCompleteEnumsAndLookups) {
     const Catalog c = Shipped();
     ASSERT_TRUE(c.errors.empty()) << (c.errors.empty() ? "" : c.errors.front());
-    EXPECT_EQ(c.fences.size(), 15U);
+    EXPECT_EQ(c.fences.size(), 16U);
     EXPECT_EQ(c.foods.size(), 8U);
     EXPECT_GE(c.buildings.size(), 13U);
     EXPECT_GE(c.props.size(), 35U);
@@ -37,9 +37,10 @@ TEST(CatalogTests, ShippedDataLoadsAndHasCompleteEnumsAndLookups) {
 TEST(CatalogTests, HabitatBarrierKindsRemainStable) {
     const Catalog catalog = Shipped();
     int kind = 1;
-    for (const auto id : {"wooden_rail", "wire_mesh", "tall_mesh", "steel_bars", "glass_wall",
-                          "concrete_wall", "cable_barrier", "hedge", "high_cable_barrier", "high_glass_wall",
-                          "heavy_mesh", "stand_off_rail", "paddock_rail", "tall_cable_fence", "dry_moat"}) {
+    for (const auto id :
+         {"wooden_rail", "wire_mesh", "tall_mesh", "steel_bars", "glass_wall", "concrete_wall",
+          "cable_barrier", "hedge", "high_cable_barrier", "high_glass_wall", "heavy_mesh", "stand_off_rail",
+          "paddock_rail", "tall_cable_fence", "dry_moat", "mesh_backed_hedge"}) {
         const FenceDef* fence = catalog.FindFence(id);
         ASSERT_NE(fence, nullptr);
         EXPECT_EQ(fence->kind, kind);
@@ -62,6 +63,11 @@ TEST(CatalogTests, HabitatBarrierKindsRemainStable) {
     EXPECT_FLOAT_EQ(moat.heightM, 2.4f);
     EXPECT_EQ(moat.strength, 5);
     EXPECT_FLOAT_EQ(moat.visibility, 1.0f);
+    const auto& wildlifeHedge = *catalog.FindFence("mesh_backed_hedge");
+    EXPECT_EQ(wildlifeHedge.style, FenceStyle::Hedge);
+    EXPECT_FLOAT_EQ(wildlifeHedge.heightM, 1.8f);
+    EXPECT_EQ(wildlifeHedge.strength, 2);
+    EXPECT_GT(wildlifeHedge.heightM, catalog.FindFence("hedge")->heightM);
 }
 
 TEST(CatalogTests, EverySpeciesFoodAndContainmentRequirementIsCovered) {

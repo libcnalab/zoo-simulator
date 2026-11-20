@@ -46,7 +46,7 @@ diagnostics remain disabled).
 
 | Habitat | Animals (of them young) | Area, m² | m² per animal | Front | Back | Stand-off depth |
 |---|---|---:|---:|---|---|---:|
-| Meerkat Lookout | Meerkat 5 (2) | 252 | 50 | Glass S/W | Wire mesh | 0 |
+| Meerkat Lookout | Meerkat 5 (2) | 252 | 50 | Glass S/W | Mesh-backed wildlife hedge | 0 |
 | Flamingo Lagoon | Flamingo 12 (2) | 796 | 66 | Glass S/W | Wire mesh | 0 |
 | Acacia Plain | Giraffe 5 (2); zebra 6 (2) | 4,284 | 389 | Public rail, planting, tall cable fence S/W | Tall cable fence | 1 tile / 2 m |
 | Ostrich Rise | Ostrich 7 (3) | 1,016 | 145 | Public rail, planting, tall cable fence S/W | Tall cable fence | 1 tile / 2 m |
@@ -89,9 +89,10 @@ and decorative props may stand there; feeders, toys and visitor furniture may no
 classifies it as `Region::StandOff`, with no enclosure id, name or habitat statistics.
 Fencing an unmarked pocket still makes an ordinary enclosure. Strip tiles never appear in
 scenario habitat totals, visitor habitat choices or information-board associations.
-Save format 2 carries a row-major `stand_off` coordinate array in the zoo envelope. Format 1 saves omit
-it and load with no strips; the base world JSON format is unchanged. The version bump prevents
-older readers from turning planted reservations into unnamed habitats.
+Save format 2 introduced the row-major `stand_off` coordinate array in the zoo envelope. Format 1
+saves omit it and load with no strips; the base world JSON format is unchanged. Current format 3
+also permits stable fence kind 16, the mesh-backed wildlife hedge. The version bumps prevent older
+readers from turning planted reservations into unnamed habitats or misreading a new barrier kind.
 
 A viewing corridor is axis-aligned: public path, rail, one or more marked tiles without
 internal fences, containment barrier, enclosure. `ViewingSpot::side` points toward the
@@ -127,8 +128,10 @@ fountains, two statues, lamps, bins, flower beds and groves along the walks. Fee
 at least eighteen hours for the principal species, spanning the 15:00–07:00 care interval.
 
 Catalog limits: there is no low glass wall and no low rail that would hold a flamingo, so the
-small animals stand behind the same 3.5 m glass as the lions. Tigers and bears need a 4 m barrier of strength 4: their viewing fronts are the
-4.5 m `high_glass_wall`, the rest of the boundary 4.5 m `heavy_mesh`.
+small animals stand behind the same 3.5 m glass as the lions. The meerkats' service boundary is
+now a lower green wildlife hedge with its real containment mesh hidden in the foliage. Tigers and
+bears need a 4 m barrier of strength 4: their viewing fronts are the 4.5 m `high_glass_wall`, the
+rest of the boundary 4.5 m `heavy_mesh`.
 
 ## Stand-off welfare measurements
 
@@ -237,7 +240,14 @@ both plan seeds. Real seed-1/tick-3000 Elephant Valley and Rhino Hollow views ar
 All 270 active CTest cases pass; 21 measurement and diagnostic cases remain intentionally disabled.
 
 **Meerkat Lookout** is a sand mound (a 0.7 m rise, the sentries' place) with a two-tile drinking
-dish at the builder's minimum depth instead of a pool, one outcrop, and the scrub along the mesh.
+dish at the builder's minimum depth instead of a pool, one outcrop, and scrub along the boundary.
+J29 replaces exposed wire mesh on the service sides with a 1.8 m clipped wildlife hedge. Its
+welded mesh and buried edge are mostly hidden by leaves but remain in the procedural model; the
+catalog gives it strength 2, so the habitat retains containment 1.0 against the meerkat's 1.5 m /
+strength-1 requirement. The glass public front, 252 m² area, five residents, 28 viewing tiles and
+all furnishings remain. Both plan seeds pass the dedicated barrier regression, short hashes stay
+unchanged, and the rebaselined 6,000-step hashes repeat twice for seeds 1–3. The public and service
+views were opened and are recorded in `evidence/wildlife-hedge-j29-2026-11-20.jpg`.
 
 **Flamingo Lagoon** has a deep heart (the nearest eighth of its water tiles, 1.4 m) and a 0.3 m
 shelf round it: 74 of its 103 water tiles are under 0.45 m. A dry bank stays between the water

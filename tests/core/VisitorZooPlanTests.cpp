@@ -148,7 +148,7 @@ private:
                     Rgb colour{90, 30, 30};
                     if (const FenceDef* def = zoo_.Definitions().FenceByKind(fence.kind)) {
                         constexpr Rgb styles[] = {{150, 90, 40}, {20, 20, 20},  {60, 60, 90}, {0, 200, 220},
-                                                  {110, 60, 60}, {150, 0, 170}, {0, 110, 0}};
+                                                  {110, 60, 60}, {150, 0, 170}, {0, 110, 0},  {130, 105, 75}};
                         colour = styles[static_cast<std::size_t>(def->style)];
                     }
                     if (fence.gate) {
@@ -317,7 +317,7 @@ const std::map<std::string, std::vector<Named>> kFamilies{
       Child(kFemale, 1.2f), Child(kMale, 0.7f), Child(kFemale, 0.65f)}},
 };
 
-// What stands between the hoofstock and the visitor, by habitat; nothing of it is chain-link.
+// Purpose-built alternatives to exposed chain-link, by habitat.
 const std::map<std::string, std::string> kBarriers{
     {"Acacia Plain", "tall_cable_fence"}, {"Ostrich Rise", "tall_cable_fence"},
     {"Elephant Valley", "dry_moat"},      {"Rhino Hollow", "dry_moat"},
@@ -737,6 +737,44 @@ TEST_P(VisitorZooPlan, HoofstockStandsBehindPurposeBuiltBarriers) {
         EXPECT_GT(frontEdges, 20);
         if (kBarriers.at(home.name) == "dry_moat") {
             EXPECT_GT(serviceEdges, 0);
+        }
+    }
+}
+
+TEST_P(VisitorZooPlan, MeerkatLookoutUsesAContainedWildlifeHedge) {
+    const Enclosure* lookout = nullptr;
+    for (const Enclosure& home : zoo_.Habitats().All()) {
+        if (home.name == "Meerkat Lookout") {
+            lookout = &home;
+            break;
+        }
+    }
+    ASSERT_NE(lookout, nullptr);
+    int hedgeEdges = 0;
+    int glassEdges = 0;
+    int otherEdges = 0;
+    for (const TileCoord tile : TilesInRect(lookout->min, lookout->max)) {
+        if (zoo_.Habitats().At(tile) != lookout->id) {
+            continue;
+        }
+        for (const Dir side : {Dir::North, Dir::East, Dir::South, Dir::West}) {
+            const Fence fence = zoo_.Map().FenceOn(tile, side);
+            if (!fence.Exists()) {
+                continue;
+            }
+            const FenceDef* def = zoo_.Definitions().FenceByKind(fence.kind);
+            ASSERT_NE(def, nullptr);
+            hedgeEdges += def->id == "mesh_backed_hedge" ? 1 : 0;
+            glassEdges += def->id == "glass_wall" ? 1 : 0;
+            otherEdges += def->id != "mesh_backed_hedge" && def->id != "glass_wall" ? 1 : 0;
+        }
+    }
+    EXPECT_GT(hedgeEdges, 10);
+    EXPECT_GT(glassEdges, 5);
+    EXPECT_EQ(otherEdges, 0);
+    for (const Animal& animal : zoo_.Fauna().All()) {
+        if (animal.home == lookout->id) {
+            EXPECT_GE(Containment(SpeciesOf(zoo_, animal), lookout->stats), 0.99999f);
         }
     }
 }

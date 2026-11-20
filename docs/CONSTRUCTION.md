@@ -21,12 +21,15 @@ Costs are purchase prices in dollars. Fence prices are per two metre edge; path 
 | paddock_rail | Timber paddock fence | 2.4 m | 3 | 0.90 | $120 |
 | tall_cable_fence | Tall cable fence | 3.0 m | 3 | 0.92 | $240 |
 | dry_moat | Dry moat and ha-ha | 2.4 m | 5 | 1.00 | $520 |
+| mesh_backed_hedge | Mesh-backed wildlife hedge | 1.8 m | 2 | 0.30 | $140 |
 
 Fence kinds 1–10 are unchanged; `heavy_mesh` is 11, `stand_off_rail` is 12,
-`paddock_rail` is 13, `tall_cable_fence` is 14 and `dry_moat` is 15.
+`paddock_rail` is 13, `tall_cable_fence` is 14, `dry_moat` is 15 and
+`mesh_backed_hedge` is 16.
 The existing wooden rail remains unchanged (visibility 0.75). The new public rail
 and the hidden retaining wall of a graded dry moat have visibility 1.0 so they do not
-unnecessarily obscure an already screened view.
+unnecessarily obscure an already screened view. The wildlife hedge is taller and stronger than
+the decorative clipped hedge because welded mesh and a buried edge sit inside its foliage.
 
 ## Paths and terrain
 

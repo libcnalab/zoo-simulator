@@ -25,7 +25,7 @@ enum class FenceStyle : std::uint8_t {
     Glass,  ///< glass panels between posts
     Wall,   ///< solid wall
     Cable,  ///< heavy posts with steel cables
-    Hedge,  ///< clipped hedge (decoration)
+    Hedge,  ///< clipped hedge, decorative or with a containment mesh hidden inside
     Moat,   ///< a retaining wall at the animal lip of a dry moat or ha-ha
     Count
 };

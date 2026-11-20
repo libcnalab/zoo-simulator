@@ -20,6 +20,8 @@ struct FenceLook {
     bool heavy = false;
     /// The low rail the public leans on before a planted stand-off: a broad top board.
     bool handrail = false;
+    /// A clipped wildlife hedge whose containment comes from welded mesh hidden in its foliage.
+    bool meshBacked = false;
     /// Which side of a panel from a to b the animals are on, for the overhang of heavy mesh
     /// and the visible face of a moat retaining wall:
     /// +1 towards Across(a, b) (Up x (b - a)), -1 away from it, 0 when nobody said (the

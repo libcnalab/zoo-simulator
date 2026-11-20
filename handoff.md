@@ -272,6 +272,15 @@ whatever you take up (`docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `docs/V
   corruption, repair and interaction with truncated saves (J28, 2026-11-20).
   The full suite passes: 275 active tests including the six-minute animation pipeline, with 21
   diagnostics disabled as intended.
+- J29 replaces Meerkat Lookout's exposed service-side wire mesh with a 1.8 m clipped wildlife
+  hedge containing a mostly hidden welded mesh and buried edge. New stable fence kind 16 has
+  strength 2; the five meerkats retain containment 1.0, while the glass public front, 252 m² area,
+  28 viewing tiles and furnishings remain. Save format 3 prevents an older reader from accepting
+  the new kind; formats 1 and 2 still load. Both plan seeds and the version regression pass, short
+  hashes are unchanged, and rebaselined 6,000-step hashes repeat twice for seeds 1–3. Both opened
+  runtime views are in `docs/evidence/wildlife-hedge-j29-2026-11-20.jpg`. The full suite passes:
+  277 active tests including the six-minute animation pipeline, with 21 diagnostics disabled as
+  intended (J29, 2026-11-20).
 - The stopped G7c audio audit is recovered and finished. Calls now follow `Vocalize`, social,
   play and documented feeding cues rather than a timer; takes do not repeat immediately, spatial
   pan is capped at 0.60, birds fade with daylight, crowd level follows its people, and footsteps
@@ -490,10 +499,10 @@ tests pass. Nobody listened to the audio; preserve that qualification.
 
 ### 4.8 Plan details left from G8 (`docs/VISITOR_ZOO.md` "The zoo's plan")
 
-No dry moat or ha-ha in the catalog; three constrained paved tiles remain only 2 m wide; slender
+Three constrained paved tiles remain only 2 m wide; slender
 front trees remain where a full set-back would cross the vegetation welfare band (Rhino Hollow
-and Red Dune); the hedge fence is still unused by a habitat; area per animal is an estimate, not
-EAZA/AZA figures.
+and Red Dune); area per animal is an estimate, not EAZA/AZA figures. J18 closed the dry-moat item
+and J29 puts a containment-rated hedge around Meerkat Lookout's service sides.
 
 `--stand habitat:<species>` now rejects keeper gates and buildings in the sight line. The
 meerkat view moved from `(177.0, 263.2)`, looking through mesh into the shelter wall, to

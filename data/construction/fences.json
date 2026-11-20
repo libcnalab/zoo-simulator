@@ -224,6 +224,21 @@
       "wearPerDay": 0.0012,
       "color": "#8a7863",
       "postColor": "#b6ad9d"
+    },
+    {
+      "id": "mesh_backed_hedge",
+      "name": "Mesh-backed wildlife hedge",
+      "kind": 16,
+      "style": "hedge",
+      "heightM": 1.8,
+      "strength": 2,
+      "visibility": 0.3,
+      "cost": 140,
+      "gateCost": 80,
+      "upkeepPerDay": 3,
+      "wearPerDay": 0.0015,
+      "color": "#315d34",
+      "postColor": "#263d2a"
     }
   ]
 }

@@ -206,7 +206,7 @@ hashes, saves and loads again; never a crash, and never a zoo that was accepted 
 | `WholePartsMissingOrOfTheWrongType` | every part of the document removed, null, an empty array, an empty object | 72 cases: 44 refused, 28 accepted |
 | `TruncatedFilesAreRefused` | the file cut at many lengths, from empty to one byte short; a directory under the save's name; a path below a file | all refused with a message; no `.tmp` left behind; **found defect 4** |
 | `FlippedBytesAreRefusedOrHarmless` | 320 single-byte flips, spread over the file and over the first 6,000 characters of each part | 161 no longer JSON, 104 refused by the checks, 55 accepted and lived on |
-| `AVersionOneSaveWithoutStandOffOpens` | a version 1 save (no stand-off layer) opens as the zoo it was; version 2 without the layer is refused, naming `stand_off` | passes |
+| `AVersionOneSaveWithoutStandOffOpens` | a version 1 save (no stand-off layer) opens as the zoo it was; version 2 still opens under format 3, while version 2 without the required layer is refused, naming `stand_off` | passes |
 
 Under ASan and UBSan these tests are where an accepted but wrong value would show as a read past
 an array: all five passed there (1,020 s, 31 s, 24 s, 107 s and 20 s), which rules out the ASan
@@ -322,7 +322,7 @@ Release 31 s, and under ASan, UBSan and the leak check: 12 of 12, no report.
 | Asked | Result |
 |---|---|
 | Every path tile the visitors use can be walked, tile to tile | 4,962 tiles, 9,922 steps between neighbours, none closed to the player; feet never more than 0.33 mm off the ground; the steepest path tile rises 5.7 cm |
-| No habitat and no planted strip can be entered, from any side, walking or running, straight or at 45 degrees along the barrier | 1,498 barrier edges (wire mesh 93, tall mesh 51, glass 201, cable 2, high glass 171, heavy mesh 228, stand-off rail 748, paddock rail 2, tall cable 2), 14 of them gates: no trespass; the fastest frame was 8.80 m/s |
+| No habitat and no planted strip can be entered, from any side, walking or running, straight or at 45 degrees along the barrier | 1,498 barrier edges (wire mesh 73, mesh-backed hedge 20, tall mesh 51, glass 201, cable 2, high glass 171, heavy mesh 228, stand-off rail 748, paddock rail 2, tall cable 2), 14 of them gates: no trespass; the fastest frame was 8.80 m/s |
 | Keepers' gates stay shut | 14 gates, 8 with public ground before them: none passed |
 | Buildings are solid from all sides | 41 buildings, 28 reachable on public ground, 424 runs at them from 16 directions: no body inside (beyond the 5.2 cm a round body cuts a square corner by design) |
 | The furniture of a viewing place cannot be squeezed into | 42 groups of bench, lamp, board or bin; 495 runs: caught 0 |

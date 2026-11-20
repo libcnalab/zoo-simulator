@@ -325,7 +325,13 @@ TEST(ZooSaveDamageTests, AVersionOneSaveWithoutStandOffOpens) {
     ASSERT_NE(loaded, nullptr) << error;
     EXPECT_TRUE(zoo->SameState(*loaded));
     EXPECT_EQ(zoo->StateHash(), loaded->StateHash());
-    // And version 2 without the layer is damaged, not old.
+    // Version 2 had the layer and still opens before the fence-kind extension in version 3.
+    Json versionTwo = ZooToJson(*zoo);
+    versionTwo["version"] = 2;
+    error.clear();
+    EXPECT_NE(ZooFromJson(versionTwo, testdata::GameCatalog(), testdata::GameSpecies(), &error), nullptr)
+        << error;
+    // But version 2 without the layer is damaged, not old.
     saved["version"] = 2;
     EXPECT_EQ(ZooFromJson(saved, testdata::GameCatalog(), testdata::GameSpecies(), &error), nullptr);
     EXPECT_NE(error.find("stand_off"), std::string::npos) << error;
