@@ -78,5 +78,43 @@ TEST(GroundPaint, FenceEndsTurnsAndGatesStayContinuousAcrossTileSides) {
     }
 }
 
+TEST(GroundPaint, DeepPoolBankIsBroadAndReachesItsBedBeforeTheNextTile) {
+    zoo::World world(10, 10);
+    for (int z = 2; z <= 7; ++z) {
+        for (int x = 2; x <= 7; ++x)
+            world.SetWater({x, z}, 0.0f, 1.4f);
+    }
+    const TilePaintInfo bank = PaintInfo(world, {4, 2});
+    constexpr float cell = zoo::kTileSize / static_cast<float>(kGroundCells);
+    float steepest = 0.0f;
+    float narrowestShallowBand = zoo::kTileSize;
+    for (int column = 0; column <= kGroundCells; ++column) {
+        const float x = 8.0f + static_cast<float>(column) * cell;
+        float previous = GroundHeight(bank, x, 4.0f);
+        float twentyCentimetreDepthAt = zoo::kTileSize;
+        float halfMetreDepthAt = zoo::kTileSize;
+        for (int step = 1; step <= kGroundCells; ++step) {
+            const float distance = static_cast<float>(step) * cell;
+            const float height = GroundHeight(bank, x, 4.0f + distance);
+            steepest = std::max(steepest, (previous - height) / cell);
+            const float previousDistance = distance - cell;
+            if (height <= -0.2f && twentyCentimetreDepthAt == zoo::kTileSize)
+                twentyCentimetreDepthAt =
+                    previousDistance + cell * (previous + 0.2f) / (previous - height);
+            if (height <= -0.5f && halfMetreDepthAt == zoo::kTileSize)
+                halfMetreDepthAt = previousDistance + cell * (previous + 0.5f) / (previous - height);
+            previous = height;
+        }
+        narrowestShallowBand =
+            std::min(narrowestShallowBand, halfMetreDepthAt - twentyCentimetreDepthAt);
+        EXPECT_FLOAT_EQ(previous, -1.4f);
+    }
+    // The former 0.9 m fall reached 3.19 m/m over these nine mesh columns and
+    // narrowed the 20-to-50 cm band to 11 cm. The broader profile is still a
+    // purposeful animal-pool bank, but no longer reads as a near-vertical wall.
+    EXPECT_LT(steepest, 1.6f);
+    EXPECT_GT(narrowestShallowBand, 0.2f);
+}
+
 }  // namespace
 }  // namespace zoogame

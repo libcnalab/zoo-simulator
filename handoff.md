@@ -478,6 +478,15 @@ whatever you take up (`docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `docs/V
   offscreen Tiger Forest smoke completed with ground paint at 1.77 seconds, within the previous
   measured range. The complete suite passes all 301 active cases including the 562.16-second
   animation pipeline, with 21 diagnostics disabled (J51, 2026-11-20).
+- J52 broadens the drawn bank at every deep pool from 0.9 to 1.55 m and reduces the wandering
+  start from 0.9 to 0.35 m. The 1.9 m total still reaches the exact bed inside its first two-metre
+  water tile, preserving the cross-tile seam proof and keeping dry land dry. Across all nine mesh
+  columns of a constructed 1.4 m pool, the worst 25 cm step falls from 3.19 to below 1.6 m/m and
+  the narrowest visible 20-to-50 cm band grows from 11 to over 20 cm. The new hard regression and
+  all 29 game-side tests pass; all four ground tests pass under AddressSanitizer. Matched offscreen
+  Tiger Forest frames were inspected without cracks, flooding or renderer errors. The complete
+  C++ suite passes all 301 active cases in 281.86 seconds, with 21 diagnostics disabled; the
+  unchanged animation pipeline passed in the immediately preceding full run (J52, 2026-11-20).
 - The stopped G7c audio audit is recovered and finished. Calls now follow `Vocalize`, social,
   play and documented feeding cues rather than a timer; takes do not repeat immediately, spatial
   pan is capped at 0.60, birds fade with daylight, crowd level follows its people, and footsteps

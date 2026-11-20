@@ -2,7 +2,7 @@
 
 What the ground of Greenhill Zoo is drawn from, how the banks of its pools are shaped, the
 height lookup everything standing on the ground uses, what it costs, and what is open.
-Tasks G1 (2026-11-13), G1b and G1c (2026-11-14), J51 (2026-11-20). Code:
+Tasks G1 (2026-11-13), G1b and G1c (2026-11-14), J51 and J52 (2026-11-20). Code:
 `src/game/GroundPaint.{hpp,cpp}`
 (colours and heights), `src/game/GroundDetail.{hpp,cpp}` (the detail layer's textures),
 `src/game/TerrainRenderer.{hpp,cpp}` (meshes, textures, drawing). Evidence:
@@ -63,7 +63,7 @@ Since G1c the drawn ground keeps dry land dry, without touching the simulation:
   land down to the water's edge, above the water.
 - **Bank tiles.** A water tile with dry land on a side or at a corner is cut into 8 x 8
   cells of 25 cm. Its ground stays at the rim near the dry land, then falls to the world's
-  bed over `kBankWidthM` (0.9 m), beginning anywhere between 0 and `kBankWanderM` (0.9 m)
+  bed over `kBankWidthM` (1.55 m), beginning anywhere between 0 and `kBankWanderM` (0.35 m)
   from the dry land, along two octaves of noise: the waterline wanders inside the water
   tile instead of following the tiles. Where dry land lies along two sides of the tile that
   meet, the water's corner is rounded off (1 m). Land corners that reach into the water get
@@ -80,12 +80,11 @@ Since G1c the drawn ground keeps dry land dry, without touching the simulation:
 After the change, the same measurement finds no animal on dry land standing in drawn water at
 all (0 samples over 10 % of the shoulder height, all 15 species).
 
-What it costs in realism: the drawn banks are steep (up to 1.4 m over 0.9 m at the deep
-pools of the bears, the penguins and the tigers), more like the rock or concrete edges real
-pools of those animals have than like a natural pond; the dry ground beside a pool is never
-under water, so the land is at most 5 cm above the water at the edge (no low, flooded
-margins); a few dry tiles whose own land lies below the water (Flamingo Lagoon 4, Ostrich
-Rise 2) are still flooded by up to 3.4 cm.
+What it costs in realism: even the broader drawn bank remains inside the first two-metre water
+tile, more like the engineered edge of an animal pool than a broad natural beach. The dry ground
+beside a pool is never under water, so the land is at most 5 cm above the water at the edge (no
+low, flooded margins); a few dry tiles whose own land lies below the water (Flamingo Lagoon 4,
+Ostrich Rise 2) are still flooded by up to 3.4 cm.
 
 ## Drawn height: `DrawnGroundHeight`
 
@@ -188,11 +187,20 @@ smoke also completed; ground painting took 1.77 seconds, within G1c's recorded r
 suite passes all 301 active cases including the 562.16-second animation pipeline, with 21
 diagnostics disabled.
 
+J52 broadens the deep-pool fall from 0.9 to 1.55 m while reducing the wandering start from
+0.9 to 0.35 m; their 1.9 m total still reaches the exact bed before the far side of the first
+water tile, so G1c's seam proof is unchanged. On a constructed 1.4 m-deep pool, across all nine
+columns of the real 25 cm mesh, the steepest drawn step falls from 3.19 to below 1.6 m/m and the
+narrowest visible band between 20 and 50 cm depth grows from 11 to over 20 cm. A regression holds
+all three properties, all 29 game-side C++ tests pass, and the four ground tests also pass under
+AddressSanitizer. Matched offscreen Tiger Forest frames were inspected without a crack, flooded
+dry bank or renderer error. The complete C++ suite passes all 301 active cases in 281.86 seconds,
+with 21 diagnostics disabled; the unchanged animation pipeline passed in the immediately preceding
+full run.
+
 ## Open
 
 - Building foundations end at the tile (intentional so far).
 - Detail layer outlines are 25 cm cells: the edge between mud and grass is stepped close up.
-- Shallow against deep water: the bed's colour changes with depth, but the banks are steep,
-  so the pale shallow band is narrow.
 - Not verified: shimmer and repetition in motion (stills only), resolutions above 1280 x 720,
   the editor's repaint after an edit (`TerrainRenderer::Update`), the browser build.
