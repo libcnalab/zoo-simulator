@@ -23,6 +23,7 @@ if(ZOO_BUILD_GAME AND TARGET CnaEngine::Core)
     # The walker stands on the ground as it is drawn (GroundPaint.cpp: no device, pure maths).
     add_executable(zoo_game_tests ${ZOO_GAME_TEST_SOURCES} "${CMAKE_SOURCE_DIR}/src/game/Walker.cpp"
                                   "${CMAKE_SOURCE_DIR}/src/game/GroundPaint.cpp"
+                                  "${CMAKE_SOURCE_DIR}/src/game/AnimalWater.cpp"
                                   "${CMAKE_SOURCE_DIR}/src/game/AnimalTextures.cpp"
                                   "${CMAKE_SOURCE_DIR}/src/game/KeeperAppearance.cpp"
                                   "${CMAKE_SOURCE_DIR}/src/game/MeshWriter.cpp"

@@ -24,7 +24,7 @@ loudspeaker stays muted and nobody has listened to any of it.
 | Terrain resource memory | a read-only desktop visit releases 37.7 MiB of CPU staging for all 100 chunk mip chains, three detail chains and the apron after their complete GPU upload; the editor and context-recovering platforms retain them; the immediate noisy software-GL sample observed 2,760 -> 2,665 MB | `docs/PERFORMANCE.md`, `src/game/TerrainRenderer.cpp`, `src/game/StaticTexture.hpp` |
 | Common static-texture memory | a read-only desktop visit releases another exact 10.33 MiB of CPU data after upload: 4.81 MiB of smaller mips for procedural surfaces and 5.52 MiB for the far-plant palette's source image, miniatures and mip staging; the editor retains its editable resources, and no RSS change is claimed from contradictory short-run samples | `docs/PERFORMANCE.md`, `src/game/{Surfaces,PlantPalette,SceneryRenderer}.cpp` |
 | Light from the sky and the ground | below | `src/game/SkyLight.*` |
-| Water with ripples | below | `src/game/Surfaces.cpp` |
+| Water with ripples and animal wakes | the 4 s wind loop remains seamless; swimmers and shallow waders now leave three soft, body-scaled rings stretched along their heading, while dry animals do not add a mark | `src/game/{Surfaces,AnimalWater,AnimalRenderer}.cpp`, `evidence/animal-water-j59-2026-11-20.jpg` |
 | Lion, lioness, cub and tiger on a professional sculpt (CC BY 4.0) | real cat anatomy; the lioness has no mane any more | `docs/ANIMALS.md`, `evidence/big-cats-sculpt-2026-11-13.jpg` |
 | Visitors walk like people | they steer instead of sliding along a line, each at a pace and stride of its own; groups walk two abreast and close companion crossings fell from 1.44% to 0.58%; walkers give way to oncoming and standing people and to the player; those who eat, read, watch or queue get ground of their own (pairs closer than 0.3 m in a crowd of 800: 81 -> 9), and a watcher yields if somebody later settles within half a metre; watchers lean on the rail, point and turn to follow an animal. Costs about 3 ms a frame with 800 people (`docs/PERFORMANCE.md`) | `docs/VISITORS.md`, `evidence/visitors-g4-2026-11-14.jpg` |
 | Buildings, barriers, signs and furniture | clear viewing glass on a kerb instead of milky sheets; welded mesh with an overhang leaning towards the animals and DANGER plates at the big cats and bears; printed signs (ZOO over the gate, TOILETS, DRINKS, ICE CREAM, BURGERS, GIFT SHOP, EDUCATION CENTRE), kiosk counters, gutters, sheet-roofed barns, a ticket lodge, faceted rocks, printed habitat boards and entrance visitor boards with hours, admission, live animal counts and map guidance instead of blank lecterns. Scenery 2.18 -> 2.31 million triangles, 121 -> 130 draw calls; the entrance bench (3 runs each, load 12-17) showed no measurable cost | `src/game/{BuildingModels,FenceModels,PropModels,RockModels,SignTextures,BarrierTextures}.cpp`, `evidence/built-g3-2026-11-14.jpg`, `evidence/entrance-welcome-board-j25-2026-11-20.jpg` |
@@ -95,8 +95,12 @@ of a pool reflects the trees and the near side shows the water's own colour.
 Picture: `evidence/sky-light-water-2026-11-13.jpg` (left before, right after: meerkats,
 penguins, elephant).
 
-Not done about water: the bank wanders inside the water tiles since G1c (`docs/GROUND.md`), nothing splashes or rings
-where an animal wades. Penguins swim and float with their own clips now, and polar bears swim with theirs.
+The bank wanders inside the water tiles since G1c (`docs/GROUND.md`). Since J59, a moving
+animal in more than 4 cm of water makes body-scaled rings while moving, and a floating body keeps
+a quiet disturbance at rest: a swimmer stretches the rings into a wake and a flamingo disturbs
+its shallow shelf. This is a soft surface effect rather than particle
+spray, so feet and bodies still do not throw discrete splashes. Penguins swim and float with
+their own clips, and polar bears swim with theirs.
 
 ## Open (in the order they hurt)
 

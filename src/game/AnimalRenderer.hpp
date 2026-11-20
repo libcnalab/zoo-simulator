@@ -13,10 +13,13 @@
 #include "CnaEngine/Animation/Animator.hpp"
 #include "CnaEngine/App/EngineGame.hpp"
 #include "CnaEngine/Graphics/Camera.hpp"
+#include "CnaEngine/Graphics/GpuMesh.hpp"
+#include "CnaEngine/Graphics/Material.hpp"
 #include "CnaEngine/Graphics/ModelView.hpp"
 
 #include "Microsoft/Xna/Framework/Content/ContentManager.hpp"
 #include "Microsoft/Xna/Framework/Graphics/Model.hpp"
+#include "Microsoft/Xna/Framework/Graphics/Texture2D.hpp"
 
 #include "Common.hpp"
 #include "zoo/sim/Zoo.hpp"
@@ -104,6 +107,11 @@ private:
         float bounds = 2.0f;    ///< body and the shadow it may cast, metres from its middle
         float afloat = 0.0f;  ///< 0 standing on the ground .. 1 floating at the surface
         float sunk = 0.0f;    ///< how deep it lies in the water now, model metres (Kind::swimDepth)
+        float water = 0.0f;   ///< 0 dry/still .. 1 making a visible disturbance
+        float waterY = 0.0f;
+        float waterPhase = 0.0f;
+        float waterWidth = 0.0f;
+        float waterLength = 0.0f;
         Matrix world;
         bool visible = false;
         bool seen = false;
@@ -132,6 +140,9 @@ private:
     };
     std::vector<Look> looks_;
     std::unordered_map<zoo::AnimalId, std::unique_ptr<Actor>> actors_;
+    std::unique_ptr<Microsoft::Xna::Framework::Graphics::Texture2D> waterTexture_;
+    CnaEngine::Graphics::Material waterMaterial_;
+    CnaEngine::Graphics::GpuMesh waterMesh_;
     std::vector<std::string> standIns_;
     std::int64_t tick_ = -1;
     mutable std::size_t drawn_ = 0;

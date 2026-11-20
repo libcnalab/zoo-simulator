@@ -63,7 +63,7 @@ whatever you take up (`docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `docs/V
   index buffers. The new `--bench` line measures 1,023 owned meshes, 112.2 MiB vertex and 20.7 MiB
   index data (132.9 MiB total, excluding imported borrowed buffers). Zoo cannot safely release
   these without a CNA API; ZOO-UP-004 specifies one.
-  The complete suite after these changes is 303 active tests passed, with 21 long-running
+  The complete suite after these changes is 305 active tests passed, with 21 long-running
   measurement/diagnostic tests disabled as intended.
 - Animal models are now submitted only when a generous body-and-shadow sphere intersects the
   main camera. The count fell from 88 everywhere to entrance 72, lion 7, meerkat 17, penguin 15
@@ -572,6 +572,22 @@ whatever you take up (`docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `docs/V
   game-side tests pass in 240.69 seconds. A real Polar Sound visit loads the full 90-animal zoo,
   runs 3,000 fill steps and draws three frames cleanly (leak detection off for the documented
   `ptrace` limitation; J58, 2026-11-20).
+- J59 makes water respond to animals instead of leaving waders and swimmers visually detached
+  from its animated surface. Every visible animal moving through more than 4 cm of water leaves
+  three soft concentric rings at the drawn surface; a floating body keeps a quiet disturbance at
+  rest, and the footprint scales with its body and
+  stretches along its heading and speed into a wake. It fades when the animal stops or leaves
+  the water, so no dry selection-like mark remains. One 64 x 64 texture and one quad are uploaded
+  once, then reused for the extra visible-wet-animal draw. Penguin Cove and Flamingo Lagoon were
+  inspected close up; both show subtle rings without a rectangular texture edge
+  (`docs/evidence/animal-water-j59-2026-11-20.jpg`). An early unlit material exposed its whole
+  white quad and was rejected using a no-animal control before the final PBR alpha material.
+  The image generator has a focused coverage/falloff test; all 31 game-side tests pass under
+  ASan in 205.39 seconds, and a real ASan Flamingo Lagoon visit loads all 90 animals, runs 3,000
+  fill steps and draws three frames cleanly. The complete suite passes all 305 active cases in
+  392.12 seconds, including the 392.11-second animation pipeline, with 21 diagnostics disabled
+  (leak detection off for the documented `ptrace` limitation; J59, 2026-11-20). The effect is
+  surface displacement, not a claim of discrete particle splashes.
 - The stopped G7c audio audit is recovered and finished. Calls now follow `Vocalize`, social,
   play and documented feeding cues rather than a timer; takes do not repeat immediately, spatial
   pan is capped at 0.60, birds fade with daylight, crowd level follows its people, and footsteps

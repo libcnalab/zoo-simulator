@@ -629,6 +629,15 @@ byte.
   clip. Seen at Penguin Cove:
   `evidence/penguin-floating-2026-11-13.jpg` (a resting penguin on the pool: the head above
   the water, the body under it; a real one floats a little higher).
+- **Water displaced by animals.** Any animal moving through more than 4 cm of water now leaves
+  three soft concentric rings at the drawn water surface. Their footprint scales with the body,
+  stretches with speed along the heading into a swimming wake, and fades when the animal stops
+  or reaches the bank. A floating animal continues to make a quiet disturbance even at rest.
+  This applies both to deep swimmers and to flamingos wading on the 0.3 m lagoon shelf; dry
+  animals add nothing. The effect reuses one 64 x 64 alpha
+  texture and one quad uploaded once by `AnimalRenderer`, then submits one extra draw only for
+  each visible wet animal. It is a restrained surface displacement, not a claim of particle
+  splashes. Inspected close views: `evidence/animal-water-j59-2026-11-20.jpg`.
 - **Activity clips.** A still animal plays the clip its model's `meta.activity_clips` names
   for its activity (`sentinel` -> `sentry`, `preen` -> `preen`, ...; see above), provided the
   model has that clip; it changes into and out of `sentry`, `dust_bathe` and `bathe` with the slower

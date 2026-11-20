@@ -13,13 +13,16 @@
 
 #include "CnaEngine/App/AssetDirectory.hpp"
 #include "CnaEngine/Enhanced/ModelImport.hpp"
+#include "CnaEngine/Graphics/Image.hpp"
 
 #include "Microsoft/Xna/Framework/BoundingFrustum.hpp"
 #include "Microsoft/Xna/Framework/BoundingSphere.hpp"
 
+#include "AnimalWater.hpp"
 #include "AnimalTextures.hpp"
 
 #include "GroundPaint.hpp"
+#include "MeshWriter.hpp"
 
 namespace zoogame {
 
@@ -132,6 +135,26 @@ AnimalRenderer::AnimalRenderer(Microsoft::Xna::Framework::Content::ContentManage
                                const zoo::SpeciesCatalog& species)
     : content_(content), species_(species), directory_(App::FindAssetDirectory("assets")) {
     looks_.resize(species.All().size());
+
+    const AnimalWaterImage water = MakeAnimalWaterImage();
+    Graphics::Image image(water.size, water.size);
+    image.Bytes() = water.rgba;
+    auto& device = content_.getGraphicsDeviceInternal();
+    waterTexture_ = Graphics::UploadTexture(device, image, {.srgb = true}, true);
+    waterMaterial_.name = "animal water disturbance";
+    waterMaterial_.shading = Graphics::ShadingModel::PhysicallyBased;
+    waterMaterial_.blend = Graphics::BlendMode::AlphaBlend;
+    waterMaterial_.diffuseColor = Vector3(0.78f, 0.92f, 1.0f);
+    waterMaterial_.alpha = 0.75f;
+    waterMaterial_.roughness = 0.08f;
+    waterMaterial_.doubleSided = true;
+    waterMaterial_.baseTexture = waterTexture_.get();
+    waterMaterial_.sampler = &Xna::SamplerState::LinearClamp;
+    MeshWriter mesh;
+    mesh.Picture({-1.0f, 0.0f, -1.0f}, {-1.0f, 0.0f, 1.0f}, {1.0f, 0.0f, 1.0f},
+                 {1.0f, 0.0f, -1.0f}, 0.0f, 0.0f, 1.0f, 1.0f);
+    waterMesh_ = Graphics::GpuMesh::Upload(device, mesh.mesh,
+                                           Graphics::VertexLayout::PositionNormalTexture());
 }
 
 AnimalRenderer::~AnimalRenderer() = default;
@@ -318,8 +341,10 @@ void AnimalRenderer::Update(const zoo::Zoo& zoo, float seconds, float tickFracti
         auto& slot = actors_[animal.id];
         // A young animal that has grown up gets its adult body: a new actor in the same place.
         const bool fresh = slot == nullptr || slot->kind != kind;
-        if (fresh)
+        if (fresh) {
             slot = std::make_unique<Actor>(*kind);
+            slot->waterPhase = static_cast<float>(animal.id.value % 23U) / 23.0f;
+        }
         Actor& actor = *slot;
         actor.seen = true;
         const bool visible = animal.Visible();
@@ -420,6 +445,19 @@ void AnimalRenderer::Update(const zoo::Zoo& zoo, float seconds, float tickFracti
         actor.world = Matrix::CreateScale(actor.scale) * Matrix::CreateRotationX(-actor.pitch) *
                       Matrix::CreateRotationY(actor.heading) *
                       Matrix::CreateTranslation(actor.shown.x, ground, actor.shown.z);
+
+        // A moving body pushes concentric ripples out from its waterline. Stretching the same
+        // tiny transparent picture along its heading turns those rings into a wake at speed;
+        // entering and leaving water scales it in and out instead of popping at the bank.
+        const bool disturbs = depth > 0.04f && (animal.speed > 0.03f || actor.afloat > 0.2f);
+        if (disturbs)
+            actor.waterY = surface + 0.025f;
+        actor.water += ((disturbs ? 1.0f : 0.0f) - actor.water) * std::min(1.0f, 3.0f * seconds);
+        actor.waterPhase = std::fmod(actor.waterPhase + seconds * (0.32f + animal.speed * 0.16f), 1.0f);
+        const float pulse = 0.94f + 0.06f * std::sin(2.0f * kPi * actor.waterPhase);
+        const float body = std::max(0.28f, def.bodyRadiusM * bodyScale);
+        actor.waterWidth = (body + 0.34f + animal.speed * 0.08f) * pulse;
+        actor.waterLength = (body + 0.40f + animal.speed * 0.34f) * pulse;
     }
     std::erase_if(actors_, [](const auto& entry) { return !entry.second->seen; });
 }
@@ -437,6 +475,14 @@ void AnimalRenderer::Submit(CnaEngine::App::Frame& frame, const CnaEngine::Graph
         if (frustum.Contains(bounds) == ContainmentType::Disjoint)
             continue;
         frame.Add(*actor->kind->view, actor->world, &actor->animator.SkinPalette());
+        if (actor->water > 0.02f) {
+            const Matrix water = Matrix::CreateScale(actor->waterWidth * actor->water, 1.0f,
+                                                     actor->waterLength * actor->water) *
+                                 Matrix::CreateRotationY(actor->heading) *
+                                 Matrix::CreateTranslation(actor->shown.x, actor->waterY,
+                                                           actor->shown.z);
+            frame.Add(waterMesh_, waterMaterial_, water);
+        }
         ++drawn_;
     }
 }
