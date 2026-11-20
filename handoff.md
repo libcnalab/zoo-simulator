@@ -365,6 +365,13 @@ whatever you take up (`docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `docs/V
   the automatic night shift. The focused test passes in 4.10 seconds; the complete suite passes all
   289 active cases, including the 362.86-second animation test, with 21 diagnostics disabled
   (J38, 2026-11-20).
+- J39 replaces the visitor leader's single rejected service with a bounded visit-long history.
+  Queue patience, an unaffordable order and a full indoor service all add to the same list, and
+  every later service choice avoids every remembered building. Saves keep the complete history
+  while retaining `skip_building` for old readers; old saves promote that lone value. Focused
+  visitor, save round-trip and corruption tests pass; the complete suite passes all 290 active
+  cases, including the 367.51-second animation test, with 21 diagnostics disabled
+  (J39, 2026-11-20).
 - The stopped G7c audio audit is recovered and finished. Calls now follow `Vocalize`, social,
   play and documented feeding cues rather than a timer; takes do not repeat immediately, spatial
   pan is capped at 0.60, birds fade with daylight, crowd level follows its people, and footsteps

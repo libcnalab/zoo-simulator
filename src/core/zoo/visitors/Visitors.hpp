@@ -105,6 +105,10 @@ struct VisitorPace {
 /// group goes and holds the group's purse; the plan is copied to every member,
 /// each of whom walks its own route to its own place at the destination.
 struct Visitor {
+    /// More than a group can realistically abandon in one visit; bounds saves
+    /// and memory without making a recently rejected service immediately recur.
+    static constexpr std::size_t kMaxAvoidedBuildings = 64;
+
     VisitorId id;
     std::uint32_t look = 0;   ///< seeds body, clothes and hair in the renderer
     bool child = false;       ///< half price at the gate, shorter, slower
@@ -153,11 +157,25 @@ struct Visitor {
     std::vector<std::uint32_t> seenEnclosures;  ///< enclosure ids it has been to, in order
     std::uint8_t unmet = 0;                     ///< bit per need it found nothing for (see VisitorTuning)
     std::uint8_t done = 0;                      ///< bit per once-a-visit thing done (see VisitorTuning)
-    BuildingId skipBuilding;                    ///< the stall whose queue it walked away from
+    std::vector<BuildingId> avoidedBuildings;  ///< services whose queue, capacity or price it rejected
     std::uint8_t litter = 0;                    ///< wrappers and cups in hand
     std::uint8_t lost = 0;                      ///< plans that failed in a row
     bool ticketPaid = false;
     bool served = false;  ///< the stall is preparing its order (activityUntil: when it is ready)
+
+    bool Avoids(BuildingId building) const {
+        return std::find(avoidedBuildings.begin(), avoidedBuildings.end(), building) !=
+               avoidedBuildings.end();
+    }
+    void Avoid(BuildingId building) {
+        if (!building || Avoids(building)) {
+            return;
+        }
+        if (avoidedBuildings.size() == kMaxAvoidedBuildings) {
+            avoidedBuildings.erase(avoidedBuildings.begin());
+        }
+        avoidedBuildings.push_back(building);
+    }
 
     bool operator==(const Visitor&) const = default;
 };

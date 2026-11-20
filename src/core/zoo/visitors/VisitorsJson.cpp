@@ -46,6 +46,11 @@ Json Encode(const Visitor& v) {
     for (const Vec2 point : v.route) {
         route.push_back(Point(point));
     }
+    Json avoided = Json::array();
+    for (const BuildingId id : v.avoidedBuildings) {
+        avoided.push_back(id.value);
+    }
+    const std::uint32_t lastAvoided = v.avoidedBuildings.empty() ? 0 : v.avoidedBuildings.back().value;
     return Json{{"id", v.id.value},
                 {"look", v.look},
                 {"child", v.child},
@@ -86,7 +91,9 @@ Json Encode(const Visitor& v) {
                 {"seen_enclosures", v.seenEnclosures},
                 {"unmet", v.unmet},
                 {"done", v.done},
-                {"skip_building", v.skipBuilding.value},
+                // Kept for old readers; new readers use the complete list below.
+                {"skip_building", lastAvoided},
+                {"avoided_buildings", std::move(avoided)},
                 {"litter", v.litter},
                 {"lost", v.lost},
                 {"ticket_paid", v.ticketPaid},
@@ -143,7 +150,20 @@ Visitor Decode(const Json& j) {
     v.seenEnclosures = j.at("seen_enclosures").get<std::vector<std::uint32_t>>();
     v.unmet = j.at("unmet").get<std::uint8_t>();
     v.done = j.at("done").get<std::uint8_t>();
-    v.skipBuilding = BuildingId{j.at("skip_building").get<std::uint32_t>()};
+    if (const auto avoided = j.find("avoided_buildings"); avoided != j.end()) {
+        if (!avoided->is_array() || avoided->size() > Visitor::kMaxAvoidedBuildings) {
+            throw std::runtime_error("too many avoided buildings");
+        }
+        for (const Json& value : *avoided) {
+            const BuildingId id{value.get<std::uint32_t>()};
+            if (!id || v.Avoids(id)) {
+                throw std::runtime_error("avoided building ids must be nonzero and unique");
+            }
+            v.Avoid(id);
+        }
+    } else {
+        v.Avoid(BuildingId{j.at("skip_building").get<std::uint32_t>()});
+    }
     v.litter = j.at("litter").get<std::uint8_t>();
     v.lost = j.at("lost").get<std::uint8_t>();
     v.ticketPaid = j.at("ticket_paid").get<bool>();

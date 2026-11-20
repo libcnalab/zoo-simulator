@@ -601,7 +601,7 @@ void Stepper::ActQueue(Group g) {
             lead.activityUntil =
                 now + Ticks(def.serviceSeconds * kServiceShare + 0.5f * static_cast<float>(g.Size() - 1));
         } else if (now - lead.queuedTick > Ticks(kQueuePatienceSeconds)) {
-            lead.skipBuilding = site.id;
+            lead.Avoid(site.id);
             Think(g, VisitorThought::TooCrowded);
             Cheer(g, -0.03f);
             Finish(g);
@@ -666,7 +666,7 @@ void Stepper::Purchase(Group g, const ServiceSite& site, Building& building) {
         Think(g, VisitorThought::TooExpensive);
         Cheer(g, -0.03f);
         lead.unmet |= drink ? kUnmetDrink : kUnmetFood;
-        lead.skipBuilding = site.id;
+        lead.Avoid(site.id);
         Finish(g);
         return;
     }
@@ -705,7 +705,7 @@ void Stepper::ActBuilding(Group g) {
             lead.activityUntil = now + Ticks(std::max(2.0f, def.serviceSeconds * kInsideShare) *
                                              (0.8f + 0.4f * rng.NextFloat()));
         } else if (now - lead.queuedTick > Ticks(kDoorPatienceSeconds)) {
-            lead.skipBuilding = site.id;
+            lead.Avoid(site.id);
             if (site.role == BuildingRole::Restroom) {
                 lead.unmet |= kUnmetRestroom;
             }

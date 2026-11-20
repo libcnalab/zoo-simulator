@@ -79,6 +79,12 @@ What the map offers (viewing places, stalls and where their queues stand,
 benches, bins, boards, how pleasant each tile is) is derived from the world in
 `VisitorSites.cpp` and rebuilt only when a revision changes; it is not saved.
 
+A group remembers up to 64 services whose queue, capacity or price it rejected
+during its visit and will not immediately choose any of them again. The complete
+list is saved in `avoided_buildings`; the legacy `skip_building` field retains
+the most recent one so an older game can still open a new save. Conversely, a
+save from before the list existed promotes its single value on load.
+
 Benches and picnic tables stand beside the paths: the last step from the paving
 to a seat is a straight line. A bench is offered only when one reachable path
 tile has a fence-, water- and boundary-safe straight step to every advertised
@@ -323,11 +329,18 @@ and the ground-litter count falls while the calendar is still on the same day
 (2026-11-20). The complete suite passes all 289 active cases, including the
 362.86-second animation test; 21 diagnostics remain disabled.
 
+J39 stops a dissatisfied group oscillating between services it has already
+rejected. The leader now keeps a bounded visit-long history rather than only the
+last building, every service choice consults it, and all three rejection paths
+(queue patience, price and indoor capacity) add to it. A compatible JSON field
+preserves the history while old saves and old readers retain their one-building
+fallback (2026-11-20). The complete suite passes all 290 active cases, including
+the 367.51-second animation test; 21 diagnostics remain disabled.
+
 ## Known limits
 
 - Peak presence is close to the day's arrivals: visits are long against the
   opening hours.
-- A group remembers only the last stall whose queue it gave up on.
 - Walkers go round each other, staff and the player; people who stand do not
   step aside for anybody, and a watcher who comes to a fence after somebody
   began to eat right behind the rail may stand within arm's length of them.

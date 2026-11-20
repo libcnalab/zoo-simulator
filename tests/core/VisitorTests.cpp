@@ -352,6 +352,37 @@ TEST(VisitorTests, ASaveKeepsEveryVisitorWhereItWas) {
     EXPECT_TRUE(zoo->SameState(*loaded));
 }
 
+TEST(VisitorTests, AGroupRemembersEveryRejectedServiceAcrossSaves) {
+    const std::unique_ptr<Zoo> zoo = StarterZoo();
+    AdvanceToHour(*zoo, 12.0f);
+    nlohmann::json saved = ToJson(zoo->Guests());
+    ASSERT_FALSE(saved.at("visitors").empty());
+    nlohmann::json& leader = saved["visitors"][0];
+    ASSERT_TRUE(leader.at("leader").get<bool>());
+    leader["skip_building"] = 23;  // compatibility field for old readers
+    leader["avoided_buildings"] = {11, 17, 23};
+
+    std::string error;
+    std::optional<Visitors> loaded = VisitorsFromJson(saved, &error);
+    ASSERT_TRUE(loaded.has_value()) << error;
+    const Visitor& restored = loaded->All().front();
+    EXPECT_TRUE(restored.Avoids(BuildingId{11}));
+    EXPECT_TRUE(restored.Avoids(BuildingId{17}));
+    EXPECT_TRUE(restored.Avoids(BuildingId{23}));
+    EXPECT_EQ(restored.avoidedBuildings.size(), 3U);
+    const nlohmann::json roundTrip = ToJson(*loaded);
+    EXPECT_EQ(roundTrip["visitors"][0]["avoided_buildings"], nlohmann::json({11, 17, 23}));
+    EXPECT_EQ(roundTrip["visitors"][0]["skip_building"], 23);
+
+    // A version-one save from before the list existed still restores its one
+    // remembered service and gains the list on its next save.
+    leader.erase("avoided_buildings");
+    leader["skip_building"] = 17;
+    loaded = VisitorsFromJson(saved, &error);
+    ASSERT_TRUE(loaded.has_value()) << error;
+    EXPECT_EQ(loaded->All().front().avoidedBuildings, std::vector<BuildingId>({BuildingId{17}}));
+}
+
 TEST(VisitorTests, SavesFromBeforeThereWereVisitorsStillOpen) {
     const std::unique_ptr<Zoo> zoo = StarterZoo();
     AdvanceToHour(*zoo, 12.0f);
@@ -387,6 +418,14 @@ TEST(VisitorTests, DamagedVisitorsAreRefusedNotLoaded) {
     refused("a missing field", [](nlohmann::json& j) { j["visitors"][0].erase("position"); });
     refused("a route index past the route",
             [](nlohmann::json& j) { j["visitors"][0]["route_index"] = 100000; });
+    refused("duplicate avoided buildings",
+            [](nlohmann::json& j) { j["visitors"][0]["avoided_buildings"] = {4, 4}; });
+    refused("a zero avoided building",
+            [](nlohmann::json& j) { j["visitors"][0]["avoided_buildings"] = {0}; });
+    refused("too many avoided buildings", [](nlohmann::json& j) {
+        j["visitors"][0]["avoided_buildings"] =
+            std::vector<std::uint32_t>(Visitor::kMaxAvoidedBuildings + 1, 1);
+    });
     refused("an id that would be given again",
             [](nlohmann::json& j) { j["next_id"] = j["visitors"][0]["id"]; });
     refused("a newer format", [](nlohmann::json& j) { j["version"] = 999; });

@@ -564,7 +564,7 @@ bool Stepper::TryService(Group g, VisitorGoal goal, float maxDistance, bool comp
     float bestCost = std::numeric_limits<float>::infinity();
     for (std::size_t s = 0; s < sites.services.size(); ++s) {
         const ServiceSite& site = sites.services[s];
-        if (site.role != role || site.id == lead.skipBuilding) {
+        if (site.role != role || lead.Avoids(site.id)) {
             continue;
         }
         const Building* building = env.objects.FindBuilding(site.id);
