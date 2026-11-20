@@ -218,6 +218,14 @@ whatever you take up (`docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `docs/V
   and uniform; only the gait phase differs with real loading time. All 272 active functional CTest
   cases pass, as did today's earlier separate `zoogen_animation` run (21 diagnostics disabled; J22,
   2026-11-20).
+- J23 gives every staff tool a soft contact shadow projected onto the ground from the sun direction
+  and the tool's height. A long rake or broom uses three joined patches; a barrow-and-rake pose adds
+  at most 210 simple transparent triangles and no draw call because it shares the existing crew
+  shade pass. The inspected morning frame is
+  `docs/evidence/staff-tool-shadows-j23-2026-11-20.jpg` (J23, 2026-11-20). The separate shadow-map
+  pass is deliberately not used for these small CPU-built tools. A targeted off-screen run finds
+  keeper 6 raking at tick 12,000 and all 272 active functional CTest cases pass (21 diagnostics
+  disabled; today's separate `zoogen_animation` run already passed).
 - The stopped G7c audio audit is recovered and finished. Calls now follow `Vocalize`, social,
   play and documented feeding cues rather than a timer; takes do not repeat immediately, spatial
   pan is capped at 0.60, birds fade with daylight, crowd level follows its people, and footsteps

@@ -117,6 +117,15 @@ in `evidence/repeatable-staff-cast-j22-2026-11-20.jpg`; the gait differs slightl
 were taken after 30 real-time render frames whose loading times differ. All 22 game-side tests and
 all 272 active functional CTest cases pass.
 
+J23 grounds the tools as well as their users. Buckets, barrows, rakes, brooms, hoses, clipboards,
+sacks, trowels and watering cans now lay small soft patches on the drawn ground, projected away from
+the sun by the height of the object. Long tools use three overlapping patches along the shaft rather
+than a disconnected round blob. They share the crew's existing transparent pass, so the change adds
+no draw call; the busiest barrow-and-rake pose adds 210 simple triangles. The inspected morning frame
+shows the wheel, tray and rake joined to the yard in
+`evidence/staff-tool-shadows-j23-2026-11-20.jpg`. The warning-clean game build, targeted off-screen
+run and all 272 active functional CTest cases pass (21 diagnostics remain disabled).
+
 ## Automatic care stays behind them
 
 The game's time is compressed (a game hour is thirty seconds of walking, `docs/VISITORS.md`
@@ -151,7 +160,7 @@ of its own for every job (a lean, a squat, the hands placed and the arms solved)
 and out so that a rake does not turn into a bucket in the hands. The tools are coloured
 triangles built every frame for those in view (bucket, wheelbarrow, rake, broom, hose with its
 jet, clipboard, sack, trowel, watering can) and drawn in two calls for the whole crew; they
-cast no shadow, a soft patch of shade lies under each member. At most the 8 nearest within
+cast soft projected contact shadows, as does each member. At most the 8 nearest within
 150 m are drawn.
 
 `--stand keeper:<id>` stands the camera on the nearest path a few metres from that member
@@ -182,4 +191,4 @@ the first tick on), not because of the keepers.
 
 - The dangerous species are never entered: no mucking out of the lions' or bears' habitats,
   because the model cannot shut the animals in their house.
-- Tools cast no shadow; nobody is drawn beyond 150 m or beyond the 8 nearest.
+- Nobody is drawn beyond 150 m or beyond the 8 nearest.

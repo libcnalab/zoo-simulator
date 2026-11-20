@@ -38,7 +38,8 @@ namespace zoogame {
 /// wheelbarrow, rake, broom, hose with its jet, clipboard, sack, trowel, watering can.
 /// The tools are a few hundred coloured triangles a keeper, built in place and lit on the
 /// processor every frame for those in view only, and drawn in two calls for the whole
-/// crew (the solid ones, then water and the patches of shade). They cast no shadow.
+/// crew (the solid ones, then water and the patches of shade). Small projected patches
+/// join each tool to the ground without another draw call.
 ///
 /// The crew is at most a dozen people; everybody in view within kFarthest is drawn as a
 /// full avatar (there are no pictures for the distance as the visitors have).

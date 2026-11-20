@@ -583,18 +583,17 @@ public:
         sheer_.emplace_back(Vector3::Transform(c, world_), Lit(base, kUp, alphaC));
     }
 
-    /// The patch of shade under something standing at `feet`: dark in the middle, gone at the
-    /// rim, lying where the light throws it (longer and fainter under a low sun).
-    void Shade(const Vector3& feet, float radius) {
-        const Vector3 at = Vector3::Transform(feet, world_) + Vector3(0.0f, 0.04f, 0.0f);
+    /// A soft patch already placed in world space: dark in the middle, gone at the rim,
+    /// longer and fainter under a low sun.
+    void SoftShade(const Vector3& at, float radius, float reachScale = 1.2f, float opacity = 1.0f) {
         const float flat = std::sqrt(toSun_.X * toSun_.X + toSun_.Z * toSun_.Z);
         const float bright = std::clamp((sun_.X + sun_.Y + sun_.Z) / 3.0f, 0.0f, 1.0f);
         const float low = toSun_.Y > 0.05f ? std::clamp(flat / toSun_.Y, 0.0f, 2.5f) : 2.5f;
         const Vector3 along =
             flat > 0.001f ? Vector3(-toSun_.X / flat, 0.0f, -toSun_.Z / flat) : Vector3(1.0f, 0.0f, 0.0f);
         const Vector3 across(-along.Z, 0.0f, along.X);
-        const float reach = radius * (1.0f + 1.2f * low);
-        const float strength = (0.2f + 0.3f * bright) / (1.0f + 0.25f * low);
+        const float reach = radius * (1.0f + reachScale * low);
+        const float strength = opacity * (0.2f + 0.3f * bright) / (1.0f + 0.25f * low);
         const Vector3 middle = at + along * (reach - radius);
         constexpr int kSides = 14;
         const auto rim = [&](int i, float share) {
@@ -615,6 +614,32 @@ public:
             sheer_.emplace_back(rim(i + 1, 1.0f), none);
             sheer_.emplace_back(rim(i + 1, 0.5f), half);
         }
+    }
+
+    /// The patch of shade under something standing at `feet` in avatar space.
+    void Shade(const Vector3& feet, float radius) {
+        SoftShade(Vector3::Transform(feet, world_) + Vector3(0.0f, 0.04f, 0.0f), radius);
+    }
+
+    /// A small object's centre in avatar space, projected onto the ground away from the sun.
+    void ToolShade(const Vector3& centre, float radius) {
+        Vector3 at = Vector3::Transform(centre, world_);
+        const float ground = Vector3::Transform(Vector3(0.0f, 0.04f, 0.0f), world_).Y;
+        const float height = std::max(at.Y - ground, 0.0f);
+        const float flat = std::sqrt(toSun_.X * toSun_.X + toSun_.Z * toSun_.Z);
+        if (flat > 0.001f) {
+            const float low = toSun_.Y > 0.05f ? std::clamp(flat / toSun_.Y, 0.0f, 2.5f) : 2.5f;
+            at = at + Vector3(-toSun_.X / flat, 0.0f, -toSun_.Z / flat) * (height * low);
+        }
+        at.Y = ground;
+        SoftShade(at, radius, 0.45f, 0.58f);
+    }
+
+    /// A long tool leaves a connected row of small shadows rather than one round spot.
+    void ToolShade(const Vector3& a, const Vector3& b, float radius) {
+        ToolShade(a, radius);
+        ToolShade(Lerp(a, b, 0.5f), radius);
+        ToolShade(b, radius);
     }
 
 private:
@@ -656,6 +681,7 @@ void Bucket(Painter& paint, const Vector3& rim, const Vector3& up, const Vector3
     const Vector3 bottom = rim - up * 0.26f;
     paint.Round(bottom, rim, 0.1f, 0.135f, kBucketBlue, 10, true, false);
     paint.Disc(rim - up * 0.035f, up, 0.127f, content, 10);
+    paint.ToolShade((bottom + rim) * 0.5f, 0.13f);
 }
 
 /// A bucket hanging from the hand by its handle.
@@ -684,6 +710,7 @@ void LongTool(Painter& paint, const Vector3& butt, const Vector3& along, bool br
         paint.Box(end, across * 0.24f, along * 0.012f, tines * 0.012f, kSteel);
         paint.Box(end + tines * 0.045f, across * 0.24f, along * 0.004f, tines * 0.045f, kSteel);
     }
+    paint.ToolShade(butt, end, broom ? 0.07f : 0.065f);
 }
 
 /// A wheelbarrow by the middle between its grips, looking along `ahead` (level, unit).
@@ -710,6 +737,8 @@ void Barrow(Painter& paint, const Vector3& grips, const Vector3& ahead, bool wit
     }
     if (withRake)
         LongTool(paint, tray - slope * 0.75f + lift * 0.24f + right * 0.1f, slope, false);
+    paint.ToolShade(tray, 0.34f);
+    paint.ToolShade(axle, 0.2f);
 }
 
 /// Feed or water falling from `from`: a few bits of it, each `fall` metres on its way.
@@ -865,6 +894,8 @@ void WorkTools(Painter& paint, const AvatarPose& pose, const Build& build, Staff
             paint.Rod(sag, ground, 0.015f, kHoseGreen);
             paint.Rod(ground, reel, 0.015f, kHoseGreen);
             paint.Round(reel, reel + kUp * 0.1f, 0.2f, 0.2f, kHoseGreen, 10, false, true);
+            paint.ToolShade(Lerp(ground, reel, 0.5f), 0.18f);
+            paint.ToolShade(reel + kUp * 0.05f, 0.21f);
             break;
         }
         case StaffActivity::Inspect: {
@@ -874,12 +905,14 @@ void WorkTools(Painter& paint, const AvatarPose& pose, const Build& build, Staff
             const Vector3 centre = left + Vector3(0.05f, 0.05f, -0.06f);
             paint.Box(centre, kRight * 0.11f, tall * 0.15f, face * 0.006f, kBoard);
             paint.Box(centre + face * 0.008f, kRight * 0.095f, tall * 0.13f, face * 0.002f, kPaper);
+            paint.ToolShade(centre, 0.13f);
             break;
         }
         case StaffActivity::EmptyBin: {
             const Vector3 neck = between - kUp * 0.03f;
             paint.Round(neck, neck - kUp * 0.2f, 0.05f, 0.2f, kSack, 8, false, false);
             paint.Round(neck - kUp * 0.2f, neck - kUp * 0.46f, 0.2f, 0.12f, kSack, 8, false, true);
+            paint.ToolShade(neck - kUp * 0.25f, 0.2f);
             break;
         }
         case StaffActivity::Tend: {
@@ -887,6 +920,7 @@ void WorkTools(Painter& paint, const AvatarPose& pose, const Build& build, Staff
             paint.Rod(right - along * 0.04f, right + along * 0.1f, 0.016f, kWood);
             paint.Box(right + along * 0.19f, kRight * 0.035f, along * 0.09f, Vector3::Cross(kRight, along) * 0.004f,
                       kSteel);
+            paint.ToolShade(right + along * 0.1f, 0.07f);
             break;
         }
         case StaffActivity::Water: {
@@ -902,6 +936,8 @@ void WorkTools(Painter& paint, const AvatarPose& pose, const Build& build, Staff
             paint.Rod(can + out * 0.1f - up * 0.08f, rose, 0.02f, kCanGrey);
             paint.Disc(rose, out, 0.045f, kCanGrey, 8);
             Falling(paint, rose + out * 0.02f, time, std::max(rose.Y - 0.05f, 0.1f), true);
+            paint.ToolShade(can, 0.15f);
+            paint.ToolShade(rose, 0.06f);
             break;
         }
         default:
@@ -926,11 +962,12 @@ void HeldTools(Painter& paint, const AvatarPose& pose, const Build& build, Held 
             const Vector3 rose = can + kForward * 0.44f + kUp * 0.1f;
             paint.Rod(can + kForward * 0.1f - kUp * 0.08f, rose, 0.02f, kCanGrey);
             paint.Disc(rose, kForward, 0.045f, kCanGrey, 8);
+            paint.ToolShade(can, 0.15f);
+            paint.ToolShade(rose, 0.06f);
             break;
         }
         case Held::Barrow:
             Barrow(paint, (left + right) * 0.5f, kForward, true);
-            paint.Shade(Vector3(0.0f, 0.0f, (left.Z + right.Z) * 0.5f - 0.8f), 0.42f);
             break;
         case Held::Rake:
         case Held::Broom: {
@@ -945,6 +982,7 @@ void HeldTools(Painter& paint, const AvatarPose& pose, const Build& build, Held 
             const Vector3 centre = left - kUp * 0.1f - kRight * 0.02f;
             paint.Box(centre, kForward * 0.11f, kUp * 0.15f, kRight * 0.006f, kBoard);
             paint.Box(centre - kRight * 0.008f, kForward * 0.095f, kUp * 0.13f, kRight * 0.002f, kPaper);
+            paint.ToolShade(centre, 0.13f);
             break;
         }
         case Held::Nothing:
