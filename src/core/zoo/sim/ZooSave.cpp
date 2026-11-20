@@ -28,14 +28,15 @@ struct ZooAccess {
     static const ZooConfig& Config(const Zoo& zoo) { return zoo.config_; }
     static const std::deque<Notification>& Notifications(const Zoo& zoo) { return zoo.notifications_; }
     static std::uint32_t NextNotification(const Zoo& zoo) { return zoo.nextNotification_; }
+    static std::int64_t LastScareNote(const Zoo& zoo) { return zoo.lastScareNote_; }
 
     static std::unique_ptr<Zoo> Assemble(const Catalog& catalog, const SpeciesCatalog& species,
                                          ZooConfig config, World world, ZooObjects objects, Finance finance,
                                          Animals animals, Visitors visitors, Staff staff,
                                          const WeatherState& weather, GameTime time, const Json& enclosures,
                                          std::deque<Notification> notifications,
-                                         std::uint32_t nextNotification, bool viewersSaved,
-                                         std::string* error) {
+                                         std::uint32_t nextNotification, std::int64_t lastScareNote,
+                                         bool viewersSaved, std::string* error) {
         WeatherSystem sky(config.seed, config.climate);
         // The sky as its last step left it: that was one tick of the calendar ago.
         GameTime before = time;
@@ -58,6 +59,7 @@ struct ZooAccess {
         }
         zoo->notifications_ = std::move(notifications);
         zoo->nextNotification_ = nextNotification;
+        zoo->lastScareNote_ = lastScareNote;
         return zoo;
     }
 };
@@ -310,7 +312,8 @@ Json ZooToJson(const Zoo& zoo) {
               {"visitors", ToJson(zoo.Guests())},
               {"staff", ToJson(zoo.Keepers())},
               {"notifications", std::move(notifications)},
-              {"next_notification", ZooAccess::NextNotification(zoo)}};
+              {"next_notification", ZooAccess::NextNotification(zoo)},
+              {"last_scare_note", ZooAccess::LastScareNote(zoo)}};
     return Json{{"format", kSaveFormat},
                 {"version", kSaveVersion},
                 {"summary", Json{{"name", zoo.Name()},
@@ -406,11 +409,16 @@ std::unique_ptr<Zoo> ZooFromJson(const Json& json, const Catalog& catalog, const
             notifications.push_back(NotificationFromJson(n));
         }
         const std::uint32_t nextNotification = body.at("next_notification").get<std::uint32_t>();
+        const std::int64_t lastScareNote =
+            body.value("last_scare_note", -static_cast<std::int64_t>(kTicksPerGameHour));
+        if (lastScareNote < -static_cast<std::int64_t>(kTicksPerGameHour) || lastScareNote > time.tick) {
+            throw std::runtime_error("last_scare_note is outside the saved clock");
+        }
 
         std::unique_ptr<Zoo> zoo = ZooAccess::Assemble(
             catalog, species, std::move(config), std::move(*world), std::move(*objects), std::move(*finance),
             std::move(*animals), std::move(*visitors), std::move(*staff), weather, time,
-            body.at("enclosures"), std::move(notifications), nextNotification,
+            body.at("enclosures"), std::move(notifications), nextNotification, lastScareNote,
             ViewersSaved(body.at("animals")), &part);
         if (!zoo) {
             throw std::runtime_error("enclosures: " + part);

@@ -351,6 +351,14 @@ whatever you take up (`docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `docs/V
   both ends of a route; all visitor/day/walk and short-hash tests pass without changing the Visitor
   Zoo hashes. The complete suite passes all 287 active cases, including the 364.69-second animation
   test, with 21 diagnostics disabled (J36, 2026-11-20).
+- J37 persists the one-game-hour loose-animal alarm cooldown. The optional top-level
+  `last_scare_note` keeps format-3 saves backward compatible, rejects impossible future or
+  pre-sentinel ticks, and is part of saved-state equality while remaining outside the
+  simulation hash like the notifications it controls. A regression scares one crowd, saves and
+  loads, then produces a real scare in a second crowd inside the cooldown and proves neither zoo
+  repeats the alarm. All 30 focused visitor/save/hash cases pass; the complete suite passes all
+  288 active cases, including the 365.89-second animation test, with 21 diagnostics disabled
+  (J37, 2026-11-20).
 - The stopped G7c audio audit is recovered and finished. Calls now follow `Vocalize`, social,
   play and documented feeding cues rather than a timer; takes do not repeat immediately, spatial
   pan is capped at 0.60, birds fade with daylight, crowd level follows its people, and footsteps

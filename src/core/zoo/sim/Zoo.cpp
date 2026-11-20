@@ -656,7 +656,7 @@ bool Zoo::SameState(const Zoo& other) const {
     return config_ == other.config_ && time_ == other.time_ && world_ == other.world_ &&
            objects_ == other.objects_ && enclosures_ == other.enclosures_ && finance_ == other.finance_ &&
            animals_ == other.animals_ && visitors_ == other.visitors_ && staff_ == other.staff_ &&
-           weather_.State() == other.weather_.State();
+           weather_.State() == other.weather_.State() && lastScareNote_ == other.lastScareNote_;
 }
 
 }  // namespace zoo

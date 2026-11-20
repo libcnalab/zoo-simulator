@@ -259,7 +259,8 @@ private:
     };
     std::vector<RosterEntry> roster_;
     /// When visitors last ran from a loose animal: one message per scare, not per group.
-    std::int64_t lastScareNote_ = -1000000;
+    /// Saved because it suppresses later messages for a game hour.
+    std::int64_t lastScareNote_ = -kTicksPerGameHour;
 };
 
 /// The pieces a Zoo is assembled from, either new or read from a save.

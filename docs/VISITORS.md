@@ -43,7 +43,8 @@ and is saved with the zoo. The game draws each visitor as a CNA avatar.
   `MeanEducation()`.
 - **Danger.** A dangerous animal loose within `kThreatM` makes a group run for the
   gate (`VisitorActivity::Fleeing`, event `VisitorScared`); the zoo raises one
-  alarm per game hour.
+  alarm per game hour. The tick of that alarm is saved, so loading during the
+  cooldown cannot repeat it for a second crowd.
 - **Litter.** Wrappers go into a bin when one is within `kBinSearchM`, on the
   ground otherwise. Litter in sight lowers happiness. With `autoCare` the bins
   are emptied and the litter swept at midnight; staff will take that over.
@@ -242,9 +243,12 @@ old people's stoop and step): for looking at one pose, never set in the game.
 `ZooSave` writes a `"visitors"` section (every visitor with its plan and route,
 the litter, the price, the rating, the generator's state) and a visitor count in
 the summary. A save without the section loads as a zoo with no visitors, so
-saves from before visitors existed still open (`kSaveVersion` stays 1). Damaged
-values are refused with a message that starts `visitors:`. After loading, a zoo
-continues tick for tick as the one that was saved
+saves from before visitors existed still open (the visitors subdocument remains
+version 1). Damaged values are refused with a message that starts `visitors:`.
+The top-level zoo state also saves `last_scare_note`, the tick which gates the
+once-per-hour loose-animal alarm. It is optional for old format-3 documents;
+present values before the initial sentinel or after the saved clock are refused.
+After loading, a zoo continues tick for tick as the one that was saved
 (`VisitorTests.ASaveKeepsEveryVisitorWhereItWas`).
 
 ## Determinism and cost
@@ -293,10 +297,10 @@ not inside each other and stay with their leader, watchers look at an animal
 and never away from the fence, people who stand keep apart, a sitter is on its
 seat facing out with its neighbours beside it, somebody standing on the path is
 walked around, children and old people are slower),
-`tests/core/VisitorTests.cpp` (sixteen cases: the gate's hours, the price and
+`tests/core/VisitorTests.cpp` (seventeen cases: the gate's hours, the price and
 the weather, an empty zoo, determinism, groups, places at the fence and on
-seats, saving and loading, a torn-up path, a loose lion, litter and bins, the
-price limits) and `tests/core/VisitorDayTests.cpp` (two whole days in the
+seats, saving and loading, a torn-up path, a loose lion and its saved alarm
+cooldown, litter and bins, the price limits) and `tests/core/VisitorDayTests.cpp` (two whole days in the
 starter zoo with statistics printed, and invariants: nobody off the paths except
 at a seat, nobody stuck, everybody gone by night). `VisitorSitesTests` directly
 puts a bench across a fence from its only reachable path and proves it is no
@@ -306,6 +310,11 @@ checks that arrival ends and departure begins at the verified access. The comple
 suite passes all 287 active cases, including the 364.69-second animation test; 21
 diagnostics remain disabled (J36, 2026-11-20).
 
+J37 adds the saved alarm-cooldown regression described above. All 30 focused
+visitor/save/hash cases pass, and the complete suite passes all 288 active cases,
+including the 365.89-second animation test; 21 diagnostics remain disabled
+(2026-11-20).
+
 ## Known limits
 
 - Peak presence is close to the day's arrivals: visits are long against the
@@ -313,7 +322,6 @@ diagnostics remain disabled (J36, 2026-11-20).
 - Nothing is swept before midnight, so litter complaints pile up during a busy
   day until cleaners exist.
 - A group remembers only the last stall whose queue it gave up on.
-- The once-an-hour limit on the "animal on the loose" alarm is not saved.
 - Walkers go round each other, staff and the player; people who stand do not
   step aside for anybody, and a watcher who comes to a fence after somebody
   began to eat right behind the rail may stand within arm's length of them.

@@ -247,7 +247,9 @@ TEST(VisitorTests, WatchersStandAtTheFenceAndTheAnimalsKnow) {
             arrived.push_back(v.id.value);
         }
     }
-    Advance(*zoo, static_cast<std::int64_t>(std::ceil(3.2f / (visitor_tuning::kTurnRadiansPerSecond * kTickSeconds))) + 1);
+    Advance(*zoo, static_cast<std::int64_t>(
+                      std::ceil(3.2f / (visitor_tuning::kTurnRadiansPerSecond * kTickSeconds))) +
+                      1);
     int checked = 0;
     for (const Visitor& v : zoo->Guests().All()) {
         if (v.activity != VisitorActivity::Watching) {
@@ -479,6 +481,88 @@ TEST(VisitorTests, ALooseLionClearsThePaths) {
         }
     }
     EXPECT_EQ(alarms, 1) << "one message for the scare, not one for each group";
+}
+
+TEST(VisitorTests, TheLooseAnimalAlarmCooldownSurvivesASave) {
+    const std::unique_ptr<Zoo> original = StarterZoo();
+    AdvanceToHour(*original, 13.0f);
+    ASSERT_GT(original->Guests().Count(), 60);
+    CountEvents(*original, EventType::VisitorScared);
+
+    const int lion = original->SpeciesList().IndexOf("lion");
+    ASSERT_GE(lion, 0);
+    AnimalId beast;
+    for (const Animal& animal : original->Fauna().All()) {
+        if (animal.species == lion) {
+            beast = animal.id;
+            break;
+        }
+    }
+    ASSERT_TRUE(beast);
+    const auto calmLeader = [](const Zoo& zoo) -> const Visitor* {
+        const auto found =
+            std::find_if(zoo.Guests().All().begin(), zoo.Guests().All().end(), [](const Visitor& visitor) {
+                return visitor.leader && visitor.ticketPaid && !visitor.inside &&
+                       visitor.goal != VisitorGoal::Flee;
+            });
+        return found == zoo.Guests().All().end() ? nullptr : &*found;
+    };
+    const auto alarmNotesFrom = [](const Zoo& zoo, std::uint32_t first) {
+        return std::count_if(zoo.Notifications().begin(), zoo.Notifications().end(),
+                             [first](const Notification& note) {
+                                 return note.id >= first && note.text.find("running") != std::string::npos;
+                             });
+    };
+
+    const Visitor* firstLeader = calmLeader(*original);
+    ASSERT_NE(firstLeader, nullptr);
+    const auto firstTile =
+        original->Routes().NearestPassable(World::TileAt(firstLeader->position), NavProfile::Visitor(), 4);
+    ASSERT_TRUE(firstTile.has_value());
+    ASSERT_EQ(original->MoveAnimal(beast, World::TileCenter(*firstTile)), ActionError::None);
+    const std::uint32_t firstNote = original->NextNotificationId();
+    for (int step = 0; step < 40 && alarmNotesFrom(*original, firstNote) == 0; ++step) {
+        original->Step();
+    }
+    ASSERT_EQ(alarmNotesFrom(*original, firstNote), 1);
+    EXPECT_GT(CountEvents(*original, EventType::VisitorScared), 0);
+
+    nlohmann::json saved = ZooToJson(*original);
+    ASSERT_EQ(saved["zoo"]["last_scare_note"].get<std::int64_t>(), original->Time().tick);
+    std::string error;
+    const std::unique_ptr<Zoo> loaded =
+        ZooFromJson(saved, testdata::GameCatalog(), testdata::GameSpecies(), &error);
+    ASSERT_NE(loaded, nullptr) << error;
+    EXPECT_TRUE(original->SameState(*loaded));
+
+    const Visitor* secondLeader = calmLeader(*original);
+    ASSERT_NE(secondLeader, nullptr);
+    const VisitorId secondLeaderId = secondLeader->id;
+    const auto secondTile =
+        original->Routes().NearestPassable(World::TileAt(secondLeader->position), NavProfile::Visitor(), 4);
+    ASSERT_TRUE(secondTile.has_value());
+    const Vec2 secondPlace = World::TileCenter(*secondTile);
+    ASSERT_EQ(original->MoveAnimal(beast, secondPlace), ActionError::None);
+    ASSERT_EQ(loaded->MoveAnimal(beast, secondPlace), ActionError::None);
+    ASSERT_NE(loaded->Guests().Find(secondLeaderId), nullptr);
+    const std::uint32_t nextNote = loaded->NextNotificationId();
+    for (int step = 0; step < 40; ++step) {
+        original->Step();
+        loaded->Step();
+    }
+    EXPECT_GT(CountEvents(*original, EventType::VisitorScared), 0);
+    EXPECT_GT(CountEvents(*loaded, EventType::VisitorScared), 0);
+    EXPECT_EQ(alarmNotesFrom(*original, nextNote), 0);
+    EXPECT_EQ(alarmNotesFrom(*loaded, nextNote), 0)
+        << "loading must not reset the one-game-hour alarm cooldown";
+    EXPECT_TRUE(original->SameState(*loaded));
+
+    nlohmann::json old = saved;
+    old["zoo"].erase("last_scare_note");
+    EXPECT_NE(ZooFromJson(old, testdata::GameCatalog(), testdata::GameSpecies(), &error), nullptr) << error;
+    saved["zoo"]["last_scare_note"] = original->Time().tick + 1;
+    EXPECT_EQ(ZooFromJson(saved, testdata::GameCatalog(), testdata::GameSpecies(), &error), nullptr);
+    EXPECT_NE(error.find("last_scare_note"), std::string::npos) << error;
 }
 
 TEST(VisitorTests, WrappersGoInTheBinsAndTheNightShiftEmptiesThem) {
