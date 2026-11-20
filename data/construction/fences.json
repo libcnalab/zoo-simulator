@@ -209,6 +209,21 @@
       "wearPerDay": 0.0015,
       "color": "#77766e",
       "postColor": "#4a3b2c"
+    },
+    {
+      "id": "dry_moat",
+      "name": "Dry moat and ha-ha",
+      "kind": 15,
+      "style": "moat",
+      "heightM": 2.4,
+      "strength": 5,
+      "visibility": 1.0,
+      "cost": 520,
+      "gateCost": 200,
+      "upkeepPerDay": 8,
+      "wearPerDay": 0.0012,
+      "color": "#8a7863",
+      "postColor": "#b6ad9d"
     }
   ]
 }

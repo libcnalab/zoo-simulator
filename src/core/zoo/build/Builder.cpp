@@ -814,7 +814,7 @@ BuildPlan Builder::DoTerraform(Brush brush, Vec2 center, float radius, float amo
                 }
             }
         }
-        enclosures_.Rebuild(world_, objects_, catalog_);
+        RefreshFigures();
     }
     return plan;
 }

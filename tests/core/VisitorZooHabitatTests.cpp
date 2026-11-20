@@ -180,15 +180,16 @@ int StripDepth(const Enclosure& home) {
     return 0;
 }
 
-/// What the hoofstock stands behind: cables for the heavy and the tall, a timber rail for the rest.
+/// What the hoofstock stands behind: moats for the heavy, cables for the tall, timber for the rest.
 std::string_view FrontBarrier(const Enclosure& home) {
     if (home.name == "Elephant Valley" || home.name == "Rhino Hollow") {
-        return "cable_barrier";
+        return "dry_moat";
     }
     return home.name == "Acacia Plain" || home.name == "Ostrich Rise" ? "tall_cable_fence" : "paddock_rail";
 }
 
 void ExpectFronts(const Zoo& zoo) {
+    int gradedMoatViews = 0;
     for (const Enclosure& home : zoo.Habitats().All()) {
         SCOPED_TRACE(home.name);
         const int depth = StripDepth(home);
@@ -214,10 +215,12 @@ void ExpectFronts(const Zoo& zoo) {
             EXPECT_EQ(rail->id, "stand_off_rail");
             TileCoord next = spot.tile + Step(spot.side);
             int crossed = 0;
+            bool graded = false;
             while (zoo.Map().InBounds(next) && zoo.Map().At(next).standOff) {
                 EXPECT_EQ(zoo.Habitats().RegionAt(next), Region::StandOff);
                 EXPECT_FALSE(zoo.Habitats().At(next));
                 EXPECT_FALSE(zoo.Routes().Passable(next, NavProfile::Visitor()));
+                graded = graded || zoo.Map().TileRelief(next) > 1.5f;
                 ++crossed;
                 next = next + Step(spot.side);
             }
@@ -228,6 +231,9 @@ void ExpectFronts(const Zoo& zoo) {
             ASSERT_NE(barrier, nullptr);
             EXPECT_EQ(barrier->id, FrontBarrier(home));
             EXPECT_FLOAT_EQ(spot.visibility, rail->visibility * barrier->visibility);
+            if (barrier->id == "dry_moat" && graded) {
+                ++gradedMoatViews;
+            }
         }
         if (home.name == "Lion Rock" || home.name == "Tiger Forest" || home.name == "Bear Falls" ||
             home.name == "Polar Sound" || home.name == "Wolf Wood") {
@@ -249,6 +255,7 @@ void ExpectFronts(const Zoo& zoo) {
             }
         }
     }
+    EXPECT_GT(gradedMoatViews, 20);
     int marked = 0;
     int planted = 0;
     for (int z = 0; z < zoo.Map().Depth(); ++z) {

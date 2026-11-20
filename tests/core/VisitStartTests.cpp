@@ -64,16 +64,17 @@ TEST(VisitStart, MatchesGameSequence) {
 // off blocking props; 2026-11-19: routine places must have two body-wide exits around props;
 // land plants keep off the sloping ground dug by pools; trees keep back from habitat fronts; public
 // walks are at least two tiles wide wherever the plan has open lawn to widen them onto;
-// 2026-11-20: reeds root on the lagoon's dry margin and tall grass grows in open habitats).
+// 2026-11-20: reeds root on the lagoon's dry margin and tall grass grows in open habitats;
+// Elephant Valley and Rhino Hollow gain graded dry moats along their public fronts).
 void CheckFillHashes(std::int64_t ticks) {
     constexpr std::array<std::array<std::uint64_t, 2>, 3> shortHashes{
-        {{16908303875916853244ULL, 14731267202063341801ULL},
-         {14092795439250136264ULL, 4161065727649398171ULL},
-         {6888267011948307956ULL, 7769725591801234485ULL}}};
+        {{7560156996047162741ULL, 8343308058394152995ULL},
+         {7108501925148723507ULL, 15152907383881355740ULL},
+         {14252937736451231278ULL, 6785947190206891201ULL}}};
     constexpr std::array<std::array<std::uint64_t, 2>, 3> fullHashes{
-        {{10119584832427267003ULL, 12255278480547151749ULL},
-         {13326900462605982850ULL, 14793419543629801821ULL},
-         {6809618643121934778ULL, 9701693660048525382ULL}}};
+        {{3917046566163336429ULL, 5084521177905920983ULL},
+         {15326845548793726107ULL, 16557771993383861837ULL},
+         {9249874662538397109ULL, 2577845765601036608ULL}}};
     for (const std::uint64_t seed : {1ULL, 2ULL, 3ULL}) {
         Zoo zoo(testdata::GameCatalog(), testdata::GameSpecies(), VisitorZooConfig(seed));
         BuildVisitorZoo(zoo);

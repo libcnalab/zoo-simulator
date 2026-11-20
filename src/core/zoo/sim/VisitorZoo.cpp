@@ -288,7 +288,7 @@ HabitatStyle Style(std::string_view species) {
     if (species == "elephant") {
         return {Terrain::Savanna,
                 "cable_barrier",
-                "cable_barrier",
+                "dry_moat",
                 "large_shelter",
                 "hay_rack",
                 "savanna_shrub",
@@ -300,7 +300,7 @@ HabitatStyle Style(std::string_view species) {
     if (species == "rhino") {
         return {Terrain::Grass,
                 "cable_barrier",
-                "cable_barrier",
+                "dry_moat",
                 "large_shelter",
                 "hay_rack",
                 "savanna_shrub",
@@ -1208,6 +1208,32 @@ void StandOffWithService(Zoo& zoo, Script& script, const Site& site, int depth) 
     }
 }
 
+/// Replace only the habitat edges that face the reserved strip. The rear service apron keeps
+/// its cable fence and gate, while the public circuit sees an uninterrupted dry moat.
+void DryMoatFront(Zoo& zoo, Script& script, const Site& site) {
+    std::vector<EdgeRef> edges;
+    std::vector<TileCoord> ditch;
+    for (const TileCoord tile : PublicOutline(script, *site.plan)) {
+        if (zoo.Map().At(tile).standOff) {
+            ditch.push_back(tile);
+        }
+    }
+    for (const TileCoord tile : site.tiles) {
+        for (const Dir side : {Dir::North, Dir::East, Dir::South, Dir::West}) {
+            const TileCoord next = tile + Step(side);
+            if (zoo.Map().InBounds(next) && zoo.Map().At(next).standOff) {
+                edges.push_back(EdgeOf(tile, side));
+            }
+        }
+    }
+    Builder builder = zoo.FreeBuilder();
+    const auto painted = builder.PaintTerrain(ditch, Terrain::Rock);
+    const auto fenced = builder.PlaceFence(edges, script.FenceKind("dry_moat"));
+    if (!painted.Ok() || !fenced.Ok() || fenced.count == 0 || fenced.skipped > 0) {
+        script.Problem(std::string(site.plan->name) + ": incomplete dry moat");
+    }
+}
+
 void Habitat(Zoo& zoo, Script& script, const HabitatPlan& plan, const VisitorZooOptions& options) {
     Site site;
     site.plan = &plan;
@@ -1238,6 +1264,9 @@ void Habitat(Zoo& zoo, Script& script, const HabitatPlan& plan, const VisitorZoo
         // Visitors also use the back circuit: the same clearance protects that walk.
         // Keep every habitat tile and all its provisions, moving the public edge out.
         StandOffWithService(zoo, script, site, stripDepth);
+        if (style.front == "dry_moat") {
+            DryMoatFront(zoo, script, site);
+        }
     } else {
         script.ViewingFront(site.tiles, style.front, {Dir::South, plan.east < 0 ? Dir::East : Dir::West});
     }
@@ -1313,6 +1342,44 @@ void StripPlants(Zoo& zoo, Script& script) {
             } else {
                 script.Prop(style.bush, point, script.Random().Range(0.0f, kTwoPi), 0.7f);
             }
+        }
+    }
+}
+
+/// Cut the V-shaped earthwork after its sparse scrub and rocks have been placed on level ground.
+/// Only vertices surrounded by four reserved tiles move: habitat and public-path lips therefore
+/// retain their exact heights, areas and walking grades. Two strip tiles make the ditch 4 m wide.
+void GradeDryMoats(Zoo& zoo, Script& script) {
+    for (const HabitatPlan& plan : kHabitats) {
+        if (plan.species != "elephant" && plan.species != "rhino") {
+            continue;
+        }
+        std::set<std::pair<int, int>> ditch;
+        for (const TileCoord tile : PublicOutline(script, plan)) {
+            if (zoo.Map().At(tile).standOff) {
+                ditch.emplace(tile.z, tile.x);
+            }
+        }
+        int lowered = 0;
+        for (int vz = 1; vz < zoo.Map().Depth(); ++vz) {
+            for (int vx = 1; vx < zoo.Map().Width(); ++vx) {
+                bool surrounded = true;
+                for (int dz = -1; dz <= 0; ++dz) {
+                    for (int dx = -1; dx <= 0; ++dx) {
+                        surrounded = surrounded && ditch.contains({vz + dz, vx + dx});
+                    }
+                }
+                if (surrounded) {
+                    const Vec2 vertex{static_cast<float>(vx) * kTileSize,
+                                      static_cast<float>(vz) * kTileSize};
+                    if (script.Terraform(Builder::Brush::Raise, vertex, 1.0f, -1.8f)) {
+                        ++lowered;
+                    }
+                }
+            }
+        }
+        if (lowered == 0) {
+            script.Problem(std::string(plan.name) + ": dry moat has no lowered centre line");
         }
     }
 }
@@ -1883,6 +1950,7 @@ ScenarioReport BuildVisitorZoo(Zoo& zoo, const VisitorZooOptions& options) {
     // What follows stands outside the habitats and asks about none of their figures.
     script.Hold();
     StripPlants(zoo, script);
+    GradeDryMoats(zoo, script);
     Facilities(zoo, script);
     GroundDetail(zoo, script);
     Parkland(zoo, script);

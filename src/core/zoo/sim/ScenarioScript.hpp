@@ -28,6 +28,15 @@ public:
     void Release() { build_.Release(); }
     Rng& Random() { return rng_; }
 
+    bool Terraform(Builder::Brush brush, Vec2 center, float radius, float amount) {
+        const BuildPlan plan = build_.Terraform(brush, center, radius, amount);
+        if (!plan.Ok()) {
+            Problem("terraform: " + std::string(Describe(plan.error)));
+            return false;
+        }
+        return true;
+    }
+
     TileCoord Tile(int east, int north) const { return {origin_.x + east, origin_.z - north}; }
     /// Centre of a tile, plus an offset in metres (east, north).
     Vec2 Point(int east, int north, float dEast = 0.0f, float dNorth = 0.0f) const {

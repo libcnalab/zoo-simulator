@@ -26,9 +26,10 @@ enum class FenceStyle : std::uint8_t {
     Wall,   ///< solid wall
     Cable,  ///< heavy posts with steel cables
     Hedge,  ///< clipped hedge (decoration)
+    Moat,   ///< a retaining wall at the animal lip of a dry moat or ha-ha
     Count
 };
-std::string_view ToString(FenceStyle v);  // "rail", "mesh", "bars", "glass", "wall", "cable", "hedge"
+std::string_view ToString(FenceStyle v);
 
 struct FenceDef {
     std::string id;    ///< "wire_mesh"

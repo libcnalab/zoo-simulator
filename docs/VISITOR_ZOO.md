@@ -28,7 +28,7 @@ combine elliptical lobes. Every habitat has a keeper gate, shelter, stocked feed
 enrichment, a public information board and benches. Planting concentrates behind the open
 viewing ground, with woods between habitats and around the perimeter.
 
-The seed-1 zoo contains **88 animals in 14 habitats, 41 buildings and 2,579 props** when
+The seed-1 zoo contains **88 animals in 14 habitats, 41 buildings and 2,689 props** when
 every species is included (74 animals and 2,817 props before the plan's rework of
 2026-11-14, below). The farthest public path tile is **75.1 m** walking distance
 from a visitor facility. `VisitorZooTests.DISABLED_PrintPlan` prints these measurements. Families
@@ -48,8 +48,8 @@ the public walks and rails move outward, preserving all space and habitat provis
 | Bear Falls | Brown bear 2 | 2,236 | 1,118 | High glass S/E | Heavy welded mesh | 0 |
 | Polar Sound | Polar bear 2 | 2,812 | 1,406 | High glass S/E | Heavy welded mesh; cooled den | 0 |
 | Penguin Cove | Penguin 13 (3) | 1,044 | 80 | Glass S/E | Wire mesh | 0 |
-| Elephant Valley | Elephant 5 (2) | 5,436 | 1,087 | Public rail, planting, cable S/E | Cable | 2 tiles / 4 m |
-| Rhino Hollow | Rhino 4 (1) | 1,692 | 423 | Public rail, planting, cable S/E | Cable | 2 tiles / 4 m |
+| Elephant Valley | Elephant 5 (2) | 5,436 | 1,087 | Public rail, scrubbed dry moat S/E | Cable service side | 2 tiles / 4 m |
+| Rhino Hollow | Rhino 4 (1) | 1,692 | 423 | Public rail, scrubbed dry moat S/E | Cable service side | 2 tiles / 4 m |
 | Red Dune | Camel 5 (2) | 1,616 | 323 | Public rail, planting, timber paddock fence S/E | Timber paddock fence | 1 tile / 2 m |
 | Kangaroo Grove | Kangaroo 7 (3) | 1,136 | 162 | Public rail, planting, timber paddock fence S/E | Timber paddock fence | 1 tile / 2 m |
 
@@ -209,9 +209,24 @@ Older daughters are female, so that no second adult male grows up into a fight.
 **Barriers for hoofstock.** Nothing hoofed stands behind chain-link any more. Two catalog rows
 were added (`data/construction/fences.json`): `paddock_rail` (kind 13, timber, 2.4 m,
 strength 3, visibility 0.9) for camels and kangaroos, `tall_cable_fence` (kind 14, cables,
-3.0 m, strength 3, visibility 0.92) for giraffes, zebras and ostriches; elephants and rhinos
-keep `cable_barrier`. Each is a barrier the species' own figures accept (containment 1.0).
-The catalog has no dry moat or ha-ha.
+3.0 m, strength 3, visibility 0.92) for giraffes, zebras and ostriches. The J18
+`dry_moat` (kind 15, 2.4 m effective height, strength 5, visibility 1.0) now fronts elephants
+and rhinos. Each is a barrier the species' own figures accept (containment 1.0).
+
+**Dry moats and ha-has (J18, 2026-11-20).** Elephant Valley and Rhino Hollow use their existing
+two-tile reservation as a four-metre-wide dry ditch. Only a vertex surrounded by four reserved
+tiles is lowered, by 1.8 m, giving a V profile without moving either the habitat lip or the public
+path lip. Rocky ground, sparse low scrub and a continuous drain sit below a 2.4 m animal-side
+retaining wall; its 0.29 m coping marks the edge without interrupting the view. Edges beside the
+rear service apron remain `cable_barrier`, including the keeper gate. The catalog exposes the moat
+as a buildable style; a player grades its approach with the ordinary terrain tool.
+
+Both habitat areas, welfare figures and 999 planted stand-off tiles are unchanged. The steepest
+public path tile remains 2.8 % in seed 1 and 2.7 % in seed 2. Short and 6,000-step state hashes are
+repeatable for seeds 1–3, and save/load, keeper access, containment and visitor visibility pass in
+both plan seeds. Real seed-1/tick-3000 Elephant Valley and Rhino Hollow views are inspected in
+`evidence/dry-moats-j18-2026-11-20.jpg`.
+All 270 active CTest cases pass; 21 measurement and diagnostic cases remain intentionally disabled.
 
 **Meerkat Lookout** is a sand mound (a 0.7 m rise, the sentries' place) with a two-tile drinking
 dish at the builder's minimum depth instead of a pool, one outcrop, and the scrub along the mesh.

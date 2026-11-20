@@ -18,10 +18,15 @@ Costs are purchase prices in dollars. Fence prices are per two metre edge; path 
 | high_glass_wall | High glass wall | 4.5 m | 4 | 1.00 | $940 |
 | heavy_mesh | Heavy welded mesh | 4.5 m | 4 | 0.80 | $230 |
 | stand_off_rail | Stand-off rail | 1.1 m | 1 | 1.00 | $50 |
+| paddock_rail | Timber paddock fence | 2.4 m | 3 | 0.90 | $120 |
+| tall_cable_fence | Tall cable fence | 3.0 m | 3 | 0.92 | $240 |
+| dry_moat | Dry moat and ha-ha | 2.4 m | 5 | 1.00 | $520 |
 
-Fence kinds 1–10 are unchanged; `heavy_mesh` is 11 and `stand_off_rail` is 12.
+Fence kinds 1–10 are unchanged; `heavy_mesh` is 11, `stand_off_rail` is 12,
+`paddock_rail` is 13, `tall_cable_fence` is 14 and `dry_moat` is 15.
 The existing wooden rail remains unchanged (visibility 0.75). The new public rail
-has visibility 1.0 so it does not unnecessarily obscure an already screened view.
+and the hidden retaining wall of a graded dry moat have visibility 1.0 so they do not
+unnecessarily obscure an already screened view.
 
 ## Paths and terrain
 

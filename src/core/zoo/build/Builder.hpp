@@ -126,10 +126,10 @@ public:
     Builder(World& world, ZooObjects& objects, Enclosures& enclosures, const Catalog& catalog,
             Finance* finance = nullptr);
 
-    /// For placing many props or painting much ground in a row (a scenario's planting):
-    /// between Hold() and Release() those two operations leave the enclosures' figures
+    /// For placing many props, painting ground or terraforming in a row (a scenario's planting):
+    /// between Hold() and Release() those operations leave the enclosures' figures
     /// (Enclosure::stats) as they were, and Release() brings them up to date in one
-    /// rebuild instead of one per prop. Regions never go stale: props and ground cover
+    /// rebuild instead of one per operation. Regions never go stale: props and ground cover
     /// do not change them, and every other operation still rebuilds at once.
     void Hold() { held_ = true; }
     void Release();

@@ -320,7 +320,7 @@ const std::map<std::string, std::vector<Named>> kFamilies{
 // What stands between the hoofstock and the visitor, by habitat; nothing of it is chain-link.
 const std::map<std::string, std::string> kBarriers{
     {"Acacia Plain", "tall_cable_fence"}, {"Ostrich Rise", "tall_cable_fence"},
-    {"Elephant Valley", "cable_barrier"}, {"Rhino Hollow", "cable_barrier"},
+    {"Elephant Valley", "dry_moat"},      {"Rhino Hollow", "dry_moat"},
     {"Red Dune", "paddock_rail"},         {"Kangaroo Grove", "paddock_rail"},
 };
 
@@ -695,7 +695,7 @@ TEST_P(VisitorZooPlan, BenchesStandInShade) {
     EXPECT_EQ(sunny, (std::vector<std::string>{"Ostrich Rise", "Elephant Valley", "Kangaroo Grove"}));
 }
 
-TEST_P(VisitorZooPlan, HoofstockStandsBehindCablesAndRails) {
+TEST_P(VisitorZooPlan, HoofstockStandsBehindPurposeBuiltBarriers) {
     for (const Enclosure& home : zoo_.Habitats().All()) {
         SCOPED_TRACE(home.name);
         for (const Animal& animal : zoo_.Fauna().All()) {
@@ -708,6 +708,8 @@ TEST_P(VisitorZooPlan, HoofstockStandsBehindCablesAndRails) {
             continue;
         }
         int edges = 0;
+        int frontEdges = 0;
+        int serviceEdges = 0;
         for (const TileCoord tile : TilesInRect(home.min, home.max)) {
             if (zoo_.Habitats().At(tile) != home.id) {
                 continue;
@@ -719,12 +721,23 @@ TEST_P(VisitorZooPlan, HoofstockStandsBehindCablesAndRails) {
                 }
                 const FenceDef* def = zoo_.Definitions().FenceByKind(fence.kind);
                 ASSERT_NE(def, nullptr);
-                EXPECT_EQ(def->id, kBarriers.at(home.name));
+                if (kBarriers.at(home.name) == "dry_moat") {
+                    EXPECT_TRUE(def->id == "dry_moat" || def->id == "cable_barrier");
+                    frontEdges += def->id == "dry_moat" ? 1 : 0;
+                    serviceEdges += def->id == "cable_barrier" ? 1 : 0;
+                } else {
+                    EXPECT_EQ(def->id, kBarriers.at(home.name));
+                    ++frontEdges;
+                }
                 EXPECT_NE(def->style, FenceStyle::Mesh);
                 ++edges;
             }
         }
         EXPECT_GT(edges, 40);
+        EXPECT_GT(frontEdges, 20);
+        if (kBarriers.at(home.name) == "dry_moat") {
+            EXPECT_GT(serviceEdges, 0);
+        }
     }
 }
 

@@ -15,8 +15,8 @@
 namespace zoo {
 namespace {
 using Json = nlohmann::json;
-constexpr std::array<std::string_view, 7> kFenceStyles = {"rail", "mesh",  "bars", "glass",
-                                                          "wall", "cable", "hedge"};
+constexpr std::array<std::string_view, 8> kFenceStyles = {"rail", "mesh",  "bars",  "glass",
+                                                          "wall", "cable", "hedge", "moat"};
 constexpr std::array<std::string_view, 9> kBuildingRoles = {
     "animal_shelter", "food_stall", "drink_stall",      "restroom",       "gift_shop",
     "staff_room",     "vet_clinic", "education_center", "research_center"};

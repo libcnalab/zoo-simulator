@@ -245,7 +245,7 @@ void SceneryRenderer::BuildFences(const zoo::World& world, Cell& cell) {
                 }
                 const Vector3 a = VertexAt(world, x, z);
                 const Vector3 b = horizontal ? VertexAt(world, x + 1, z) : VertexAt(world, x, z + 1);
-                if (look.heavy) {
+                if (look.heavy || look.style == zoo::FenceStyle::Moat) {
                     look.inward = AnimalSide(world, edge);
                 }
                 BuildFencePanel(model, look, a, b, fence.gate,

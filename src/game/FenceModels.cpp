@@ -231,6 +231,34 @@ void RockworkPanel(ModelBuilder& model, const FenceLook& look, const Vector3& a,
     (void)seed;
 }
 
+/// The hidden animal-side wall of a dry moat. The scenario lowers the middle vertices of its
+/// four-metre reserved strip, exposing this wall above the stony V-shaped ditch. Player-built
+/// examples can be paired with the ordinary terrain tool to make the same cross-section.
+void DryMoatPanel(ModelBuilder& model, const FenceLook& look, const Vector3& a, const Vector3& b,
+                  bool gate) {
+    if (gate) {
+        // Leave the keeper's leaf a real opening in the retaining wall. The terrain tool supplies
+        // the approach ramp where a player adds one; the Visitor Zoo keeps its gates on cables.
+        DryMoatPanel(model, look, a, Along(a, b, 0.08f, 0.0f), false);
+        DryMoatPanel(model, look, Along(a, b, 0.92f, 0.0f), b, false);
+        return;
+    }
+    const Vector3 across = Across(a, b);
+    const float side = look.inward == 0 ? 1.0f : static_cast<float>(look.inward);
+    const Vector3 animal = across * side;
+    const Vector3 faceA = a + animal * 0.08f;
+    const Vector3 faceB = b + animal * 0.08f;
+    MeshWriter& wall = model.Use(look.color, Pattern::Rock);
+    Slab(wall, faceA, faceB, -look.height, 0.16f, 0.22f);
+    // A pale coping makes the animal lip legible without putting a sightline-height fence on it.
+    Slab(model.Use(look.postColor, Pattern::Concrete), faceA, faceB, 0.16f, 0.29f, 0.34f);
+    // A continuous drain at the foot reads through the sparse scrub in the ditch.
+    const Vector3 publicSide = animal * -0.18f;
+    model.Use(kDarkSteel, Pattern::Metal)
+        .Beam(faceA + publicSide - Up(look.height - 0.12f),
+              faceB + publicSide - Up(look.height - 0.12f), 0.12f, 0.12f);
+}
+
 }  // namespace
 
 bool LookOf(const zoo::Catalog& catalog, zoo::Fence fence, FenceLook& out) {
@@ -335,6 +363,7 @@ void BuildFencePost(ModelBuilder& model, const FenceLook& look, const Vector3& b
             break;
         }
         case zoo::FenceStyle::Hedge:
+        case zoo::FenceStyle::Moat:
         case zoo::FenceStyle::Count:
             break;
     }
@@ -467,6 +496,10 @@ void BuildFencePanel(ModelBuilder& model, const FenceLook& look, const Vector3& 
                 break;
             }
             BuildHedge(model, a, b, h, look.color, seed);
+            break;
+        }
+        case zoo::FenceStyle::Moat: {
+            DryMoatPanel(model, look, a, b, gate);
             break;
         }
         case zoo::FenceStyle::Count:

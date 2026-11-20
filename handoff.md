@@ -78,7 +78,8 @@ whatever you take up (`docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `docs/V
   75.1 m), shade-tree islands keep a two-tile ring, dead raster teeth are removed, and thin runs
   widen only across unobstructed public lawn. Both seeds report the same three coordinates; the
   top-down plan and a food-court view were inspected. The changed deterministic routine history
-  improves animal stalls to 0.88%, under the unchanged 1.3% limit; seed 1 now has 2,579 props
+  improves animal stalls to 0.88%, under the unchanged 1.3% limit; seed 1 had 2,579 props before
+  the later reed and tall-grass planting brought the current total to 2,689
   (`docs/VISITOR_ZOO.md`, 2026-11-19).
 - Reeds and tall grass now use their previously dormant procedural models and catalog entries.
   Flamingo Lagoon has twelve non-blocking reed stands rooted in its dry lowered margin, outside
@@ -170,6 +171,16 @@ whatever you take up (`docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `docs/V
   runtime check are inspected in `docs/evidence/lion-mane-j17-2026-11-20.jpg` (J17, 2026-11-20).
   All 131 animal-pipeline tests and all 270 active CTest cases pass (21 diagnostics disabled).
   Cards remain detectable at extreme close range and the head is still a widened lioness sculpt.
+- J18 adds the catalog's first `dry_moat` / ha-ha barrier (saved kind 15): an effective 2.4 m,
+  strength-5 retaining wall with an unobtrusive 0.29 m coping and full viewing visibility.
+  Elephant Valley and Rhino Hollow use their existing two-tile stand-off as a four-metre rocky
+  V-ditch, lowered 1.8 m only along vertices surrounded by four reserved tiles. Habitat and public
+  path lips therefore keep their exact grades, areas and welfare. Their service aprons and keeper
+  gates retain cable barriers. Both plan seeds keep all 999 strip plants, containment, visibility,
+  save/load and keeper access; the steepest path remains 2.8/2.7 %. Seed 1 after 3,000 ticks is
+  inspected at both habitats in `docs/evidence/dry-moats-j18-2026-11-20.jpg` (J18, 2026-11-20).
+  Short and 6,000-step state hashes repeat for seeds 1–3. All 270 active CTest cases pass
+  (21 diagnostics disabled).
 - The stopped G7c audio audit is recovered and finished. Calls now follow `Vocalize`, social,
   play and documented feeding cues rather than a timer; takes do not repeat immediately, spatial
   pan is capped at 0.60, birds fade with daylight, crowd level follows its people, and footsteps
