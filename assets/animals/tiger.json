@@ -103,11 +103,22 @@
       "loop": false,
       "name": "vocalize",
       "speed": 0.0
+    },
+    {
+      "duration": 8.0,
+      "events": [],
+      "frames": 241,
+      "loop": true,
+      "name": "bathe",
+      "speed": 0.0
     }
   ],
   "generator": "tools/animals (zoogen)",
   "license": "CC-BY-4.0",
   "meta": {
+    "activity_clips": {
+      "bathe": "bathe"
+    },
     "asset_license": "CC-BY-4.0",
     "common_name": "Bengal tiger",
     "material_source": "adapted authored base, normal and occlusion",

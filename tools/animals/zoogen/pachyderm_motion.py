@@ -270,7 +270,8 @@ def clips(solver, data):
         # handled separately so the animal actually folds its legs beneath the body.
         rest = quad.rest_clip(solver, params)
         result += [Clip('rest', rest.duration, partial(rhino_rest, solver, data, rest)),
-                   Clip('sleep', 12, partial(lateral_sleep, solver, data))]
+                   Clip('sleep', 12, partial(lateral_sleep, solver, data)),
+                   Clip('bathe', 10, partial(rhino_bathe, solver, data, rest))]
     result.append(Clip('vocalize', 3, partial(call_pose, solver, data), loop=False, events=[(.3, 'call')]))
     if elephant:
         # Dust is gathered a little above the ground, where the curled tip clears it.
@@ -283,3 +284,14 @@ def clips(solver, data):
 
 def rhino_rest(solver, data, clip, phase):
     return grounded(solver, clip.pose(phase), data)
+
+
+def rhino_bathe(solver, data, rest, phase):
+    """A shallow wallow: the recumbent rhinoceros rocks its barrel and sweeps its muzzle."""
+    angle = math.tau * phase
+    pose = activity.copy_pose(rest.pose(phase))
+    roll = 7 * math.sin(angle)
+    pose.r('hips', rx=roll).r('chest', rx=-.55 * roll)
+    pose.r('neck1', rx=3 * math.sin(2 * angle)).r('head', rx=5 * math.sin(2 * angle + .6))
+    pose.r('tail1', rx=8 * math.sin(3 * angle))
+    return grounded(solver, pose, data)

@@ -440,11 +440,10 @@ from the Release build, visitor zoo, seed 1, after the visit's fill.
 - **The watcher test below passes now**: the fix was on the visitors' side and went in before
   this integration. The paragraph is kept as the record of what Codex saw.
 - **What the game shows.** `AnimalRenderer` takes the clip of a still animal from a table per
-  activity (`Kind::shown`): `dig` and `filter_feed` play `eat`, `bathe` plays `rest`, the rest
-  stand in `idle` unless the model's manifest says otherwise (`meta.activity_clips`: flamingo
-  `huddle` -> `rest`, its one-leg pose; ostrich `dust_bathe` -> `rest`; camel `ruminate` ->
-  `rest`). No model has a clip of its own for preening, dust bathing, digging or sentry duty
-  yet: a preening bird stands. The information panel names every new activity.
+  activity (`Kind::shown`) and lets each model's manifest override the closest standard pose.
+  Dedicated clips now cover sentry duty, digging, preening, dust bathing, filter feeding,
+  rumination and shallow wallowing (`docs/ANIMALS.md`); the information panel names every
+  activity. The remaining closest-pose cases are huddling, paired social contact and zebra watch.
 - **Flamingos are waders.** The routine sent them into the lagoon for every activity but
   sleep, and the lagoon of the present plan is 0.45 to 1.40 m deep everywhere (103 tiles, none
   shallower): they stood in it to the neck. `RoutinePlace` now treats a flamingo as a wader in

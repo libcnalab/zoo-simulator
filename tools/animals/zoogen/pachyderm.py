@@ -346,7 +346,9 @@ def make_pachyderm(model_name, kind, height, edits, shape, walk, fast, meta):
                 occlusion_source='source texture' if kind == 'rhino' else 'Cycles bake of neutral source geometry (source has no AO image)')
     if kind == 'elephant':
         # The game's clip for a still activity (AnimalRenderer).
-        meta['activity_clips'] = {'dust_bathe': 'dust_bathe'}
+        meta['activity_clips'] = {'dust_bathe': 'dust_bathe', 'bathe': 'dust_bathe'}
+    else:
+        meta['activity_clips'] = {'bathe': 'bathe'}
     from .pachyderm_motion import clips
     return Spec(model_name, bones, [], texture_size=1024 if kind == 'rhino' else 2048,
                 target_tris=21000 if meta.get('variant') == 'juvenile' else 34000,

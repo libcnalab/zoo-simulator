@@ -210,11 +210,12 @@ tests pass. Nobody listened to the audio; preserve that qualification.
 - No juvenile model for meerkat, ostrich, wolf, camel, kangaroo, flamingo (drawn as scaled
   adults); the brown/polar bear cub models exist but are unused (bears live as pairs).
 - Dedicated clips now cover meerkat sentry/dig, penguin and flamingo preening, flamingo filter
-  feeding, camel and giraffe rumination, and ostrich and elephant dust-bathing. Still represented
-  by the closest standard pose: shallow wallowing, penguin huddling, lion social contact and zebra
-  watch; the exact table and honest visual limitations are in `docs/ANIMALS.md`. The A2 exports
-  were deterministic byte for byte, 102 pipeline tests and all 20 game-side tests pass, and the
-  inspected evidence is `docs/evidence/animal-clips-a2-2026-11-20.jpg` (2026-11-20).
+  feeding, camel and giraffe rumination, ostrich and elephant dust-bathing, and shallow wallowing
+  for bears, tigers and rhinoceroses (elephants reuse their scoop/toss as a wet toss). Still
+  represented by the closest standard pose: penguin huddling, lion social contact and zebra watch;
+  the exact table and honest visual limitations are in `docs/ANIMALS.md`. A3's twenty production
+  files matched independent exports byte for byte, 103 pipeline tests and all 20 game-side tests
+  pass, and the inspected evidence is `docs/evidence/animal-clips-a3-2026-11-20.jpg` (2026-11-20).
 - Blocking-prop pockets are now rejected by `ClearPlace`: every routine destination needs two
   body-wide exit segments clear of fences, water and blocking props. Seed 1 fell from 4,183 of
   280,044 stalled moving ticks (1.49 %) to 2,994 of 270,133 (1.11 %), with no continuous stall

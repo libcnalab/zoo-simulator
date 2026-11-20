@@ -7,7 +7,7 @@ import math
 
 import numpy as np
 
-from . import quadruped as quad
+from . import activity, quadruped as quad
 from .geom import Bone, Part, R, Spec
 from .rig import Clip, Leg, Pose, Rig, Solver, rot_y, rot_z
 from .scan import landmark_bones, segment_distance
@@ -291,7 +291,8 @@ def make_bear(name, polar, juvenile, height, edits):
                 source_url='https://sketchfab.com/3d-models/1d1bb459a39a428282ce4cb46bdc3ed5',
                 source_pose='Upright roaring brown-bear-like sculpt; species identification is visual',
                 derivation='Re-proportioned and repainted brown-bear sculpt' if polar else 'Reposed brown-bear sculpt',
-                proportion_edits=edits, rest_pose='Sternal recumbency, chin on forepaws', sleep_pose='Lying on side with folded legs', roughness=.9)
+                proportion_edits=edits, rest_pose='Sternal recumbency, chin on forepaws', sleep_pose='Lying on side with folded legs',
+                activity_clips={'bathe': 'bathe'}, roughness=.9)
     if juvenile:
         parent = 'polar_bear' if polar else 'brown_bear'
         meta.update(variant_of=parent, variant='juvenile', relative_height=height / (1.5 if polar else 1.2))
@@ -372,6 +373,26 @@ def swim_pose(solver, height, phase):
     return pose
 
 
+def bathe_pose(solver, rest, height, phase):
+    """A shallow-water wallow: the recumbent bear rolls its shoulders and paddles each forepaw."""
+    angle = math.tau * phase
+    pose = activity.copy_pose(rest.pose(phase))
+    roll = 7 * math.sin(angle)
+    pose.r('hips', rx=roll)
+    pose.r('chest', rx=-.55 * roll)
+    pose.r('head', rx=4 * math.sin(2 * angle + .5), rz=2 * math.sin(3 * angle))
+    for key, offset in (('FL', 0), ('FR', .5)):
+        stroke = math.sin(math.tau * (2 * phase + offset))
+        pose.feet[key].pos += height * np.array([.045 * stroke, 0, .018 * max(0, stroke)])
+    from .scan import skin_floor
+    lift = .003 * height - skin_floor(solver, pose)
+    if lift > 0:
+        pose.move(solver.rig.body, dz=lift)
+        for target in pose.feet.values():
+            target.pos[2] += lift
+    return pose
+
+
 def bear_clips(solver, height, polar, juvenile):
     from .scan import skin_floor
     solver.rig.extra['height'] = height
@@ -416,11 +437,13 @@ def bear_clips(solver, height, polar, juvenile):
     idle.pose = partial(bear_idle, idle.pose)
     eat = quad.eat_clip(solver, params)
     eat.pose = partial(bear_eat, eat.pose, height)
+    rest = Clip('rest', 8, partial(lying_pose, solver, params, height, False, resting, base=lying_base))
     result = [idle, bear_gait(solver, walk), bear_gait(solver, lope), eat,
               quad.drink_clip(solver, params),
-              Clip('rest', 8, partial(lying_pose, solver, params, height, False, resting, base=lying_base)),
+              rest,
               Clip('sleep', 8, partial(side_sleep_pose, side_sleep_base(solver, params, height, sleeping, lying_base), height)),
-              quad.vocalize_clip(solver, params)]
+              quad.vocalize_clip(solver, params),
+              Clip('bathe', 9, partial(bathe_pose, solver, rest, height))]
     if polar:
         swim = Clip('swim', 1.5, partial(swim_pose, solver, height), speed=.65 * height)
         swim.contact_keys = []

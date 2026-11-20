@@ -46,7 +46,7 @@ class BearTests(unittest.TestCase):
                 path = ROOT / 'assets/animals' / (name + '.glb')
                 manifest = json.loads(path.with_suffix('.json').read_text())
                 doc, binary = glb(path)
-                expected = STANDARD | ({'swim'} if name.startswith('polar') else set())
+                expected = STANDARD | {'bathe'} | ({'swim'} if name.startswith('polar') else set())
                 self.assertEqual(set(clips), expected)
                 self.assertEqual({item['name'] for item in manifest['clips']}, expected)
                 self.assertEqual({item['name'] for item in doc['animations']}, expected)
@@ -80,7 +80,7 @@ class BearTests(unittest.TestCase):
 
     def test_rest_and_sleep_bones_clear_ground(self):
         for name, (spec, solver, clips) in self.cases.items():
-            for clip_name in ('rest', 'sleep'):
+            for clip_name in ('rest', 'sleep', 'bathe'):
                 for phase in np.linspace(0, 1, 16):
                     world = solver.solve(clips[clip_name].pose(float(phase)))
                     for bone in solver.order:

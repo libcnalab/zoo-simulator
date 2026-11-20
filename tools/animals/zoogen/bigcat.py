@@ -6,9 +6,9 @@ from pathlib import Path
 
 import numpy as np
 
-from . import quadruped as quad
+from . import activity, quadruped as quad
 from .geom import Part, R, Spec
-from .rig import Leg, Rig
+from .rig import Clip, Leg, Rig
 from .sculpt import prepare_instance
 
 SOURCE = Path(__file__).resolve().parents[1] / 'sources/bigcat/sculpt.npz'
@@ -23,7 +23,8 @@ def cat_rig(data):
     nose = data['vertices'][np.argmax(data['vertices'][:, 0])].copy()
     return Rig('hips', legs, ['spine1', 'spine2'], 'chest', ['neck1', 'neck2'], 'head', 'jaw',
                ['tail1', 'tail2', 'tail3', 'tail4'], ['ear.L', 'ear.R'],
-               extra={'muzzle': ('head', nose)})
+               extra={'muzzle': ('head', nose), 'skin_vertices': data['vertices'],
+                      'skin_weights': data['weights'], 'skin_bones': data['bone_names']})
 
 
 def hair_parts(data, kind):
@@ -98,6 +99,9 @@ def clips(solver, height, walk_speed, trot_speed, kind, lie_drop):
     idle.pose = partial(_lower_idle, idle.pose, height)
     call = result[-1]
     call.pose = partial(_roar, call.pose, height)
+    if kind == 'tiger':
+        rest = next(clip for clip in result if clip.name == 'rest')
+        result.append(Clip('bathe', 8, partial(_bathe, solver, rest, height)))
     return result
 
 
@@ -107,6 +111,25 @@ def _roar(original, height, phase):
     pose.move("hips", dz=-.008 * height * quad.envelope(phase, .22, .72))
     pose.r("spine1", ry=.7 * breath)
     pose.r("spine2", ry=-.7 * breath)
+    return pose
+
+
+def _bathe(solver, rest, height, phase):
+    """The tiger lies in the shallows, rolls its chest and bats water with alternating paws."""
+    angle = math.tau * phase
+    pose = activity.copy_pose(rest.pose(phase))
+    roll = 6 * math.sin(angle)
+    pose.r('hips', rx=roll).r('chest', rx=-.7 * roll)
+    pose.r('head', rx=3 * math.sin(2 * angle + .4), rz=2 * math.sin(3 * angle))
+    for key, offset in (('FL', 0), ('FR', .5)):
+        stroke = math.sin(math.tau * (2 * phase + offset))
+        pose.feet[key].pos += height * np.array([.06 * stroke, 0, .025 * max(0, stroke)])
+    from .scan import skin_floor
+    lift = .003 * height - skin_floor(solver, pose)
+    if lift > 0:
+        pose.move(solver.rig.body, dz=lift)
+        for target in pose.feet.values():
+            target.pos[2] += lift
     return pose
 
 
@@ -150,6 +173,8 @@ def make_cat(name, kind, height, edits, walk_speed, trot_speed, meta=None):
                     material_source='adapted authored base, normal and occlusion',
                     preparation_version=2)
     metadata.update(meta or {})
+    if kind == 'tiger':
+        metadata['activity_clips'] = {'bathe': 'bathe'}
     body_budget = 23000 if kind == 'juvenile' else 36000 if kind == 'male' else 33000
     return Spec(name, data['bones'], hair_parts(data, kind),
                 texture_size=1024, target_tris=body_budget,

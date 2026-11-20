@@ -522,11 +522,12 @@ class SculptCatTests(unittest.TestCase):
             spec, solver = make_solver(species)
             bones = geom.expand_bones(spec.bones)
             for clip in spec.clips(solver):
-                if clip.name not in ("rest", "sleep"):
+                if clip.name not in ("rest", "sleep", "bathe"):
                     continue
                 for index in range(24):
                     world = solver.solve(clip.pose(index / 24))
-                    self.assertLess(world[spec.rig.chest][2, 3], .45 * spec.meta["shoulder_height_m"],
+                    limit = .48 if clip.name == "bathe" else .45
+                    self.assertLess(world[spec.rig.chest][2, 3], limit * spec.meta["shoulder_height_m"],
                                     f"{species}/{clip.name}/chest")
                     for bone in bones:
                         if not bone.deform:
@@ -541,7 +542,7 @@ class SculptCatTests(unittest.TestCase):
             data = spec.sculpt
             vertices = data["vertices"]
             for clip in spec.clips(solver):
-                if clip.name not in ("rest", "sleep"):
+                if clip.name not in ("rest", "sleep", "bathe"):
                     continue
                 for phase in (0, .125, .25, .375, .5, .625, .75, .875):
                     world = solver.solve(clip.pose(phase))
@@ -577,7 +578,10 @@ class SculptCatTests(unittest.TestCase):
             self.assertEqual(manifest["texture"], 1024)
             self.assertEqual(manifest["license"], "CC-BY-4.0")
             clips = {clip["name"]: clip for clip in manifest["clips"]}
-            self.assertEqual(set(clips), {"idle", "walk", "trot", "eat", "drink", "rest", "sleep", "vocalize"})
+            expected = {"idle", "walk", "trot", "eat", "drink", "rest", "sleep", "vocalize"}
+            if species == "tiger":
+                expected.add("bathe")
+            self.assertEqual(set(clips), expected)
             expected_height = dict(lion=1.15, lion_female=1.05, lion_juvenile=.45, tiger=1.0)[species]
             self.assertAlmostEqual(manifest["meta"]["shoulder_height_m"], expected_height)
             if species.startswith("lion_"):

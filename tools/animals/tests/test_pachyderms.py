@@ -17,7 +17,7 @@ CLIPS = {'idle', 'walk', 'trot', 'eat', 'drink', 'rest', 'sleep', 'vocalize', 's
 
 def clip_set(species):
     """The elephants also dust-bathe (an activity clip, tests/test_activity_clips.py)."""
-    return CLIPS | ({'dust_bathe'} if species.startswith('elephant') else set())
+    return CLIPS | ({'dust_bathe'} if species.startswith('elephant') else {'bathe'})
 
 
 def world_translation(document, node, translation):
@@ -114,7 +114,7 @@ class PachydermTests(unittest.TestCase):
                     pose = clip.pose(phase)
                     points = skin_points(solver, pose, spec.sculpt)
                     self.assertGreaterEqual(points[:, 2].min(), -.02, f'{species}/{clip.name}/{phase}')
-                    if clip.name not in ('rest', 'sleep'):
+                    if clip.name not in ('rest', 'sleep', 'bathe'):
                         continue
                     world = solver.solve(pose)
                     standing = clip.name == 'rest' and species in ('elephant', 'elephant_female')

@@ -50,7 +50,7 @@ python3 -m unittest discover -s tools/animals/tests
 Each has the same eight clips, which the game picks from what the animal is doing: `idle`,
 `walk`, `trot` (the fast gait, a hop for the kangaroo), `eat`, `drink`, `rest`, `sleep`,
 `vocalize`; some have activity clips beside them (`sentry`, `dig`, `preen`, `dust_bathe`,
-`ruminate`, `filter_feed`, below). 9,000 to 34,000 triangles, 18 to 46 bones, a coat painted
+`ruminate`, `filter_feed`, `bathe`, below). 9,000 to 34,000 triangles, 18 to 46 bones, a coat painted
 by the species file. The first-generation models (the last two rows) are stylised, not
 photorealistic; what each is weak at is listed in
 [`PIVOT_TO_ZOO_EXPLORATION.md`](PIVOT_TO_ZOO_EXPLORATION.md).
@@ -283,15 +283,19 @@ named the real activity. Dedicated clips are now made in the pipeline
 | `camel` | `ruminate` (10 s) | `ruminate` | standing with a slow asymmetric sideways jaw grind and a small head movement |
 | `flamingo` | `filter_feed` (7 s) | `filter_feed` | the fitted inverted-bill feeding posture, sweeping a broad irregular arc through the shallows |
 | `giraffe`, `giraffe_female`, `giraffe_juvenile` | `ruminate` (10 s) | `ruminate` | standing, with a deliberate lateral cud grind slower and broader than the incidental idle chew |
+| `brown_bear`, `brown_bear_juvenile`, `polar_bear`, `polar_bear_juvenile` | `bathe` (9 s) | `bathe` | lying in the shallows, rolling the shoulders and paddling with alternating forepaws |
+| `tiger` | `bathe` (8 s) | `bathe` | lying low, rolling its chest and batting water with alternating forepaws |
+| `rhino`, `rhino_juvenile` | `bathe` (10 s) | `bathe` | a low wallow, rocking the barrel while the muzzle and tail sweep |
+| `elephant`, `elephant_female`, `elephant_juvenile` | `dust_bathe` (16 s) | `bathe` | hot-weather bathing reuses the fitting scrape, trunk scoop and toss as a wet mud toss |
 
 Coverage of every species routine's nonstandard or signature action is below. “Default” means
 the model has no dedicated clip and the renderer deliberately uses the nearest standard pose.
 
 | Species | Routine action | Clip played now | What a visitor would expect |
 |---|---|---|---|
-| Brown bear | hot-weather `bathe` | `rest` (default) | a shallow wallow or splash; still missing |
+| Brown bear | hot-weather `bathe` | `bathe` | a low shoulder roll and alternating forepaw paddles |
 | Camel | `ruminate` | `ruminate` | standing with a slow lateral cud grind |
-| Elephant | `dust_bathe`; hot-weather `bathe` | `dust_bathe`; `rest` (default) | scrape, gather and toss dust; a wet mud toss remains a resting pose |
+| Elephant | `dust_bathe`; hot-weather `bathe` | `dust_bathe` for both | scrape, gather and toss dry dust or wet mud with the trunk |
 | Flamingo | `preen`; `filter_feed`; `huddle` | `preen`; `filter_feed`; `rest` (manifest) | grooming and the inverted-bill sweep are dedicated; huddling uses the one-leg rest |
 | Giraffe | `browse`; `ruminate` | raised `eat` (manifest); `ruminate` | browsing reaches foliage; a separate slow jaw grind shows chewing the cud |
 | Kangaroo | social rest | ordinary `rest` / `idle` | a close resting mob; no paired interaction clip |
@@ -299,9 +303,9 @@ the model has no dedicated clip and the renderer deliberately uses the nearest s
 | Meerkat | `sentinel`; `dig` | `sentry`; `dig` | upright scanning with tail support; alternating fore-paw scratches |
 | Ostrich | `dust_bathe` | `dust_bathe` | sitting, wing shaking and neck sweeps |
 | Penguin | `preen`; `huddle` | `preen`; `idle` (default) | grooming is dedicated; a tight upright huddle has no separate clip |
-| Polar bear | `bathe` | `rest` (default) | shallow splashing or rolling; still missing |
-| Rhinoceros | `bathe` | `rest` (default) | wallowing; still missing |
-| Tiger | `bathe` | `rest` (default) | lying or splashing in shallow water; splashing is missing |
+| Polar bear | `bathe` | `bathe` | a low shoulder roll and alternating forepaw paddles |
+| Rhinoceros | `bathe` | `bathe` | low barrel rocking, muzzle sweep and tail movement |
+| Tiger | `bathe` | `bathe` | lying low, rolling and batting the water with both forepaws |
 | Wolf | `patrol` | `walk` / `trot` while moving, `idle` when stopped | the existing gait already shows the boundary patrol |
 | Zebra | `sentinel` | `idle` (default) | a head-up watch; the existing idle is already head-up |
 
@@ -316,7 +320,7 @@ sitting-up watch it always was.
 
 Not made: preening for the ostrich (its routine never preens), the zebra's head-up watch (its
 `sentinel` plays `idle`, which is already head-up), `browse` for the giraffe beyond its `eat`,
-`bathe` wallowing, `huddle` beyond the flamingo's one leg, and paired social-contact clips.
+`huddle` beyond the flamingo's one leg, and paired social-contact clips.
 What is weak: no sand or dust is thrown (the game has no particles for it), the elephant's toss
 reaches above the forehead rather than over the back (ten trunk joints at most 48 degrees each),
 the flamingo's bill and neck are buried in the wing when it preens there, as a real one's are, so
@@ -336,6 +340,14 @@ and a giraffe routine. At deterministic endpoint states, tick 600 had four giraf
 tick 2,400 had ten flamingos filter-feeding and tick 6,000 had three camels ruminating. The HUD
 identified the pictured giraffe as “Chewing the cud” and the flamingo as “Sieving the shallows”.
 The sheet, its nine source frames and every viewer phase were opened after integration.
+
+The third sheet (`evidence/animal-clips-a3-2026-11-20.jpg`) shows two wallow phases each for the
+brown bear, tiger and adult rhinoceros, plus the polar bear, rhinoceros calf and elephant wet-toss
+pose. The wallow generator settles every frame from the lowest point of the actual skinned mesh;
+tests require the body to roll, remain recumbent and never enter the ground. At 14:00/tick 600
+the deterministic state selected `bathe` for polar bear Esme, but she spent the sampled bout
+walking to the water, so no habitat frame is claimed as a settled wallow. All nine viewer frames
+and the sheet were opened after integration.
 
 ### What the game does with a model
 
@@ -357,7 +369,7 @@ The sheet, its nine source frames and every viewer phase were opened after integ
   the water, the body under it; a real one floats a little higher).
 - **Activity clips.** A still animal plays the clip its model's `meta.activity_clips` names
   for its activity (`sentinel` -> `sentry`, `preen` -> `preen`, ...; see above), provided the
-  model has that clip; it changes into and out of `sentry` and `dust_bathe` with the slower
+  model has that clip; it changes into and out of `sentry`, `dust_bathe` and `bathe` with the slower
   0.9 s blend of lying down.
 - **Textures.** CNA imports glTF images with one level (its warning GLTF-206), so the game
   builds the mip chain itself when it loads a model (`src/game/AnimalTextures.cpp`). The renderer

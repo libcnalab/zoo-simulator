@@ -142,6 +142,7 @@
   "license": "CC-BY-4.0",
   "meta": {
     "activity_clips": {
+      "bathe": "dust_bathe",
       "dust_bathe": "dust_bathe"
     },
     "asset_license": "CC-BY-4.0",

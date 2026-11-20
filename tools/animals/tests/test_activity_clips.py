@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: MIT
 """The activity clips beside the standard eight (zoogen/activity.py): the meerkat's sentry duty
-and digging, preening and filter-feeding birds, dust-bathing ostrich and elephants, and ruminant
-chewing. What each must show, and that the manifests map activities to clips the models carry.
+and digging, preening and filter-feeding birds, dust-bathing, wallowing and ruminant chewing.
+What each must show, and that the manifests map activities to clips the models really carry.
 
     python3 -m unittest discover -s tools/animals/tests
 """
@@ -27,17 +27,24 @@ ACTIVITIES = {"idle", "wander", "forage", "eat", "drink", "rest", "sleep", "play
               "bathe", "dust_bathe", "preen", "sentinel", "dig", "filter_feed", "patrol", "huddle"}
 # The clips a still animal may play (AnimalRenderer's still poses).
 STILL_CLIPS = {"idle", "eat", "drink", "rest", "sleep", "sentry", "dig", "preen", "dust_bathe",
-               "ruminate", "filter_feed"}
+               "ruminate", "filter_feed", "bathe"}
 EXPECTED = {
+    "brown_bear": {"bathe": "bathe"},
+    "brown_bear_juvenile": {"bathe": "bathe"},
+    "polar_bear": {"bathe": "bathe"},
+    "polar_bear_juvenile": {"bathe": "bathe"},
     "camel": {"ruminate": "ruminate"},
     "meerkat": {"sentinel": "sentry", "dig": "dig"},
     "penguin": {"preen": "preen"},
     "penguin_juvenile": {"preen": "preen"},
     "flamingo": {"huddle": "rest", "preen": "preen", "filter_feed": "filter_feed"},
     "ostrich": {"dust_bathe": "dust_bathe"},
-    "elephant": {"dust_bathe": "dust_bathe"},
-    "elephant_female": {"dust_bathe": "dust_bathe"},
-    "elephant_juvenile": {"dust_bathe": "dust_bathe"},
+    "elephant": {"dust_bathe": "dust_bathe", "bathe": "dust_bathe"},
+    "elephant_female": {"dust_bathe": "dust_bathe", "bathe": "dust_bathe"},
+    "elephant_juvenile": {"dust_bathe": "dust_bathe", "bathe": "dust_bathe"},
+    "rhino": {"bathe": "bathe"},
+    "rhino_juvenile": {"bathe": "bathe"},
+    "tiger": {"bathe": "bathe"},
     "giraffe": {"browse": "eat", "ruminate": "ruminate"},
     "giraffe_female": {"browse": "eat", "ruminate": "ruminate"},
     "giraffe_juvenile": {"browse": "eat", "ruminate": "ruminate"},
@@ -192,6 +199,21 @@ class FeedingAndRuminationTests(unittest.TestCase):
                     self.assertAlmostEqual(world[leg.toes][2, 3], solver.toe_base(key)[2], places=6)
                 jaw.append(world[spec.rig.jaw][:3, :3])
             self.assertGreater(max(np.linalg.norm(matrix - jaw[0]) for matrix in jaw), .04, species)
+
+
+class BatheTests(unittest.TestCase):
+    def test_wallowing_species_lie_low_and_roll_their_bodies(self):
+        species_names = ("brown_bear", "brown_bear_juvenile", "polar_bear",
+                         "polar_bear_juvenile", "rhino", "rhino_juvenile", "tiger")
+        for species in species_names:
+            spec, solver, clips = clips_of(species)
+            hips, chest_heights = [], []
+            for index in range(60):
+                world = solver.solve(clips["bathe"].pose(index / 60))
+                hips.append(world[spec.rig.body][:3, :3])
+                chest_heights.append(world[spec.rig.chest][2, 3])
+            self.assertGreater(max(np.linalg.norm(matrix - hips[0]) for matrix in hips), .08, species)
+            self.assertLess(max(chest_heights), .75 * spec.meta["shoulder_height_m"], species)
 
 
 class DustBatheTests(unittest.TestCase):

@@ -105,6 +105,14 @@
       "speed": 0.0
     },
     {
+      "duration": 9.0,
+      "events": [],
+      "frames": 271,
+      "loop": true,
+      "name": "bathe",
+      "speed": 0.0
+    },
+    {
       "duration": 1.5,
       "events": [],
       "frames": 46,
@@ -116,6 +124,9 @@
   "generator": "tools/animals (zoogen)",
   "license": "CC-BY-4.0",
   "meta": {
+    "activity_clips": {
+      "bathe": "bathe"
+    },
     "asset_license": "CC-BY-4.0",
     "common_name": "Polar bear",
     "derivation": "Re-proportioned and repainted brown-bear sculpt",

@@ -32,7 +32,7 @@ constexpr float kPi = 3.14159265f;
 
 constexpr std::array<const char*, static_cast<std::size_t>(AnimalPose::Count)> kClipNames = {
     "idle", "walk", "trot", "eat", "drink", "rest", "sleep", "vocalize", "swim", "float",
-    "sentry", "dig", "preen", "dust_bathe", "ruminate", "filter_feed"};
+    "sentry", "dig", "preen", "dust_bathe", "ruminate", "filter_feed", "bathe"};
 
 /// Up to this share of its growing time an animal is drawn with the model of the young.
 constexpr float kJuvenileShare = 0.5f;
@@ -65,10 +65,11 @@ bool LiesDown(AnimalPose pose) {
     return pose == AnimalPose::Rest || pose == AnimalPose::Sleep;
 }
 
-/// A posture the body takes slowly: lying down, sitting down to dust-bathe, or rising on the
-/// hind feet.
+/// A posture the body takes slowly: lying down, wallowing, sitting down to dust-bathe, or
+/// rising on the hind feet.
 bool SettlesSlowly(AnimalPose pose) {
-    return LiesDown(pose) || pose == AnimalPose::DustBathe || pose == AnimalPose::Sentry;
+    return LiesDown(pose) || pose == AnimalPose::DustBathe || pose == AnimalPose::Bathe ||
+           pose == AnimalPose::Sentry;
 }
 
 using ShownPoses = std::array<AnimalPose, static_cast<std::size_t>(zoo::AnimalActivity::Count)>;
@@ -110,7 +111,7 @@ void ReadActivityClips(const nlohmann::json& clips, const PoseClips& present, Sh
         for (const AnimalPose pose :
              {AnimalPose::Idle, AnimalPose::Eat, AnimalPose::Drink, AnimalPose::Rest, AnimalPose::Sleep,
               AnimalPose::Sentry, AnimalPose::Dig, AnimalPose::Preen, AnimalPose::DustBathe,
-              AnimalPose::Ruminate, AnimalPose::FilterFeed}) {
+              AnimalPose::Ruminate, AnimalPose::FilterFeed, AnimalPose::Bathe}) {
             const auto index = static_cast<std::size_t>(pose);
             if (clip == kClipNames[index] && present[index] != nullptr)
                 shown[activity] = pose;
