@@ -208,8 +208,12 @@ of its own for every job (a lean, a squat, the hands placed and the arms solved)
 and out so that a rake does not turn into a bucket in the hands. The tools are coloured
 triangles built every frame for those in view (bucket, wheelbarrow, rake, broom, hose with its
 jet, clipboard, sack, trowel, watering can) and drawn in two calls for the whole crew; they
-cast soft projected contact shadows, as does each member. At most the 8 nearest within
-150 m are drawn.
+cast soft projected contact shadows, as does each member. All nine members of Greenhill's crew
+fit the 12-nearest full-avatar budget; nobody beyond 150 m is drawn. The bounded headroom admits
+a somewhat larger built-in zoo without letting a damaged or imported save request hundreds of
+CNA avatars in one frame. A warning-clean game build, a real 626-visitor offscreen run at a
+working keeper and all 32 active keeper/Walker integration cases pass (J46, 2026-11-20); the
+captured frame was opened and checked.
 
 `--stand keeper:<id>` stands the camera on the nearest path a few metres from that member
 (`keeper:0`: the first member at a job; `keeper:0:rake`: the first raking) and prints who it is
@@ -239,4 +243,4 @@ the first tick on), not because of the keepers.
 
 - Lockout moves animals into their houses atomically; it does not yet animate a recall or expose a
   separate holding-yard gate. Shelter capacity and doors are real, but the transfer is immediate.
-- Nobody is drawn beyond 150 m or beyond the 8 nearest.
+- Nobody is drawn beyond 150 m or beyond the 12 nearest.

@@ -419,6 +419,12 @@ whatever you take up (`docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `docs/V
   version passes all 24 focused movement, keeper, day and week-capacity cases; changed short and
   6,000-tick hashes for seeds 1–3 repeat twice. The complete suite passes all 292 active cases
   including its 368.55-second animation pipeline, with 21 diagnostics disabled (J45, 2026-11-20).
+- J46 raises the keeper renderer's bounded full-avatar budget from 8 to 12, enough for all nine
+  members of Greenhill's crew instead of dropping the farthest one when all are visible. The
+  150 m distance/frustum cull and the bound for damaged or imported saves remain; the scenario
+  regression now requires the planned seven keepers, gardener and cleaner. A warning-clean game
+  build, real 626-visitor offscreen smoke and all 32 active keeper/Walker integration cases pass;
+  its captured frame was opened and checked (J46, 2026-11-20).
 - The stopped G7c audio audit is recovered and finished. Calls now follow `Vocalize`, social,
   play and documented feeding cues rather than a timer; takes do not repeat immediately, spatial
   pan is capped at 0.60, birds fade with daylight, crowd level follows its people, and footsteps

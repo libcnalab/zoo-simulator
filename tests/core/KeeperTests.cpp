@@ -109,8 +109,7 @@ struct Watch {
 TEST(Keeper, TheVisitorZooHasItsCrew) {
     const auto zoo = VisitorZoo();
     const Staff& staff = zoo->Keepers();
-    ASSERT_GE(staff.All().size(), 6u);
-    ASSERT_LE(staff.All().size(), 10u);
+    ASSERT_EQ(staff.All().size(), 9u);
     int gardeners = 0;
     int cleaners = 0;
     for (const StaffMember& member : staff.All()) {

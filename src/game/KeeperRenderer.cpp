@@ -34,8 +34,9 @@ constexpr std::size_t kCast = 4;
 /// Nobody is drawn farther from the camera than this, metres: a keeper is then a dozen
 /// pixels tall and the tools cannot be told any more.
 constexpr float kFarthest = 150.0f;
-/// How many are drawn in one frame at most (the nearest).
-constexpr std::size_t kMost = 8;
+/// How many are drawn in one frame at most (the nearest): enough for Greenhill's whole crew,
+/// with room for a larger built-in scenario but still bounded for a damaged or imported save.
+constexpr std::size_t kMost = 12;
 
 float Ease(float value, float goal, float rate, float seconds) {
     return goal + (value - goal) * std::exp(-rate * seconds);

@@ -251,7 +251,7 @@ the new result is the removed buffer churn rather than an unreliable fps compari
 
 ## After the keepers (G5; 2026-11-14)
 
-Nine members of staff are simulated and up to 8 are drawn as full CNA avatars with tools
+Nine members of staff are simulated and all fit the 12-nearest full CNA avatar budget with tools
 built on the processor each frame (`docs/KEEPERS.md` "Cost"). Entrance bench, interleaved, three
 runs each, load 3.6 to 4.9: frame ms mean 15.05 / 14.22 / 14.53 before against 16.49 / 14.18 /
 13.98 after; the people pass (visitors and keepers) 3.16 to 3.41 ms against 4.29 to 4.85 ms; the
