@@ -30,6 +30,22 @@ void AddSquareFence(World& world, const Catalog& catalog, int low, int high) {
     }
 }
 
+void AddShelter(World& world, ZooObjects& objects, const Catalog& catalog, std::string_view id,
+                TileCoord origin) {
+    Building shelter;
+    shelter.def = catalog.BuildingIndex(id);
+    shelter.origin = origin;
+    shelter.facing = Dir::South;
+    const BuildingId shelterId = objects.AddBuilding(shelter);
+    ASSERT_TRUE(shelterId);
+    const BuildingDef& def = catalog.buildings[static_cast<std::size_t>(shelter.def)];
+    for (int z = origin.z; z < origin.z + def.depth; ++z) {
+        for (int x = origin.x; x < origin.x + def.width; ++x) {
+            world.SetBuilding({x, z}, shelterId);
+        }
+    }
+}
+
 int CountEvents(const std::vector<Event>& events, EventType type) {
     return static_cast<int>(std::count_if(events.begin(), events.end(),
                                           [type](const Event& event) { return event.type == type; }));
@@ -89,6 +105,7 @@ TEST(AnimalLifeTests, HealthyPairConceivesAndBirthsAYoungWithRecordedParents) {
     World world(50, 50);
     ZooObjects objects;
     AddSquareFence(world, catalog, 8, 40);
+    AddShelter(world, objects, catalog, "large_shelter", {10, 10});
     Enclosures enclosures;
     enclosures.Rebuild(world, objects, catalog);
     Navigator nav(world);
@@ -275,6 +292,7 @@ TEST(AnimalLifeTests, CratedMotherWaitsForBirthAndRemovedFatherIdIsPreserved) {
     World world(50, 50);
     ZooObjects objects;
     AddSquareFence(world, catalog, 8, 40);
+    AddShelter(world, objects, catalog, "large_shelter", {10, 10});
     Enclosures enclosures;
     enclosures.Rebuild(world, objects, catalog);
     Navigator nav(world);

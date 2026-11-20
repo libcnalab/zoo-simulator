@@ -26,6 +26,16 @@ cleanly with 88 animals and 624 visitors. Both used
 itself with `LeakSanitizer does not work under ptrace`. UBSan and the entire current suite were
 not rerun; do not read this targeted ASan pass as either of those claims.
 
+**J26 follow-up (2026-11-20):** managed breeding now projects the minimum litter into the
+actual home habitat before conception, including shelter, space and the minimum litters already
+reserved by every species there. At birth, a larger random litter is capped to the remaining
+habitat capacity; if even the minimum no longer fits, birth waits. A real small-shelter regression
+caps an ostrich clutch at one chick and proves that a full habitat starts no further pregnancy.
+The week test is strict after births now: seed 1 ends day 7 with 91 animals and three births,
+with every habitat still sheltered and at full space. Short and 6,000-step hashes for seeds 1–3
+are unchanged. All 274 active CTest cases pass, including the 365.49-second animation pipeline;
+21 diagnostics remain disabled.
+
 **Found while merging:** `SaveLoadInTheMiddleOfTheVisit` failed on develop for seed 2: 100 steps
 after a load the zoo was no longer the saved one. The number of people watching each habitat,
 which steers where the animals glance (`LookAtInterest`), was an input "not saved"; after a load
@@ -240,17 +250,17 @@ All in `tests/core/VisitorZooHabitatTests.cpp`, for seeds 1 and 2, on the real d
 **`NoHabitatEmptyOrOverFullAtTheStartAfterADayAndAfterAWeek`.** `ExpectOccupancy` asks of every
 habitat of Greenhill: it has residents; none of them is loose; each stands on its own habitat's
 ground; the species are the ones the plan promises; no species has more animals than its
-`groupMax`; and, as long as nothing was born, the shelters hold all residents and the space
-score is at least 0.99. Checked after `BuildVisitorZoo`, after one day of the management
+`groupMax`; the shelters hold all residents; and the space score is at least 0.99, including
+after births. Checked after `BuildVisitorZoo`, after one day of the management
 simulation (14,400 steps) and, for seed 1, after seven days.
 
 - At the start and after a day: no habitat empty, none over-full, both seeds.
-- After a week, **before correction 3**: Ostrich Rise held 23 ostriches of at most 20. After it:
-  101 animals, 27 births in the week, no group above its `groupMax`.
-- After a week, still: the groups that bred have outgrown what was built for the animals the
-  plan put there. The test prints it and does not fail on it:
-  `OCCUPANCY seed=1 after a week: Ostrich Rise has grown to 20 animals, shelter for 18, space 0.83`
-  and `Penguin Cove has grown to 20 animals, shelter for 18, space 1`. See "For the lead to decide".
+- Before correction 3, Ostrich Rise held 23 ostriches of at most 20. Correction 3 limited the
+  group but still let shelter and ground overflow. Before J26 that historical week ended with
+  101 animals and 27 births: 20 ostriches at space 0.83 and 20 penguins, both with shelter for 18.
+- After J26, seed 1 ends day 7 with 91 animals and three births. Penguin Cove grows from 13 to 15
+  and one other habitat gains a young animal; all fourteen habitats still pass the strict shelter
+  and space checks. Reproduction remains visible without manufacturing overcrowded groups.
 
 **`NoHabitatEmptyOrOverFullDuringTheVisit`** fills the zoo and steps the visit as the game does
 (pace 12), and asks the same as the visit begins and 6,000 steps later. **A visit's calendar
@@ -260,8 +270,9 @@ a day" and "after a week" are days of the simulation, which these tests walk.
 **The animals do not stop with the calendar.** The visit slows the calendar twelve times and
 stops it at 15:30, but the animals live by the steps (`Zoo::Step`: "by the motion clock"):
 they eat, age, conceive and give birth at the management simulation's pace, twenty steps a
-second. `DISABLED_NoHabitatEmptyOrOverFullOverAVisitingDay` (172,800 steps: 2 h 24 min of play,
-twelve days of the animals' life; 317 s in Release, seed 1; seed 2 was stopped by the wrap-up):
+second. Before J26, `DISABLED_NoHabitatEmptyOrOverFullOverAVisitingDay` (172,800 steps: 2 h 24
+min of play, twelve days of the animals' life; 317 s in Release, seed 1; seed 2 was stopped by
+the wrap-up) recorded:
 
 ```
 OCCUPANCY seed=1 the first birth of the visit after 67201 steps (56 minutes of play)
@@ -271,10 +282,12 @@ OCCUPANCY ...: Ostrich Rise has grown to 20 animals, shelter for 18, space 0.832
 OCCUPANCY ...: Penguin Cove has grown to 20 animals, shelter for 18, space 1.000000
 ```
 
-No habitat empties and no group passes its `groupMax` (with correction 3), nobody escapes or
-dies. But somebody who stays an hour sees the first young, and after two hours three habitats
-hold more animals than they shelter. `NoHabitatEmptyOrOverFullDuringTheVisit` (the first 6,000
-steps, five minutes of play, both seeds) passes with the strict rule: 74 animals, no birth.
+No habitat emptied and no group passed its `groupMax` (with correction 3), but three habitats
+outgrew their shelter. J26 makes the same strict rule apply after births; the ordinary first 6,000
+visit steps still have 74 animals and no birth, and their hashes are unchanged. Re-recorded after
+J26, the long seed-1 diagnostic passes in 25.61 s: the first birth is at step 52,201 (43 minutes of
+play), and step 172,800 ends with 102 animals, 14 births, no death or escape, and every habitat
+still passing the strict group, shelter and space checks.
 
 **`EveryBoardFacesThePathAndTellsOfTheAnimalsBehindIt`** (with the earlier
 `EveryHabitatHasItsOwnReadableBoard`). Of every information board: it stands on public ground,
@@ -518,21 +531,16 @@ measurement.
 
 ## For the lead to decide
 
-1. **Groups that outgrow their habitats.** After a week of the simulation the ostriches and
-   the penguins are 20 each in habitats built and sheltered for the group the plan put there
-   (shelter for 18; the ostriches' space score 0.83). The choices: habitats sized for
-   `groupMax`, or conception that also asks for shelter and space. See also point 4.
-2. **The two controller defects** for `docs/UPSTREAM.md` (text above), and whether the game
+1. **The two controller defects** for `docs/UPSTREAM.md` (text above), and whether the game
    keeps both remedies when cna-engine is corrected: the guard costs 4 microseconds a frame and
    is harmless on a correct engine; `stepHeight = 0` should stay as long as the world has no
    ledges.
-3. **Caching the filled zoo**, the summary file for saves, the chunk images: proposals above,
+2. **Caching the filled zoo**, the summary file for saves, the chunk images: proposals above,
    not done, each in files other tasks are editing today.
-4. **Animals that breed during a visit** (above): the first young after 56 minutes of play,
-   habitats short of shelter after two hours, while the clock stands at 15:30. Either the
-   animals' life follows the visit's calendar, or residents of the Visitor Zoo do not breed, or
-   it is wanted (young animals are something to see) and the habitats get room for it.
-5. **What this audit did not get to**, in the order it would be done: the rest of the sanitized
+3. **Animals that breed during a visit:** J26 resolves the welfare failure by reserving nursery
+   capacity while retaining young animals as something to see. The separate calendar question
+   remains: animal life still advances after the visitor clock stops at 15:30.
+4. **What this audit did not get to**, in the order it would be done: the rest of the sanitized
    game runs, above all the scripted visit with its loads; the core suite once more with
    `halt_on_error=1` for UBSan; the start by phase, the memory by kind and the bench in Release;
    the pictures of the wall and of the refused save.

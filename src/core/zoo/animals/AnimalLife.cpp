@@ -41,6 +41,75 @@ bool IsCarnivore(const SpeciesDef& species) {
     return species.dangerous && (species.diet == Diet::Carnivore || species.diet == Diet::Omnivore);
 }
 
+GroupInfo ProjectedNurseryGroup(const std::vector<Animal>& animals, const Env& env, const Animal& mother,
+                                EnclosureId enclosure, int young) {
+    GroupInfo group{0, 0, 0, 0.0f, false};
+    const SpeciesDef& species = env.species.All()[static_cast<std::size_t>(mother.species)];
+    for (const Animal& other : animals) {
+        const bool physicallyHere = other.InWorld() && env.enclosures.At(other.position) == enclosure;
+        if (!physicallyHere && other.home != enclosure) {
+            continue;
+        }
+        const SpeciesDef& otherSpecies = env.species.All()[static_cast<std::size_t>(other.species)];
+        ++group.allAnimals;
+        if (other.species == mother.species) {
+            ++group.sameSpecies;
+            if (other.sex == Sex::Male && IsAdult(other, species, env.time)) {
+                ++group.adultMales;
+            }
+        } else {
+            group.otherSpeciesSpaceM2 += SpaceNeededM2(otherSpecies, 1);
+            if (IsCarnivore(otherSpecies) &&
+                species.adultMassKg < tuning::kPredatorMassRatio * otherSpecies.adultMassKg) {
+                group.predator = true;
+            }
+        }
+        // A mother gives birth in her home enclosure. Reserve the minimum litter of
+        // every other pregnancy committed to that enclosure, including a temporarily
+        // crated resident, before allowing another pregnancy or a larger litter.
+        if (other.id == mother.id || other.home != enclosure || !other.Pregnant()) {
+            continue;
+        }
+        group.allAnimals += otherSpecies.litterMin;
+        if (other.species == mother.species) {
+            group.sameSpecies += otherSpecies.litterMin;
+        } else {
+            group.otherSpeciesSpaceM2 +=
+                static_cast<float>(otherSpecies.litterMin) * SpaceNeededM2(otherSpecies, 1);
+        }
+    }
+    group.allAnimals += young;
+    group.sameSpecies += young;
+    return group;
+}
+
+bool NurseryFits(const std::vector<Animal>& animals, const Env& env, const Animal& mother,
+                 EnclosureId enclosure, int young) {
+    const Enclosure* home = env.enclosures.Find(enclosure);
+    if (home == nullptr) {
+        return false;
+    }
+    const SpeciesDef& species = env.species.All()[static_cast<std::size_t>(mother.species)];
+    const WelfareReport projected =
+        EvaluateHabitat(species, home->stats, ProjectedNurseryGroup(animals, env, mother, enclosure, young));
+    return projected.space >= 1.0f && projected.shelter >= 1.0f;
+}
+
+int NurseryRoom(const std::vector<Animal>& animals, const Env& env, const Animal& mother,
+                EnclosureId enclosure, int requested) {
+    // Old saves can contain a due mother without a valid home (and the group-limit
+    // tests intentionally construct one). There is no habitat capacity to assess.
+    if (env.enclosures.Find(enclosure) == nullptr) {
+        return requested;
+    }
+    for (int young = requested; young > 0; --young) {
+        if (NurseryFits(animals, env, mother, enclosure, young)) {
+            return young;
+        }
+    }
+    return 0;
+}
+
 }  // namespace
 
 void Animals::ForgetAnimalReferences(AnimalId id) {
@@ -167,10 +236,12 @@ void Animals::AdvanceLife(Env& env) {
             }
             // A moved-in animal can consume the reserved room. As with a crated mother,
             // wait until birth is possible instead of exceeding groupMax or losing the young.
-            if (species.groupMax - group < species.litterMin)
+            const int groupRoom = species.groupMax - group;
+            const int habitatRoom = NurseryRoom(animals_, env, animal, animal.home, groupRoom);
+            if (groupRoom < species.litterMin || habitatRoom < species.litterMin)
                 continue;
             const int litterSize = std::min(rng_.RangeInt(species.litterMin, species.litterMax),
-                                             species.groupMax - group);
+                                            std::min(groupRoom, habitatRoom));
             const bool lost = rng_.Chance(tuning::kStillbirthBaseChance +
                                           (1.0f - animal.welfare) * tuning::kStillbirthPoorWelfareChance);
             animal.dueTick = 0;
@@ -253,6 +324,7 @@ void Animals::AdvanceLife(Env& env) {
                 }
             }
             if (male != nullptr && speciesCount + species.litterMin <= species.groupMax &&
+                NurseryFits(animals_, env, animal, enclosureId, species.litterMin) &&
                 rng_.Chance(tuning::kConceptionChancePerDay / tuning::kLifeChecksPerGameDay)) {
                 animal.dueTick =
                     env.time.tick +

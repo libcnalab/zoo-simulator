@@ -162,9 +162,13 @@ to breed share an enclosure. Welfare must meet `kBreedingWelfare`; conception ri
 `kConceptionChancePerDay` per day, divided across `kLifeChecksPerGameDay` hourly checks.
 The female must be younger than
 `kBreedingMaximumAgeFraction` of lifespan and meet the species' birth interval. The
-enclosure must have room for `litterMin` young under `groupMax`. Gestation uses the
+enclosure must have room for `litterMin` young under `groupMax`, in its shelter, and at a
+full space score. Existing pregnancies reserve their own minimum litters, including for
+temporarily crated residents and other species in a mixed habitat. Gestation uses the
 species' `gestationDays` converted by `kGameDaysPerRealDay`. Births wait while the mother
-is crated. Litter size is uniform from `litterMin` to `litterMax`; each young animal has
+is crated or if moved-in residents have consumed the reserved minimum room. Litter size is
+drawn uniformly from `litterMin` to `litterMax`, then capped to the current group, shelter
+and space capacity while retaining the other pregnancies' reservations. Each young animal has
 age zero, random sex, parent ids, and the mother's home. `kStillbirthBaseChance` plus
 `kStillbirthPoorWelfareChance` times missing welfare determines whether the whole litter
 is lost. A surviving litter increments `Births()` once per young. Pregnancy multiplies

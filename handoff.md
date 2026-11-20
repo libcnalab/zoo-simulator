@@ -242,6 +242,16 @@ whatever you take up (`docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `docs/V
   retained its full Meerkat Lookout species, resident and feeding content. The inspected panel is
   `docs/evidence/entrance-welcome-board-j25-2026-11-20.jpg`; all 272 active functional CTest cases
   pass (21 diagnostics disabled; J25, 2026-11-20).
+- J26 makes breeding respect the habitat the young will actually occupy. Conception now reserves
+  the minimum litter against group size, shelter and space, including other pregnancies in a mixed
+  habitat; birth caps a larger random litter to the remaining capacity and waits if even the
+  minimum was consumed after conception. A small-shelter regression limits a 1–20 chick ostrich
+  clutch to one and then prevents another pregnancy. The formerly permissive Visitor Zoo week
+  check is strict after births: seed 1 ends day 7 with 91 animals and three young, all habitats
+  still fully sheltered and at space 1. The disabled long-visit diagnostic also passes after
+  172,800 steps with 102 animals, 14 births, no death or escape and no capacity failure. Short and
+  6,000-step hashes for seeds 1–3 remain unchanged; all 274 active CTest cases pass, including the
+  separate animation pipeline (21 diagnostics disabled; J26, 2026-11-20).
 - The stopped G7c audio audit is recovered and finished. Calls now follow `Vocalize`, social,
   play and documented feeding cues rather than a timer; takes do not repeat immediately, spatial
   pan is capped at 0.60, birds fade with daylight, crowd level follows its people, and footsteps

@@ -719,14 +719,10 @@ TEST_P(VisitorZooHabitat, SaveLoadInTheMiddleOfTheVisit) {
 }
 
 // Nobody is missing and nobody is one too many: every promised species lives in its habitat,
-// in a group its species holds, with ground and shelter for all of them.
-//
-// `grown` is the zoo after young were born: the group still is one its species holds, but the
-// habitats are laid out for the animals they were given, and what a grown group lacks in
-// shelter and ground is counted and printed, not refused (docs/RELIABILITY.md, "Occupancy").
-void ExpectOccupancy(Zoo& zoo, const std::string& when, bool grown = false) {
+// in a group its species holds, with ground and shelter for all of them. Managed breeding
+// reserves nursery room, so this remains strict after births as well as on opening day.
+void ExpectOccupancy(Zoo& zoo, const std::string& when) {
     SCOPED_TRACE(when);
-    std::map<std::string, std::string> shortOf;
     ExpectResidents(zoo);
     const Env env = zoo.MakeEnv();
     std::map<std::uint32_t, int> heads;
@@ -745,16 +741,8 @@ void ExpectOccupancy(Zoo& zoo, const std::string& when, bool grown = false) {
         const GroupInfo group = zoo.Fauna().GroupOf(env, animal);
         EXPECT_LE(group.sameSpecies, def.groupMax) << home->name << " holds too many " << def.id;
         const float space = EvaluateHabitat(def, home->stats, group).space;
-        if (grown) {
-            if (home->stats.shelterCapacity < group.allAnimals || space < 0.99f) {
-                shortOf[home->name] = std::to_string(group.allAnimals) + " animals, shelter for " +
-                                      std::to_string(home->stats.shelterCapacity) + ", space " +
-                                      std::to_string(space);
-            }
-        } else {
-            EXPECT_GE(home->stats.shelterCapacity, group.allAnimals) << home->name;
-            EXPECT_GE(space, 0.99f) << home->name << " is crowded";
-        }
+        EXPECT_GE(home->stats.shelterCapacity, group.allAnimals) << home->name;
+        EXPECT_GE(space, 0.99f) << home->name << " is crowded";
         ++heads[home->id.value];
     }
     std::cout << "OCCUPANCY seed=" << zoo.Config().seed << ' ' << when << " day=" << zoo.Time().Day()
@@ -765,10 +753,6 @@ void ExpectOccupancy(Zoo& zoo, const std::string& when, bool grown = false) {
         std::cout << ' ' << heads[home.id.value];
     }
     std::cout << '\n';
-    for (const auto& [name, what] : shortOf) {
-        std::cout << "OCCUPANCY seed=" << zoo.Config().seed << ' ' << when << ": " << name << " has grown to "
-                  << what << '\n';
-    }
 }
 
 // A day and a week of the zoo's own life (the pace of the management game: a day in 14,400
@@ -785,7 +769,7 @@ TEST_P(VisitorZooHabitat, NoHabitatEmptyOrOverFullAtTheStartAfterADayAndAfterAWe
             zoo.Step();
         }
         if (day == 1 || day == days) {
-            ExpectOccupancy(zoo, "after day " + std::to_string(day), zoo.Fauna().Births() > 0);
+            ExpectOccupancy(zoo, "after day " + std::to_string(day));
         }
     }
     EXPECT_EQ(zoo.Fauna().Escapes(), 0);
@@ -809,10 +793,10 @@ void CheckVisitOccupancy(Zoo& zoo, std::int64_t fill, std::int64_t steps) {
         }
     }
     if (firstBirth >= 0) {
-        std::cout << "OCCUPANCY seed=" << zoo.Config().seed << " the first birth of the visit after " << firstBirth
-                  << " steps (" << firstBirth / (kTicksPerSecond * 60) << " minutes of play)\n";
+        std::cout << "OCCUPANCY seed=" << zoo.Config().seed << " the first birth of the visit after "
+                  << firstBirth << " steps (" << firstBirth / (kTicksPerSecond * 60) << " minutes of play)\n";
     }
-    ExpectOccupancy(zoo, "after " + std::to_string(steps) + " steps of the visit", zoo.Fauna().Births() > 0);
+    ExpectOccupancy(zoo, "after " + std::to_string(steps) + " steps of the visit");
     EXPECT_EQ(zoo.Fauna().Escapes(), 0);
     EXPECT_EQ(zoo.Fauna().Deaths(), 0);
 }
@@ -854,8 +838,8 @@ TEST_P(VisitorZooHabitat, EveryBoardFacesThePathAndTellsOfTheAnimalsBehindIt) {
             continue;
         }
         ++boards;
-        SCOPED_TRACE("board " + std::to_string(board.id.value) + " at " + std::to_string(board.position.x) + ", " +
-                     std::to_string(board.position.z));
+        SCOPED_TRACE("board " + std::to_string(board.id.value) + " at " + std::to_string(board.position.x) +
+                     ", " + std::to_string(board.position.z));
         const TileCoord tile = World::TileAt(board.position);
         // Outside the barrier: neither in a habitat nor on the reserved ground before one.
         EXPECT_FALSE(zoo.Habitats().At(tile));
@@ -926,8 +910,8 @@ TEST_P(VisitorZooHabitat, EveryBoardFacesThePathAndTellsOfTheAnimalsBehindIt) {
     for (const Enclosure& home : zoo.Habitats().All()) {
         EXPECT_GE(own[home.id.value], 1) << home.name << " has no board of its own in front of it";
     }
-    std::cout << "BOARDS seed=" << zoo.Config().seed << " all=" << boards << " away from habitats=" << elsewhere
-              << '\n';
+    std::cout << "BOARDS seed=" << zoo.Config().seed << " all=" << boards
+              << " away from habitats=" << elsewhere << '\n';
     EXPECT_EQ(boards, static_cast<int>(zoo.Habitats().All().size()) + elsewhere);
 }
 
