@@ -237,6 +237,49 @@ TEST(VisitorWalkTests, PeopleWhoStandKeepTheirOwnGround) {
     EXPECT_GT(standing, 1000);
 }
 
+TEST(VisitorWalkTests, AStallQueueWaitsForAnUnrelatedStandingVisitor) {
+    const std::unique_ptr<Zoo> zoo = StarterZoo();
+    AdvanceToHour(*zoo, 11.0f);
+    float closest = std::numeric_limits<float>::infinity();
+    VisitorId queued;
+    VisitorId other;
+    VisitorActivity otherActivity = VisitorActivity::Count;
+    VisitorGoal otherGoal = VisitorGoal::Count;
+    std::int64_t closestTick = 0;
+    std::int64_t checked = 0;
+    for (int step = 0; step < 6000; ++step) {
+        zoo->Step();
+        const std::vector<Visitor>& all = zoo->Guests().All();
+        for (const Visitor& inLine : all) {
+            if (inLine.activity != VisitorActivity::Queueing ||
+                (inLine.goal != VisitorGoal::Food && inLine.goal != VisitorGoal::Drink)) {
+                continue;
+            }
+            for (const Visitor& standing : all) {
+                if (standing.group == inLine.group || standing.activity == VisitorActivity::Inside ||
+                    Travelling(standing) || standing.speed != 0.0f || standing.goal == VisitorGoal::Food ||
+                    standing.goal == VisitorGoal::Drink) {
+                    continue;
+                }
+                ++checked;
+                const float distance = Distance(inLine.position, standing.position);
+                if (distance < closest) {
+                    closest = distance;
+                    queued = inLine.id;
+                    other = standing.id;
+                    otherActivity = standing.activity;
+                    otherGoal = standing.goal;
+                    closestTick = zoo->Time().tick;
+                }
+            }
+        }
+    }
+    EXPECT_GT(checked, 1000);
+    EXPECT_GE(closest, 0.3f) << "queued visitor " << queued.value << " came within " << closest
+                             << " m of standing visitor " << other.value << " (" << ToString(otherActivity)
+                             << " for " << ToString(otherGoal) << ") at tick " << closestTick;
+}
+
 TEST(VisitorWalkTests, ASitterSitsOnItsSeatAndFacesOut) {
     const std::unique_ptr<Zoo> zoo = StarterZoo();
     AdvanceToHour(*zoo, 11.0f);

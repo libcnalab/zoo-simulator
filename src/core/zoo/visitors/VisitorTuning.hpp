@@ -94,8 +94,8 @@ inline constexpr float kRowM = 0.85f;
 inline constexpr float kChildAheadM = 1.9f;
 /// Two people who stand (not at a fence, on a seat or in a line) keep this far apart.
 inline constexpr float kRoomM = 0.5f;
-/// ...and that far from the first so many places of a stall's line.
-inline constexpr std::size_t kLineKeptClear = 8;
+/// ...and that far from every place which the queue limit can occupy.
+inline constexpr std::size_t kLineKeptClear = 16;
 /// A watcher looks at an animal up to this far off the straight line across the fence, rad,
 /// picks another every kAimSeconds or so and turns to it at kAimEase times what is left of
 /// the turn a second, never slower than kAimTurn rad/s.
@@ -135,6 +135,7 @@ inline constexpr int kCapacityPerCounter = 6;
 inline constexpr int kQueueLimit = 16;
 inline constexpr float kQueuePatienceSeconds = 24.0f;
 inline constexpr float kQueueSpacingM = 0.7f;
+inline constexpr float kQueueBodyM = 0.3f;  ///< a line waits rather than entering a standing person
 inline constexpr int kQueuePlaces = 18;
 /// Seats and bins farther than this from where a group stands are not looked for.
 inline constexpr float kSeatSearchM = 30.0f;

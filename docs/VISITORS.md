@@ -135,9 +135,10 @@ a line:
 - **Standing.** People who stand to eat, read a board or use a bin, and those
   who find no seat, are placed by `Stepper::MakeRoom`: the group's little circle
   is moved as a whole (rings of 0.8 m) to where every member is `kRoomM` from
-  everybody already standing or bound for a place there, and from the first
-  `kLineKeptClear` places of a stall's line; when that fails, or when the places
-  of the group fell on top of one another, each member finds its own.
+  everybody already standing or bound for a place there, and from all
+  `kLineKeptClear` usable places and intervening segments of a stall's line;
+  when that fails, or when the places of the group fell on top of one another,
+  each member finds its own.
 - **Watching.** Places at a fence are 0.5 m apart, the front row 0.34 m from the
   rail. `Stepper::Aim` gives each watcher an animal of the enclosure to look at
   (within `kAimSpread` of the straight line across the fence; mostly the one
@@ -168,7 +169,7 @@ All in `VisitorTuning.hpp`; the more important ones:
 | `kTurnWalking`, `kTurnOnTheSpot` | 3.4, +2.6 rad/s | turning at full stride, and more at a standstill |
 | `kAheadM`, `kShoulderM`, `kOwnShoulderM`, `kFollowM` | 1.4, 0.55, 0.4, 0.5 m | whom a walker goes round |
 | `kAbreastM`, `kRowM`, `kChildAheadM` | 0.62, 0.85, 1.9 m | a group's formation |
-| `kRoomM`, `kLineKeptClear` | 0.5 m, 8 | room between people who stand; places of a queue kept free |
+| `kRoomM`, `kLineKeptClear` | 0.5 m, 16 | room between people who stand; every occupiable queue place kept free |
 | `kAimSpread`, `kAimSeconds`, `kAimEase`, `kAimTurn` | 0.5 rad, 2.5 s, 4 /s, 0.5 rad/s | a watcher's look at an animal |
 | `kHungerPerHour` .. `kTirednessPerHour` | 0.06 .. 0.09 | needs per game hour |
 | `kUrgent`, `kNotable`, `kHandyM` | 0.62, 0.4, 36 m | when a need is seen to |
@@ -337,6 +338,15 @@ preserves the history while old saves and old readers retain their one-building
 fallback (2026-11-20). The complete suite passes all 290 active cases, including
 the 367.51-second animation test; 21 diagnostics remain disabled.
 
+J40 closes the live gap between a mapped stall line and somebody already
+standing beside it. Standing plans reserve the continuous line through all 16
+places a queue may occupy, not only eight sampled points; while shuffling, a
+whole queue also waits before entering an unrelated stationary visitor. A
+6,000-tick regression inspects every tick and keeps active food and drink lines
+at least 0.3 m from eating, watching, reading and idle visitors (2026-11-20).
+The complete suite passes all 291 active cases, including the 363.81-second
+animation test; 21 diagnostics remain disabled.
+
 ## Known limits
 
 - Peak presence is close to the day's arrivals: visits are long against the
@@ -346,5 +356,3 @@ the 367.51-second animation test; 21 diagnostics remain disabled.
   began to eat right behind the rail may stand within arm's length of them.
 - Two walkers of a group can still be inside each other for a moment where a
   path narrows (about 1 % of the pairs in `VisitorWalkTests`).
-- The line of a stall is laid from the map alone; people who stood there before
-  the first customer came are not moved.

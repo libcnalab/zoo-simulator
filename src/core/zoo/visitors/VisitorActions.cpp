@@ -577,13 +577,37 @@ void Stepper::ActQueue(Group g) {
     // Shuffle up as the line shortens.
     const float turn = kTurnRadiansPerSecond * kTickSeconds;
     const int ahead = scr.ahead[g.first];
+    bool bystander = false;
+    for (std::size_t i = g.first; i < g.end && !bystander; ++i) {
+        const Visitor& v = list[i];
+        const std::size_t place =
+            std::min(static_cast<std::size_t>(ahead) + (i - g.first), site.line.size() - 1);
+        const Vec2 to = site.line[place] - v.position;
+        const float distance = Length(to);
+        if (distance <= 0.03f) {
+            continue;
+        }
+        const float step = std::min(distance, 0.9f * kTickSeconds);
+        const Vec2 next = v.position + to * (step / distance);
+        for (std::size_t other = 0; other < list.size() && !bystander; ++other) {
+            if ((other >= g.first && other < g.end) || list[other].activity == VisitorActivity::Inside ||
+                Travelling(list[other].activity) || list[other].goal == VisitorGoal::Food ||
+                list[other].goal == VisitorGoal::Drink) {
+                continue;
+            }
+            bystander = list[other].speed == 0.0f &&
+                        DistanceSquared(next, list[other].position) < kQueueBodyM * kQueueBodyM;
+        }
+    }
     for (std::size_t i = g.first; i < g.end; ++i) {
         Visitor& v = list[i];
         const std::size_t place =
             std::min(static_cast<std::size_t>(ahead) + (i - g.first), site.line.size() - 1);
         const Vec2 to = site.line[place] - v.position;
         const float distance = Length(to);
-        if (distance > 0.03f) {
+        if (bystander) {
+            v.speed = 0.0f;
+        } else if (distance > 0.03f) {
             const float step = std::min(distance, 0.9f * kTickSeconds);
             v.position += to * (step / distance);
             v.speed = step / kTickSeconds;

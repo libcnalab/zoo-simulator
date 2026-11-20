@@ -272,6 +272,9 @@ void Stepper::MakeRoom(Group g, Plan& plan, const Vec2* focus) {
             continue;
         }
         for (std::size_t i = 0; i < site.line.size() && i < kLineKeptClear; ++i) {
+            if (i > 0) {
+                spots.push_back((site.line[i - 1] + site.line[i]) * 0.5f);
+            }
             spots.push_back(site.line[i]);
         }
     }

@@ -372,6 +372,13 @@ whatever you take up (`docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `docs/V
   visitor, save round-trip and corruption tests pass; the complete suite passes all 290 active
   cases, including the 367.51-second animation test, with 21 diagnostics disabled
   (J39, 2026-11-20).
+- J40 keeps an active food or drink queue out of unrelated people who are already standing.
+  `MakeRoom` now reserves the continuous line through all 16 occupiable places rather than eight
+  isolated points, and a shuffling queue waits as a whole before entering an eating, watching,
+  reading or idle visitor. A 6,000-tick every-frame regression covers the former gap while the
+  two-day visitor simulation retains normal purchases and sub-three-second longest standstill
+  (J40, 2026-11-20). The complete suite passes all 291 active cases, including the 363.81-second
+  animation test, with 21 diagnostics disabled.
 - The stopped G7c audio audit is recovered and finished. Calls now follow `Vocalize`, social,
   play and documented feeding cues rather than a timer; takes do not repeat immediately, spatial
   pan is capped at 0.60, birds fade with daylight, crowd level follows its people, and footsteps
