@@ -698,6 +698,39 @@ TEST(Keeper, AtWorkAmongVisitorsAfterTheMorningFill) {
     EXPECT_GT(closestWalkingVisitor, 0.2f) << "a visitor walked through a member of staff";
 }
 
+// The cleaner is not merely animated beside a bin: a daytime sweep removes real
+// litter before automatic care's midnight safety net.
+TEST(Keeper, TheCleanerSweepsRealLitterBeforeMidnight) {
+    const auto zoo = VisitorZoo();
+    FillForVisit(*zoo, VisitStartOptions{.fillTicks = 6000});
+    zoo->SetDayPace(12);
+    const std::int64_t day = zoo->Time().Day();
+    std::size_t mostLitter = zoo->Guests().LitterOnGround().size();
+    bool appliedSweep = false;
+    bool removedLitter = false;
+    for (int step = 0; step < 12000 && !removedLitter; ++step) {
+        const std::size_t before = zoo->Guests().LitterOnGround().size();
+        bool appliesNow = false;
+        for (const StaffMember& member : zoo->Keepers().All()) {
+            const StaffTask* task = member.Task();
+            if (member.role == StaffRole::Cleaner && member.working && task != nullptr &&
+                task->work == StaffActivity::Sweep &&
+                member.ticksLeft == (std::max(task->ticks, 1) + 1) / 2) {
+                appliesNow = true;
+            }
+        }
+        zoo->Step();
+        const std::size_t after = zoo->Guests().LitterOnGround().size();
+        mostLitter = std::max(mostLitter, after);
+        appliedSweep |= appliesNow;
+        removedLitter |= appliesNow && after < before;
+    }
+    EXPECT_EQ(zoo->Time().Day(), day) << "the night shift, not the cleaner, removed the litter";
+    EXPECT_GT(mostLitter, 0U) << "the run never exercised litter";
+    EXPECT_TRUE(appliedSweep) << "the run never reached the cleaner's sweep effect";
+    EXPECT_TRUE(removedLitter) << "a visible daytime sweep removed no litter";
+}
+
 // How often a visitor finds a keeper at a habitat: figures for docs/KEEPERS.md, not a check.
 // Two shares of the time for each habitat: its keeper at a job there, and its keeper at a job
 // or carrying or pushing to one within 20 m.

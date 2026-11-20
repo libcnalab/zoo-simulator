@@ -123,6 +123,12 @@ automatic care alone, a two-hour longest spell against three, and worst hunger 0
 the 3,600-tick public morning still records zero staff/animal body-clearance approaches. All 285
 active CTest cases pass, including the 366.73-second animation test; 21 diagnostics remain disabled.
 
+J38 locks down the cleaner's existing daytime effect rather than merely its animation. A public
+visit produces ground litter, the regression waits for the exact midpoint of a visible sweep and
+observes the count fall before the day changes; automatic midnight cleaning remains only the net
+behind anything the round did not reach. The complete suite passes all 289 active cases, including
+the 362.86-second animation test; 21 diagnostics remain disabled.
+
 J21 spreads outside work around habitats which have a planted stand-off strip. `BarrierStands`
 used to stop as soon as it found the service gate, even if that left Elephant Valley and Rhino
 Hollow with one place for every feeding, fence check and sweep. It now keeps both the direct gate

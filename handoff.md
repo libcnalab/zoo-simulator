@@ -359,6 +359,12 @@ whatever you take up (`docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `docs/V
   repeats the alarm. All 30 focused visitor/save/hash cases pass; the complete suite passes all
   288 active cases, including the 365.89-second animation test, with 21 diagnostics disabled
   (J37, 2026-11-20).
+- J38 corrects the stale claim that litter waits for midnight even though the staffed zoo already
+  has a cleaner. A deterministic public-visit regression creates ground litter, watches the exact
+  midpoint of the cleaner's visible sweep remove it, and proves the calendar has not crossed into
+  the automatic night shift. The focused test passes in 4.10 seconds; the complete suite passes all
+  289 active cases, including the 362.86-second animation test, with 21 diagnostics disabled
+  (J38, 2026-11-20).
 - The stopped G7c audio audit is recovered and finished. Calls now follow `Vocalize`, social,
   play and documented feeding cues rather than a timer; takes do not repeat immediately, spatial
   pan is capped at 0.60, birds fade with daylight, crowd level follows its people, and footsteps

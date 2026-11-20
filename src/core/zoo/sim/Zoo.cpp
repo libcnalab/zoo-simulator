@@ -298,8 +298,8 @@ void Zoo::CloseDay(std::int64_t day) {
     const int guests = visitors_.ArrivedToday();
     visitors_.CloseDay();
     if (config_.autoCare) {
-        // Until the zoo has cleaners of its own the night shift empties the bins
-        // and sweeps the paths.
+        // The night shift is the auto-care safety net behind a visible cleaner's
+        // daytime round: empty anything and sweep any litter it did not reach.
         std::vector<PropId> bins;
         for (const Prop& prop : objects_.Props()) {
             if (catalog_.props[static_cast<std::size_t>(prop.def)].role == PropRole::Bin &&

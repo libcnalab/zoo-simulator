@@ -46,8 +46,9 @@ and is saved with the zoo. The game draws each visitor as a CNA avatar.
   alarm per game hour. The tick of that alarm is saved, so loading during the
   cooldown cannot repeat it for a second crowd.
 - **Litter.** Wrappers go into a bin when one is within `kBinSearchM`, on the
-  ground otherwise. Litter in sight lowers happiness. With `autoCare` the bins
-  are emptied and the litter swept at midnight; staff will take that over.
+  ground otherwise. Litter in sight lowers happiness. The cleaner empties bins
+  on its daytime round and sweeps the nearest ground litter within 25 m of each;
+  with `autoCare`, the midnight shift remains a safety net for anything left.
 
 ## Time
 
@@ -315,12 +316,17 @@ visitor/save/hash cases pass, and the complete suite passes all 288 active cases
 including the 365.89-second animation test; 21 diagnostics remain disabled
 (2026-11-20).
 
+J38 removes a stale limitation from this document and makes the existing daytime
+cleaning behaviour a regression: a filled public visit produces real litter, the
+test observes the exact midpoint at which the cleaner's visible sweep applies,
+and the ground-litter count falls while the calendar is still on the same day
+(2026-11-20). The complete suite passes all 289 active cases, including the
+362.86-second animation test; 21 diagnostics remain disabled.
+
 ## Known limits
 
 - Peak presence is close to the day's arrivals: visits are long against the
   opening hours.
-- Nothing is swept before midnight, so litter complaints pile up during a busy
-  day until cleaners exist.
 - A group remembers only the last stall whose queue it gave up on.
 - Walkers go round each other, staff and the player; people who stand do not
   step aside for anybody, and a watcher who comes to a fence after somebody
