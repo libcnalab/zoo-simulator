@@ -807,13 +807,17 @@ void Bush(Maker& k, const Foliage& foliage, int blobs, float spread, float squas
         const float distance = i == 0 ? 0.0f : spread * k.R(0.5f, 1.1f);
         const float tall = H * (i == 0 ? 0.5f : k.R(0.28f, 0.46f)) * squash;
         const float wide = k.def.radiusM * k.R(0.7f, 1.12f);
-        Crown(k, foliage, Polar(angle, distance, tall * 0.8f), Vector3(wide, tall, wide),
-              std::clamp(wide * 1.1f, 0.5f, 0.8f), {.lumpiness = 0.25f, .flatBase = 0.75f, .cover = 1.5f});
+        // At arm's length a bush is many twig-end sprays, not four coarse green cushions. Keep
+        // the former card size in the far form: its atlas cell already represents four sprays.
+        const float coarseCard = std::clamp(wide * 1.1f, 0.5f, 0.8f);
+        const float card = k.far ? coarseCard : std::clamp(wide * 0.88f, 0.42f, 0.64f);
+        Crown(k, foliage, Polar(angle, distance, tall * 0.8f), Vector3(wide, tall, wide), card,
+              {.lumpiness = 0.25f, .flatBase = 0.75f, .cover = k.far ? 1.5f : 1.2f});
     }
     if (twigs) {
         MeshWriter& bark = k.Bark();
         // Stems from the root, which show through the leaves; none stands out above them.
-        for (int i = 0; i < 4; ++i) {
+        for (int i = 0; i < (k.far ? 4 : 7); ++i) {
             const float angle = k.R(0.0f, 2.0f * kPi);
             Limb(k, bark, Polar(angle, 0.1f, -0.1f),
                  Polar(angle, k.R(0.3f, 0.6f), H * squash * k.R(0.4f, 0.6f)), 0.03f, 0.012f, 4);

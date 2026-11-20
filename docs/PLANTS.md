@@ -25,7 +25,7 @@ crown, the wood, a strip under every frond.
 | palm (feather palm) | ringed stem (the frond scars as steps, swollen foot), a fibrous crown shaft, 19 to 23 fronds from the upright young ones to the hanging old ones: each frond is a rachis with leaflets painted on two rows of cards along an arching line, an opaque strip under it; two to four dead brown fronds hang down the stem |
 | bamboo | 13 to 16 jointed canes (swollen nodes as high as one can see them), close at the foot, leaning apart and nodding over at the top, fans of narrow leaves on twigs from the upper nodes; solid blades among the leaves dapple the ground |
 | fern | a shuttlecock of 15 to 19 twice-divided fronds, the young ones upright, the old ones arching out, over a low dark heart |
-| shrub, scrub | two to five masses of sprays over hearts, stems from the root, and a few tufts of dry grass at the foot (what grazers leave under a thorny bush) |
+| shrub, scrub | two to five masses of fine twig-end sprays over hearts, seven visible stems from the root, and a few tufts of dry grass at the foot (what grazers leave under a thorny bush) |
 | juniper | three or four tall masses of needle sprays |
 | flower bed | a stone kerb, soil, a cushion of leaves, 30 clumps of flower heads (daisies and umbels, the colour from the material) leaning every way, in patches of one colour |
 | hedge (fence style) | a dark core box a hand inside the leaves, coated with leaf sprays lying against both faces and the top like tiles, the top ones standing a little proud |
@@ -66,6 +66,22 @@ Forest view and a close crop are in `evidence/leaf-litter-j9-2026-11-20.jpg`. Th
 `PlantModels` regression checks all five broadleaf looks at 64 litter triangles each, a zero-triangle
 far litter part, and a pine without litter.
 
+## Fine shrubs at visitor distance (J33, 2026-11-20)
+
+The near shrub and scrub forms use leaf-spray cards about one fifth smaller than the old cards,
+with seven rather than four stems visible through the foliage. Their lower coverage keeps this a
+silhouette refinement rather than an indiscriminate geometry increase. The far form retains the
+old larger four-spray cards and four stems exactly: the detail is for an arm's-length planted
+strip, not for a bush fifty metres away.
+
+An initial finer setting looked good but raised the real visitor zoo's scenery from 2,258,980 to
+2,708,192 triangles (+19.9%); it was rejected. The retained setting reports 2,364,188 triangles
+(+105,208, 4.66%) in the same Lion Rock run and the same 472 draw calls. A seed-1 savanna shrub
+is 552 triangles rather than 500, while its far form remains 128. The `PlantModels` regression
+requires at least 280 near leaf-spray triangles, fewer than 160 far ones, a greater-than-fourfold
+near/far spray ratio, and a sub-900-triangle near model. The opened close crop is
+`evidence/fine-shrubs-j33-2026-11-20.jpg`.
+
 ## Distance form
 
 `BuildPlant(..., PlantDetail::Far)` writes the same individual with the same random numbers in
@@ -74,7 +90,7 @@ out: one spray card in four, twice the size and carrying all four sprays of its 
 same leaves at the same size cover the same area); hearts, trunks and limbs with fewer sides;
 limbs under 7 cm in radius, roots and twigs left out; a palm's rings as four pieces; every other
 fern frond and grass tuft, one bamboo fan and one flower clump in three (each larger). A far plant has about a quarter of the
-triangles of the near one (savanna shrub 500 -> 128, acacia 1,622 -> 460, oak 2,184 -> 614,
+triangles of the near one (savanna shrub 552 -> 128, acacia 1,622 -> 460, oak 2,184 -> 614,
 palm 3,036 -> 672).
 
 The far form of a grove is merged into **two meshes** whatever grows in it: the opaque parts in

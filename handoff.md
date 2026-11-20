@@ -315,6 +315,15 @@ whatever you take up (`docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `docs/V
   species aliases across the fourteen habitats resolve in a zero-tick offscreen smoke. The 22
   game-side tests and the complete suite pass: 281 active tests including the 365.72-second
   animation pipeline, with 21 diagnostics disabled as intended (J32, 2026-11-20).
+- J33 refines the shrubs seen at arm's length along the planted fronts. Near shrub and scrub
+  models use leaf sprays about one fifth smaller and seven visible stems instead of four; their
+  far forms retain the old geometry. A first +19.9% scene setting was rejected. The retained
+  version raises the same Lion Rock scene only 2,258,980 -> 2,364,188 triangles (+4.66%) with
+  draw calls unchanged at 472; one savanna shrub is 500 -> 552 triangles and stays 128 far.
+  All 23 game-side tests pass, including the new direct near/far budget regression. Together with
+  the core and 365.72-second animation passes immediately before this game-only change, the suite
+  has 282 active passes and 21 disabled diagnostics. The opened crop is
+  `docs/evidence/fine-shrubs-j33-2026-11-20.jpg` (J33, 2026-11-20).
 - The stopped G7c audio audit is recovered and finished. Calls now follow `Vocalize`, social,
   play and documented feeding cues rather than a timer; takes do not repeat immediately, spatial
   pan is capped at 0.60, birds fade with daylight, crowd level follows its people, and footsteps
@@ -408,7 +417,7 @@ sound unknown); saves there live only in the page's memory.
 Keepers (`docs/KEEPERS.md`; open: dangerous habitats never entered), ground and water edges
 (`docs/GROUND.md`; open: steep banks at deep pools, props'
 collision floor still at the simulation's height in `Walker.cpp`), plants (`docs/PLANTS.md`;
-open: far cut-out edges aliased, reeds unused, fill cost of alpha-tested cards). The new first
+open: far cut-out edges aliased and fill cost of alpha-tested cards). The new first
 priority is memory (section 0).
 
 ### 4.4 Reliability audit (G6b): merged, see `docs/RELIABILITY.md` top

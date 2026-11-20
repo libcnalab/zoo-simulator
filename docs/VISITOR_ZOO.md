@@ -522,8 +522,9 @@ The game's own line at the start of a visit (seed 1, 10:30): 245 watching, betwe
 Wood) and 30 (Ostrich Rise) at every one of the fourteen habitats. Both
 `DISABLED_VisibleAndContainedFull` variants pass. The golden fill hashes were recorded again.
 
-The strip's shrubs are still the same coarse blobs as every other bush. The scripted `--stand`
-chooser no longer mistakes a keeper gate or a convenient service-mesh side for the public front:
+The strip's arm's-length shrubs now use smaller leaf sprays and seven visible stems while their
+far forms retain the old lean geometry. The scripted `--stand` chooser no longer mistakes a
+keeper gate or a convenient service-mesh side for the public front:
 glass and moat edges receive a strong preference, rail and cable a smaller one, and end panels
 are devalued. These are deliberately soft preferences, so a tree-obscured glass panel may still
 lose to an unobstructed animal rather than producing a formally correct but useless photograph.

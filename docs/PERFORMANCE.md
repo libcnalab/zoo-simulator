@@ -269,6 +269,16 @@ triangles a frame 4.67 -> 3.29 million, draw calls 478 -> 516, resident 2,190 ->
 scenery the view runs at 147 fps and with every grove far at about 71: the rest of the scenery's
 cost is fill by overlapping alpha-tested cards more than triangles (`docs/PLANTS.md`).
 
+## Finer near shrubs (J33, 2026-11-20)
+
+Smaller leaf-spray cards and three extra visible stems apply only to near shrub and scrub models;
+the far forms are byte-for-geometry unchanged. The first visually useful setting was rejected
+because it raised the real visitor-zoo scenery 2,258,980 -> 2,708,192 triangles (+19.9%). The
+retained lower-coverage setting raises it only to 2,364,188 (+105,208, 4.66%) and keeps 472 draw
+calls. A seed-1 savanna shrub is 500 -> 552 triangles while its far form stays at 128. This is a
+geometry budget, not an fps claim; the alpha-tested fill cost remains the more important open
+plant expense. The direct near/far regression and opened crop are described in `docs/PLANTS.md`.
+
 ## After the ground (G1 to G1c, 2026-11-14)
 
 Ground painting, mip levels, meshes and the detail textures run as jobs on up to 6 threads; the
