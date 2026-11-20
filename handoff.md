@@ -207,7 +207,7 @@ tests pass. Nobody listened to the audio; preserve that qualification.
 - First-generation stylised models still: wolf, camel, meerkat, ostrich, kangaroo; bears are
   sculpt-based but crude (`docs/ANIMALS.md`; pipeline in `tools/animals/`, its tests
   `python3 -m unittest discover -s tools/animals/tests`, about 10 minutes).
-- No juvenile model for meerkat, ostrich, camel, kangaroo, flamingo (drawn as scaled
+- No juvenile model for ostrich, camel, kangaroo, flamingo (drawn as scaled
   adults); the brown/polar bear cub models exist but are unused (bears live as pairs).
 - `wolf_juvenile` is now a real older-pup variant rather than a scaled adult: 0.46 m shoulder,
   shorter body and muzzle, broader skull, larger eyes, ears and paws, lighter coat, 15,528
@@ -216,6 +216,14 @@ tests pass. Nobody listened to the audio; preserve that qualification.
   independent fresh export. All 108 animal-pipeline tests pass; a real Wolf Ridge run selected
   the model for one-year-old Rosa. The inspected comparison and habitat evidence is
   `docs/evidence/wolf-juvenile-j1-2026-11-20.jpg` (J1, 2026-11-20).
+- `meerkat_juvenile` now replaces the scaled adults used for both 0.15-year-old pups in the
+  Visitor Zoo: 0.17 m shoulder, rounder and proportionally broader skull, 72 % face length,
+  larger eyes, ears and paws, lighter coat, 8,576 triangles, 33 bones and ten clips. Its
+  juvenile-scaled sentry and dig retain grounded hind feet, paws and tail. The adult export
+  remained byte-for-byte identical, the production pup matches an independent fresh export,
+  and all 109 pipeline tests pass. A real habitat run loaded the variant and selected
+  two-month-old Pavel; the inspected evidence is
+  `docs/evidence/meerkat-juvenile-j2-2026-11-20.jpg` (J2, 2026-11-20).
 - Dedicated clips now cover meerkat sentry/dig, penguin and flamingo preening, flamingo filter
   feeding, camel and giraffe rumination, ostrich and elephant dust-bathing, and shallow wallowing
   for bears, tigers and rhinoceroses (elephants reuse their scoop/toss as a wet toss). Penguin

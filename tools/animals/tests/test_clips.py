@@ -21,6 +21,7 @@ from zoogen.rig import Pose, Solver, quat_from_matrix, rot_x, rot_y, rot_z  # no
 
 CATS = ["lion", "lion_female", "lion_juvenile", "tiger"]
 SPECIES = ["lion", "lion_female", "lion_juvenile", "tiger", "wolf", "wolf_juvenile",
+           "meerkat_juvenile",
            "brown_bear", "polar_bear",
            "brown_bear_juvenile", "polar_bear_juvenile",
            "zebra", "zebra_female", "zebra_juvenile", "rhino", "camel", "elephant", "giraffe",
@@ -210,6 +211,39 @@ class ClipTests(unittest.TestCase):
 
 
 class AnatomyTests(unittest.TestCase):
+    def test_meerkat_pup_has_juvenile_proportions_and_variant_metadata(self):
+        adult = importlib.import_module("species.meerkat").make_spec()
+        pup = importlib.import_module("species.meerkat_juvenile").make_spec()
+        adult_parts = {part.name: part for part in adult.parts}
+        pup_parts = {part.name: part for part in pup.parts}
+        adult_height = adult.meta["shoulder_height_m"]
+        pup_height = pup.meta["shoulder_height_m"]
+        self.assertGreater(pup_parts["skull"].rings[1].ry / pup_height,
+                           1.18 * adult_parts["skull"].rings[1].ry / adult_height)
+        self.assertGreater(pup_parts["eye.L"].rings[0].ry / pup_height,
+                           1.3 * adult_parts["eye.L"].rings[0].ry / adult_height)
+        self.assertGreater(pup_parts["front_paw.L"].rings[-1].ry / pup_height,
+                           1.15 * adult_parts["front_paw.L"].rings[-1].ry / adult_height)
+        adult_face = (adult_parts["nose"].rings[-1].c[0] -
+                      adult_parts["skull"].rings[0].c[0]) / adult.meta["body_length_m"]
+        pup_face = (pup_parts["nose"].rings[-1].c[0] -
+                    pup_parts["skull"].rings[0].c[0]) / pup.meta["body_length_m"]
+        self.assertLess(pup_face, .75 * adult_face)
+        self.assertEqual(pup.meta["variant_of"], "meerkat")
+        self.assertEqual(pup.meta["variant"], "juvenile")
+        self.assertAlmostEqual(pup.meta["relative_height"], pup_height / adult_height)
+        root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+        with open(os.path.join(root, "assets", "animals", "meerkat_juvenile.json")) as source:
+            manifest = json.load(source)
+        self.assertEqual(manifest["name"], "meerkat_juvenile")
+        self.assertEqual(manifest["meta"], pup.meta)
+        self.assertLessEqual(manifest["triangles"], 10000)
+        clips = {clip["name"]: clip for clip in manifest["clips"]}
+        self.assertEqual(set(clips), {"idle", "walk", "trot", "eat", "drink", "rest",
+                                      "sleep", "vocalize", "sentry", "dig"})
+        self.assertAlmostEqual(clips["walk"]["speed"], .42, delta=.02)
+        self.assertAlmostEqual(clips["trot"]["speed"], 1.05, delta=.02)
+
     def test_wolf_pup_has_juvenile_proportions_and_variant_metadata(self):
         adult = importlib.import_module("species.wolf").make_spec()
         pup = importlib.import_module("species.wolf_juvenile").make_spec()
@@ -280,19 +314,20 @@ class AnatomyTests(unittest.TestCase):
                                        species + "/" + end)
 
     def test_sentinel_has_planted_hind_feet_and_a_grounded_tail(self):
-        spec, solver = make_solver("meerkat")
-        idle = next(clip for clip in spec.clips(solver) if clip.name == "idle")
-        for phase in (0, .25, .5, .75):
-            world = solver.solve(idle.pose(phase))
-            for key in ("HL", "HR"):
-                toe = world[spec.rig.legs[key].toes][:3, 3]
-                self.assertAlmostEqual(float(toe[2]), float(solver.toe_base(key)[2]))
-            tip = solver.point(world, "tail4", np.array([-.332, 0, .062]))
-            self.assertAlmostEqual(float(tip[2]), .003, places=6)
-            pelvis = world["hips"][:3, 3]
-            shoulder = world["chest"][:3, 3]
-            self.assertGreater(float(shoulder[2] - pelvis[2]), .12)
-            self.assertLess(abs(float(shoulder[0] - pelvis[0])), .04)
+        for species, scale in (("meerkat", 1.0), ("meerkat_juvenile", .68)):
+            spec, solver = make_solver(species)
+            idle = next(clip for clip in spec.clips(solver) if clip.name == "idle")
+            for phase in (0, .25, .5, .75):
+                world = solver.solve(idle.pose(phase))
+                for key in ("HL", "HR"):
+                    toe = world[spec.rig.legs[key].toes][:3, 3]
+                    self.assertAlmostEqual(float(toe[2]), float(solver.toe_base(key)[2]))
+                tip = solver.point(world, "tail4", np.array([-.332, 0, .062]) * scale)
+                self.assertAlmostEqual(float(tip[2]), .003 * scale, places=6)
+                pelvis = world["hips"][:3, 3]
+                shoulder = world["chest"][:3, 3]
+                self.assertGreater(float(shoulder[2] - pelvis[2]), .12 * scale)
+                self.assertLess(abs(float(shoulder[0] - pelvis[0])), .04 * scale)
 
 
 BIPEDS = [species for species in SPECIES if species in ("penguin", "ostrich", "flamingo", "kangaroo")]

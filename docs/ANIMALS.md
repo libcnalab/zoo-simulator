@@ -43,14 +43,14 @@ python3 -m unittest discover -s tools/animals/tests
 | `zoogen/scan.py` on a prepared third-party static sculpt, rigged by us (below) | zebra, zebra_female, zebra_juvenile |
 | `zoogen/giraffe2.py` on a prepared head-and-neck scan, body modelled by us (below) | giraffe, giraffe_female, giraffe_juvenile |
 | `zoogen/sculpt.py`, `bear.py` on a prepared third-party sculpt, rigged by us (below) | brown_bear, brown_bear_juvenile, polar_bear, polar_bear_juvenile |
-| `zoogen/quadruped.py`, `wild_quadruped.py`, `anatomy.py` | wolf, wolf_juvenile, camel, meerkat |
+| `zoogen/quadruped.py`, `wild_quadruped.py`, `anatomy.py` | wolf, wolf_juvenile, camel, meerkat, meerkat_juvenile |
 | `zoogen/birdscan.py` on a prepared third-party scan or sculpt, rigged by us (below) | penguin, penguin_juvenile, flamingo |
 | `zoogen/biped.py` | ostrich, kangaroo |
 
 Each has the same eight clips, which the game picks from what the animal is doing: `idle`,
 `walk`, `trot` (the fast gait, a hop for the kangaroo), `eat`, `drink`, `rest`, `sleep`,
 `vocalize`; some have activity clips beside them (`sentry`, `dig`, `preen`, `dust_bathe`,
-`ruminate`, `filter_feed`, `bathe`, `huddle`, `browse`, below). 9,000 to 34,000 triangles, 18 to 46 bones, a coat painted
+`ruminate`, `filter_feed`, `bathe`, `huddle`, `browse`, below). 8,500 to 41,000 triangles, 18 to 46 bones, a coat painted
 by the species file. The first-generation models (the last two rows) are stylised, not
 photorealistic; what each is weak at is listed in
 [`PIVOT_TO_ZOO_EXPLORATION.md`](PIVOT_TO_ZOO_EXPLORATION.md).
@@ -71,6 +71,22 @@ comparison and a real Wolf Ridge frame are in
 one-year-old Rosa. The proportions read as young, especially beside an adult, but this is still
 the same stylised loft-and-tube first-generation model rather than a furred or scan-based wolf;
 the large paws are deliberate and there is no normal map.
+
+### Meerkat pup (2026-11-20)
+
+`meerkat_juvenile` replaces the scaled-adult bodies of the two 0.15-year-old pups at Meerkat
+Lookout. The 0.17 m model has a rounder, proportionally 22 % broader skull, a face shortened
+to 72 % of the adult proportion, larger eyes, ears and paws, and a lighter coat. Its gait is
+shorter and slower (0.42 m/s walk, 1.05 m/s trot). It has 8,576 triangles, 33 bones and ten
+clips: the standard eight plus the adult's dedicated `sentry` and `dig` activities, rescaled
+so the hind feet and tail still support the upright guard and the paws still meet the ground.
+
+A fresh adult export remained byte-for-byte identical after the variant refactor, and the
+production pup matches an independent fresh export. The same-camera size comparison, four
+shape views and a real habitat frame are in
+`evidence/meerkat-juvenile-j2-2026-11-20.jpg`; the HUD identifies the selected model's animal
+as two-month-old Pavel. The shape reads as a pup, but it inherits the smooth, heavy-bodied
+first-generation meerkat and has neither individual toes nor a normal map.
 
 ### Big cats from a sculpt (2026-11-13)
 
@@ -396,7 +412,7 @@ byte.
   them uses the one model for everybody. A model is scaled by height:
   `species shoulder height x share of its sex x growth / meta.shoulder_height_m` of the model
   drawn, so a variant states its own height. (Lion, elephant, zebra, rhinoceros, giraffe, wolf,
-  both bears and penguin have variants so far.)
+  meerkat, both bears and penguin have variants so far.)
 - **Swimming.** Where the water is deeper than about 0.6 of the animal's standing height it
   floats: the body rides with `meta.swim_depth_m` (default 0.72 of the model's shoulder height)
   under the surface instead of walking on the pool bed under water, and plays the optional

@@ -35,6 +35,7 @@ EXPECTED = {
     "polar_bear_juvenile": {"bathe": "bathe"},
     "camel": {"ruminate": "ruminate"},
     "meerkat": {"sentinel": "sentry", "dig": "dig"},
+    "meerkat_juvenile": {"sentinel": "sentry", "dig": "dig"},
     "penguin": {"preen": "preen", "huddle": "huddle"},
     "penguin_juvenile": {"preen": "preen", "huddle": "huddle"},
     "flamingo": {"huddle": "huddle", "preen": "preen", "filter_feed": "filter_feed"},
@@ -99,49 +100,49 @@ class ManifestTests(unittest.TestCase):
 
 
 class MeerkatTests(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls):
-        cls.spec, cls.solver, cls.clips = clips_of("meerkat")
-
     def test_sentry_stands_tall_on_planted_feet_and_the_tail(self):
-        solver, spec = self.solver, self.spec
-        idle_head = max(solver.solve(self.clips["idle"].pose(u / 12))["head"][2, 3] for u in range(12))
-        yaws = []
-        for index in range(36):
-            world = solver.solve(self.clips["sentry"].pose(index / 36))
-            for key in ("HL", "HR"):
-                toe = world[spec.rig.legs[key].toes][:3, 3]
-                self.assertTrue(np.allclose(toe[[1, 2]], solver.toe_base(key)[[1, 2]], atol=1e-6))
-            tip = solver.point(world, "tail4", np.array([-.332, 0, .062]))
-            self.assertAlmostEqual(float(tip[2]), .003, places=5)
-            pelvis, shoulder = world["hips"][:3, 3], world["chest"][:3, 3]
-            self.assertGreater(float(shoulder[2] - pelvis[2]), .13)
-            self.assertLess(abs(float(shoulder[0] - pelvis[0])), .03)
-            # Taller than the sitting idle: up on the hind feet, not on the haunches.
-            self.assertGreater(world["head"][2, 3], idle_head + .04)
-            muzzle = solver.point(world, "jaw", solver.tail["jaw"]) - world["head"][:3, 3]
-            yaws.append(np.degrees(np.arctan2(muzzle[1], muzzle[0])))
-        # The watch turns to both sides.
-        self.assertGreater(max(yaws), 35)
-        self.assertLess(min(yaws), -35)
+        for species, scale in (("meerkat", 1.0), ("meerkat_juvenile", .68)):
+            spec, solver, clips = clips_of(species)
+            idle_head = max(solver.solve(clips["idle"].pose(u / 12))["head"][2, 3]
+                            for u in range(12))
+            yaws = []
+            for index in range(36):
+                world = solver.solve(clips["sentry"].pose(index / 36))
+                for key in ("HL", "HR"):
+                    toe = world[spec.rig.legs[key].toes][:3, 3]
+                    self.assertTrue(np.allclose(toe[[1, 2]], solver.toe_base(key)[[1, 2]], atol=1e-6))
+                tip = solver.point(world, "tail4", np.array([-.332, 0, .062]) * scale)
+                self.assertAlmostEqual(float(tip[2]), .003 * scale, places=5)
+                pelvis, shoulder = world["hips"][:3, 3], world["chest"][:3, 3]
+                self.assertGreater(float(shoulder[2] - pelvis[2]), .13 * scale)
+                self.assertLess(abs(float(shoulder[0] - pelvis[0])), .03 * scale)
+                # Taller than the sitting idle: up on the hind feet, not on the haunches.
+                self.assertGreater(world["head"][2, 3], idle_head + .04 * scale)
+                muzzle = solver.point(world, "jaw", solver.tail["jaw"]) - world["head"][:3, 3]
+                yaws.append(np.degrees(np.arctan2(muzzle[1], muzzle[0])))
+            # The watch turns to both sides.
+            self.assertGreater(max(yaws), 35)
+            self.assertLess(min(yaws), -35)
 
     def test_dig_scratches_with_the_fore_paws_nose_low(self):
-        solver, spec = self.solver, self.spec
-        lifted = {"FL": 0, "FR": 0}
-        travel = {"FL": [], "FR": []}
-        for index in range(90):
-            pose = self.clips["dig"].pose(index / 90)
-            world = solver.solve(pose)
-            for key in ("HL", "HR"):
-                self.assertAlmostEqual(world[spec.rig.legs[key].toes][2, 3], solver.toe_base(key)[2])
+        for species, scale in (("meerkat", 1.0), ("meerkat_juvenile", .68)):
+            spec, solver, clips = clips_of(species)
+            lifted = {"FL": 0, "FR": 0}
+            travel = {"FL": [], "FR": []}
+            for index in range(90):
+                pose = clips["dig"].pose(index / 90)
+                world = solver.solve(pose)
+                for key in ("HL", "HR"):
+                    self.assertAlmostEqual(world[spec.rig.legs[key].toes][2, 3],
+                                           solver.toe_base(key)[2])
+                for key in lifted:
+                    toe = world[spec.rig.legs[key].toes][:3, 3]
+                    lifted[key] += toe[2] > solver.toe_base(key)[2] + .01 * scale
+                    travel[key].append(toe[0])
+                self.assertLess(quadruped.muzzle(solver, pose)[2], .10 * scale)
             for key in lifted:
-                toe = world[spec.rig.legs[key].toes][:3, 3]
-                lifted[key] += toe[2] > solver.toe_base(key)[2] + .01
-                travel[key].append(toe[0])
-            self.assertLess(quadruped.muzzle(solver, pose)[2], .10)
-        for key in lifted:
-            self.assertGreater(lifted[key], 10, key)
-            self.assertGreater(np.ptp(travel[key]), .04, key)
+                self.assertGreater(lifted[key], 10, key)
+                self.assertGreater(np.ptp(travel[key]), .04 * scale, key)
 
 
 class PreenTests(unittest.TestCase):

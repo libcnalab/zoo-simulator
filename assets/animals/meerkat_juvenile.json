@@ -1,0 +1,157 @@
+{
+  "bones": 33,
+  "clips": [
+    {
+      "duration": 6.0,
+      "events": [],
+      "frames": 181,
+      "loop": true,
+      "name": "idle",
+      "speed": 0.0
+    },
+    {
+      "duration": 0.2667,
+      "events": [
+        {
+          "name": "step",
+          "time": 0.0
+        },
+        {
+          "name": "step",
+          "time": 0.0667
+        },
+        {
+          "name": "step",
+          "time": 0.1333
+        },
+        {
+          "name": "step",
+          "time": 0.2
+        }
+      ],
+      "frames": 9,
+      "loop": true,
+      "name": "walk",
+      "speed": 0.42
+    },
+    {
+      "duration": 0.2,
+      "events": [
+        {
+          "name": "step",
+          "time": 0.0
+        },
+        {
+          "name": "step",
+          "time": 0.0
+        },
+        {
+          "name": "step",
+          "time": 0.1
+        },
+        {
+          "name": "step",
+          "time": 0.1
+        }
+      ],
+      "frames": 7,
+      "loop": true,
+      "name": "trot",
+      "speed": 1.05
+    },
+    {
+      "duration": 3.0,
+      "events": [],
+      "frames": 91,
+      "loop": true,
+      "name": "eat",
+      "speed": 0.0
+    },
+    {
+      "duration": 2.4,
+      "events": [],
+      "frames": 73,
+      "loop": true,
+      "name": "drink",
+      "speed": 0.0
+    },
+    {
+      "duration": 8.0,
+      "events": [],
+      "frames": 241,
+      "loop": true,
+      "name": "rest",
+      "speed": 0.0
+    },
+    {
+      "duration": 8.0,
+      "events": [],
+      "frames": 241,
+      "loop": true,
+      "name": "sleep",
+      "speed": 0.0
+    },
+    {
+      "duration": 2.6,
+      "events": [
+        {
+          "name": "call",
+          "time": 0.572
+        }
+      ],
+      "frames": 79,
+      "loop": false,
+      "name": "vocalize",
+      "speed": 0.0
+    },
+    {
+      "duration": 9.0,
+      "events": [],
+      "frames": 271,
+      "loop": true,
+      "name": "sentry",
+      "speed": 0.0
+    },
+    {
+      "duration": 3.0,
+      "events": [],
+      "frames": 91,
+      "loop": true,
+      "name": "dig",
+      "speed": 0.0
+    }
+  ],
+  "generator": "tools/animals (zoogen)",
+  "license": "MIT",
+  "meta": {
+    "activity_clips": {
+      "dig": "dig",
+      "sentinel": "sentry"
+    },
+    "age_shape": "Pup: shorter face, rounder skull, larger eyes, ears and paws",
+    "body_length_m": 0.238,
+    "common_name": "Meerkat",
+    "relative_height": 0.68,
+    "roughness": 0.91,
+    "scientific_name": "Suricata suricatta",
+    "shoulder_height_m": 0.17,
+    "variant": "juvenile",
+    "variant_of": "meerkat"
+  },
+  "name": "meerkat_juvenile",
+  "skeleton_bounds_animal_space": {
+    "max": [
+      0.17,
+      0.0265,
+      0.1771
+    ],
+    "min": [
+      -0.219,
+      -0.0265,
+      0.0
+    ]
+  },
+  "texture": 1024,
+  "triangles": 8576,
+  "vertices": 4296
+}
