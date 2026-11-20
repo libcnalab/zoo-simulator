@@ -159,6 +159,17 @@ whatever you take up (`docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `docs/V
   Forest run are inspected in `docs/evidence/tiger-ruff-j16-2026-11-20.jpg` (J16, 2026-11-20).
   The alpha-tested fringe is still card hair, the tiger remains a conversion of the lioness
   sculpt, and the lion mane remains the cats' most visible close-up limitation.
+- The male lion's J17 mane replaces 1,879 long, broad shingle-like mane cards with
+  2,199 directionally varied curved locks over the same opaque undercoat (plus the unchanged
+  42-card tail tuft). Mane cards span 1.5–2.3 cm and no more than 12.4 cm long, 288 smaller
+  radial locks close the front, and 63 short cards lie back across the forehead. The lion is now
+  41,854 triangles, 30,127 vertices and 3.92 MB, under the existing 42,000-triangle budget;
+  33 bones and eight clips are unchanged. The production GLB/JSON match an independent
+  deterministic export byte for byte. Same-camera,
+  side and close comparisons, `vocalize`, `sleep` and an internal seed-1/tick-3000 Lion Rock
+  runtime check are inspected in `docs/evidence/lion-mane-j17-2026-11-20.jpg` (J17, 2026-11-20).
+  All 131 animal-pipeline tests and all 270 active CTest cases pass (21 diagnostics disabled).
+  Cards remain detectable at extreme close range and the head is still a widened lioness sculpt.
 - The stopped G7c audio audit is recovered and finished. Calls now follow `Vocalize`, social,
   play and documented feeding cues rather than a timer; takes do not repeat immediately, spatial
   pan is capped at 0.60, birds fade with daylight, crowd level follows its people, and footsteps

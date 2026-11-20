@@ -110,6 +110,8 @@
   "meta": {
     "asset_license": "CC-BY-4.0",
     "common_name": "African lion",
+    "mane_card_locks": 2199,
+    "mane_revision": "Short narrow curved locks over opaque undercoat",
     "material_source": "adapted authored base, normal and occlusion",
     "preparation_version": 2,
     "proportion_edits": {
@@ -178,6 +180,6 @@
     ]
   },
   "texture": 1024,
-  "triangles": 40574,
-  "vertices": 28207
+  "triangles": 41854,
+  "vertices": 30127
 }

@@ -173,6 +173,9 @@ def make_cat(name, kind, height, edits, walk_speed, trot_speed, meta=None):
                     material_source='adapted authored base, normal and occlusion',
                     preparation_version=2)
     metadata.update(meta or {})
+    if kind == 'male':
+        metadata['mane_revision'] = 'Short narrow curved locks over opaque undercoat'
+        metadata['mane_card_locks'] = 2199
     if kind == 'tiger':
         metadata['activity_clips'] = {'bathe': 'bathe'}
         metadata['cheek_ruff_revision'] = 'Layered warm cream locks with irregular roots'

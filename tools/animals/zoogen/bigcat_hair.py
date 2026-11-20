@@ -47,7 +47,7 @@ def cards(data):
         tops = np.array([ring.up for ring in rings])
         bottoms = np.array([ring.dn for ring in rings])
         for layer in range(22):
-            for index in range(72):
+            for index in range(84):
                 scatter = (math.sin(index * 19.37 + layer * 63.17) * 43758.5453) % 1
                 t = float(np.clip((layer + 1.8 * scatter - .9) / 21, 0, 1))
                 position = t * (len(rings) - 1)
@@ -60,18 +60,25 @@ def cards(data):
                 tangent = centers[interval + 1] - centers[interval]
                 tangent /= np.linalg.norm(tangent)
                 vertical = np.cross(tangent, [0, 1, 0])
-                angle = 2 * math.pi * (index + .43 * layer + .10 * math.sin(index * 7.1)) / 72
+                angle = 2 * math.pi * (index + .43 * layer + .10 * math.sin(index * 7.1)) / 84
                 side, up = math.cos(angle), math.sin(angle)
                 radial = np.array([0, side * width, 0]) + vertical * up * (top if up > 0 else bottom)
                 normal = np.array([.75 * t ** 4, side, 0]) + vertical * up
                 normal /= np.linalg.norm(normal)
                 root = center + radial * 1.008
-                length = height * (.090 + .030 * (1 - up) + .025 * math.sin(index * 7.7 + layer))
+                length = height * (.060 + .018 * (1 - up)
+                                   + .012 * (.5 + .5 * math.sin(index * 7.7 + layer)))
                 if up > .4:
-                    length *= .65
-                direction = np.array([-.85, .20 * side, -.4 + .25 * up])
+                    length *= .78
+                second = math.sin(index * 11.91 + layer * 3.17)
+                direction = np.array([-.74 + .10 * second,
+                                      .16 * side + .08 * (scatter - .5),
+                                      -.34 + .20 * up + .06 * second])
                 if t > .85:
-                    direction = np.array([-.10, .62 * side, -.65 + .30 * up])
+                    direction = np.array([-.08 + .05 * second,
+                                          .50 * side + .08 * (scatter - .5),
+                                          -.50 + .24 * up + .05 * second])
+                direction /= np.linalg.norm(direction)
                 if t > .75:
                     weights = {'head': (t - .75) / .25, 'neck2': 1 - (t - .75) / .25}
                 elif t > .3:
@@ -79,34 +86,34 @@ def cards(data):
                 else:
                     weights = {'chest': 1 - t / .3, 'neck1': t / .3}
                 palette = int(np.clip(round(13 * (1 - t ** 2) + .6 * scatter), 0, 13))
-                lock_width = .028 * height * (.82 + .26 * math.sin(index * 5.3 + layer) ** 2)
+                lock_width = .018 * height * (.80 + .25 * math.sin(index * 5.3 + layer) ** 2)
                 result.append((root, direction * length, normal, lock_width, weights, palette))
         # Radial locks cover the frontal cap; longitudinal cards alone are edge-on here.
         center = centers[-1].copy()
         center[0] += .006 * height
         for layer in range(4):
-            for index in range(64):
-                angle = 2 * math.pi * (index + .37 * layer) / 64
+            for index in range(72):
+                angle = 2 * math.pi * (index + .37 * layer) / 72
                 side, up = math.cos(angle), math.sin(angle)
                 radial = np.array([0, side * widths[-1], up * (tops[-1] if up > 0 else bottoms[-1])])
                 root = center + radial * (.62 + .10 * layer)
                 normal = np.array([1., .2 * side, .2 * up])
                 normal /= np.linalg.norm(normal)
-                direction = radial * (.23 + .03 * math.sin(index * 7.3))
+                direction = radial * (.18 + .025 * math.sin(index * 7.3))
                 direction[0] = .004 * height
-                result.append((root, direction, normal, .030 * height, {'head': 1}, 0))
+                result.append((root, direction, normal, .020 * height, {'head': 1}, 0))
         # Short forehead crest closes the bare gap between the ears without covering the muzzle.
         for row in range(3):
-            for index in range(13):
-                y = (index - 6) * .014 * height
-                root = head + height * np.array([.075 - row * .03, y / height, .125])
+            for index in range(21):
+                y = (index - 10) * .009 * height
+                root = head + height * np.array([.072 - row * .032, y / height, .125])
                 surface = data['vertices'][data['vertices'][:, 2] > head[2] + .05 * height]
                 distances = np.sum((surface[:, :2] - root[:2]) ** 2, axis=1)
                 root[2] = max(surface[np.argmin(distances), 2], head[2] + tops[-1]) + .006 * height
                 normal = np.array([.5, y / height * 3, 1.])
                 normal /= np.linalg.norm(normal)
-                result.append((root, height * np.array([-.07, .02 * np.sign(y), .018]), normal,
-                               .025 * height, {'head': 1}, 0))
+                result.append((root, height * np.array([-.035, .010 * np.sign(y), .008]), normal,
+                               .013 * height, {'head': 1}, 0))
     if kind == 'tiger':
         face = data['weights'][:, [names.index('head'), names.index('jaw')]].sum(axis=1) > .8
         normals = surface_normals(data)
@@ -159,7 +166,8 @@ def geometry(data):
         tangent /= max(np.linalg.norm(tangent), 1e-8)
         offset = len(vertices)
         for row, t in enumerate((0., .5, 1.)):
-            center = root + direction * t + normal * np.linalg.norm(direction) * .035 * math.sin(t * math.pi)
+            curve = .070 if data['kind'] == 'male' and 'tail4' not in influence else .035
+            center = root + direction * t + normal * np.linalg.norm(direction) * curve * math.sin(t * math.pi)
             for side in (-1, 1):
                 point = center + tangent * width * .5 * side * (1 - .80 * t)
                 if data['kind'] == 'male' and 'tail4' not in influence:

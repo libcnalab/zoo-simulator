@@ -221,12 +221,12 @@ eight clips are ours, as for every other species.
 
 | Model | Triangles | Shoulder | What it is |
 |---|---:|---:|---|
-| `lion` | 40,574 | 1.15 m | male with a mane of hair cards over an opaque backing |
+| `lion` | 41,854 | 1.15 m | male with a compact curved-card mane over an opaque backing |
 | `lion_female` | 32,398 | 1.05 m | the game draws it for every female lion |
 | `lion_juvenile` | 23,122 | 0.45 m | drawn below half of the age of maturity |
 | `tiger` | 32,702 | 1.00 m | longer body, broad paws, striped coat, layered cheek ruff |
 
-(Triangles after S7, except the tiger after J16.)
+(Triangles after S7, except the tiger after J16 and male lion after J17.)
 
 Seen in Blender previews, in the game's viewer and in the lion habitat
 (`evidence/big-cats-sculpt-2026-11-13.jpg`). Honest state: the lioness is the good one.
@@ -265,9 +265,29 @@ CTest cases pass (21 diagnostics remain disabled as intended).
 Honest state: the ruff is now a compact irregular fringe rather than three broad teeth, but it is
 still alpha-tested card hair and the underlying body is still the lioness sculpt converted into
 a tiger. The procedural face markings do not reach photograph quality, and the male lion's mane
-cards remain visible at arm's length. Screenshots of hair taken with `--screenshot` keep the
+cards at this point remained visible at arm's length. Screenshots of hair taken with `--screenshot` keep the
 cards' alpha in the PNG and can tint them grey even after flattening; the colour values above
 come from the embedded atlas (`docs/UPSTREAM.md`, ZOO-UP-002).
+
+**Lion mane (J17, 2026-11-20).** The opaque undercoat stays, but 1,879 mane cards are replaced
+by 2,199 locks (plus the unchanged 42-card tail tuft). Mane cards span 1.5–2.3 cm wide and at most
+12.4 cm long instead of the old broad, long shingles; their directions vary, their middle bows
+twice as far from the root-to-tip plane, and 288 smaller radial locks close the front. The short
+forehead bridge uses 63 1.5 cm cards laid back toward the mane. This turns the long shingle-like
+edge into a compact silhouette while respecting the model's 42,000-triangle budget: 41,854
+triangles, 30,127 vertices and 3.92 MB. Bones (33) and clips (eight) are unchanged. Production
+GLB/JSON match a separate deterministic export byte for byte. Same-camera, side and close
+comparisons plus
+`vocalize`, `sleep` and a seed-1 Lion Rock check are in
+`evidence/lion-mane-j17-2026-11-20.jpg`.
+All 131 animal-pipeline tests and all 270 active CTest cases pass; 21 measurement and diagnostic
+cases remain intentionally disabled.
+
+Honest state after J17: individual alpha cards are still detectable at extreme close range and
+the head under them is still the broadened lioness sculpt, not a purpose-built male skull. The
+automatic viewer PNG's alpha defect makes the brown embedded atlas appear grey; the running game
+frame in the evidence is the useful colour check. The new mane is denser and less ragged, not
+strand-level fur.
 
 ### Rhinoceros and elephant on rigged models (2026-11-13)
 

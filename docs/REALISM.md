@@ -49,6 +49,7 @@ loudspeaker stays muted and nobody has listened to any of it.
 | Ostrich layered plumage, adult and chick | four overlapping feathers on each folded wing and five separated tail feathers replace fused plume blobs; a feather-only tangent-space normal map adds directional barb relief while keeping the bare skin smooth. The procedural egg body remains stylised | `docs/ANIMALS.md`, `evidence/ostrich-feathers-j13-2026-11-20.jpg` |
 | Red-kangaroo short fur, feet and hands, adult and joey | a dense short-fur normal map replaces the flat painted coat; each hind foot has the dominant fourth digit, smaller fifth and tiny syndactylous inner pair, while five separate fingers replace each forepaw mitten. Hop and five-point crawl contacts are unchanged | `docs/ANIMALS.md`, `evidence/kangaroo-coat-j14-2026-11-20.jpg` |
 | Tiger cheek ruff | 150 narrow locks with irregular roots and warm cream, sparse black and orange atlas groups replace 72 broad neutral-grey cards in three rows. The alpha-tested fringe remains card hair and the animal remains a conversion of the lioness sculpt | `docs/ANIMALS.md`, `evidence/tiger-ruff-j16-2026-11-20.jpg` |
+| Male-lion mane, second hair pass | 2,199 short narrow curved mane locks over the opaque undercoat replace 1,879 long wide shingle-like cards; a denser radial face layer and short laid-back forehead bridge give a compact silhouette within the existing 42,000-triangle model budget. Individual alpha cards remain visible at extreme close range | `docs/ANIMALS.md`, `evidence/lion-mane-j17-2026-11-20.jpg` |
 | Meerkat pups with juvenile proportions | both two-month-old animals at Meerkat Lookout now use a dedicated 0.17 m pup: rounder skull, shorter face, larger eyes, ears and paws, lighter coat and pup-scaled locomotion; its sentry and digging clips retain their grounded feet and tail | `docs/ANIMALS.md`, `evidence/meerkat-juvenile-j2-2026-11-20.jpg` |
 | Ostrich chicks instead of miniature adult males | all three four-month-old birds at Ostrich Rise now use a dedicated 1.13 m chick: shorter neck and face, larger round head, eyes and feet, compact wings and tail, brown striped down, chick-scaled locomotion and a retained dust-bathing clip | `docs/ANIMALS.md`, `evidence/ostrich-juvenile-j3-2026-11-20.jpg` |
 | Camel calves with developing humps | both young animals at Red Dune now use a dedicated 1.26 m calf: a slimmer body, shorter neck and face, larger head, eyes, ears and pads, a lighter coat, low developing humps, shorter-stride locomotion and the retained cud-chewing clip | `docs/ANIMALS.md`, `evidence/camel-juvenile-j4-2026-11-20.jpg` |
@@ -98,8 +99,9 @@ where an animal wades. Penguins swim and float with their own clips now, and pol
    closed resting mouths, softer shoulders and shorter outline fur but remain converted from an
    upright brown-bear sculpt (the polar anatomy and scaled-adult cub bodies are still crude)
    (`docs/ANIMALS.md`). The cats are believable now but not photographs: the tiger's formerly
-   grey three-row cheek comb is a finer layered fringe, but it remains card hair on a converted
-   lioness body, and the lion's mane cards still show close up.
+   grey three-row cheek comb is a finer layered fringe and the lion's long shingle-like mane is
+   denser and compact, but both remain alpha-card hair on converted lioness bodies; individual
+   mane cards still show at extreme close range.
 2. Habitat fronts: the catalog has no dry moat or ha-ha. Trees keep the planted strip's depth
    behind the barrier except where that would cross the species' vegetation welfare band (Rhino
    Hollow and Red Dune retain slender front trees; their massive trunks are still set back).

@@ -77,6 +77,22 @@ class BigCatMaterialTests(unittest.TestCase):
         self.assertGreater(cream[1], cream[2])
         self.assertGreater(float(cream.min()), .65)
 
+    def test_lion_mane_uses_dense_short_curved_locks(self):
+        spec, _ = common.make_solver('lion')
+        all_cards = cards(spec.sculpt)
+        mane = [card for card in all_cards if 'tail4' not in card[4]]
+        self.assertEqual(len(all_cards), 2241)
+        self.assertEqual(len(mane), 2199)
+        self.assertEqual(spec.meta['mane_card_locks'], 2199)
+        self.assertEqual(spec.meta['mane_revision'],
+                         'Short narrow curved locks over opaque undercoat')
+        widths = np.array([card[3] for card in mane]) / spec.sculpt['height']
+        lengths = np.array([np.linalg.norm(card[1]) for card in mane]) / spec.sculpt['height']
+        self.assertGreater(float(widths.min()), .0129)
+        self.assertLess(float(widths.max()), .0201)
+        self.assertGreater(float(lengths.min()), .023)
+        self.assertLess(float(lengths.max()), .110)
+
     def test_complete_recumbent_surface(self):
         for species in common.CATS:
             spec, solver = common.make_solver(species)
