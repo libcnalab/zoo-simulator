@@ -320,6 +320,33 @@ void Scaffold(Maker& k, MeshWriter& bark, const Vector3& from, const Vector3& to
     bark.Pipe(points, radii, k.far ? 3 : 6);
 }
 
+/// Dry leaves caught around the foot of a broadleaf tree. Every random value is still consumed for
+/// the far form, but leaves this small are omitted there: at the 48-56 m switch they are below a
+/// pixel.
+void FallenLeaves(Maker& k) {
+    MeshWriter& leaves = k.m.Use(Scaled(kDryLeaf, 0.65f), Pattern::Leaves);
+    constexpr int count = 32;
+    const float reach = std::clamp(k.def.radiusM * 1.8f, 1.15f, 2.4f);
+    for (int i = 0; i < count; ++i) {
+        const float around = k.R(0.0f, 2.0f * kPi);
+        const float out = reach * std::sqrt(k.R(0.08f, 1.0f));
+        const float turn = k.R(0.0f, 2.0f * kPi);
+        const float length = k.R(0.18f, 0.34f);
+        const float width = length * k.R(0.36f, 0.55f);
+        const float lift = k.R(0.012f, 0.032f);
+        const float fold = k.R(0.0f, 0.018f);
+        if (k.far) {
+            continue;
+        }
+        const Vector3 center = Polar(around, out, lift);
+        const Vector3 along = Polar(turn, length * 0.5f);
+        const Vector3 across = Polar(turn + kPi * 0.5f, width * 0.5f);
+        // Counter-clockwise from above: one cheap, gently folded leaf lying on the ground.
+        leaves.Quad(center - along, center + across + Up(fold), center + along,
+                    center - across + Up(fold));
+    }
+}
+
 /// Broad and heavy: a short thick trunk, limbs that reach out almost level, and a crown
 /// wider than it is high.
 void Oak(Maker& k) {
@@ -877,24 +904,30 @@ bool IsPlant(const zoo::PropDef& def) {
 bool BuildPlant(ModelBuilder& model, const zoo::PropDef& def, std::uint32_t seed, PlantDetail detail) {
     const std::string_view look = def.look;
     Maker k(model, def, seed, detail);
+    bool dropsLeaves = false;
     if (look == "oak") {
         Oak(k);
+        dropsLeaves = true;
     } else if (look == "birch") {
         Birch(k);
+        dropsLeaves = true;
     } else if (look == "pine") {
         Pine(k);
     } else if (look == "spruce") {
         Spruce(k);
     } else if (look == "acacia") {
         Acacia(k);
+        dropsLeaves = true;
     } else if (look == "baobab") {
         Baobab(k);
+        dropsLeaves = true;
     } else if (look == "palm") {
         Palm(k);
     } else if (look == "bamboo") {
         Bamboo(k);
     } else if (look == "willow") {
         Willow(k);
+        dropsLeaves = true;
     } else if (look == "juniper") {
         Bush(k, Conifer(k), 3, 0.3f, 1.15f, false, false);
     } else if (look == "shrub") {
@@ -911,6 +944,9 @@ bool BuildPlant(ModelBuilder& model, const zoo::PropDef& def, std::uint32_t seed
         FlowerBed(k);
     } else {
         return false;
+    }
+    if (dropsLeaves) {
+        FallenLeaves(k);
     }
     return true;
 }

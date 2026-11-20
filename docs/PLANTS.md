@@ -51,6 +51,21 @@ lines. `VisitorZooPlanTests` verifies this for seeds 1 and 2. A real seed-1 visi
 props and submits 2,201,274 scenery triangles in 461 draw calls; the inspected lagoon and close
 savanna views are in `evidence/reeds-grass-j8-2026-11-20.jpg`.
 
+## Fallen leaves under broadleaf trees (J9, 2026-11-20)
+
+The near model of every oak, birch, willow, acacia and baobab now scatters 32 deterministic dry
+leaves around its roots. Each is a gently folded 18-34 cm quad with a mottled dry-leaf finish;
+the scatter reaches 1.15-2.4 m according to the catalog radius. It belongs to the procedural
+tree rather than the terrain painter, so it follows the individual tree and needs no map-specific
+placement. The far model consumes the same random values but omits the sub-pixel leaves.
+
+Seed 1 has exactly 500 affected trees. The litter therefore adds 32,000 near triangles to the J8
+baseline (2,201,274 -> 2,233,274 scenery triangles) and one dry-leaf finish to each of the 16
+visible near groves (461 -> 477 draw calls); the all-far tally is unchanged. The normal Tiger
+Forest view and a close crop are in `evidence/leaf-litter-j9-2026-11-20.jpg`. The game-side
+`PlantModels` regression checks all five broadleaf looks at 64 litter triangles each, a zero-triangle
+far litter part, and a pine without litter.
+
 ## Distance form
 
 `BuildPlant(..., PlantDetail::Far)` writes the same individual with the same random numbers in

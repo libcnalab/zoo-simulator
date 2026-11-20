@@ -86,6 +86,12 @@ whatever you take up (`docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `docs/V
   grassland habitats. Both plan seeds, both fill-hash lengths, all 269 active CTest cases and a
   real offscreen game load pass;
   the inspected evidence is `docs/evidence/reeds-grass-j8-2026-11-20.jpg` (J8, 2026-11-20).
+- Every near oak, birch, willow, acacia and baobab now scatters 32 deterministic dry leaves around
+  its roots; the far form consumes the same RNG but omits this sub-pixel detail. Seed 1 has 500
+  affected trees: +32,000 scenery triangles and +16 draw calls over J8, while the far tally is
+  unchanged. A direct model regression covers all five looks and the no-litter pine control; all
+  270 active CTest cases pass (21 diagnostics disabled). The normal Tiger Forest view and close
+  crop are inspected in `docs/evidence/leaf-litter-j9-2026-11-20.jpg` (J9, 2026-11-20).
 - The stopped G7c audio audit is recovered and finished. Calls now follow `Vocalize`, social,
   play and documented feeding cues rather than a timer; takes do not repeat immediately, spatial
   pan is capped at 0.60, birds fade with daylight, crowd level follows its people, and footsteps

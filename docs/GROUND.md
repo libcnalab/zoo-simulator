@@ -102,11 +102,14 @@ machine was loaded); against the mesh, 470,320 sample points agree within 0.11 m
 
 Users: `AnimalRenderer` (the ground under and in front of and behind each animal; a
 swimmer's surface stays the world's water level), `VisitorRenderer` (feet), `Walker` (the
-player's collision field at tile resolution from `DrawnVertexHeight`, and the start
-position). Still at `World::HeightAt`: props in `SceneryRenderer` (84 of 2,508 props stand
-where the two differ by more than 3 cm, up to 1.45 m: trees, rocks, log piles, ice blocks at
-the pools; a two-line change, see the G1c report), keepers (`KeeperRenderer`, not yet merged),
-sounds, the binoculars' aim, the editor's tools. The simulation itself keeps its heights.
+player's collision field at tile resolution from `DrawnVertexHeight`, and the start position),
+`SceneryRenderer` (ordinary props and both plant detail forms), and `KeeperRenderer` (feet).
+Still at `World::HeightAt`: sounds, the binoculars' aim and the editor's tools. The simulation
+itself keeps its heights.
+
+Fallen leaves added in J9 are part of each broadleaf tree's near procedural model, rather than
+paint baked into the terrain. That gives the painter-independent feature the exact tree position
+and deterministic seed while naturally following scenery rebuilds; see `docs/PLANTS.md`.
 
 ## Start-up
 
@@ -167,10 +170,7 @@ paths, buildings, fences and mulch, not at the water (see "Open").
   and is wider along a gate than beside it (up to 0.22 in linear colour across a tile side);
   building foundations end at the tile (intentional so far).
 - Detail layer outlines are 25 cm cells: the edge between mud and grass is stepped close up.
-- Props at the water stand at `World::HeightAt` until `SceneryRenderer` uses
-  `DrawnGroundHeight`.
 - Shallow against deep water: the bed's colour changes with depth, but the banks are steep,
   so the pale shallow band is narrow.
-- Leaf litter under trees: the painter sees tiles, not where trees stand.
 - Not verified: shimmer and repetition in motion (stills only), resolutions above 1280 x 720,
   the editor's repaint after an edit (`TerrainRenderer::Update`), the browser build.
