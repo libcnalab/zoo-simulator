@@ -120,6 +120,8 @@
       "bathe": "bathe"
     },
     "asset_license": "CC-BY-4.0",
+    "cheek_ruff_cards": 150,
+    "cheek_ruff_revision": "Layered warm cream locks with irregular roots",
     "common_name": "Bengal tiger",
     "material_source": "adapted authored base, normal and occlusion",
     "preparation_version": 2,
@@ -214,6 +216,6 @@
     ]
   },
   "texture": 1024,
-  "triangles": 32390,
-  "vertices": 16715
+  "triangles": 32702,
+  "vertices": 17183
 }

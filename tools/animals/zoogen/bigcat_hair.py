@@ -113,20 +113,26 @@ def cards(data):
         for side in (-1, 1):
             indices = np.flatnonzero(face & (data['vertices'][:, 1] * side > 0))
             surface = data['vertices'][indices]
-            for row in range(3):
-                for index in range(12):
-                    scatter = math.sin(index * 17.31 + row * 8.1)
-                    target = head + height * np.array([-.015 - .026 * row + .008 * scatter,
-                                                        0, -.12 + .012 * index + .005 * scatter])
+            for layer in range(5):
+                for index in range(15):
+                    scatter = math.sin(index * 17.31 + layer * 8.1 + side * 1.7)
+                    vertical = (index * .61803398875 + layer * .271828 + .035 * scatter) % 1
+                    target = head + height * np.array([-.006 - .017 * layer + .006 * scatter,
+                                                        0, -.130 + .155 * vertical])
                     distance = (surface[:, 0] - target[0]) ** 2 + (surface[:, 2] - target[2]) ** 2
-                    nearby = np.argsort(distance)[:12]
+                    nearby = np.argsort(distance)[:16]
                     chosen = nearby[np.argmax(surface[nearby, 1] * side)]
                     # Start on the sculpt's cheek, so only the tapered tips extend its silhouette.
                     normal = normals[indices[chosen]]
-                    root = surface[chosen] + normal * .0015 * height
-                    direction = height * np.array([-.035, side * (.023 + .009 * scatter), -.035])
-                    palette = 14 if index in (3, 8) else 15
-                    result.append((root, direction, normal, .015 * height, {'head': 1}, palette))
+                    root = surface[chosen] + normal * .0012 * height
+                    direction = height * np.array([
+                        -.020 - .008 * layer / 4,
+                        side * (.014 + .008 * (1 - vertical) + .003 * scatter),
+                        -.010 - .016 * (1 - vertical)])
+                    palette = 14 if (index + 2 * layer) % 11 == 0 else \
+                        13 if layer == 4 and index % 3 == 1 else 15
+                    width = height * (.007 + .003 * math.sin(index * 5.3 + layer) ** 2)
+                    result.append((root, direction, normal, width, {'head': 1}, palette))
     if kind in ('female', 'male', 'juvenile'):
         tip = data['tails'][names.index('tail4')]
         for layer in range(3):
@@ -171,6 +177,20 @@ def geometry(data):
     return np.array(vertices), np.array(triangles), np.array(uv), np.array(normals), weights
 
 
+def hair_palette(name):
+    palette = np.empty((16, 3))
+    for index in range(14):
+        blend = index / 13
+        palette[index] = np.array([.48, .27, .095]) * (1 - blend) + np.array([.20, .10, .04]) * blend
+    palette[14] = [.055, .027, .012]
+    palette[15] = [.61, .59, .54]
+    if name.startswith('tiger'):
+        palette[13] = [.54, .23, .045]
+        palette[14] = [.014, .011, .009]
+        palette[15] = [.86, .79, .67]
+    return palette
+
+
 def hair_material(name):
     import bpy
     width, height = 1024, 512
@@ -182,14 +202,7 @@ def hair_material(name):
     tip = .72 + .25 * np.sin(np.floor(u * 5) * 17.3) ** 2
     edge = .35 * (1 - np.sin(np.pi * u) ** .4)
     alpha = ((strand > .22 + .62 * v ** 3 + edge) & (v < tip + .10 * strand)).astype(float)
-    palette = np.empty((16, 3))
-    for index in range(14):
-        blend = index / 13
-        palette[index] = np.array([.48, .27, .095]) * (1 - blend) + np.array([.20, .10, .04]) * blend
-    palette[14] = [.055, .027, .012]
-    palette[15] = [.61, .59, .54]
-    if name.startswith('tiger'):
-        palette[14] = [.014, .011, .009]
+    palette = hair_palette(name)
     rgb = palette[np.minimum(xx // (width // 16), 15)] * (.65 + .35 * strand[..., None])
     rgba = np.concatenate([rgb, alpha[..., None]], axis=-1)
     image = bpy.data.images.new(name + '_hair_groups', width, height, alpha=True)

@@ -149,6 +149,16 @@ whatever you take up (`docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `docs/V
   and Polar Sound runs in `docs/evidence/bear-anatomy-j15-2026-11-20.jpg` (J15, 2026-11-20).
   Honest remaining limits: the crouched brown, slender converted polar and proportionally edited
   cubs all retain the same upright brown-bear source sculpt and its sharp hip anatomy.
+- The tiger cheek ruff no longer consists of 72 wide neutral-grey cards in three rows. J16 uses
+  150 narrower locks distributed irregularly over five depths, with a warm cream embedded atlas
+  and sparse black/orange groups; only short tapered tips leave the white cheek silhouette. The
+  tiger is now 32,702 triangles, 17,183 vertices and 3.18 MB, with its 33 bones and nine clips
+  unchanged. Production GLB/JSON match an independent `OMP_NUM_THREADS=1`, Blender `-t 1` export
+  byte for byte. All 130 animal-pipeline tests and all 270 active CTest cases pass (21 diagnostics
+  disabled). Same-camera and close comparisons, `vocalize`, `bathe`, and a seed-1/tick-3000 Tiger
+  Forest run are inspected in `docs/evidence/tiger-ruff-j16-2026-11-20.jpg` (J16, 2026-11-20).
+  The alpha-tested fringe is still card hair, the tiger remains a conversion of the lioness
+  sculpt, and the lion mane remains the cats' most visible close-up limitation.
 - The stopped G7c audio audit is recovered and finished. Calls now follow `Vocalize`, social,
   play and documented feeding cues rather than a timer; takes do not repeat immediately, spatial
   pan is capped at 0.60, birds fade with daylight, crowd level follows its people, and footsteps

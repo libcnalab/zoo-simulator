@@ -175,6 +175,8 @@ def make_cat(name, kind, height, edits, walk_speed, trot_speed, meta=None):
     metadata.update(meta or {})
     if kind == 'tiger':
         metadata['activity_clips'] = {'bathe': 'bathe'}
+        metadata['cheek_ruff_revision'] = 'Layered warm cream locks with irregular roots'
+        metadata['cheek_ruff_cards'] = 150
     body_budget = 23000 if kind == 'juvenile' else 36000 if kind == 'male' else 33000
     return Spec(name, data['bones'], hair_parts(data, kind),
                 texture_size=1024, target_tris=body_budget,

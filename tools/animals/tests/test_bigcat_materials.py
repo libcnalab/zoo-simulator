@@ -6,7 +6,7 @@ import numpy as np
 
 import test_clips as common
 from zoogen import geom
-from zoogen.bigcat_hair import cards, geometry
+from zoogen.bigcat_hair import cards, geometry, hair_palette
 from zoogen.pachyderm_motion import skin_points
 
 
@@ -54,6 +54,28 @@ class BigCatMaterialTests(unittest.TestCase):
                 self.assertTrue(set(weights) <= allowed)
                 if species == 'lion' and root[0] > 0:
                     self.assertTrue(set(weights) <= allowed - {'tail4'})
+
+    def test_tiger_cheek_ruff_is_layered_narrow_and_warm(self):
+        spec, _ = common.make_solver('tiger')
+        locks = cards(spec.sculpt)
+        self.assertEqual(len(locks), 150)
+        self.assertEqual(spec.meta['cheek_ruff_cards'], 150)
+        self.assertEqual(spec.meta['cheek_ruff_revision'],
+                         'Layered warm cream locks with irregular roots')
+        widths = np.array([lock[3] for lock in locks]) / spec.sculpt['height']
+        lengths = np.array([np.linalg.norm(lock[1]) for lock in locks]) / spec.sculpt['height']
+        self.assertLess(float(widths.max()), .0101)
+        self.assertGreater(float(widths.min()), .0069)
+        self.assertGreater(float(lengths.min()), .020)
+        self.assertLess(float(lengths.max()), .050)
+        palettes = [lock[-1] for lock in locks]
+        self.assertGreater(palettes.count(15), 110)
+        self.assertGreater(palettes.count(14), 5)
+        self.assertGreater(palettes.count(13), 5)
+        cream = hair_palette('tiger')[15]
+        self.assertGreater(cream[0], cream[1])
+        self.assertGreater(cream[1], cream[2])
+        self.assertGreater(float(cream.min()), .65)
 
     def test_complete_recumbent_surface(self):
         for species in common.CATS:

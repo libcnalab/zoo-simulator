@@ -224,9 +224,9 @@ eight clips are ours, as for every other species.
 | `lion` | 40,574 | 1.15 m | male with a mane of hair cards over an opaque backing |
 | `lion_female` | 32,398 | 1.05 m | the game draws it for every female lion |
 | `lion_juvenile` | 23,122 | 0.45 m | drawn below half of the age of maturity |
-| `tiger` | 32,390 | 1.00 m | longer body, broad paws, striped coat |
+| `tiger` | 32,702 | 1.00 m | longer body, broad paws, striped coat, layered cheek ruff |
 
-(Triangles after the second pass, S7.)
+(Triangles after S7, except the tiger after J16.)
 
 Seen in Blender previews, in the game's viewer and in the lion habitat
 (`evidence/big-cats-sculpt-2026-11-13.jpg`). Honest state: the lioness is the good one.
@@ -247,10 +247,27 @@ casts the shadow. The game gives alpha-tested textures mip levels that keep the 
 coverage (`src/game/AnimalTextures.cpp`, the engine's `MipOptions::alphaTestReference`), so the
 mane stays full at 30 m. Seen in Blender and in the game's viewer
 (`evidence/big-cats-s7-2026-11-14.jpg`): the male finally has a lion's head inside a mane, the
-lioness's face is the sculptor's. Still wrong: the tiger's cheek ruff reads as a grey comb
-close up, the faces are not at photograph quality (Codex's own verdict), and the mane's cards
-are visible as cards at arm's length. Screenshots of hair taken with `--screenshot` keep the
-cards' alpha in the PNG; view them flattened (`docs/UPSTREAM.md`, ZOO-UP-002).
+lioness's face is the sculptor's. At S7 the tiger's 72 cheek cards still read as three rows of a
+grey comb; the faces were not at photograph quality (Codex's own verdict), and the mane's cards
+were visible as cards at arm's length.
+
+**Tiger cheek ruff (J16, 2026-11-20).** The three regular rows are replaced by 150 narrower
+locks whose roots use an irregular golden-ratio distribution over five depths. Only their short,
+tapered tips extend the sculpt's white cheek. The hair atlas now assigns the locks a warm cream
+base (linear RGB 0.86/0.79/0.67) with sparse black and orange groups instead of neutral grey;
+the GLB contains the corresponding approximate sRGB texels 219/201/171. The extra 312 triangles
+bring the tiger to 32,702 triangles, 17,183 vertices and 3.18 MB; its 33 bones and nine clips are
+unchanged. The production GLB and JSON match a separate deterministic export byte for byte.
+Same-camera, close-crop, `vocalize`, `bathe` and seed-1 Tiger Forest checks are in
+`evidence/tiger-ruff-j16-2026-11-20.jpg`. All 130 animal-pipeline tests and all 270 active
+CTest cases pass (21 diagnostics remain disabled as intended).
+
+Honest state: the ruff is now a compact irregular fringe rather than three broad teeth, but it is
+still alpha-tested card hair and the underlying body is still the lioness sculpt converted into
+a tiger. The procedural face markings do not reach photograph quality, and the male lion's mane
+cards remain visible at arm's length. Screenshots of hair taken with `--screenshot` keep the
+cards' alpha in the PNG and can tint them grey even after flattening; the colour values above
+come from the embedded atlas (`docs/UPSTREAM.md`, ZOO-UP-002).
 
 ### Rhinoceros and elephant on rigged models (2026-11-13)
 
