@@ -27,8 +27,8 @@ SPECIES = ["lion", "lion_female", "lion_juvenile", "tiger", "wolf", "wolf_juveni
            "zebra", "zebra_female", "zebra_juvenile", "rhino", "camel", "camel_juvenile",
            "elephant", "giraffe",
            "giraffe_female", "giraffe_juvenile", "meerkat",
-           "penguin", "penguin_juvenile", "ostrich", "ostrich_juvenile", "flamingo", "kangaroo",
-           "kangaroo_juvenile"]
+           "penguin", "penguin_juvenile", "ostrich", "ostrich_juvenile", "flamingo",
+           "flamingo_juvenile", "kangaroo", "kangaroo_juvenile"]
 
 
 def make_solver(species):
@@ -404,8 +404,8 @@ class AnatomyTests(unittest.TestCase):
 
 
 BIPEDS = [species for species in SPECIES
-          if species in ("penguin", "ostrich", "ostrich_juvenile", "flamingo", "kangaroo",
-                         "kangaroo_juvenile")]
+          if species in ("penguin", "ostrich", "ostrich_juvenile", "flamingo",
+                         "flamingo_juvenile", "kangaroo", "kangaroo_juvenile")]
 
 
 class BipedTests(unittest.TestCase):
@@ -431,7 +431,8 @@ class BipedTests(unittest.TestCase):
         root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
         budgets = {"penguin": (6000, 12000), "ostrich": (12000, 24000),
                    "ostrich_juvenile": (9000, 16000),
-                   "flamingo": (8000, 16000), "kangaroo": (12000, 24000),
+                   "flamingo": (8000, 16000), "flamingo_juvenile": (8000, 16000),
+                   "kangaroo": (12000, 24000),
                    "kangaroo_juvenile": (10000, 20000)}
         for species in BIPEDS:
             data_species = species.removesuffix("_juvenile")
@@ -444,7 +445,9 @@ class BipedTests(unittest.TestCase):
             self.assertEqual(manifest["texture"], 1024)
             clips = {clip["name"]: clip for clip in manifest["clips"]}
             # Activity clips beside the standard eight: tests/test_activity_clips.py.
-            activity = {"penguin": {"preen", "huddle"}, "flamingo": {"preen", "filter_feed", "huddle"},
+            activity = {"penguin": {"preen", "huddle"},
+                        "flamingo": {"preen", "filter_feed", "huddle"},
+                        "flamingo_juvenile": {"preen", "filter_feed", "huddle"},
                         "ostrich": {"dust_bathe"}, "ostrich_juvenile": {"dust_bathe"}}
             self.assertEqual(set(clips),
                              {"idle", "walk", "trot", "eat", "drink", "rest", "sleep", "vocalize"}
@@ -454,6 +457,8 @@ class BipedTests(unittest.TestCase):
                 self.assertAlmostEqual(clips["walk"]["speed"], .75, delta=.02)
             elif species == "kangaroo_juvenile":
                 self.assertAlmostEqual(clips["walk"]["speed"], .58, delta=.02)
+            elif species == "flamingo_juvenile":
+                self.assertAlmostEqual(clips["walk"]["speed"], .602, delta=.02)
             else:
                 self.assertAlmostEqual(clips["walk"]["speed"], data["walkSpeed"],
                                        delta=.1 * data["walkSpeed"])
@@ -503,8 +508,8 @@ class BipedTests(unittest.TestCase):
     def test_signature_biped_anatomy(self):
         for species in BIPEDS:
             spec, _ = make_solver(species)
-            if species in ("ostrich", "ostrich_juvenile", "flamingo"):
-                self.assertGreaterEqual(len(spec.rig.neck), 5 if species == "flamingo" else 4)
+            if species in ("ostrich", "ostrich_juvenile", "flamingo", "flamingo_juvenile"):
+                self.assertGreaterEqual(len(spec.rig.neck), 5 if species.startswith("flamingo") else 4)
             if species == "penguin":
                 for side in ("L", "R"):
                     expected = 3 if spec.sculpt is not None and spec.sculpt.get('birdscan') else 2
@@ -550,17 +555,19 @@ class BipedTests(unittest.TestCase):
     def test_flamingo_one_leg_and_inverted_feeding(self):
         if "flamingo" not in BIPEDS:
             return
-        spec, solver = make_solver("flamingo")
-        clips = {clip.name: clip for clip in spec.clips(solver)}
-        for name in ("idle", "rest", "sleep"):
-            for phase in (0, .25, .5, .75):
-                world = solver.solve(clips[name].pose(phase))
-                self.assertAlmostEqual(world[spec.rig.legs["L"].toes][2, 3], solver.toe_base("L")[2])
-                self.assertGreater(world[spec.rig.legs["R"].toes][2, 3], .6)
-        for name in ("eat", "drink"):
-            world = solver.solve(clips[name].pose(0))
-            delta = world[spec.rig.head][:3, :3] @ solver.rest[spec.rig.head][:3, :3].T
-            self.assertLess((delta @ np.array([0, 0, 1]))[2], 0, name)
+        for species, scale in (("flamingo", 1.), ("flamingo_juvenile", .86)):
+            spec, solver = make_solver(species)
+            clips = {clip.name: clip for clip in spec.clips(solver)}
+            for name in ("idle", "rest", "sleep"):
+                for phase in (0, .25, .5, .75):
+                    world = solver.solve(clips[name].pose(phase))
+                    self.assertAlmostEqual(world[spec.rig.legs["L"].toes][2, 3],
+                                           solver.toe_base("L")[2])
+                    self.assertGreater(world[spec.rig.legs["R"].toes][2, 3], .6 * scale)
+            for name in ("eat", "drink"):
+                world = solver.solve(clips[name].pose(0))
+                delta = world[spec.rig.head][:3, :3] @ solver.rest[spec.rig.head][:3, :3].T
+                self.assertLess((delta @ np.array([0, 0, 1]))[2], 0, species + "/" + name)
 
     def test_kangaroo_hop_is_synchronous_with_flight(self):
         if "kangaroo" not in BIPEDS:
@@ -655,8 +662,10 @@ class BipedTests(unittest.TestCase):
                 position = np.array(struct.unpack_from("<3f", binary, offset))
                 expected = solver.solve(clips[animation["name"]].pose(0))[spec.rig.body][:3, 3]
                 # Animal XYZ becomes YZX in glTF after Blender's two coordinate transforms.
-                # Blender stores rest joints as floats; long-chain reach fitting adds micrometre differences.
-                self.assertTrue(np.allclose(position, expected[[1, 2, 0]], atol=2e-5),
+                # Blender stores rest joints as floats; the flamingo's twelve-piece fitted neck
+                # accumulates up to 35 micrometres in its deepest feeding postures.
+                tolerance = 4e-5 if species.startswith("flamingo") else 2e-5
+                self.assertTrue(np.allclose(position, expected[[1, 2, 0]], atol=tolerance),
                                 f"{species}/{animation['name']}")
 
 

@@ -44,7 +44,7 @@ python3 -m unittest discover -s tools/animals/tests
 | `zoogen/giraffe2.py` on a prepared head-and-neck scan, body modelled by us (below) | giraffe, giraffe_female, giraffe_juvenile |
 | `zoogen/sculpt.py`, `bear.py` on a prepared third-party sculpt, rigged by us (below) | brown_bear, brown_bear_juvenile, polar_bear, polar_bear_juvenile |
 | `zoogen/quadruped.py`, `wild_quadruped.py`, `anatomy.py` | wolf, wolf_juvenile, camel, camel_juvenile, meerkat, meerkat_juvenile |
-| `zoogen/birdscan.py` on a prepared third-party scan or sculpt, rigged by us (below) | penguin, penguin_juvenile, flamingo |
+| `zoogen/birdscan.py` on a prepared third-party scan or sculpt, rigged by us (below) | penguin, penguin_juvenile, flamingo, flamingo_juvenile |
 | `zoogen/biped.py` | ostrich, ostrich_juvenile, kangaroo, kangaroo_juvenile |
 
 Each has the same eight clips, which the game picks from what the animal is doing: `idle`,
@@ -335,6 +335,24 @@ The same step for two birds (Codex task S9; `tools/animals/prepare_bird.py`,
 | `penguin` | 11,899 | 21 | 0.65 m | adult, three-joint flippers |
 | `penguin_juvenile` | 9,799 | 21 | 0.53 m | grey-brown young without the band |
 | `flamingo` | 12,354 | 29 | 1.40 m | rests and sleeps on one leg, feeds with the bill inverted |
+| `flamingo_juvenile` | 12,354 | 29 | 1.20 m | first-year grey-pink juvenile, same functional bill and neck |
+
+`flamingo_juvenile` replaces the scaled pink adults previously used for the 0.8- and 0.9-year-old
+birds at Flamingo Lagoon. These are nearly grown first-year juveniles, not downy hatchlings: the
+licensed adult sculpt and fitted rig are retained at 86 % height, while a separate coat replaces
+the crimson coverts with light grey-brown and the first muted pink feathers, and gives the bill and
+legs juvenile grey tones. The Smithsonian National Zoo describes first-birthday flamingos as
+light pink and notes that the darker adult colour takes another one or two years. The walk is
+0.60 m/s and the trot 1.25 m/s.
+
+The model retains all eleven adult clips, including one-leg rest and sleep, `preen`, `filter_feed`
+and `huddle`; every target distance and gait displacement is scaled with the bird. A fresh adult
+export remained byte-for-byte identical after the opt-in change, and the production juvenile
+matches an independent fresh export. The same-camera comparison, four scan views and a real
+Flamingo Lagoon binocular frame are in `evidence/flamingo-juvenile-j6-2026-11-20.jpg`; the HUD
+identifies selected Aya as female and ten months old. The age and coat now read correctly, but the
+variant deliberately shares the coarse feather ridges, folded-leg limitations and lack of a normal
+map of the adult sculpt.
 
 The penguins have ten clips: the usual eight, `swim` (flying under water with the flippers,
 0.45 m of the bird under the surface, 1.5 m/s) and `float` (resting on the surface, 0.25 m
@@ -348,7 +366,7 @@ penguin is slimmer than the old one and stands like a penguin. What is wrong: be
 keep the roughness and the asymmetry of a mounted specimen; the bill does not really open;
 all adults share one spot layout; the flamingo's feather ridges and deep neck bends are
 coarse, its tucked head and folded leg do not bear a close look; neither has a normal map;
-there is no flamingo chick.
+the first-year flamingo deliberately shares that sculpt rather than pretending to be a downy chick.
 
 A species without a model would be left out of the Visitor Zoo by the game (its habitat built
 and standing empty).

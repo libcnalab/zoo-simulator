@@ -1,0 +1,152 @@
+{
+  "bones": 29,
+  "clips": [
+    {
+      "duration": 0.6,
+      "events": [
+        {
+          "name": "step",
+          "time": 0.0
+        },
+        {
+          "name": "step",
+          "time": 0.3
+        }
+      ],
+      "frames": 19,
+      "loop": true,
+      "name": "walk",
+      "speed": 0.602
+    },
+    {
+      "duration": 0.4,
+      "events": [
+        {
+          "name": "step",
+          "time": 0.0
+        },
+        {
+          "name": "step",
+          "time": 0.2
+        }
+      ],
+      "frames": 13,
+      "loop": true,
+      "name": "trot",
+      "speed": 1.247
+    },
+    {
+      "duration": 5.0,
+      "events": [],
+      "frames": 151,
+      "loop": true,
+      "name": "idle",
+      "speed": 0.0
+    },
+    {
+      "duration": 5.0,
+      "events": [],
+      "frames": 151,
+      "loop": true,
+      "name": "eat",
+      "speed": 0.0
+    },
+    {
+      "duration": 5.0,
+      "events": [],
+      "frames": 151,
+      "loop": true,
+      "name": "drink",
+      "speed": 0.0
+    },
+    {
+      "duration": 5.0,
+      "events": [],
+      "frames": 151,
+      "loop": true,
+      "name": "rest",
+      "speed": 0.0
+    },
+    {
+      "duration": 5.0,
+      "events": [],
+      "frames": 151,
+      "loop": true,
+      "name": "sleep",
+      "speed": 0.0
+    },
+    {
+      "duration": 5.0,
+      "events": [],
+      "frames": 151,
+      "loop": true,
+      "name": "vocalize",
+      "speed": 0.0
+    },
+    {
+      "duration": 10.0,
+      "events": [],
+      "frames": 301,
+      "loop": true,
+      "name": "preen",
+      "speed": 0.0
+    },
+    {
+      "duration": 7.0,
+      "events": [],
+      "frames": 211,
+      "loop": true,
+      "name": "filter_feed",
+      "speed": 0.0
+    },
+    {
+      "duration": 9.0,
+      "events": [],
+      "frames": 271,
+      "loop": true,
+      "name": "huddle",
+      "speed": 0.0
+    }
+  ],
+  "generator": "tools/animals (zoogen)",
+  "license": "CC-BY-4.0",
+  "meta": {
+    "activity_clips": {
+      "filter_feed": "filter_feed",
+      "huddle": "huddle",
+      "preen": "preen"
+    },
+    "age_shape": "First-year juvenile: nearly grown, grey-pink plumage",
+    "asset_license": "CC-BY-4.0",
+    "body_length_m": 1.032,
+    "common_name": "Greater flamingo",
+    "neck_centerline_m": 0.6590409389900733,
+    "relative_height": 0.86,
+    "roughness": 0.92,
+    "scientific_name": "Phoenicopterus roseus",
+    "sex": "juvenile",
+    "shoulder_height_m": 1.204,
+    "source_author": "muppe5",
+    "source_pose": "Upright S-neck with one lifted foot",
+    "source_title": "Flamingo (descriptive; no title exposed by importer)",
+    "source_url": "https://sketchfab.com/3d-models/b363f8f4f7394ddb9d5b3a337f2f7fc7",
+    "variant": "juvenile",
+    "variant_of": "flamingo"
+  },
+  "name": "flamingo_juvenile",
+  "skeleton_bounds_animal_space": {
+    "max": [
+      0.3139,
+      0.0817,
+      1.1567
+    ],
+    "min": [
+      -0.387,
+      -0.0817,
+      0.0
+    ]
+  },
+  "texture": 1024,
+  "triangles": 12354,
+  "vertices": 6240
+}

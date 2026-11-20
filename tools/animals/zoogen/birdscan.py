@@ -158,7 +158,7 @@ def neutral_vertices(vertices, kind):
 def instance(kind, juvenile=False):
     path = SOURCES / kind / 'mesh.npz'
     source = sculpt.read_source(str(path))
-    scale = (.82 if kind == 'penguin' else .78) if juvenile else 1.
+    scale = (.82 if kind == 'penguin' else .86) if juvenile else 1.
     data = dict(source, vertices=source['vertices'].copy() * scale,
                 source_path=str(path), birdscan=True, photo_texture=True, detail_non_color=True,
                 detail_strength=.8 if kind == 'penguin' else .35)
@@ -221,9 +221,27 @@ def penguin_paint(ctx, juvenile=False, scale=1.):
     return color
 
 
-def flamingo_paint(ctx):
-    x, y, z = ctx.x, ctx.y, ctx.z
+def flamingo_paint(ctx, juvenile=False, scale=1.):
+    x, y, z = ctx.x / scale, ctx.y / scale, ctx.z / scale
     feather = nz.fbm(ctx.P * [1, 2, 5], 90, 2, seed=73)
+    if juvenile:
+        # At about one year the bird is almost grown but only beginning to colour: retain the
+        # scan's feather relief while replacing the adult crimson coverts and pink bare parts.
+        grey = np.array([.72, .68, .64])
+        warm = np.array([.94, .78, .75])
+        underside = nz.smoothstep(-.02, .09, x) * nz.smoothstep(.94, .73, z)
+        color = nz.mix(grey, warm, .30 * underside)
+        wing = ctx.tag('wing') * nz.smoothstep(.035 * scale, .085 * scale, np.abs(ctx.y))
+        color = nz.mix(color, np.array([.78, .64, .63]), .45 * wing)
+        color *= (.93 + .09 * feather)[..., None]
+        color = nz.mix(color, np.array([.48, .49, .49]), ctx.tag('bare') + ctx.tag('foot'))
+        bill = nz.mix(np.array([.48, .48, .46]), np.array([.055, .050, .052]),
+                      nz.smoothstep(1.235, 1.20, z))
+        color = nz.mix(color, bill, ctx.tag('beak'))
+        color = nz.mix(color, np.array([.35, .31, .22]), ctx.tag('eye'))
+        pupil = ((x-.277)/.004)**2 + ((z-1.311)/.004)**2
+        return nz.mix(color, np.array([.025, .022, .020]),
+                      ctx.tag('eye') * nz.smoothstep(1., .4, pupil))
     color = np.broadcast_to(np.array([.94, .83, .80]), ctx.P.shape).copy()
     coverts = ctx.tag('wing') * nz.smoothstep(.035, .085, np.abs(y))
     color = nz.mix(color, np.array([.73, .22, .27]), coverts * .75)
@@ -367,9 +385,11 @@ def penguin_clips(solver):
 
 
 def flamingo_one_leg(solver, sleeping=False):
+    scale = solver.rig.extra['scale']
     pose = biped.standing(solver)
     pose.r('hip.R', ry=-34, rz=-139)
-    pose.plant('R', (-.302, -.020, .814), foot_pitch=-78, toe_pitch=-78, pole=(1, 0, 0))
+    pose.plant('R', np.array((-.302, -.020, .814)) * scale,
+               foot_pitch=-78, toe_pitch=-78, pole=(1, 0, 0))
     if sleeping:
         angles = [35, 65, 95, 125, 155, 185, 215, 240, 300, 330, 350]
         biped.sagittal_profile(solver, pose, solver.rig.neck, angles)
@@ -378,8 +398,9 @@ def flamingo_one_leg(solver, sleeping=False):
 
 
 def flamingo_feeding(solver, effort):
+    scale = solver.rig.extra['scale']
     pose = biped.standing(solver)
-    pose.move('hips', dz=-.22 * effort)
+    pose.move('hips', dz=-.22 * scale * effort)
     pose.r('hips', ry=8 * effort)
     start = [math.degrees(math.atan2(*(b-a)[[2, 0]]))
              for a, b in zip(FLAMINGO_NECK, FLAMINGO_NECK[1:])]
@@ -438,7 +459,7 @@ def flamingo_filter_feed(solver, feeding, phase):
 def flamingo_huddle(solver, phase):
     """`huddle`: a compact, two-legged cold-weather stance, neck drawn in and wings held close."""
     angle = math.tau * phase
-    pose = biped.standing(solver).move('hips', dz=-.018)
+    pose = biped.standing(solver).move('hips', dz=-.018 * solver.rig.extra['scale'])
     neutral = [math.degrees(math.atan2(*(b-a)[[2, 0]]))
                for a, b in zip(FLAMINGO_NECK, FLAMINGO_NECK[1:])]
     tuck = .42
@@ -455,10 +476,13 @@ def flamingo_huddle(solver, phase):
 
 def flamingo_clips(solver):
     from .quadruped import bisect_effort, muzzle
-    clips = [biped.gait_clip(solver, biped.Stride('walk', .7, .60, .65, .10, bob=.006, nod=2.4)),
-             biped.gait_clip(solver, biped.Stride('trot', 1.45, .40, .45, .14, bob=.010, wing=6))]
+    scale = solver.rig.extra['scale']
+    clips = [biped.gait_clip(solver, biped.Stride('walk', .7 * scale, .60, .65,
+                                                 .10 * scale, bob=.006 * scale, nod=2.4)),
+             biped.gait_clip(solver, biped.Stride('trot', 1.45 * scale, .40, .45,
+                                                 .14 * scale, bob=.010 * scale, wing=6))]
     feeding = {}
-    for name, height in [('eat', .075), ('drink', .035)]:
+    for name, height in [('eat', .075 * scale), ('drink', .035)]:
         def trial(value):
             return muzzle(solver, flamingo_feeding(solver, value))[2]
         effort = bisect_effort(trial, height, name)
@@ -485,7 +509,7 @@ def flamingo_clips(solver):
                 result.r('neck1', rz=5 * math.sin(angle))
                 for side, offset in [('L', 0), ('R', math.pi)]:
                     target = solver.toe_base(side)
-                    target[2] += .015 * max(0., math.sin(2 * angle + offset))**2
+                    target[2] += .015 * scale * max(0., math.sin(2 * angle + offset))**2
                     result.plant(side, target)
             else:
                 result = biped.standing(solver)

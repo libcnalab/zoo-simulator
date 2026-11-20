@@ -207,8 +207,8 @@ tests pass. Nobody listened to the audio; preserve that qualification.
 - First-generation stylised models still: wolf, camel, meerkat, ostrich, kangaroo; bears are
   sculpt-based but crude (`docs/ANIMALS.md`; pipeline in `tools/animals/`, its tests
   `python3 -m unittest discover -s tools/animals/tests`, about 10 minutes).
-- No juvenile model for flamingo (drawn as scaled adults); the brown/polar bear cub models exist
-  but are unused (bears live as pairs).
+- Every young animal used in the Visitor Zoo has a dedicated variant; the brown/polar bear cub
+  models exist but are unused (bears live as pairs).
 - `wolf_juvenile` is now a real older-pup variant rather than a scaled adult: 0.46 m shoulder,
   shorter body and muzzle, broader skull, larger eyes, ears and paws, lighter coat, 15,528
   triangles, 33 bones and eight clips with pup-scaled motion. The adult wolf remained
@@ -248,6 +248,15 @@ tests pass. Nobody listened to the audio; preserve that qualification.
   animal-pipeline tests and all 267 active CTest cases pass. A real habitat run loaded the variant
   and selected eight-month-old Nadia; the inspected evidence is
   `docs/evidence/kangaroo-juvenile-j5-2026-11-20.jpg` (J5, 2026-11-20).
+- `flamingo_juvenile` now replaces the scaled pink adults used for the 0.8- and 0.9-year-old birds
+  at Flamingo Lagoon. It retains the licensed scan-derived anatomy at 86 % height (1.20 m) and has
+  separate light grey-pink first-year plumage, grey legs and bill, 12,354 triangles, 29 bones and
+  all eleven adult clips. Its 0.60 m/s walk, 1.25 m/s trot, lifted-leg poses, feeding targets and
+  activity motions scale with the variant. The adult export remained byte-for-byte identical and
+  the production juvenile matches an independent final export; all 113 animal-pipeline tests and
+  all 267 active CTest cases pass. A real game run loaded the model and selected ten-month-old
+  Aya. The inspected evidence is `docs/evidence/flamingo-juvenile-j6-2026-11-20.jpg`
+  (J6, 2026-11-20).
 - Dedicated clips now cover meerkat sentry/dig, penguin and flamingo preening, flamingo filter
   feeding, camel and giraffe rumination, ostrich and elephant dust-bathing, and shallow wallowing
   for bears, tigers and rhinoceroses (elephants reuse their scoop/toss as a wet toss). Penguin

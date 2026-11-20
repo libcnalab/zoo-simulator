@@ -40,6 +40,8 @@ EXPECTED = {
     "penguin": {"preen": "preen", "huddle": "huddle"},
     "penguin_juvenile": {"preen": "preen", "huddle": "huddle"},
     "flamingo": {"huddle": "huddle", "preen": "preen", "filter_feed": "filter_feed"},
+    "flamingo_juvenile": {"huddle": "huddle", "preen": "preen",
+                            "filter_feed": "filter_feed"},
     "ostrich": {"dust_bathe": "dust_bathe"},
     "ostrich_juvenile": {"dust_bathe": "dust_bathe"},
     "elephant": {"dust_bathe": "dust_bathe", "bathe": "dust_bathe"},
@@ -152,7 +154,8 @@ class PreenTests(unittest.TestCase):
         # Moments when the bird holds a preening posture, and how close the bill tip must be
         # to the body's skin (the scan's feathers): it touches, it does not stand off.
         moments = {"penguin": (.15, .25, .47, .73, .8), "penguin_juvenile": (.15, .47, .8),
-                   "flamingo": (.15, .35, .55, .75)}
+                   "flamingo": (.15, .35, .55, .75),
+                   "flamingo_juvenile": (.15, .35, .55, .75)}
         for species, phases in moments.items():
             spec, solver, clips = clips_of(species)
             data = spec.sculpt
@@ -165,13 +168,16 @@ class PreenTests(unittest.TestCase):
                 tip = quadruped.muzzle(solver, pose)
                 body = posed_skin(solver, world, data)[~head]
                 distance = np.linalg.norm(body - tip, axis=1).min()
-                self.assertLess(distance, .035 * spec.meta["shoulder_height_m"] / .65 if species != "flamingo"
-                                else .03, f"{species} at {phase}")
+                limit = (.03 * spec.meta["relative_height"]
+                         if species == "flamingo_juvenile" else .03
+                         if species == "flamingo" else
+                         .035 * spec.meta["shoulder_height_m"] / .65)
+                self.assertLess(distance, limit, f"{species} at {phase}")
                 for key, leg in spec.rig.legs.items():
                     self.assertAlmostEqual(world[leg.toes][2, 3], solver.toe_base(key)[2], places=6)
 
     def test_preening_starts_and_ends_upright(self):
-        for species in ("penguin", "flamingo"):
+        for species in ("penguin", "flamingo", "flamingo_juvenile"):
             _, solver, clips = clips_of(species)
             start = solver.solve(clips["preen"].pose(0))
             idle = solver.solve(clips["idle"].pose(0)) if species == "penguin" else None
@@ -182,17 +188,19 @@ class PreenTests(unittest.TestCase):
 
 class FeedingAndRuminationTests(unittest.TestCase):
     def test_filter_feeding_bill_sweeps_at_the_water_surface(self):
-        spec, solver, clips = clips_of("flamingo")
-        tips = []
-        for index in range(60):
-            pose = clips["filter_feed"].pose(index / 60)
-            world = solver.solve(pose)
-            tips.append(quadruped.muzzle(solver, pose))
-            for key, leg in spec.rig.legs.items():
-                self.assertAlmostEqual(world[leg.toes][2, 3], solver.toe_base(key)[2], places=6)
-        tips = np.asarray(tips)
-        self.assertLess(tips[:, 2].max(), .08)
-        self.assertGreater(np.ptp(tips[:, 1]), .20)
+        for species, scale in (("flamingo", 1.), ("flamingo_juvenile", .86)):
+            spec, solver, clips = clips_of(species)
+            tips = []
+            for index in range(60):
+                pose = clips["filter_feed"].pose(index / 60)
+                world = solver.solve(pose)
+                tips.append(quadruped.muzzle(solver, pose))
+                for key, leg in spec.rig.legs.items():
+                    self.assertAlmostEqual(world[leg.toes][2, 3],
+                                           solver.toe_base(key)[2], places=6)
+            tips = np.asarray(tips)
+            self.assertLess(tips[:, 2].max(), .08)
+            self.assertGreater(np.ptp(tips[:, 1]), .20 * scale)
 
     def test_ruminants_stand_and_grind_the_jaw(self):
         for species in ("camel", "camel_juvenile", "giraffe", "giraffe_female",
@@ -249,17 +257,19 @@ class HuddleAndWatchTests(unittest.TestCase):
             self.assertGreater(max(np.linalg.norm(matrix - heads[0]) for matrix in heads), .25, species)
 
     def test_flamingo_huddle_is_compact_on_two_planted_legs(self):
-        spec, solver, clips = clips_of("flamingo")
-        idle_head = solver.solve(clips["idle"].pose(0))[spec.rig.head][2, 3]
-        heads = []
-        for index in range(60):
-            world = solver.solve(clips["huddle"].pose(index / 60))
-            heads.append(world[spec.rig.head][:3, 3])
-            for key, leg in spec.rig.legs.items():
-                self.assertAlmostEqual(world[leg.toes][2, 3], solver.toe_base(key)[2], places=6)
-        heads = np.asarray(heads)
-        self.assertLess(heads[:, 2].max(), idle_head - .08)
-        self.assertGreater(np.ptp(heads[:, 1]), .04)
+        for species, scale in (("flamingo", 1.), ("flamingo_juvenile", .86)):
+            spec, solver, clips = clips_of(species)
+            idle_head = solver.solve(clips["idle"].pose(0))[spec.rig.head][2, 3]
+            heads = []
+            for index in range(60):
+                world = solver.solve(clips["huddle"].pose(index / 60))
+                heads.append(world[spec.rig.head][:3, 3])
+                for key, leg in spec.rig.legs.items():
+                    self.assertAlmostEqual(world[leg.toes][2, 3],
+                                           solver.toe_base(key)[2], places=6)
+            heads = np.asarray(heads)
+            self.assertLess(heads[:, 2].max(), idle_head - .08 * scale)
+            self.assertGreater(np.ptp(heads[:, 1]), .04 * scale)
 
 
 class BrowsingTests(unittest.TestCase):

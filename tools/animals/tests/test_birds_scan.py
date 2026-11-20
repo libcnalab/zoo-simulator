@@ -13,7 +13,7 @@ from test_clips import make_solver
 from test_pachyderms import glb, accessor
 
 ROOT = Path(__file__).resolve().parents[3]
-BIRDS = ('penguin', 'penguin_juvenile', 'flamingo')
+BIRDS = ('penguin', 'penguin_juvenile', 'flamingo', 'flamingo_juvenile')
 STANDARD = {'idle', 'walk', 'trot', 'eat', 'drink', 'rest', 'sleep', 'vocalize'}
 
 
@@ -60,12 +60,13 @@ class BirdScanTests(unittest.TestCase):
     def test_manifest_clip_water_and_variant_contract(self):
         for name, (spec, _, clips) in self.cases.items():
             manifest = json.loads((ROOT / 'assets/animals' / (name + '.json')).read_text())
-            limit = 10000 if name.endswith('juvenile') else 14000
+            limit = 10000 if name == 'penguin_juvenile' else 14000
             self.assertLessEqual(manifest['triangles'], limit)
             self.assertEqual(manifest['license'], 'CC-BY-4.0')
             self.assertEqual(manifest['meta'], spec.meta)
             # Both preen (an activity clip, tests/test_activity_clips.py); penguins also swim.
-            activities = {'preen', 'huddle'} | ({'filter_feed'} if name == 'flamingo' else set())
+            activities = {'preen', 'huddle'} | ({'filter_feed'}
+                                                if name.startswith('flamingo') else set())
             expected = STANDARD | activities | ({'swim', 'float'} if name.startswith('penguin') else set())
             self.assertEqual(set(clips), expected)
             exported = {clip['name']: clip for clip in manifest['clips']}
@@ -79,7 +80,7 @@ class BirdScanTests(unittest.TestCase):
                     self.assertLess(metadata['depth_m'], spec.meta['shoulder_height_m'])
                     self.assertAlmostEqual(metadata['speed'], exported[water]['speed'], places=4)
             if name.endswith('juvenile'):
-                self.assertEqual(manifest['meta']['variant_of'], 'penguin')
+                self.assertEqual(manifest['meta']['variant_of'], name.removesuffix('_juvenile'))
                 self.assertEqual(manifest['meta']['variant'], 'juvenile')
                 self.assertLess(manifest['meta']['relative_height'], 1)
 
@@ -111,15 +112,26 @@ class BirdScanTests(unittest.TestCase):
                                                         f'{name}/{clip_name}/{bone.name}')
 
     def test_flamingo_rest_has_exactly_one_ground_contact(self):
-        _, solver, clips = self.cases['flamingo']
-        for name in ('rest', 'sleep'):
-            for phase in np.arange(12) / 12:
-                world = solver.solve(clips[name].pose(float(phase)))
-                contact = [abs(world[leg.toes][2, 3]-solver.toe_base(key)[2]) < .002
-                           for key, leg in solver.rig.legs.items()]
-                self.assertEqual(sum(contact), 1, name)
-                self.assertGreater(world['toes.R'][2, 3], .60)
-                self.assertLess(world['head'][2, 3], 1.15)
+        for species, scale in (('flamingo', 1.), ('flamingo_juvenile', .86)):
+            _, solver, clips = self.cases[species]
+            for name in ('rest', 'sleep'):
+                for phase in np.arange(12) / 12:
+                    world = solver.solve(clips[name].pose(float(phase)))
+                    contact = [abs(world[leg.toes][2, 3]-solver.toe_base(key)[2]) < .002
+                               for key, leg in solver.rig.legs.items()]
+                    self.assertEqual(sum(contact), 1, species + '/' + name)
+                    self.assertGreater(world['toes.R'][2, 3], .60 * scale)
+                    self.assertLess(world['head'][2, 3], 1.15 * scale)
+
+    def test_flamingo_juvenile_is_smaller_and_keeps_the_scan_anatomy(self):
+        adult, _, _ = self.cases['flamingo']
+        juvenile, _, _ = self.cases['flamingo_juvenile']
+        self.assertAlmostEqual(juvenile.meta['relative_height'], .86)
+        self.assertAlmostEqual(juvenile.meta['shoulder_height_m'], 1.204)
+        self.assertEqual(juvenile.meta['sex'], 'juvenile')
+        self.assertTrue(np.allclose(juvenile.sculpt['vertices'], adult.sculpt['vertices'] * .86))
+        self.assertTrue(np.array_equal(juvenile.sculpt['triangles'], adult.sculpt['triangles']))
+        self.assertEqual(juvenile.sculpt['bone_names'].tolist(), adult.sculpt['bone_names'].tolist())
 
     def test_walk_stance_feet_do_not_slide(self):
         for name, (_, solver, clips) in self.cases.items():
