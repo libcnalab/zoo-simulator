@@ -10,7 +10,10 @@ whatever you take up (`docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `docs/V
 - Current northern layout on `develop` includes Lynx Ridge, Red Panda Canopy and Snow Leopard
   Heights. The two extensions added 40,960 m². Seed 1 has 17 habitats, 99 animals and a
   78.1 m maximum walk to a facility. See `docs/VISITOR_ZOO.md` for the plan and game views.
-  Filled-visit cache revision 3 covers the expanded layout. Late starts now load the exact
+  Filled-visit cache revision 4 covers the expanded layout and its northern family routines.
+  Lynx, red panda and snow leopard cubs now follow their mothers. Their mean distances are
+  0.96 m, 1.04 m and 2.16 m in a five-minute seed-1 visit (`docs/ANIMAL_BEHAVIOUR.md`).
+  Late starts now load the exact
   prepared state. The old cache path could run the entire visitor fill twice at 18:00.
   The visitor map checks gate connectivity and the player's collision radius before offering
   a destination. A seed-1 visit at 10:30 offered 25 stops, including all 17 habitats. Clicking

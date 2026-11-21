@@ -43,7 +43,7 @@ it is tired). Sleep timing uses a day/night bias, with a midday
 rest period for crepuscular species. Loose animals roam nearby public tiles,
 drink at open water and keep accumulating needs.
 
-The fifteen shipped species use the internal table in `AnimalProfile.cpp`.
+The eighteen shipped species use the internal table in `AnimalProfile.cpp`.
 Unknown species ids still use the original weighted routine; the species JSON
 schema and loader are unchanged. Table weights and all times and distances below
 are **game-design estimates**, intended to produce plausible ethograms, not
@@ -68,8 +68,11 @@ standing rumination, and flock resting choices become huddling.
 | Ostrich | 2/11/6/2 | dust bathing | 6 | 10 |
 | Kangaroo | 6/10/3/1 | social rest, dusk grazing | 5 | 14 |
 | Polar bear | 4/2/5/5 | bathing/swimming | solitary | 15 |
+| Eurasian lynx | 10/0/4/2 | boundary patrol | solitary | 16 |
+| Red panda | 6/8/3/1 | foraging and enrichment | solitary | 14 |
+| Snow leopard | 12/0/4/2 | boundary patrol | solitary | 18 |
 
-Lions, tigers, wolves, brown bears, rhinos and kangaroos receive a twilight
+Lions, tigers, wolves, brown bears, rhinos, kangaroos and the three northern families receive a twilight
 activity multiplier of 2.4 from 05:00–08:00 and 17:00–21:00, 0.45 at
 11:00–16:00, and 0.8 otherwise. Midday rest weights multiply by 1.5. The other
 profiles have staggered night sleep windows derived from their existing sleep
@@ -113,6 +116,45 @@ pairs can lie close; adult male rivals leave additional space. Young follow thei
 living mother, rest beside her, and can seek other juveniles for play. Maternal
 food dependence retains the existing needs rule. This is a local group model,
 not a hierarchy, pair-bond or kinship simulation.
+
+### Mothers and cubs in the northern habitats (2026-11-21)
+
+The northern species initially ran the fallback routine, which occasionally picked a nearby
+wander target but skipped the regular maternal-follow update. All three now use the routine
+profiles above. Their adults choose destinations independently. A dependent cub can join
+its mother at her destination or rest beside her, and stops following when she leaves the group.
+The two cats favour elevated resting spots. Red pandas forage and visit their enrichment.
+
+In the seed-1 visitor zoo, the existing family-distance diagnostic sampled both dependent
+young of each species on every tick for 6,000 ticks after the morning fill. The distances
+below are means in metres. They describe one five-minute visit.
+
+| Habitat | Previous mean | Current mean |
+|---|---:|---:|
+| Lynx Ridge | 11.42 | 0.96 |
+| Red Panda Canopy | 9.70 | 1.04 |
+| Snow Leopard Heights | 8.05 | 2.16 |
+
+[Comparison of distances in the three habitats](evidence/northern-family-distances-2026-11-21.png).
+
+In a separate one-game-day fixture with food and water available, all three northern species
+ended at full health. The adult lynx and snow leopards both patrolled. Red pandas spent 12.9%
+of recorded animal-ticks foraging. A regression separates a dependent young animal from its
+resting mother, observes it close the gap, then crates the mother and checks that following ends.
+
+The recorded simulation hashes cover two fill lengths and another 500 ticks of the visit.
+Filled-visit cache revision 4 uses the new routines.
+
+| Seed | Fill ticks | At opening | After 500 ticks |
+|---:|---:|---:|---:|
+| 1 | 600 | 3399284276129038929 | 2345721614951052103 |
+| 2 | 600 | 7530215229751015445 | 7303233870023771811 |
+| 3 | 600 | 1025021742823844907 | 1236883498961724436 |
+| 1 | 6,000 | 2340672768525208463 | 13221382786027523413 |
+| 2 | 6,000 | 18162814393738903142 | 6724508172774927581 |
+| 3 | 6,000 | 1251580372408499294 | 9508548962437344888 |
+
+### Group signals and attention
 
 Meerkats and zebras rotate adult watch duty every 45 motion seconds in daylight.
 The outgoing sentinel stays until its replacement is posted. Duty can defer

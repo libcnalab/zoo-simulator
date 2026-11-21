@@ -158,7 +158,8 @@ Vec2 RoutinePlace(const Animal& animal, const SpeciesDef& species, const Behavio
     // A flamingo is a wader whatever it is doing: it stands in the shallows, it does not swim out.
     const bool wader = species.id == "flamingo";
     const bool shallow = activity == AnimalActivity::FilterFeed || species.id == "rhino" || wader;
-    const bool wantsHigh = activity == AnimalActivity::Sentinel || (rest && species.group == "big_cat");
+    const bool wantsHigh = activity == AnimalActivity::Sentinel ||
+                           (rest && (species.group == "big_cat" || species.group == "cat"));
     const std::uint32_t routeStop =
         HashU32(animal.id.value, static_cast<std::uint32_t>(env.time.tick / (45 * kTicksPerSecond))) % 3U;
     const Vec2 favourite = Favourite(animal, enclosure, rest ? 0U : 1U + routeStop);

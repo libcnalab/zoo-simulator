@@ -309,6 +309,13 @@ TEST(AnimalEthogramTests, SpeciesBudgetsCohesionAndAwakeMotion) {
     }
 }
 
+TEST(AnimalEthogramTests, EveryShippedSpeciesHasARoutine) {
+    const auto species = SpeciesCatalog::LoadDirectory(std::string(ZOO_SOURCE_DIR) + "/data/species");
+    for (const auto& def : species.All()) {
+        EXPECT_NE(animal_internal::ProfileFor(def), nullptr) << def.id;
+    }
+}
+
 TEST(AnimalEthogramTests, RoutineStateAndEveryAppendedActivityRoundTripAndAffectHash) {
     HabitatDay habitat("wolf");
     Animal* animal = habitat.animals.Find(AnimalId{1U});
@@ -354,7 +361,8 @@ TEST(AnimalEthogramTests, RoutineStateAndEveryAppendedActivityRoundTripAndAffect
 }
 
 TEST(AnimalEthogramTests, HabitatWaterShadeAndHighGroundAreUsedWithoutUnsafeTargets) {
-    for (const std::string_view name : {"flamingo", "polar_bear", "lion", "meerkat"}) {
+    for (const std::string_view name :
+         {"flamingo", "polar_bear", "lion", "meerkat", "lynx", "snow_leopard"}) {
         HabitatDay habitat(name);
         const auto& species = habitat.species.All()[static_cast<std::size_t>(habitat.speciesIndex)];
         const auto* profile = animal_internal::ProfileFor(species);
@@ -369,8 +377,10 @@ TEST(AnimalEthogramTests, HabitatWaterShadeAndHighGroundAreUsedWithoutUnsafeTarg
                                   : name == "polar_bear" ? AnimalActivity::Bathe
                                   : name == "meerkat"    ? AnimalActivity::Sentinel
                                                          : AnimalActivity::Rest;
-        habitat.env.time.shift = 5 * kTicksPerGameHour;
-        if (name == "meerkat") {
+        // Give the resting forest and alpine cats a morning without a competing midday shade preference.
+        habitat.env.time.shift = species.group == "cat" ? 0 : 5 * kTicksPerGameHour;
+        const bool raisedSite = name == "meerkat" || name == "lynx" || name == "snow_leopard";
+        if (raisedSite) {
             for (int z = 14; z <= 19; ++z) {
                 for (int x = 14; x <= 19; ++x) {
                     habitat.world.SetVertexHeight(x, z, 4.0f);
@@ -387,8 +397,8 @@ TEST(AnimalEthogramTests, HabitatWaterShadeAndHighGroundAreUsedWithoutUnsafeTarg
         } else {
             EXPECT_FALSE(habitat.world.HasWater(World::TileAt(target)));
         }
-        if (name == "meerkat") {
-            EXPECT_GT(habitat.world.HeightAt(target), 3.0f);
+        if (raisedSite) {
+            EXPECT_GT(habitat.world.HeightAt(target), 3.0f) << name;
         }
         if (name == "lion") {
             EXPECT_LT(Length(target - World::TileCenter({18, 23})), 5.0f);
@@ -464,6 +474,40 @@ TEST(AnimalEthogramTests, CallsAreAnsweredOnceAndJuvenileFollowsLivingMother) {
     EXPECT_FALSE(habitat.animals.Find(AnimalId{4U})->following);
     EXPECT_TRUE(habitat.animals.Remove(mother));
     EXPECT_FALSE(habitat.animals.Find(AnimalId{4U})->following);
+}
+
+TEST(AnimalEthogramTests, NorthernCubsRejoinTheirMotherAndStopFollowingWhenSeparated) {
+    for (const std::string_view name : {"lynx", "red_panda", "snow_leopard"}) {
+        SCOPED_TRACE(name);
+        HabitatDay habitat(name);
+        Animal* mother = habitat.animals.Find(AnimalId{1U});
+        Animal* child = habitat.animals.Find(AnimalId{2U});
+        Animal* adult = habitat.animals.Find(AnimalId{3U});
+        ASSERT_NE(mother, nullptr);
+        ASSERT_NE(child, nullptr);
+        ASSERT_NE(adult, nullptr);
+        child->mother = mother->id;
+        child->bornTick = habitat.env.time.tick;
+        child->position = World::TileCenter({27, 16});
+        adult->mother = mother->id;
+        // Hold the mother at rest while a dependent cub crosses the habitat to rejoin her.
+        animal_internal::StartActivity(*mother, AnimalActivity::Rest, mother->position, 120);
+        animal_internal::StartActivity(*child, AnimalActivity::Idle, child->position, 120);
+        const float before = Distance(child->position, mother->position);
+        for (int tick = 0; tick < 45 * kTicksPerSecond; ++tick) {
+            ++habitat.env.time.tick;
+            habitat.animals.Step(habitat.env);
+        }
+        EXPECT_EQ(child->following, mother->id);
+        EXPECT_LT(Distance(child->position, mother->position), before * 0.5f);
+        EXPECT_FALSE(adult->following);
+        ASSERT_TRUE(habitat.animals.Crate(mother->id));
+        for (int tick = 0; tick < 2 * kTicksPerSecond; ++tick) {
+            ++habitat.env.time.tick;
+            habitat.animals.Step(habitat.env);
+        }
+        EXPECT_FALSE(child->following);
+    }
 }
 
 TEST(AnimalEthogramTests, FollowerKeepsRouteToMovingLeaderDestination) {

@@ -25,6 +25,9 @@ constexpr BehaviourProfile profiles[] = {
     {"ostrich", 2, 11, 6, 2, A::Forage, A::DustBathe, 6, 10, false},
     {"kangaroo", 6, 10, 3, 1, A::Forage, A::Socialize, 5, 14, true},
     {"polar_bear", 4, 2, 5, 5, A::Forage, A::Bathe, 0, 15, false},
+    {"lynx", 10, 0, 4, 2, A::Forage, A::Patrol, 0, 16, true},
+    {"red_panda", 6, 8, 3, 1, A::Forage, A::Play, 0, 14, true},
+    {"snow_leopard", 12, 0, 4, 2, A::Forage, A::Patrol, 0, 18, true},
 };
 }  // namespace
 
