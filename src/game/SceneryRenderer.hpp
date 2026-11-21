@@ -3,8 +3,10 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <list>
 #include <map>
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -75,6 +77,8 @@ public:
     void Submit(CnaEngine::App::Frame& frame, const Vector3& eye);
     /// Submits everything in full detail.
     void Submit(CnaEngine::App::Frame& frame) const;
+    /// Distance to the nearest solid part of a tree between the eye and the animal.
+    std::optional<float> TreeInSight(const Vector3& eye, const Vector3& direction, float reach);
 
     /// Triangles and draw calls of everything in full detail; a frame draws what is in view
     /// of it, and the far groves with fewer triangles.
@@ -88,6 +92,7 @@ private:
     struct Cell;
     struct Grove;
     struct HoldingGate;
+    struct TreeGeometry;
 
     void Layout(const zoo::World& world);
     std::uint64_t FenceHash(const zoo::World& world, const Cell& cell) const;
@@ -108,6 +113,7 @@ private:
     std::map<zoo::BuildingId, HoldingGate> holdingGates_;
     std::vector<std::unique_ptr<Cell>> cells_;
     std::vector<std::unique_ptr<Grove>> groves_;
+    std::list<TreeGeometry> treeGeometry_;
     int width_ = 0;
     int depth_ = 0;
     int cellTiles_ = kEditCellTiles;

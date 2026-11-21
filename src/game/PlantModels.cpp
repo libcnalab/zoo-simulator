@@ -7,6 +7,7 @@
 #include <numbers>
 #include <string_view>
 
+#include "CnaEngine/Collision/StaticWorld.hpp"
 #include "FoliageTextures.hpp"
 #include "zoo/base/Rng.hpp"
 
@@ -953,6 +954,18 @@ bool BuildPlant(ModelBuilder& model, const zoo::PropDef& def, std::uint32_t seed
         FallenLeaves(k);
     }
     return true;
+}
+
+void BuildTreeSight(CnaEngine::Collision::StaticWorld& sight, const zoo::PropDef& def,
+                    std::uint32_t seed, PlantDetail detail, const Matrix& placement) {
+    ModelBuilder model;
+    BuildPlant(model, def, seed, detail);
+    for (const ModelPart& part : model.Parts()) {
+        if (OpaqueTreeSurface(part.finish.pattern)) {
+            const auto& mesh = part.writer.mesh;
+            sight.AddTriangles(mesh.positions, mesh.indices, placement);
+        }
+    }
 }
 
 void BuildHedge(ModelBuilder& model, const Vector3& a, const Vector3& b, float height,

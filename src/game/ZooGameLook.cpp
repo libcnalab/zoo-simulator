@@ -11,6 +11,7 @@
 
 #include "GroundPaint.hpp"
 #include "Hud.hpp"
+#include "SceneryRenderer.hpp"
 #include "SightLine.hpp"
 #include "ZooGame.hpp"
 #include "zoo/visitors/VisitorTuning.hpp"
@@ -155,6 +156,8 @@ void ZooGame::LookAtAnimals(float seconds) {
     const auto& species = zoo_->SpeciesList().All();
     const zoo::Animal* found = nullptr;
     std::optional<GazeHit> best;
+    std::optional<float> treeCover;
+    float checkedDistance = 0.0f;
     // Through binoculars the eyes reach across the zoo and are as precise as the view is narrow.
     const float magnified = Magnification();
     const float reach = std::min(kLookReach * magnified, 300.0f);
@@ -165,10 +168,16 @@ void ZooGame::LookAtAnimals(float seconds) {
         if (!target)
             continue;
         const auto hit = AimAtAnimal(*target, eye, gaze, reach, magnified);
-        if (hit && (!best || *hit < *best)) {
-            best = hit;
-            found = &animal;
+        if (!hit || (best && !(*hit < *best)))
+            continue;
+        if (!treeCover && hit->depth > checkedDistance) {
+            checkedDistance = hit->depth;
+            treeCover = scenery_->TreeInSight(ToXna(eye), ToXna(gaze), checkedDistance);
         }
+        if (treeCover && *treeCover < hit->depth)
+            continue;
+        best = hit;
+        found = &animal;
     }
 
     AnimalCard& card = visit_.card;

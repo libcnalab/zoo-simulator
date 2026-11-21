@@ -521,3 +521,16 @@ This is documented as ZOO-UP-004 in `docs/UPSTREAM.md`, not worked around with p
 game. CNA currently exposes no operation that preserves a buffer's GPU renderer while releasing
 its shadow. The new counter is diagnostic only and does not change memory use or drawing. Its
 warning-clean build, real 45-frame benchmark and all 30 game-side tests pass.
+
+## Trees between a visitor and an animal (2026-11-21)
+
+The visitor checks the opaque surfaces of a tree only when an animal is under the crosshair.
+Each grove stores a bounding box for its wood and crown cores and another for each tree.
+At most sixteen recently queried trees keep a CPU triangle index. The scene builds each
+index using the same plant seed, placement and detail level as the visible tree.
+
+In three seed-1 software-GL visits at 13:00, the `--bench` animal gaze section averaged
+0.22 ms per frame looking into the tree fork that covers Ravi, 0.12 ms looking past it
+toward Esme, and 0.05 ms looking across Capybara Marsh. Each run measured 29 frame
+intervals after 40 warm-up frames at 1280 × 720. This section includes both matching the
+displayed animal and checking tree cover. [Views used for the measurements](evidence/trees-and-binoculars-2026-11-21.jpg)

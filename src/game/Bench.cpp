@@ -62,7 +62,7 @@ void Bench::Print(const char* what) const {
                 "max %.2f\n",
                 what, sorted.size(), 1000.0 / mean, mean, at(0.5), at(0.95), at(0.99), sorted.back() * 1000.0);
     static constexpr const char* kNames[SectionCount] = {"simulation", "animals", "people",     "sound",
-                                                         "rest",       "submit",  "people pass"};
+                                                         "rest",       "submit",  "people pass", "animal gaze"};
     std::string line;
     double known = 0.0;
     for (int i = 0; i < SectionCount; ++i) {

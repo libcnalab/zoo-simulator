@@ -686,8 +686,10 @@ void ZooGame::UpdateVisit(double seconds) {
     {
         const Bench::Scope timed(bench_, Bench::Animals);
         animals_->Update(*zoo_, lived, static_cast<float>(tickDebt_));
-        if (visit_.screen == VisitScreen::Walking)
-            LookAtAnimals(dt);
+    }
+    if (visit_.screen == VisitScreen::Walking) {
+        const Bench::Scope timed(bench_, Bench::AnimalLook);
+        LookAtAnimals(dt);
     }
     {
         const Bench::Scope timed(bench_, Bench::People);

@@ -35,6 +35,12 @@ height in water. At Capybara Marsh it distinguishes two-month-old Malik from Oma
 beside him. Both comparisons use the same saved 13:00 visit and fixed camera on each run.
 [Matched binocular views](evidence/binocular-animal-identification-2026-11-21.jpg)
 
+Trunks, branches and the solid interior of tree crowns now hide a card when they cover
+the sightline. On the same Acacia Plain gallery, a tree fork hides Ravi at a heading
+of 15 degrees. Turning toward the opening at 10.4 degrees reveals Esme. Openings between
+branches and the rectangular leaf textures stay transparent to this test.
+[Views through the gallery trees](evidence/trees-and-binoculars-2026-11-21.jpg)
+
 On the expanded plan, the footer names the stop under the pointer. Two northern restrooms
 are distinguished by the nearest habitat centre, Red Panda Canopy or Snow Leopard Heights.
 The names stay the same when crowds shift to another viewing place. Habitat labels take

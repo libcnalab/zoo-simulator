@@ -7,6 +7,9 @@
 
 #include <gtest/gtest.h>
 
+#include "CnaEngine/Collision/StaticWorld.hpp"
+#include "Microsoft/Xna/Framework/Ray.hpp"
+
 namespace zoogame {
 namespace {
 
@@ -29,6 +32,24 @@ std::size_t LeafTriangles(const ModelBuilder& model) {
         }
     }
     return triangles;
+}
+
+TEST(PlantModels, SolidTreeGeometryBlocksTheTrunkAndLeavesTheGapBesideItOpen) {
+    using Microsoft::Xna::Framework::Ray;
+    const auto tree = Tree("oak");
+    const auto placement = Matrix::CreateRotationY(0.4f) * Matrix::CreateTranslation(20, 0, 15);
+    for (const auto detail : {PlantDetail::Near, PlantDetail::Far}) {
+        CnaEngine::Collision::StaticWorld sight;
+        BuildTreeSight(sight, tree, 12345, detail, placement);
+        const auto hit = sight.Raycast(Ray({20, 1, 5}, {0, 0, 1}), 20);
+        ASSERT_TRUE(hit);
+        EXPECT_GT(hit->distance, 9.0f);
+        EXPECT_LT(hit->distance, 10.0f);
+        EXPECT_FALSE(sight.Raycast(Ray({20, 1, 5}, {0, 0, 1}), 8.0f));
+        EXPECT_FALSE(sight.Raycast(Ray({23, 1, 5}, {0, 0, 1}), 20));
+    }
+    EXPECT_FALSE(OpaqueTreeSurface(Pattern::LeafSpray));
+    EXPECT_FALSE(OpaqueTreeSurface(Pattern::NeedleSpray));
 }
 
 std::size_t PatternTriangles(const ModelBuilder& model, Pattern pattern) {

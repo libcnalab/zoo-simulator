@@ -16,7 +16,7 @@ namespace zoogame {
 /// are left out: the avatars' cast is still being put together then.
 class Bench {
 public:
-    enum Section { Simulation, Animals, People, Sound, Rest, Submit, PeoplePass, SectionCount };
+    enum Section { Simulation, Animals, People, Sound, Rest, Submit, PeoplePass, AnimalLook, SectionCount };
 
     using Clock = std::chrono::steady_clock;
 
@@ -30,7 +30,8 @@ public:
     }
     /// Seconds in the sections of an update so far (not the passes of the draw).
     double Timed() const {
-        return sections_[Simulation] + sections_[Animals] + sections_[People] + sections_[Sound];
+        return sections_[Simulation] + sections_[Animals] + sections_[People] + sections_[Sound] +
+               sections_[AnimalLook];
     }
     /// Counts of the frame the renderer drew last.
     void Drawn(unsigned long long drawCalls, unsigned long long primitives);

@@ -8,6 +8,8 @@
 #include <cstdlib>
 #include <numbers>
 
+#include "CnaEngine/Collision/StaticWorld.hpp"
+#include "Microsoft/Xna/Framework/Ray.hpp"
 #include "BuildingModels.hpp"
 #include "FenceModels.hpp"
 #include "GroundPaint.hpp"
@@ -96,6 +98,34 @@ struct SceneryRenderer::Grove {
     std::uint64_t hash = 0, wanted = 0;
     bool built = false;
     bool showsFar = false;
+    struct Tree {
+        zoo::PropId id;
+        int definition;
+        Matrix placement;
+        Microsoft::Xna::Framework::BoundingBox bounds;
+    };
+    std::vector<Tree> trees;
+    Microsoft::Xna::Framework::BoundingBox treeBounds;
+
+    bool UseFar(const Vector3& eye) {
+        const float dx = std::max({static_cast<float>(x0) * kTile - eye.X, 0.0f,
+                                   eye.X - static_cast<float>(x1) * kTile});
+        const float dz = std::max({static_cast<float>(z0) * kTile - eye.Z, 0.0f,
+                                   eye.Z - static_cast<float>(z1) * kTile});
+        const float dy = eye.Y - ground;
+        const float square = dx * dx + dy * dy + dz * dz;
+        if (square > kFarBeyond * kFarBeyond)
+            showsFar = true;
+        else if (square < kNearWithin * kNearWithin)
+            showsFar = false;
+        return showsFar;
+    }
+};
+
+struct SceneryRenderer::TreeGeometry {
+    zoo::PropId id;
+    PlantDetail detail;
+    CnaEngine::Collision::StaticWorld solids{1.5f};
 };
 
 struct SceneryRenderer::HoldingGate {
@@ -126,6 +156,7 @@ SceneryRenderer::~SceneryRenderer() = default;
 
 void SceneryRenderer::Layout(const zoo::World& world) {
     cells_.clear();
+    treeGeometry_.clear();
     holdingGates_.clear();
     width_ = world.Width();
     depth_ = world.Depth();
@@ -465,7 +496,11 @@ std::uint64_t SceneryRenderer::GroveHash(const zoo::World& world, const zoo::Zoo
 }
 
 void SceneryRenderer::BuildGrove(const zoo::World& world, const zoo::ZooObjects& objects, Grove& grove) {
+    using Microsoft::Xna::Framework::BoundingBox;
     ModelBuilder near, far;
+    std::vector<std::size_t> firstVertex;
+    grove.trees.clear();
+    treeGeometry_.clear();
     std::vector<zoo::PropId> ids;
     objects.PropsInTiles({grove.x0, grove.z0}, {grove.x1 - 1, grove.z1 - 1}, ids);
     float heights = 0.0f;
@@ -479,11 +514,39 @@ void SceneryRenderer::BuildGrove(const zoo::World& world, const zoo::ZooObjects&
         const Vector3 position(prop->position.x, DrawnGroundHeight(world, prop->position), prop->position.z);
         const Matrix placement = Placement(position, prop->heading, prop->scale);
         const std::uint32_t seed = Scramble(id.value, 17u, 3u);
-        near.SetTransform(placement);
-        BuildPlant(near, *def, seed, PlantDetail::Near);
-        if (!fullDetail_) {
-            far.SetTransform(placement);
-            BuildPlant(far, *def, seed, PlantDetail::Far);
+        const bool tree = def->role == zoo::PropRole::Tree;
+        BoundingBox bounds(position, position);
+        const auto build = [&](ModelBuilder& model, PlantDetail detail) {
+            if (tree) {
+                firstVertex.clear();
+                for (const ModelPart& part : model.Parts())
+                    firstVertex.push_back(part.writer.mesh.positions.size());
+            }
+            model.SetTransform(placement);
+            BuildPlant(model, *def, seed, detail);
+            if (!tree)
+                return;
+            // Only the newly appended vertices belong to this tree. Bounds enclose the
+            // actual opaque surfaces at both detail levels, including overhanging limbs.
+            std::size_t partIndex = 0;
+            for (const ModelPart& part : model.Parts()) {
+                const auto first = partIndex < firstVertex.size() ? firstVertex[partIndex] : 0;
+                ++partIndex;
+                if (!OpaqueTreeSurface(part.finish.pattern))
+                    continue;
+                const auto& points = part.writer.mesh.positions;
+                for (std::size_t i = first; i < points.size(); ++i) {
+                    bounds.Min = Vector3::Min(bounds.Min, points[i]);
+                    bounds.Max = Vector3::Max(bounds.Max, points[i]);
+                }
+            }
+        };
+        build(near, PlantDetail::Near);
+        if (!fullDetail_)
+            build(far, PlantDetail::Far);
+        if (tree) {
+            grove.treeBounds = grove.trees.empty() ? bounds : BoundingBox::CreateMerged(grove.treeBounds, bounds);
+            grove.trees.push_back({id, prop->def, placement, bounds});
         }
         heights += position.Y;
         ++count;
@@ -572,6 +635,45 @@ void SceneryRenderer::DiscardEditCache(bool discardCpuTextureCopies) {
     editCacheDiscarded_ = true;
 }
 
+std::optional<float> SceneryRenderer::TreeInSight(const Vector3& eye, const Vector3& direction, float reach) {
+    const Microsoft::Xna::Framework::Ray ray(eye, direction);
+    std::optional<float> nearest;
+    for (const auto& grove : groves_) {
+        if (grove->trees.empty())
+            continue;
+        const auto groveDistance = ray.Intersects(grove->treeBounds);
+        if (!groveDistance || *groveDistance > reach)
+            continue;
+        const PlantDetail detail = !fullDetail_ && grove->UseFar(eye) ? PlantDetail::Far : PlantDetail::Near;
+        for (const auto& tree : grove->trees) {
+            const auto distance = ray.Intersects(tree.bounds);
+            if (!distance || *distance > reach)
+                continue;
+            // Keep only the last trees actually examined through the binoculars. The hundreds
+            // of other trees in the zoo can discard their CPU triangles after upload.
+            auto entry = std::ranges::find_if(treeGeometry_, [&](const TreeGeometry& cached) {
+                return cached.id == tree.id && cached.detail == detail;
+            });
+            if (entry == treeGeometry_.end()) {
+                if (treeGeometry_.size() >= 16)
+                    treeGeometry_.pop_back();
+                TreeGeometry& cached = treeGeometry_.emplace_front();
+                cached.id = tree.id;
+                cached.detail = detail;
+                BuildTreeSight(cached.solids, catalog_.props[static_cast<std::size_t>(tree.definition)],
+                               Scramble(tree.id.value, 17u, 3u), detail, tree.placement);
+            } else {
+                treeGeometry_.splice(treeGeometry_.begin(), treeGeometry_, entry);
+            }
+            if (const auto hit = treeGeometry_.front().solids.Raycast(ray, reach)) {
+                reach = hit->distance;
+                nearest = reach;
+            }
+        }
+    }
+    return nearest;
+}
+
 void SceneryRenderer::Submit(CnaEngine::App::Frame& frame, const Vector3& eye) {
     if (fullDetail_) {
         static_cast<const SceneryRenderer&>(*this).Submit(frame);
@@ -585,19 +687,7 @@ void SceneryRenderer::Submit(CnaEngine::App::Frame& frame, const Vector3& eye) {
         if (grove->near.Empty()) {
             continue;
         }
-        // From the eye to the nearest point of the grove's square on the ground.
-        const float dx = std::max({static_cast<float>(grove->x0) * kTile - eye.X, 0.0f,
-                                   eye.X - static_cast<float>(grove->x1) * kTile});
-        const float dz = std::max({static_cast<float>(grove->z0) * kTile - eye.Z, 0.0f,
-                                   eye.Z - static_cast<float>(grove->z1) * kTile});
-        const float dy = eye.Y - grove->ground;
-        const float distance = std::sqrt(dx * dx + dy * dy + dz * dz);
-        if (distance > kFarBeyond) {
-            grove->showsFar = true;
-        } else if (distance < kNearWithin) {
-            grove->showsFar = false;
-        }
-        (grove->showsFar ? grove->far : grove->near).Submit(frame);
+        (grove->UseFar(eye) ? grove->far : grove->near).Submit(frame);
     }
     constexpr float kSlide = 1.75f;
     constexpr float kRailOffset = 0.85f;

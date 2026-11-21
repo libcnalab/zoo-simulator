@@ -6,6 +6,10 @@
 #include "MeshWriter.hpp"
 #include "zoo/build/Catalog.hpp"
 
+namespace CnaEngine::Collision {
+class StaticWorld;
+}
+
 namespace zoogame {
 
 /// How much of a plant is written.
@@ -26,6 +30,16 @@ bool IsPlant(const zoo::PropDef& def);
 /// details.
 bool BuildPlant(ModelBuilder& model, const zoo::PropDef& def, std::uint32_t seed,
                 PlantDetail detail = PlantDetail::Near);
+
+inline bool OpaqueTreeSurface(Pattern finish) {
+    return finish == Pattern::Bark || finish == Pattern::BirchBark ||
+           finish == Pattern::LeafShade || finish == Pattern::Needles;
+}
+
+/// Add the wood and opaque crown surfaces of this individual to a sight query. Leaves on
+/// cut-out cards have holes, so a card's rectangular outline cannot obstruct the whole view.
+void BuildTreeSight(CnaEngine::Collision::StaticWorld& sight, const zoo::PropDef& def,
+                    std::uint32_t seed, PlantDetail detail, const Matrix& placement);
 
 /// A clipped hedge from `a` to `b` on the ground line, `height` metres high: a dark solid
 /// core, which hides what is behind it and casts the shadow, in a coat of leaf sprays.

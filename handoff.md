@@ -36,8 +36,9 @@ whatever you take up (`docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `docs/V
 - Animal cards and automatic habitat views now aim at the model's animated body.
   At 13:00, looking at the adult giraffe Esme and at the capybara pup Malik identifies
   both on their public walks. See `docs/evidence/binocular-animal-identification-2026-11-21.jpg`.
-  A tree can still hide the animal while its card is visible. One reproducible view is
-  `--hour 13 --view 309,289.5,15,-6.45` with binoculars raised, where Ravi is behind branches.
+  At `--hour 13 --view 309,289.5,15,-6.45`, a fork blocks Ravi and his card. Looking through
+  the neighbouring gap shows Esme. `docs/evidence/trees-and-binoculars-2026-11-21.jpg` records
+  both views. Individual leaf textures, buildings and visitors are outside the tree check.
 
 - **The game:** Greenhill Zoo, a first-person walk through a zoo (C++23, the simulation core in
   `src/core/zoo/`, the game on CNA / cna-engine in `src/game/`). Zoo management must not come
