@@ -19,7 +19,7 @@ the morning's crowd already spread over the park.
 | Title | Visit Zoo, Continue Visit, Load Visit, Settings, Quit |
 | Walking | `W A S D` or the arrows; the mouse looks around |
 | Pace | `Shift` **switches** between walking (4.4 m/s; 1.6 until 2026-11-14) and running (8.8 m/s; 4.4 before); it is not held |
-| Looking at an animal | a card fades in: its name, species, sex and age, what it is doing |
+| Looking at an animal | Aim at the head, neck or body to see the individual's name, species, sex, age and activity. When animals overlap, the nearer body under the crosshair takes priority. |
 | `B`, right mouse button held | binoculars (since 2026-11-14): the view narrows to a seventh (7 x), eased up over a quarter of a second behind two round eyepieces; the head turns seven times slower, one stands still, and an animal's card is shown up to 300 m away (70 m without) |
 | `E` | read the information board one stands at (range, diet, facts, who lives here) |
 | `M` | Open the zoo map and click a marker to travel. Each destination needs a public path connected to the entrance, with room for the player's body beside benches, lamps and other solid props. Habitat markers favour quieter viewing places on the southern front. Facility markers place the player near the door. |
@@ -27,6 +27,13 @@ the morning's crowd already spread over the park.
 | `F5` | save the visit; the visit is also kept every two minutes for *Continue Visit* |
 | `F4` | diagnostics: visitors simulated / in range / drawn, avatars ready, sound voices |
 | Settings | mouse sensitivity, invert Y, field of view, head bob, volume, diagnostics |
+
+From the public gallery at Acacia Plain, looking up at Esme's head used to show Laila's
+card even though the calf stood below the crosshair. The current view follows the animated
+hips, chest and head of the model in front of the player, including its age, posture and
+height in water. At Capybara Marsh it distinguishes two-month-old Malik from Omar standing
+beside him. Both comparisons use the same saved 13:00 visit and fixed camera on each run.
+[Matched binocular views](evidence/binocular-animal-identification-2026-11-21.jpg)
 
 On the expanded plan, the footer names the stop under the pointer. Two northern restrooms
 are distinguished by the nearest habitat centre, Red Panda Canopy or Snow Leopard Heights.

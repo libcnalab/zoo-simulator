@@ -92,8 +92,8 @@ private:
     void ReadVisitSettings();
     void ApplyVisitSettings(bool store);
     void FillVisitFigures();
-    /// What the eyes rest on and what E would do; opens and closes the board and the map.
-    void UpdateEncounters(float seconds);
+    /// Find the board in reach and handle the board and map controls.
+    void UpdateBoardsAndMap();
     void LookAtAnimals(float seconds);
     void OpenBoard(const zoo::Prop& board);
     void BuildVisitMap();

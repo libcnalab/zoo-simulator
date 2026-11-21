@@ -9,6 +9,7 @@
 #include <map>
 #include <optional>
 
+#include "GroundPaint.hpp"
 #include "Hud.hpp"
 #include "SightLine.hpp"
 #include "ZooGame.hpp"
@@ -97,9 +98,7 @@ std::string Names(const std::vector<std::string>& names) {
 
 }  // namespace
 
-void ZooGame::UpdateEncounters(float seconds) {
-    LookAtAnimals(seconds);
-
+void ZooGame::UpdateBoardsAndMap() {
     // The board in reach: the nearest one the eyes are turned towards.
     boardInReach_ = {};
     const zoo::Vec2 here = walker_.Position();
@@ -151,32 +150,23 @@ void ZooGame::UpdateEncounters(float seconds) {
 }
 
 void ZooGame::LookAtAnimals(float seconds) {
-    const Vector3 eye = walker_.Eye();
-    const Vector3 gaze = walker_.Gaze();
+    const auto eye = FromXna(walker_.Eye());
+    const auto gaze = FromXna(walker_.Gaze());
     const auto& species = zoo_->SpeciesList().All();
     const zoo::Animal* found = nullptr;
-    float bestMiss = 1.0f;
+    std::optional<GazeHit> best;
     // Through binoculars the eyes reach across the zoo and are as precise as the view is narrow.
     const float magnified = Magnification();
     const float reach = std::min(kLookReach * magnified, 300.0f);
     for (const zoo::Animal& animal : zoo_->Fauna().All()) {
         if (!animal.Visible() || animal.species < 0)
             continue;
-        const zoo::SpeciesDef& def = species[static_cast<std::size_t>(animal.species)];
-        const Vector3 body(animal.position.x,
-                           zoo_->Map().HeightAt(animal.position) + 0.55f * def.shoulderHeightM,
-                           animal.position.z);
-        const Vector3 to = body - eye;
-        const float along = to.X * gaze.X + to.Y * gaze.Y + to.Z * gaze.Z;
-        if (along < 0.8f || along > reach)
+        const auto target = animals_->SightTargetOf(animal.id);
+        if (!target)
             continue;
-        const float aside =
-            std::sqrt(std::max(0.0f, to.X * to.X + to.Y * to.Y + to.Z * to.Z - along * along));
-        // A far animal is a small target: the eyes are allowed a little more there.
-        const float size = std::max(0.45f, 0.5f * def.bodyLengthM) + 0.2f + 0.012f * along / magnified;
-        const float miss = aside / size;
-        if (miss < bestMiss) {
-            bestMiss = miss;
+        const auto hit = AimAtAnimal(*target, eye, gaze, reach, magnified);
+        if (hit && (!best || *hit < *best)) {
+            best = hit;
             found = &animal;
         }
     }
@@ -388,6 +378,10 @@ std::optional<ZooGame::Pose> ZooGame::StandPose(std::string_view what) const {
                     (animal.species < 0 ||
                      zoo_->SpeciesList().All()[static_cast<std::size_t>(animal.species)].id != only))
                     continue;
+                const auto target = animals_->SightTargetOf(animal.id);
+                if (!target)
+                    continue;
+                const auto body = (target->joints[0] + target->joints[1]) * 0.5f;
                 for (const zoo::ViewingSpot& spot : enclosure.viewing) {
                     // A transparent keeper gate is technically a view, but not a public
                     // viewing front: its close mesh fills the picture and often frames the
@@ -446,8 +440,8 @@ std::optional<ZooGame::Pose> ZooGame::StandPose(std::string_view what) const {
                                        middle.z + forward * static_cast<float>(toward.z)};
                     if (!ClearOfPlayerProps(*zoo_, at))
                         continue;
-                    const float dx = animal.position.x - at.x;
-                    const float dz = animal.position.z - at.z;
+                    const float dx = body.x - at.x;
+                    const float dz = body.z - at.z;
                     const float sight = std::max(spot.visibility, 0.2f);
                     // Some six metres off is where an animal fills the view without the eye
                     // being on top of it.
@@ -466,11 +460,11 @@ std::optional<ZooGame::Pose> ZooGame::StandPose(std::string_view what) const {
                         score *= 1.0f + 16.0f * (0.9f - square);
                     if (worse(score))
                         continue;
-                    if (blocked(at, {animal.position.x, animal.position.z}))
+                    if (blocked(at, {body.x, body.z}))
                         score *= 16.0f;
                     if (worse(score))
                         continue;
-                    if (fences(at, {animal.position.x, animal.position.z}) > 1)
+                    if (fences(at, {body.x, body.z}) > 1)
                         score *= 40.0f;
                     // Not behind somebody's head.
                     for (const zoo::Visitor& visitor : zoo_->Guests().All()) {
@@ -487,13 +481,8 @@ std::optional<ZooGame::Pose> ZooGame::StandPose(std::string_view what) const {
                         best = score;
                         // At the middle of the animal: down at a wolf lying at the fence, level
                         // at one far off, up at a giraffe.
-                        const float distance = std::sqrt(dx * dx + dz * dz);
-                        float middleOfIt = 0.45f;
-                        if (animal.species >= 0)
-                            middleOfIt = 0.55f * zoo_->SpeciesList()
-                                                     .All()[static_cast<std::size_t>(animal.species)]
-                                                     .shoulderHeightM;
-                        const float down = std::atan2(1.65f - middleOfIt, std::max(distance, 0.5f));
+                        const float eye = DrawnGroundHeight(zoo_->Map(), at) + Walker::kEyeHeight;
+                        const float down = std::atan2(eye - body.y, std::max(distanceNow, 0.5f));
                         pose = Pose{at.x, at.z, std::atan2(dx, dz), std::clamp(down, -0.5f, 0.9f)};
                     }
                 }

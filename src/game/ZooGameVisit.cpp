@@ -649,7 +649,7 @@ void ZooGame::UpdateVisit(double seconds) {
         input.turn = look.X * turn;
         input.tilt = look.Y * turn * (visit_.settings.invertY ? -1.0f : 1.0f);
         walker_.Update(*zoo_, input, dt);
-        UpdateEncounters(dt);
+        UpdateBoardsAndMap();
         sinceKept_ += seconds;
         if (sinceKept_ >= kKeepEvery) {
             sinceKept_ = 0.0;
@@ -686,6 +686,8 @@ void ZooGame::UpdateVisit(double seconds) {
     {
         const Bench::Scope timed(bench_, Bench::Animals);
         animals_->Update(*zoo_, lived, static_cast<float>(tickDebt_));
+        if (visit_.screen == VisitScreen::Walking)
+            LookAtAnimals(dt);
     }
     {
         const Bench::Scope timed(bench_, Bench::People);

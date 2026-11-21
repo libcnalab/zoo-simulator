@@ -30,6 +30,11 @@ whatever you take up (`docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `docs/V
   adult and juvenile models. Matched close-ups are in
   `docs/evidence/carnivore-eyes-2026-11-21.jpg`. The facial-landmark test reads the
   shipped GLBs and checks that both eyes project through the coat.
+- Animal cards and automatic habitat views now aim at the model's animated body.
+  At 13:00, looking at the adult giraffe Esme and at the capybara pup Malik identifies
+  both on their public walks. See `docs/evidence/binocular-animal-identification-2026-11-21.jpg`.
+  A tree can still hide the animal while its card is visible. One reproducible view is
+  `--hour 13 --view 309,289.5,15,-6.45` with binoculars raised, where Ravi is behind branches.
 
 - **The game:** Greenhill Zoo, a first-person walk through a zoo (C++23, the simulation core in
   `src/core/zoo/`, the game on CNA / cna-engine in `src/game/`). Zoo management must not come

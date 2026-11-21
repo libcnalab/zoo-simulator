@@ -108,8 +108,8 @@ swimmer's surface stays the world's water level), `VisitorRenderer` (feet), `Wal
 player's collision field at tile resolution from `DrawnVertexHeight`, the start position and
 the floors of fences, buildings and props), `SceneryRenderer` (ordinary props and both plant
 detail forms), and `KeeperRenderer` (feet).
-Still at `World::HeightAt`: sounds, the binoculars' aim and the editor's tools. The simulation
-itself keeps its heights.
+Binoculars follow the animal's rendered pose on the ground or in water. Sounds and the
+editor's tools still use `World::HeightAt`, as does the simulation itself.
 
 J34 also anchors an unwadeable water collision block's top to the water surface, rather than a
 fixed three metres above its bed, and makes `Walker` watch `World::NavRevision`. A pool or terrain

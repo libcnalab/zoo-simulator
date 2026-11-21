@@ -32,6 +32,7 @@ public:
     static constexpr float kWalkSpeed = 4.4f;  ///< m/s
     static constexpr float kRunSpeed = 8.8f;   ///< m/s
     static constexpr float kBodyRadius = 0.28f;
+    static constexpr float kEyeHeight = 1.62f;
 
     Walker();
 

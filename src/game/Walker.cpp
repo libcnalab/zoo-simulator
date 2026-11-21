@@ -27,7 +27,7 @@ CharacterSettings Body() {
     CharacterSettings settings;
     settings.radius = Walker::kBodyRadius;
     settings.height = 1.75f;
-    settings.eyeHeight = 1.62f;
+    settings.eyeHeight = Walker::kEyeHeight;
     // No ledges: the ground is a height field (a facet steeper than a body climbs rises two
     // metres), and fences, walls, trunks and posts all stand higher than a step. With a step
     // height cna-engine's controller, stopped by a wall, tries a hop of the body's radius and

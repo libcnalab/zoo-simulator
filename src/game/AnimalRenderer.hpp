@@ -22,6 +22,7 @@
 #include "Microsoft/Xna/Framework/Graphics/Texture2D.hpp"
 
 #include "Common.hpp"
+#include "SightLine.hpp"
 #include "zoo/sim/Zoo.hpp"
 
 namespace zoogame {
@@ -62,6 +63,8 @@ public:
     /// Where the animal's body stands (its feet); nothing for an animal without
     /// a body in the world (unknown, crated, inside a shelter).
     std::optional<Vector3> PositionOf(zoo::AnimalId id) const;
+    /// World-space joints of the currently drawn pose for aiming and automatic viewpoints.
+    std::optional<AnimalSightTarget> SightTargetOf(zoo::AnimalId id) const;
     /// Bodies submitted for the last frame, after camera culling.
     std::size_t Drawn() const { return drawn_; }
     /// Species drawn with a stand-in because their own model does not exist yet.
@@ -74,6 +77,7 @@ private:
         /// The model's textures with mip levels (AnimalTextures.hpp); the view's materials use them.
         std::vector<std::unique_ptr<Microsoft::Xna::Framework::Graphics::Texture2D>> textures;
         CnaEngine::Animation::Skeleton skeleton;
+        std::array<int, 3> sightBones{{-1, -1, -1}};
         std::vector<CnaEngine::Animation::AnimationClip> clips;
         std::array<const CnaEngine::Animation::AnimationClip*, static_cast<std::size_t>(AnimalPose::Count)>
             pose{};
@@ -104,6 +108,7 @@ private:
         float pitch = 0.0f;
         float scale = 1.0f;
         float standing = 1.0f;  ///< height in the world, for conservative camera culling
+        float bodyRadius = 1.0f;
         float bounds = 2.0f;    ///< body and the shadow it may cast, metres from its middle
         float afloat = 0.0f;  ///< 0 standing on the ground .. 1 floating at the surface
         float sunk = 0.0f;    ///< how deep it lies in the water now, model metres (Kind::swimDepth)

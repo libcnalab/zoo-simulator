@@ -17,6 +17,7 @@
 
 #include "Microsoft/Xna/Framework/BoundingFrustum.hpp"
 #include "Microsoft/Xna/Framework/BoundingSphere.hpp"
+#include "Microsoft/Xna/Framework/Graphics/ModelBone.hpp"
 
 #include "AnimalWater.hpp"
 #include "AnimalTextures.hpp"
@@ -44,6 +45,38 @@ constexpr float kJuvenileShare = 0.5f;
 constexpr float kFloatDepthShare = 0.62f;
 /// ...and then, without a figure from its model, this share of its height is under water.
 constexpr float kFloatSunkShare = 0.72f;
+
+// The imported model retains named scene nodes, while its skin palette has anonymous
+// joints in topological order. Match their model-space bind transforms once per model.
+std::array<int, 3> SightBones(const Xna::Model& model, const Animation::Skeleton& skeleton) {
+    std::array<int, 3> result{-1, -1, -1};
+    constexpr std::array names{"hips", "chest", "head"};
+    const auto& nodes = model.getBonesProperty();
+    std::vector<Matrix> sceneBind(static_cast<std::size_t>(nodes.getCountProperty()));
+    model.CopyAbsoluteBoneTransformsTo(sceneBind);
+    std::vector<Matrix> skinBind;
+    skeleton.ToModelSpace(skeleton.bindPose, skinBind);
+    for (std::size_t i = 0; i < names.size(); ++i) {
+        Xna::ModelBone* node = nullptr;
+        if (!nodes.TryGetValue(names[i], node))
+            continue;
+        const Matrix& scene = sceneBind[static_cast<std::size_t>(node->getIndexProperty())];
+        float best = 1.0e-6f;
+        for (std::size_t j = 0; j < skinBind.size(); ++j) {
+            const Matrix& bind = skinBind[j];
+            const float error =
+                Vector3::DistanceSquared(scene.getTranslationProperty(), bind.getTranslationProperty()) +
+                Vector3::DistanceSquared(scene.getRightProperty(), bind.getRightProperty()) +
+                Vector3::DistanceSquared(scene.getUpProperty(), bind.getUpProperty()) +
+                Vector3::DistanceSquared(scene.getBackwardProperty(), bind.getBackwardProperty());
+            if (error < best) {
+                best = error;
+                result[i] = static_cast<int>(j);
+            }
+        }
+    }
+    return result;
+}
 #if defined(__linux__) && !defined(__ANDROID__)
 constexpr bool kDiscardAnimalCpuMipCopies = true;
 #else
@@ -207,6 +240,7 @@ const AnimalRenderer::Kind* AnimalRenderer::Load(const std::string& model) {
         return nullptr;
     }
     kind->skeleton = Enhanced::SkeletonFromSkinningData(*skin);
+    kind->sightBones = SightBones(*kind->model, kind->skeleton);
     kind->clips = Enhanced::ClipsFromSkinningData(*skin);
     // ClipsFromSkinningData makes the engine-neutral timelines every Actor plays. The imported
     // SkinningData remains owned by ContentManager so the Model's buffers, effects and textures
@@ -357,6 +391,7 @@ void AnimalRenderer::Update(const zoo::Zoo& zoo, float seconds, float tickFracti
         const float standing = def.shoulderHeightM * femaleShare * bodyScale;
         actor.scale = standing / kind->shoulderHeight;
         actor.standing = standing;
+        actor.bodyRadius = def.bodyRadiusM * bodyScale * femaleShare;
         const float length = def.bodyLengthM * bodyScale;
         // Half the body's diagonal, plus enough for a tall animal's morning shadow. This is
         // deliberately generous: submitting a marginal animal is cheap; losing its visible
@@ -492,6 +527,26 @@ std::optional<Vector3> AnimalRenderer::PositionOf(zoo::AnimalId id) const {
     if (found == actors_.end() || !found->second->visible)
         return std::nullopt;
     return found->second->world.getTranslationProperty();
+}
+
+std::optional<AnimalSightTarget> AnimalRenderer::SightTargetOf(zoo::AnimalId id) const {
+    const auto found = actors_.find(id);
+    if (found == actors_.end() || !found->second->visible)
+        return std::nullopt;
+    const auto& actor = *found->second;
+    AnimalSightTarget target{{}, actor.bodyRadius};
+    for (std::size_t i = 0; i < target.joints.size(); ++i) {
+        const int bone = actor.kind->sightBones[i];
+        if (bone >= 0) {
+            const auto local = actor.animator.BoneTransform(bone).getTranslationProperty();
+            target.joints[i] = FromXna(Vector3::Transform(local, actor.world));
+        } else {
+            // Custom rigs may use other bone names. Their displayed body still has a target.
+            target.joints[i] =
+                FromXna(actor.world.getTranslationProperty()) + zoo::Vec3{0.0f, actor.standing * 0.55f, 0.0f};
+        }
+    }
+    return target;
 }
 
 }  // namespace zoogame
