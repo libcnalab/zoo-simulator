@@ -7,6 +7,7 @@
 #include <chrono>
 #include <cmath>
 #include <condition_variable>
+#include <limits>
 #include <mutex>
 #include <thread>
 
@@ -957,8 +958,7 @@ void TerrainRenderer::BuildApron(const zoo::World& world) {
     }
     auto skirtLand = std::make_unique<Land>();
     skirtLand->material = land_.front()->material;
-    skirtLand->mesh = GpuMesh::Upload(device_, skirt, VertexLayout::PositionNormalTexture(),
-                                      {.preferSixteenBitIndices = false});
+    skirtLand->mesh = GpuMesh::Upload(device_, skirt, VertexLayout::PositionNormalTexture());
 
     // Beyond the skirt: a grid of fields over rolling hills, out to the horizon.
     const float minX = -kSkirt;
@@ -1034,11 +1034,26 @@ void TerrainRenderer::BuildApron(const zoo::World& world) {
     }
     ComputeNormals(grid);
     for (int crop = 0; crop < kCrops; ++crop) {
-        MeshData part = grid;
-        part.indices = cropIndices[static_cast<std::size_t>(crop)];
-        if (!part.indices.empty())
-            land_[static_cast<std::size_t>(crop)]->mesh = GpuMesh::Upload(
-                device_, part, VertexLayout::PositionNormalTexture(), {.preferSixteenBitIndices = false});
+        MeshData part;
+        part.indices = std::move(cropIndices[static_cast<std::size_t>(crop)]);
+        if (part.indices.empty())
+            continue;
+        // Adjacent fields share the full grid's normals along their boundary. Each
+        // material only needs to upload the vertices its own triangles actually draw.
+        constexpr auto unused = std::numeric_limits<std::uint32_t>::max();
+        std::vector<std::uint32_t> local(grid.VertexCount(), unused);
+        for (auto& index : part.indices) {
+            auto& mapped = local[index];
+            if (mapped == unused) {
+                mapped = static_cast<std::uint32_t>(part.VertexCount());
+                part.positions.push_back(grid.positions[index]);
+                part.normals.push_back(grid.normals[index]);
+                part.texCoords0.push_back(grid.texCoords0[index]);
+            }
+            index = mapped;
+        }
+        land_[static_cast<std::size_t>(crop)]->mesh =
+            GpuMesh::Upload(device_, part, VertexLayout::PositionNormalTexture());
     }
     std::erase_if(land_, [&](const std::unique_ptr<Land>& land) { return land->mesh.Vertices() == nullptr; });
     land_.push_back(std::move(skirtLand));

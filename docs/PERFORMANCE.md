@@ -629,3 +629,13 @@ drawing for the image comparison. Both identified the resting cub Zain and their
 1280 × 720 frames agreed at every RGB pixel. Immediately after loading the animals,
 the process reported 3,529 and 3,515 MiB resident. The capacity measurement counts
 the animation arrays directly.
+
+### Countryside mesh outside the property (2026-11-21)
+
+Each of the six field materials now uploads only the terrain vertices its triangles use.
+Shared border vertices keep the normals calculated across the whole landscape. Smaller
+batches and the perimeter skirt fit in 16-bit indices. In the same editor overview,
+the renderer reported 20.2 MiB of vertex buffers and 3.7 MiB of index buffers across
+591 meshes, down from 20.8 and 3.8 MiB. Three matched 1280 × 720 captures had identical
+RGB pixels, covering the editor opening, its countryside overview and the east garden
+in a populated visit.
