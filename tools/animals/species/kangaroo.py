@@ -44,30 +44,44 @@ def _skeleton():
     tail = biped.add_chain(bones, "tail", "hips", TAIL)
     return bones, Rig("hips", legs, chest="chest", neck=["neck1"], head="head",
         tail=tail, ears=["ear.L", "ear.R"],
-        extra={"muzzle": ("head", (.528, 0, 1.312)), "contact_height": CONTACT,
+        extra={"muzzle": ("head", (.545, 0, 1.297)), "contact_height": CONTACT,
                "support_tail_tip": TAIL[-1]})
 
 
 def _parts(bones):
-    parts = [Part("pear_body", [R((-.16, 0, .34), .12, .14, .16),
-        R((-.15, 0, .48), .22, .24, .25), R((-.11, 0, .65), .24, .26, .25),
-        R((-.04, 0, .84), .18, .19, .21), R((.05, 0, 1.04), .13, .14, .16),
-        R((.12, 0, 1.16), .085, .10, .11), R((.21, 0, 1.30), .067, .075, .085)],
-        chain=biped.chain(bones, "hips", "chest", "neck1", "head"), segments=32, cap_scale=.4),
-        Part("deer_head", [R((.17, 0, 1.335), .060, .070),
-            R((.245, 0, 1.35), .090, .087, .075), R((.34, 0, 1.338), .076, .063, .055),
-            R((.43, 0, 1.32), .057, .045, .035), R((.50, 0, 1.312), .050, .036, .030)],
+    parts = [Part("tapered_trunk", [R((-.17, 0, .35), .12, .14, .15),
+        R((-.17, 0, .48), .22, .23, .23), R((-.13, 0, .63), .245, .26, .25),
+        R((-.07, 0, .77), .20, .22, .23), R((-.01, 0, .90), .16, .18, .20),
+        R((.06, 0, 1.03), .145, .16, .18), R((.12, 0, 1.13), .11, .13, .14)],
+        chain=biped.chain(bones, "hips", "chest"), segments=32, cap_scale=.4),
+        Part("upright_neck", [R((.08, 0, 1.08), .115, .14, .13),
+            R((.13, 0, 1.17), .095, .115, .105), R((.17, 0, 1.25), .075, .088, .082),
+            R((.21, 0, 1.32), .065, .074, .070)],
+             chain=biped.chain(bones, "chest", "neck1", "head"), segments=28,
+             cap_start="flat", cap_end="flat"),
+        Part("cranium", [R((.18, 0, 1.335), .052, .060, .055),
+            R((.235, 0, 1.355), .088, .095, .078), R((.295, 0, 1.356), .088, .086, .072),
+            R((.35, 0, 1.340), .071, .065, .052)],
              weights={"head": 1}, segments=24, cap_scale=.3, tag="head"),
-        Part("nose", [R((.498, 0, 1.32), .043, .027), R((.528, 0, 1.312), .037, .024)],
+        Part("bowed_muzzle", [R((.31, 0, 1.342), .069, .061, .047),
+            R((.37, 0, 1.337), .064, .056, .043), R((.43, 0, 1.325), .058, .050, .036),
+            R((.49, 0, 1.308), .049, .041, .029), R((.525, 0, 1.299), .041, .032, .025)],
+             weights={"head": 1}, segments=24, cap_scale=.3, tag="head"),
+        Part("lower_jaw", [R((.32, 0, 1.307), .052, .023),
+            R((.41, 0, 1.294), .047, .025), R((.50, 0, 1.286), .034, .018)],
+             weights={"head": 1}, segments=20, cap_scale=.25, tag="head"),
+        Part("nose", [R((.505, 0, 1.307), .044, .030),
+            R((.532, 0, 1.300), .042, .029), R((.548, 0, 1.297), .032, .023)],
              weights={"head": 1}, fuse=False, segments=16, tag="nose", cap_scale=.3),
-        biped.eye_part((.305, .078, 1.373), .012),
+        biped.eye_part((.292, .083, 1.378), .013),
         Part("ear.L", [R((.185, .064, 1.38), .024, .016),
             R((.17, .080, 1.47), .034, .020), R((.15, .095, 1.555), .025, .015),
             R((.145, .098, 1.59), .008, .006)], weights={"ear.L": 1},
              side_ref=(0, 1, 0), mirror=True, fuse=False, segments=20, tag="ear", cap_scale=.3),
-        Part("hind_leg.L", [R((-.12, .12, .63), .105, .17),
-            R((.04, .17, .47), .105, .16), R((.17, .17, .34), .065, .078),
-            R((-.04, .17, .20), .045, .052), R((-.23, .17, .075), .029, .031)],
+        Part("hind_leg.L", [R((-.13, .13, .63), .13, .19),
+            R((-.03, .17, .54), .145, .20), R((.10, .17, .42), .115, .145),
+            R((.17, .17, .34), .075, .087), R((.05, .17, .25), .048, .058),
+            R((-.12, .17, .12), .034, .039), R((-.23, .17, .075), .028, .030)],
              chain=biped.chain(bones, "thigh.L", "shin.L", "foot.L"), mirror=True,
              segments=24, cap_start="flat", tag="limb"),
         Part("long_foot.L", [R((-.23, .17, .046), .033, .030),
@@ -75,8 +89,9 @@ def _parts(bones):
             R((.13, .17, .022), .028, .018)],
              chain=biped.chain(bones, "foot.L", "toes.L"), mirror=True,
              segments=20, tag="foot", cap_scale=.2),
-        Part("forearm.L", [R((.12, .13, 1.04), .043, .051),
-            R((.28, .13, .88), .030, .034), R((.22, .13, .67), .022, .024)],
+        Part("forearm.L", [R((.12, .13, 1.04), .050, .060),
+            R((.21, .13, .95), .043, .050), R((.28, .13, .88), .031, .035),
+            R((.255, .13, .78), .026, .030), R((.22, .13, .67), .021, .023)],
              chain=biped.chain(bones, "upper_arm.L", "forearm.L", "hand.L"),
              mirror=True, segments=18, tag="limb"),
         Part("small_hand.L", [R((.22, .13, .67), .025, .022),
@@ -104,8 +119,10 @@ def _parts(bones):
             R((.275 + length, y, .600), .0025, .0030)],
             weights={"fingers.L": 1}, mirror=True, fuse=False, segments=8,
             tag="finger", cap_start="flat", cap_end="point"))
-    parts.append(Part("muscular_tail", [R(point, radius, radius) for point, radius in
-            zip(TAIL, (.14, .115, .080, .049, .029, .019))],
+    parts.append(Part("muscular_tail", [
+            R(TAIL[0], .17, .18, .16), R(TAIL[1], .145, .15, .14),
+            R(TAIL[2], .098, .105, .092), R(TAIL[3], .058, .062, .054),
+            R(TAIL[4], .032, .035, .029), R(TAIL[5], .018, .020, .016)],
              chain=biped.chain(bones, "tail1", "tail2", "tail3", "tail4", "tail5"),
              segments=24, tag="tail", cap_scale=.25))
     return parts
@@ -232,16 +249,17 @@ def _juvenile_shape(spec):
     head = next(bone for bone in spec.bones if bone.name == "head")
     shorten_face(head.tail)
     for part in spec.parts:
-        if part.name in {"deer_head", "nose", "eye.L"}:
+        if part.name in {"cranium", "bowed_muzzle", "lower_jaw", "nose", "eye.L"}:
             for ring in part.rings:
                 shorten_face(ring.c)
-        if part.name == "deer_head":
+        if part.name == "cranium":
             for ring in part.rings:
                 ring.ry *= 1.25
                 ring.up *= 1.23
                 ring.dn *= 1.23
         elif part.name == "eye.L":
             for ring in part.rings:
+                ring.c[1] *= 1.24
                 ring.ry *= 1.45
                 ring.up *= 1.45
                 ring.dn *= 1.45
@@ -252,11 +270,16 @@ def _juvenile_shape(spec):
                 ring.ry *= 1.18
                 ring.up *= 1.18
                 ring.dn *= 1.18
-        elif part.name == "pear_body":
+        elif part.name == "tapered_trunk":
             for ring in part.rings:
                 ring.ry *= .88
                 ring.up *= .90
                 ring.dn *= .90
+        elif part.name == "upright_neck":
+            for ring in part.rings:
+                ring.ry *= .90
+                ring.up *= .92
+                ring.dn *= .92
         elif part.name == "hind_leg.L":
             for ring in part.rings:
                 ring.ry *= .86
@@ -341,8 +364,11 @@ def _female_shape(spec):
     substantially smaller in a habitat.
     """
     scales = {
-        "pear_body": (.88, .91),
-        "deer_head": (.92, .94),
+        "tapered_trunk": (.88, .91),
+        "upright_neck": (.90, .92),
+        "cranium": (.92, .94),
+        "bowed_muzzle": (.92, .94),
+        "lower_jaw": (.92, .94),
         "hind_leg.L": (.82, .86),
         "forearm.L": (.86, .90),
         "small_hand.L": (.90, .92),
@@ -606,6 +632,7 @@ def make_spec(juvenile=False, female=False):
                       "shoulder_height_m": 1.6, "body_length_m": 1.5,
                       "sex": "male", "roughness": .9,
                       "surface_detail": "anisotropic short-fur normal map",
+                      "anatomy": "third-pass macropod trunk, bowed muzzle and tapered limbs",
                       "activity_clips": {"socialize": "groom"}})
     if juvenile:
         _juvenile_shape(spec)

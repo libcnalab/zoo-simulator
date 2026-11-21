@@ -55,8 +55,8 @@ Each has the same eight clips, which the game picks from what the animal is doin
 `walk`, `trot` (the fast gait, a hop for the kangaroo), `eat`, `drink`, `rest`, `sleep`,
 `vocalize`; some have activity clips beside them (`sentry`, `dig`, `preen`, `dust_bathe`,
 `ruminate`, `filter_feed`, `bathe`, `huddle`, `browse`, below). 8,500 to 41,000 triangles, 18 to 46 bones, a coat painted
-by the species file. The first-generation models (the last two rows) are stylised, not
-photorealistic; what each is weak at is listed in
+by the species file. The authored procedural models in the last two rows are stylised, not
+photorealistic, even after their species-specific anatomy passes; what each is weak at is listed in
 [`PIVOT_TO_ZOO_EXPLORATION.md`](PIVOT_TO_ZOO_EXPLORATION.md).
 
 ### Grey wolf pup and double coat (2026-11-20)
@@ -304,7 +304,8 @@ ankle overlap, gait and clip contacts, surface maps and manifest; all 31 game-si
 pass. A 3,000-tick AddressSanitizer Red Dune run imported bull, cow and calf models and kept all
 five residents outside. The close viewer and habitat frame are in
 `evidence/camel-cow-j67-2026-11-21.jpg`; the HUD identifies the selected animal as thirteen-year-old
-female Ines. The base face and body remain the same stylised first-generation lofts.
+female Ines. At that stage the face and body still used the stylised first-generation lofts;
+the following third pass replaces them.
 
 ### Bactrian-camel anatomy, third pass (2026-11-21)
 
@@ -346,8 +347,8 @@ and meet the ground together during the hop. A fresh adult export remained byte-
 identical after the opt-in generator change, and the production joey matches an independent fresh
 export. A real Kangaroo Grove run loaded the variant and selected eight-month-old Nadia. The
 same-camera comparison, four shape views and habitat frame are in
-`evidence/kangaroo-juvenile-j5-2026-11-20.jpg`. The silhouette now reads as a joey, but it still
-inherits the simple first-generation face and lofted anatomy.
+`evidence/kangaroo-juvenile-j5-2026-11-20.jpg`. At that stage the silhouette read as a joey, but
+still inherited the simple first-generation face and lofted anatomy; J77 replaces those masses.
 
 A second pass improves both ages without moving their skeleton, synchronized hind-foot hop or
 five-point crawl support. Each hind foot now shows the dominant fourth digit, smaller fifth digit
@@ -378,8 +379,37 @@ The production GLB and manifest match an independent single-thread export byte f
 animal-pipeline tests and 31 game tests pass; a 3,000-tick ASan visit loaded the variant, drew all
 seven Kangaroo Grove residents and selected one-year-old female Zuri without a sanitizer report.
 The close grooming pose and that habitat endpoint are in
-`evidence/kangaroo-doe-j65-2026-11-21.jpg`. The female is now biologically distinguishable, but
-like the buck and joey retains the stylised first-generation face and lofted anatomy.
+`evidence/kangaroo-doe-j65-2026-11-21.jpg`. This made the female biologically distinguishable;
+J77 subsequently replaced the first-generation face, trunk and limb masses in all three variants.
+
+### Red-kangaroo anatomy, third pass (2026-11-21)
+
+The buck, doe and joey now share a macropod-specific anatomy pass. A seven-section trunk widens
+over the pelvis, narrows through the chest and meets a separate upright tapered neck instead of
+forming one triangular body-and-neck mass. Four cranial sections, a five-section long bowed
+muzzle, separate lower jaw and widening black nose replace the generic cone face. The large
+proximal hind-leg mass now tapers through the shin and ankle, the forearm narrows from shoulder
+to wrist, and the muscular support tail begins from a broader base before running to a fine tip.
+The joey explicitly shortens and enlarges the new cranial pieces and reseats its eye; the doe
+retains the established 79 %-height lighter build.
+
+The long bowed muzzle and documented male/female size and colour differences follow the
+[Australian Museum](https://australian.museum/learn/animals/mammals/red-kangaroo/). The strongly
+developed hind limbs and thick-based muscular support tail also follow the
+[San Diego Zoo Wildlife Alliance](https://animals.sandiegozoo.org/animals/kangaroo-and-wallaby).
+This remains authored procedural anatomy rather than a scan, and the dense coat remains a normal
+map rather than individual hair geometry.
+
+The buck has 20,012 triangles and 10,050 vertices; the doe has 19,510 / 9,799 and the joey
+19,512 / 9,800. All retain 28 manifest bones and nine clips, including the synchronized hop,
+five-point crawl and planted face wash. Production GLBs are 3,308,428, 3,058,868 and 3,123,604
+bytes; all six GLB/manifest files match independent single-threaded exports byte for byte. All
+149 animal-pipeline tests and all 305 active CTest cases pass (21 diagnostics disabled). A
+3,000-tick AddressSanitizer Kangaroo Grove run imported all
+three bodies, kept all seven residents outside, selected one-year-old Zuri and exited cleanly
+with leak detection disabled for the documented managed-session limitation. The old/new adult
+profile, adult and joey four-view sheets, face crop and habitat frame were inspected in
+`evidence/kangaroo-anatomy-j77-2026-11-21.jpg`.
 
 ### Big cats from a sculpt (2026-11-13)
 

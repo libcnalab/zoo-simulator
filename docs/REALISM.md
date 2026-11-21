@@ -62,6 +62,7 @@ loudspeaker stays muted and nobody has listened to any of it.
 | Meerkat anatomy, short coat and digging feet, adult and pup | a species-specific tapered face, low rounded ears, lean neck, trunk and limbs replace the generic round-headed heavy small-quadruped silhouette; all four feet carry four separate toes and non-retractile claws, and an anisotropic normal map gives the coat short guard-hair relief. Sentry and dig remain grounded | `docs/ANIMALS.md`, `evidence/meerkat-anatomy-j73-2026-11-21.jpg` |
 | Ostrich layered plumage and third-pass anatomy, cock, hen and chick | four overlapping feathers on each folded wing and five separated tail feathers replace fused plume blobs; a feather-only tangent-space normal map adds directional barb relief while keeping bare skin smooth. A rump-heavy seven-section trunk, deforming muscular upper thighs, a four-section head, approximately 4.4 cm eyes and separate bill-base nostrils replace the symmetric egg body, thin upper legs and indistinct face | `docs/ANIMALS.md`, `evidence/ostrich-feathers-j13-2026-11-20.jpg`, `evidence/ostrich-hen-j66-2026-11-21.jpg`, `evidence/ostrich-anatomy-j76-2026-11-21.jpg` |
 | Red-kangaroo short fur, feet and hands, buck, doe and joey | a dense short-fur normal map replaces the flat painted coat; each hind foot has the dominant fourth digit, smaller fifth and tiny syndactylous inner pair, while five separate fingers replace each forepaw mitten. Hop and five-point crawl contacts are unchanged | `docs/ANIMALS.md`, `evidence/kangaroo-coat-j14-2026-11-20.jpg` |
+| Red-kangaroo third-pass anatomy, buck, doe and joey | a pelvis-heavy seven-section trunk, separate tapered neck, four-section cranium, long bowed muzzle, lower jaw, tapering fore- and hind limbs and a thick-based muscular support tail replace the triangular body-and-neck mass, cone face, tube arms, oval thighs and cord-root tail. The joey and doe retain their established age and sex proportions; anatomy remains authored procedural rather than scan-derived | `docs/ANIMALS.md`, `evidence/kangaroo-anatomy-j77-2026-11-21.jpg` |
 | Adult red-kangaroo sexual dimorphism | Kangaroo Grove's four adult females now use a dedicated 79 %-height, lightly built doe with a narrower torso, thighs and support tail, a typical smoke-blue coat and pale belly, lower limbs and tail tip instead of the red buck model; all nine adult clips and exact contacts are retained | `docs/ANIMALS.md`, `evidence/kangaroo-doe-j65-2026-11-21.jpg` |
 | Adult common-ostrich sexual dimorphism | Ostrich Rise's three adult females now use a dedicated 90 %-height, slightly lighter hen with mottled brown plumage, grey-brown bare skin and reduced wing and tail feather masses instead of the cock's black-and-white model; all nine adult clips, including the grounded dust bath, are retained | `docs/ANIMALS.md`, `evidence/ostrich-hen-j66-2026-11-21.jpg` |
 | Tiger cheek ruff | 150 narrow locks with irregular roots and warm cream, sparse black and orange atlas groups replace 72 broad neutral-grey cards in three rows. The alpha-tested fringe remains card hair and the animal remains a conversion of the lioness sculpt | `docs/ANIMALS.md`, `evidence/tiger-ruff-j16-2026-11-20.jpg` |
@@ -115,11 +116,11 @@ manifest regression.
 
 ## Open (in the order they hurt)
 
-1. Animals: one of fifteen species (kangaroo) still uses the stylised procedural
-   first-generation anatomy. It has second-pass coat and species-specific silhouette details,
-   but remains recognisably lofted. The ostrich, camel, wolf and meerkat remain
-   procedural rather than scan-derived, but their third passes now replace generic head, neck,
-   trunk, limb and foot masses with tailored ratite, camelid, canid and mongoose outlines. The bears now have
+1. Animals: none of the fifteen species now retains its first-generation procedural anatomy.
+   The kangaroo, ostrich, camel, wolf and meerkat remain authored procedural rather than
+   scan-derived, but their third passes replace generic head, neck, trunk, limb and foot masses
+   with tailored macropod, ratite, camelid, canid and mongoose outlines. They remain visibly
+   stylised and their coats or plumage do not provide photogrammetric microgeometry. The bears now have
    closed resting mouths, softer shoulders and shorter outline fur but remain converted from an
    upright brown-bear sculpt (the polar anatomy and proportionally edited cub bodies are still crude)
    (`docs/ANIMALS.md`). The cats are believable now but not photographs: the tiger's formerly

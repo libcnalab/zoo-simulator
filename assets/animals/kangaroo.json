@@ -106,6 +106,7 @@
     "activity_clips": {
       "socialize": "groom"
     },
+    "anatomy": "third-pass macropod trunk, bowed muzzle and tapered limbs",
     "body_length_m": 1.5,
     "common_name": "Red kangaroo",
     "roughness": 0.9,
@@ -128,6 +129,6 @@
     ]
   },
   "texture": 1024,
-  "triangles": 19884,
-  "vertices": 9986
+  "triangles": 20012,
+  "vertices": 10050
 }

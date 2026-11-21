@@ -107,6 +107,7 @@
       "socialize": "groom"
     },
     "age_shape": "Joey at foot: large head, eyes, ears and feet; slim thighs and tail",
+    "anatomy": "third-pass macropod trunk, bowed muzzle and tapered limbs",
     "body_length_m": 0.82,
     "common_name": "Red kangaroo",
     "relative_height": 0.55,
@@ -132,6 +133,6 @@
     ]
   },
   "texture": 1024,
-  "triangles": 19384,
-  "vertices": 9736
+  "triangles": 19512,
+  "vertices": 9800
 }

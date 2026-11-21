@@ -107,6 +107,7 @@
       "socialize": "groom"
     },
     "age_shape": "Light adult build with a narrow torso, thighs and support tail",
+    "anatomy": "third-pass macropod trunk, bowed muzzle and tapered limbs",
     "body_length_m": 1.5,
     "coat": "Blue-grey above with a pale belly, lower limbs and tail tip",
     "common_name": "Red kangaroo doe",
@@ -133,6 +134,6 @@
     ]
   },
   "texture": 1024,
-  "triangles": 19384,
-  "vertices": 9736
+  "triangles": 19510,
+  "vertices": 9799
 }

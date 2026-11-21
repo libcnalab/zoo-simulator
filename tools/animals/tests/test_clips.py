@@ -823,14 +823,14 @@ class BipedTests(unittest.TestCase):
         joey_parts = {part.name: part for part in joey.parts}
         adult_height = adult.meta["shoulder_height_m"]
         joey_height = joey.meta["shoulder_height_m"]
-        self.assertGreater(joey_parts["deer_head"].rings[1].ry / joey_height,
-                           1.18 * adult_parts["deer_head"].rings[1].ry / adult_height)
+        self.assertGreater(joey_parts["cranium"].rings[1].ry / joey_height,
+                           1.18 * adult_parts["cranium"].rings[1].ry / adult_height)
         self.assertGreater(joey_parts["eye.L"].rings[0].ry / joey_height,
                            1.3 * adult_parts["eye.L"].rings[0].ry / adult_height)
         self.assertGreater(joey_parts["long_foot.L"].rings[-1].ry / joey_height,
                            1.15 * adult_parts["long_foot.L"].rings[-1].ry / adult_height)
-        adult_face = adult_parts["nose"].rings[-1].c[0] - adult_parts["deer_head"].rings[0].c[0]
-        joey_face = joey_parts["nose"].rings[-1].c[0] - joey_parts["deer_head"].rings[0].c[0]
+        adult_face = adult_parts["nose"].rings[-1].c[0] - adult_parts["cranium"].rings[0].c[0]
+        joey_face = joey_parts["nose"].rings[-1].c[0] - joey_parts["cranium"].rings[0].c[0]
         self.assertLess(joey_face / joey.meta["body_length_m"],
                         .8 * adult_face / adult.meta["body_length_m"])
         self.assertLess(joey_parts["muscular_tail"].rings[1].ry / joey_height,
@@ -855,7 +855,7 @@ class BipedTests(unittest.TestCase):
         doe = importlib.import_module("species.kangaroo_female").make_spec()
         adult_parts = {part.name: part for part in adult.parts}
         doe_parts = {part.name: part for part in doe.parts}
-        for name in ("pear_body", "hind_leg.L", "forearm.L", "muscular_tail"):
+        for name in ("tapered_trunk", "hind_leg.L", "forearm.L", "muscular_tail"):
             self.assertLess(doe_parts[name].rings[0].ry, adult_parts[name].rings[0].ry)
         self.assertLess(doe_parts["muscular_tail"].rings[1].ry,
                         .8 * adult_parts["muscular_tail"].rings[1].ry)
@@ -877,6 +877,29 @@ class BipedTests(unittest.TestCase):
             self.assertIsNotNone(spec.surface_height)
             self.assertEqual(spec.meta["surface_detail"], "anisotropic short-fur normal map")
 
+    def test_kangaroos_have_macropod_trunks_bowed_muzzles_and_tapered_limbs(self):
+        for species in ("kangaroo", "kangaroo_female", "kangaroo_juvenile"):
+            spec = importlib.import_module("species." + species).make_spec()
+            parts = {part.name: part for part in spec.parts}
+            trunk = parts["tapered_trunk"]
+            neck = parts["upright_neck"]
+            cranium = parts["cranium"]
+            muzzle = parts["bowed_muzzle"]
+            hind = parts["hind_leg.L"]
+            fore = parts["forearm.L"]
+            tail = parts["muscular_tail"]
+
+            self.assertEqual(len(trunk.rings), 7)
+            self.assertGreater(trunk.rings[2].ry, trunk.rings[-1].ry)
+            self.assertLess(neck.rings[-1].ry, neck.rings[0].ry)
+            self.assertGreater(cranium.rings[1].up, cranium.rings[0].up)
+            self.assertTrue(all(a.c[0] < b.c[0] for a, b in zip(muzzle.rings, muzzle.rings[1:])))
+            self.assertTrue(all(a.c[2] > b.c[2] for a, b in zip(muzzle.rings, muzzle.rings[1:])))
+            self.assertGreater(hind.rings[1].ry, 4.0 * hind.rings[-1].ry)
+            self.assertGreater(fore.rings[0].ry, 2.0 * fore.rings[-1].ry)
+            self.assertGreater(tail.rings[0].ry, 8.0 * tail.rings[-1].ry)
+            self.assertIn("third-pass macropod", spec.meta["anatomy"])
+
     def test_kangaroo_exports_carry_short_fur_normal_map_and_tangents(self):
         root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
         for species, triangle_limit in (("kangaroo", 22000), ("kangaroo_female", 22000),
@@ -887,7 +910,7 @@ class BipedTests(unittest.TestCase):
                 source.read(8)
                 length, _ = struct.unpack("<II", source.read(8))
                 document = json.loads(source.read(length))
-            self.assertLess(os.path.getsize(glb), 3_300_000)
+            self.assertLess(os.path.getsize(glb), 3_400_000)
             self.assertEqual(len(document["images"]), 2)
             self.assertIn("normalTexture", document["materials"][0])
             for mesh in document["meshes"]:

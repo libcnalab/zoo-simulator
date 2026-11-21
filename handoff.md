@@ -180,7 +180,21 @@ whatever you take up (`docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `docs/V
   cleanly with leak detection off, all seven residents outside and four-month-old Inez selected.
   The before/after profiles, adult/chick four-view sheets, face crop and habitat frame were opened in
   `docs/evidence/ostrich-anatomy-j76-2026-11-21.jpg` (J76, 2026-11-21). This remains authored
-  procedural anatomy rather than a scan; only kangaroo retains first-generation anatomy.
+  procedural anatomy rather than a scan; kangaroo was the last first-generation anatomy at J76.
+- The red-kangaroo buck, doe and joey now have a third anatomy pass. A pelvis-heavy seven-section
+  trunk, separate upright neck, four-section cranium, five-section bowed muzzle, lower jaw,
+  tapered fore- and hind limbs and a thick-based muscular support tail replace the triangular
+  body/neck, cone face, tube arms, oval thighs and cord-root tail. The doe keeps her 79 %-height
+  lighter build and the joey explicitly reshapes the new face. Buck, doe and joey have 20,012 /
+  19,510 / 19,512 triangles, 28 manifest bones and nine clips; their 3,308,428 / 3,058,868 /
+  3,123,604-byte GLBs and manifests match independent single-threaded exports byte for byte. All
+  149 animal-pipeline tests and all 305 active CTest cases pass (21 diagnostics disabled). A
+  3,000-tick ASan Kangaroo Grove run exited cleanly with leak
+  detection off, all seven residents outside and one-year-old Zuri selected. The old/new profile,
+  adult/joey sheets, face and habitat frame were inspected in
+  `docs/evidence/kangaroo-anatomy-j77-2026-11-21.jpg` (J77, 2026-11-21). No species now retains
+  first-generation anatomy, although kangaroo, ostrich, camel, wolf and meerkat remain authored
+  procedural models rather than scans.
 - Adult and juvenile ostriches now have second-pass layered plumage. Four detached feathers
   overlap each folded wing and five more separate the tail fan; a feather-only tangent-space
   normal map adds directional barb relief while leaving the bare skin smooth. The adult has
@@ -823,8 +837,9 @@ tests pass. Nobody listened to the audio; preserve that qualification.
 
 ### 4.6 Animals
 
-- First-generation stylised anatomy still: wolf, camel, meerkat, ostrich, kangaroo. All five now
-  have second-pass coats or plumage and silhouette details, but are not scan-based. Bears have
+- No species retains its first-generation anatomy. Wolf, camel, meerkat, ostrich and kangaroo now
+  have species-specific third-pass procedural outlines plus second-pass coats or plumage, but are
+  still stylised and not scan-based. Bears have
   a second-pass resting face, shoulders and outline fur, but remain visibly converted from an
   upright brown-bear sculpt (`docs/ANIMALS.md`; pipeline in `tools/animals/`, its tests
   `python3 -m unittest discover -s tools/animals/tests`, about 10 minutes).
