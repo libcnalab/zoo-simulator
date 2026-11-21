@@ -73,7 +73,7 @@ constexpr double kKeepEvery = 120.0;
 
 // Bump when BuildVisitorZoo or the fill sequence changes without changing the data or save
 // version. Data files and every option that affects the filled state are hashed separately.
-constexpr std::uint64_t kVisitCacheRevision = 2;
+constexpr std::uint64_t kVisitCacheRevision = 3;
 
 void CacheHash(std::uint64_t& hash, std::string_view bytes) {
     for (const unsigned char byte : bytes) {
@@ -207,7 +207,9 @@ std::unique_ptr<zoo::Zoo> ZooGame::MakeVisitorZoo() {
     if (cache) {
         std::string error;
         if (std::unique_ptr<zoo::Zoo> loaded = zoo::LoadZoo(cache->string(), *catalog_, *species_, &error)) {
-            PrepareVisit(*loaded, false);
+            // The cache contains a completed visit at the requested hour. Only visitor pace is
+            // transient. Preparing a user save here would repeat the fill for evening starts.
+            loaded->Guests().SetPace(CrowdPace(visit_.settings.crowd));
             ShowLoading("The morning's visitors are ready", 0.7f);
             const double took =
                 std::chrono::duration<double>(std::chrono::steady_clock::now() - began).count();

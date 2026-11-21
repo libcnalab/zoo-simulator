@@ -7,6 +7,12 @@ whatever you take up (`docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `docs/V
 
 ## 0. Start here
 
+- Current northern layout on `develop` includes Lynx Ridge, Red Panda Canopy and Snow Leopard
+  Heights. The two extensions added 40,960 m². Seed 1 has 17 habitats, 99 animals and a
+  78.1 m maximum walk to a facility. See `docs/VISITOR_ZOO.md` for the plan and game views.
+  Filled-visit cache revision 3 covers the expanded layout. Late starts now load the exact
+  prepared state. The old cache path could run the entire visitor fill twice at 18:00.
+
 - **The game:** Greenhill Zoo, a first-person walk through a zoo (C++23, the simulation core in
   `src/core/zoo/`, the game on CNA / cna-engine in `src/game/`). Zoo management must not come
   back as the primary gameplay.

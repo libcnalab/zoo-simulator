@@ -120,11 +120,12 @@ manifest regression.
 
 ## Open (in the order they hurt)
 
-1. Animals: none of the seventeen species now uses the generic first-generation procedural anatomy.
+1. Animals: none of the eighteen species now uses the generic first-generation procedural anatomy.
    The kangaroo, ostrich, camel, wolf and meerkat third passes replace generic masses with tailored
    macropod, ratite, camelid, canid and mongoose outlines; the new lynx starts with its own felid
    trunk, head, feet, ruff, ears and bobtail; the red panda adds its own masked head, branch paws
-   and ringed tail. All seven remain authored procedural rather than
+   and ringed tail. The snow leopard adds a woolly rosetted coat, broad paws and a long balancing
+   tail. All eight remain authored procedural rather than
    scan-derived and visibly stylised; their coats or plumage do not provide photogrammetric
    microgeometry. The bears now have
    closed resting mouths, softer shoulders and shorter outline fur but remain converted from an

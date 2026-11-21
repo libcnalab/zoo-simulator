@@ -2,7 +2,7 @@
 
 `FillForVisit` extracts the `PrepareVisit(fill = true)` sequence from `ZooGameVisit.cpp`.
 It sets visitor pace, day/hour, stops the calendar, uses accelerated arrivals for the first
-three fifths of the requested steps, spreads visitors, restores the visit pace, and finishes
+four fifths of the requested steps, spreads visitors, restores the visit pace, and finishes
 the steps. The caller still owns the final `SetDayPace(12)`. Defaults are day 14, 10:30,
 6,000 steps, linger 9, stay 12, arrival pace 0.25, fill arrival pace 1.7 (linger and stay
 were 6 until the habitat fronts of 2026-11-13: see "Who watches where" in
@@ -27,6 +27,12 @@ changes to `BuildVisitorZoo` or the fill sequence must bump `kVisitCacheRevision
 builder in `ZooGameVisit.cpp`. An unreadable or damaged entry is reported, ignored and atomically
 replaced after a normal build. Automated and scripted runs do not read or write personal cache
 files unless they explicitly supply `--saves`; the empty-map diagnostic is never cached.
+
+Revision 3 covers the 17-habitat northern layout and its four-fifths arrival period. A cache
+hit restores the crowd pace directly. Previously it followed the user-save path, where a time
+outside the daytime visit window triggers a fresh fill. At 18:00 a second 600-step visit
+therefore loaded state `13603843461387288093` and advanced to `1731663455863933738`
+before the first frame. The fresh and cached starts now both yield the former hash.
 
 In matched one-frame software-GL runs, the fresh path built and filled in 2.58 s and stored a
 2,431,686-byte entry. The second run loaded it in 0.04 s with the same state hash
