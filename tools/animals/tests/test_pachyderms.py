@@ -11,7 +11,8 @@ from zoogen.pachyderm_motion import skin_points
 from zoogen.pachyderm_metrics import accessor, glb, measure
 
 ROOT = Path(__file__).resolve().parents[3]
-SPECIES = ['rhino', 'rhino_juvenile', 'elephant', 'elephant_female', 'elephant_juvenile']
+SPECIES = ['rhino', 'rhino_female', 'rhino_juvenile',
+           'elephant', 'elephant_female', 'elephant_juvenile']
 CLIPS = {'idle', 'walk', 'trot', 'eat', 'drink', 'rest', 'sleep', 'vocalize', 'swim'}
 
 
@@ -105,6 +106,36 @@ class PachydermTests(unittest.TestCase):
                            for key, leg in solver.rig.legs.items()}
                 self.assertEqual(contact['FL'], contact['HR'])
                 self.assertEqual(contact['FR'], contact['HL'])
+
+    def test_rhino_cow_is_slightly_smaller_with_longer_slender_horns(self):
+        bull = self.specs['rhino']
+        cow = self.specs['rhino_female']
+        self.assertAlmostEqual(cow.meta['relative_height'], .97)
+        self.assertLess(cow.meta['shoulder_height_m'], bull.meta['shoulder_height_m'])
+
+        def dimensions(spec):
+            data = spec.sculpt
+            horn = data['tags'][:, data['tag_names'].tolist().index('horn')] > .5
+            vertices = data['vertices']
+            height = spec.meta['shoulder_height_m']
+            split = 1.76 * height / 1.8
+            selected = horn & (vertices[:, 0] > split)
+            body = {tuple(point) for point in np.round(vertices[~horn], 4)}
+            boundary = np.array([i for i in np.flatnonzero(selected)
+                                 if tuple(np.round(vertices[i], 4)) in body])
+            pivot = vertices[boundary].mean(axis=0)
+            delta = vertices[selected] - pivot
+            tip = delta[np.argmax(np.linalg.norm(delta, axis=1))]
+            axis = tip / np.linalg.norm(tip)
+            along = delta @ axis
+            radial = delta - along[:, None] * axis
+            distal = along > .75 * along.max()
+            return along.max() / height, np.linalg.norm(radial[distal], axis=1).mean() / height
+
+        bull_reach, bull_width = dimensions(bull)
+        cow_reach, cow_width = dimensions(cow)
+        self.assertGreater(cow_reach, 1.1 * bull_reach)
+        self.assertLess(cow_width, .8 * bull_width)
 
     def test_ground_and_rest_postures(self):
         for species, solver, clips in self.cases:
@@ -250,6 +281,8 @@ class PachydermTests(unittest.TestCase):
                 self.assertEqual(meta['variant'], variant)
             if species == 'elephant_female':
                 self.assertEqual(meta['relative_height'], .81)
+            if species == 'rhino_female':
+                self.assertEqual(meta['relative_height'], .97)
             by = {c['name']: c for c in manifest['clips']}
             for clip in clips:
                 self.assertAlmostEqual(by[clip.name]['speed'], clip.speed, places=4)

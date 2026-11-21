@@ -184,6 +184,36 @@ def add_trunk_fingers(data):
 def rhino_shape(data, shape):
     v = data['vertices']
     v[:, 2] -= shape.get('hump_reduce', 0) * np.exp(-((v[:, 0] - .35) / .7) ** 2) * smoothstep(1.2, 1.8, v[:, 2])
+    if shape.get('horn_length', 1) != 1 or shape.get('horn_width', 1) != 1:
+        shape_rhino_horns(data, shape)
+
+
+def shape_rhino_horns(data, shape):
+    """Lengthen and slim both horns while leaving their skin seams fixed."""
+    vertices = data['vertices']
+    horn = data['tags'][:, data['tag_names'].tolist().index('horn')] > .5
+    body_coordinates = {tuple(point) for point in np.round(vertices[~horn], 4)}
+    length = shape.get('horn_length', 1)
+    width = shape.get('horn_width', 1)
+    # The portable source has a clean x gap between its front and rear horns.
+    for selected in (horn & (vertices[:, 0] > 1.76), horn & (vertices[:, 0] <= 1.76)):
+        indices = np.flatnonzero(selected)
+        boundary = np.array([i for i in indices
+                             if tuple(np.round(vertices[i], 4)) in body_coordinates])
+        if not len(boundary):
+            raise ValueError('rhino horn has no shared skin boundary')
+        pivot = vertices[boundary].mean(axis=0)
+        delta = vertices[indices] - pivot
+        tip = delta[np.argmax(np.linalg.norm(delta, axis=1))]
+        axis = tip / np.linalg.norm(tip)
+        along = delta @ axis
+        radial = delta - along[:, None] * axis
+        reach = along.max()
+        blend = smoothstep(0, .18 * reach, np.maximum(along, 0))
+        along_scale = 1 + (length - 1) * blend
+        radial_scale = 1 + (width - 1) * blend
+        vertices[indices] = pivot + along[:, None] * along_scale[:, None] * axis + \
+            radial * radial_scale[:, None]
 
 
 def calf_horns(original, scale):

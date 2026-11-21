@@ -43,7 +43,7 @@ while geometry, textures and animations remain identical.
 | Generator | Species |
 |---|---|
 | `zoogen/sculpt.py`, `bigcat.py` on a prepared third-party sculpt (below) | lion, lion_female, lion_juvenile, tiger |
-| `zoogen/rigged.py`, `pachyderm.py`, `pachyderm_motion.py` on a prepared third-party rigged model (below) | rhino, rhino_juvenile, elephant, elephant_female, elephant_juvenile |
+| `zoogen/rigged.py`, `pachyderm.py`, `pachyderm_motion.py` on a prepared third-party rigged model (below) | rhino, rhino_female, rhino_juvenile, elephant, elephant_female, elephant_juvenile |
 | `zoogen/scan.py` on a prepared third-party static sculpt, rigged by us (below) | zebra, zebra_female, zebra_juvenile |
 | `zoogen/giraffe2.py` on a prepared head-and-neck scan, body modelled by us (below) | giraffe, giraffe_female, giraffe_juvenile |
 | `zoogen/sculpt.py`, `bear.py` on a prepared third-party sculpt, rigged by us (below) | brown_bear, brown_bear_juvenile, polar_bear, polar_bear_juvenile |
@@ -386,6 +386,7 @@ including the note that we could not confirm who modelled either animal.
 | Model | Triangles | Bones | What it is |
 |---|---:|---:|---|
 | `rhino` | 32,418 | 37 | white rhinoceros with photographic skin and a normal map |
+| `rhino_female` | 32,418 | 37 | cow: slightly smaller, with longer and more slender horns |
 | `rhino_juvenile` | 21,000 | 37 | calf: shorter body and head, larger ears, a horn stub |
 | `elephant` | 16,801 | 46 | bull: ten-joint trunk, two-joint ears, long tusks |
 | `elephant_female` | 16,801 | 46 | cow: smaller frame, shorter and thinner tusks |
@@ -405,7 +406,28 @@ an adult's. The elephant is a real elephant's body now but not yet right: it is 
 dark in the game's light (nearly black against the sand), the tusks are too long and too
 level, the ears are smooth where the body is wrinkled, and the source was an Asian elephant,
 so face and ears are a conversion and read as one from close by. The calf keeps adult skin.
-No calf lives in the Visitor Zoo yet, so both juveniles are only seen in the viewer.
+Both calves now live with their family groups in the Visitor Zoo; the original evidence also
+retains the controlled viewer comparisons.
+
+### Adult southern white-rhinoceros cow (2026-11-21)
+
+`rhino_female` gives Rhino Hollow's two adult females their own model instead of the bull body.
+[Animal Diversity Web](https://animaldiversity.org/accounts/Ceratotherium_simum/) reports that
+female white rhinoceroses are slightly smaller than males and that their horns are longer and
+thinner, while explicitly noting that quantitative sex-specific body measurements have not been
+published. The game's 97 %-height ratio is therefore a deliberately conservative visual
+approximation, not a claimed biological constant. Both horns are lengthened 12 % and narrowed to
+80 % toward their tips while their full-width skin seams remain fixed. The same photographic coat
+is retained because the source does not support a sex-specific colour change.
+
+The model has 32,418 triangles, 37 bones and ten clips: the usual eight, `swim` and the dedicated
+ten-second `bathe` wallow. Its 3.57 MB production GLB matches an independent single-threaded export
+byte for byte. All 14 pachyderm tests check its horn proportions, metadata, diagonal trot, planted
+feet, ground contact, material maps and manifest. A 3,000-tick AddressSanitizer Rhino Hollow run
+imported bull, cow and calf models and kept all four residents outside. The close view and habitat
+frame are in `evidence/rhino-cow-j69-2026-11-21.jpg`; the HUD identifies resting sixteen-year-old
+female Leila. The body and skin remain those of the strong prepared adult sculpt, so the sex
+difference is deliberately subtle rather than an unsupported reshape.
 
 ### Bears from a sculpt (2026-11-14)
 

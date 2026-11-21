@@ -1,0 +1,182 @@
+{
+  "bones": 37,
+  "clips": [
+    {
+      "duration": 12.0,
+      "events": [],
+      "frames": 361,
+      "loop": true,
+      "name": "idle",
+      "speed": 0.0
+    },
+    {
+      "duration": 0.7333,
+      "events": [
+        {
+          "name": "step",
+          "time": 0.0
+        },
+        {
+          "name": "step",
+          "time": 0.1833
+        },
+        {
+          "name": "step",
+          "time": 0.3667
+        },
+        {
+          "name": "step",
+          "time": 0.55
+        }
+      ],
+      "frames": 23,
+      "loop": true,
+      "name": "walk",
+      "speed": 1.2
+    },
+    {
+      "duration": 0.5,
+      "events": [
+        {
+          "name": "step",
+          "time": 0.0
+        },
+        {
+          "name": "step",
+          "time": 0.0
+        },
+        {
+          "name": "step",
+          "time": 0.25
+        },
+        {
+          "name": "step",
+          "time": 0.25
+        }
+      ],
+      "frames": 16,
+      "loop": true,
+      "name": "trot",
+      "speed": 3.0
+    },
+    {
+      "duration": 1.1667,
+      "events": [
+        {
+          "name": "step",
+          "time": 0.0
+        },
+        {
+          "name": "step",
+          "time": 0.2917
+        },
+        {
+          "name": "step",
+          "time": 0.5833
+        },
+        {
+          "name": "step",
+          "time": 0.875
+        }
+      ],
+      "frames": 36,
+      "loop": true,
+      "name": "swim",
+      "speed": 0.72
+    },
+    {
+      "duration": 3.0,
+      "events": [],
+      "frames": 91,
+      "loop": true,
+      "name": "eat",
+      "speed": 0.0
+    },
+    {
+      "duration": 2.4,
+      "events": [],
+      "frames": 73,
+      "loop": true,
+      "name": "drink",
+      "speed": 0.0
+    },
+    {
+      "duration": 8.0,
+      "events": [],
+      "frames": 241,
+      "loop": true,
+      "name": "rest",
+      "speed": 0.0
+    },
+    {
+      "duration": 12.0,
+      "events": [],
+      "frames": 361,
+      "loop": true,
+      "name": "sleep",
+      "speed": 0.0
+    },
+    {
+      "duration": 10.0,
+      "events": [],
+      "frames": 301,
+      "loop": true,
+      "name": "bathe",
+      "speed": 0.0
+    },
+    {
+      "duration": 3.0,
+      "events": [
+        {
+          "name": "call",
+          "time": 0.9
+        }
+      ],
+      "frames": 91,
+      "loop": false,
+      "name": "vocalize",
+      "speed": 0.0
+    }
+  ],
+  "generator": "tools/animals (zoogen)",
+  "license": "CC-BY-4.0",
+  "meta": {
+    "activity_clips": {
+      "bathe": "bathe"
+    },
+    "asset_license": "CC-BY-4.0",
+    "authored_stance_speed_medians": [
+      1.1470825672149658,
+      1.1784135103225708,
+      1.1368316411972046,
+      1.1702584028244019
+    ],
+    "common_name": "Southern white rhinoceros cow",
+    "motion_source": "procedural replacement; authored source samples retained in derivative",
+    "occlusion_source": "source texture",
+    "relative_height": 0.97,
+    "roughness": 0.9,
+    "scientific_name": "Ceratotherium simum simum",
+    "shoulder_height_m": 1.746,
+    "source_author": "LasquetiSpice",
+    "swim_depth_m": 1.4317199999999999,
+    "variant": "female",
+    "variant_of": "rhino"
+  },
+  "name": "rhino_female",
+  "skeleton_bounds_animal_space": {
+    "max": [
+      1.6328,
+      0.37,
+      1.8317
+    ],
+    "min": [
+      -1.6693,
+      -0.37,
+      0.0
+    ]
+  },
+  "texture": 1024,
+  "triangles": 32418,
+  "vertices": 17356
+}
