@@ -117,15 +117,22 @@ support the cool planted habitat, shade, elevated resting and climbing choices. 
 ration and price remain explicitly estimated in the species source.
 
 The dedicated adult and cub share a compact low trunk, short dark limbs, broad branch paws,
-rounded masked face, pointed ears, cream cheek fans and a long seven-ring tail. The cub has a
-shorter 0.24 m body, proportionally broader head, larger eyes, ears and paws, and shorter-stride
+rounded masked face, pointed ears, cream cheek ruffs and a long seven-ring tail. The cub stands
+0.24 m at the shoulder and has a proportionally broader head, larger eyes, ears and paws, and shorter-stride
 locomotion. Both have 33 bones, eight clips and a 1,024 px coat with tangent-space fur relief.
-The adult is 19,200 triangles and 2,662,672 bytes; the cub is 17,200 triangles and 2,439,552
-bytes. Their single-threaded clean exports match the production GLB and JSON files byte for byte.
-The close turntables and the inspected in-game view after 3,000 simulation ticks are in
-`evidence/red-panda-canopy-j80-2026-11-21.jpg`. All 155 animation-pipeline tests pass; the final
-3,000-tick ASan/UBSan game visit imported both models without a sanitizer finding (leak detection
-is disabled because LeakSanitizer cannot run under the debugger/ptrace environment).
+The adult export now has 18,528 triangles and the cub has 16,528. The ruffs blend into the
+cheeks and the broad muzzle has a shorter profile. Measured along the forward axis, the
+distance between the eye and the tip ring of the nose fell from 85 to 62 mm for the adult and
+from 66 to 48 mm for the cub. Pale brows and muzzle frame red-brown stripes from the eyes
+toward the mouth, following the [Smithsonian's description of the facial markings](https://nationalzoo.si.edu/animals/red-panda).
+The regression samples the coat texture at the landmarks on both cheeks.
+Both skeletons and all sixteen clips retain their prior animation keys.
+[Matched faces and game views](evidence/red-panda-faces-2026-11-21.jpg)
+
+The original turntables and the habitat view after 3,000 simulation ticks are in
+`evidence/red-panda-canopy-j80-2026-11-21.jpg`. At introduction all 155 animation-pipeline
+tests passed and the 3,000-tick ASan/UBSan visit imported both models without a sanitizer
+finding. Leak detection was disabled in that run.
 
 ### Eurasian lynx and kittens (2026-11-21)
 

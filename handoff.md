@@ -30,6 +30,9 @@ whatever you take up (`docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `docs/V
   adult and juvenile models. Matched close-ups are in
   `docs/evidence/carnivore-eyes-2026-11-21.jpg`. The facial-landmark test reads the
   shipped GLBs and checks that both eyes project through the coat.
+- The red panda mother and cubs now have shorter, rounder muzzles, continuous cheek fur,
+  pale brows and paired red-brown markings. Their joint animation is unchanged.
+  See `docs/evidence/red-panda-faces-2026-11-21.jpg` for matched close-ups and game views.
 - Animal cards and automatic habitat views now aim at the model's animated body.
   At 13:00, looking at the adult giraffe Esme and at the capybara pup Malik identifies
   both on their public walks. See `docs/evidence/binocular-animal-identification-2026-11-21.jpg`.

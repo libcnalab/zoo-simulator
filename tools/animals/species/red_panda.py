@@ -30,30 +30,34 @@ def _shape(spec, juvenile):
         R((.31 * length, 0, .94 * height), .13 * height, .15 * height),
     ]
     skull_scale = 1.12 if juvenile else 1.0
+    muzzle_tip = nose_x - .068 * height
     parts["skull"].rings = [
         R((nose_x - .22 * length, 0, head_z), .14 * height * skull_scale,
           .14 * height * skull_scale),
-        R((nose_x - .14 * length, 0, head_z + .01 * height), .18 * height * skull_scale,
-          .17 * height * skull_scale, n=2.35),
-        R((nose_x - .07 * length, 0, head_z - .03 * height), .13 * height,
-          .105 * height, n=2.45),
-        R((nose_x - .025 * length, 0, head_z - .07 * height), .075 * height,
-          .06 * height, n=2.55),
+        R((nose_x - .14 * length, 0, head_z + .015 * height), .195 * height * skull_scale,
+          .18 * height * skull_scale, n=2.10),
+        R((nose_x - .092 * length, 0, head_z + .022 * height), .157 * height,
+          .136 * height, n=2.1),
+        R((muzzle_tip - .040 * length, 0, head_z - .048 * height), .116 * height,
+          .085 * height, n=2.2),
+        R((muzzle_tip - .007 * length, 0, head_z - .073 * height), .090 * height,
+          .059 * height, n=2.3),
     ]
     parts["jaw"].rings = [
-        R((nose_x - .11 * length, 0, head_z - .10 * height), .10 * height, .04 * height),
-        R((nose_x - .03 * length, 0, head_z - .12 * height), .065 * height, .028 * height),
+        R((nose_x - .13 * length, 0, head_z - .10 * height), .12 * height, .045 * height),
+        R((muzzle_tip - .015 * length, 0, head_z - .118 * height), .076 * height, .030 * height),
     ]
     parts["nose"].rings = [
-        R((nose_x - .025 * length, 0, head_z - .06 * height), .050 * height, .034 * height),
-        R((nose_x + .015 * length, 0, head_z - .073 * height), .040 * height, .026 * height),
+        R((muzzle_tip - .010 * length, 0, head_z - .055 * height), .064 * height, .039 * height),
+        R((muzzle_tip + .012 * length, 0, head_z - .062 * height), .049 * height, .029 * height),
     ]
-    eye = (nose_x - .145 * length + .033 * height, (.172 if juvenile else .156) * height,
+    parts["nose"].cap_scale = .40
+    eye = (nose_x - .145 * length + .033 * height, (.190 if juvenile else .172) * height,
            head_z + .050 * height)
     eye_size = (.032 if juvenile else .026) * height
     parts["eye.L"].rings = [R(eye, eye_size, .80 * eye_size)]
 
-    # Upright white-edged ears and separate cheek fans make the facial mask legible in profile.
+    # Upright white-edged ears and a ruff continuous with the cheeks.
     ear_x = nose_x - .19 * length
     parts["ear.L"].rings = [
         R((ear_x, .13 * height, head_z + .04 * height), .075 * height, .055 * height),
@@ -66,11 +70,11 @@ def _shape(spec, juvenile):
         "cheek_fan.L",
         [R((nose_x - .19 * length, .13 * height, head_z - .02 * height), .075 * height,
            .075 * height),
-         R((nose_x - .12 * length, .17 * height, head_z - .09 * height), .095 * height,
+         R((nose_x - .14 * length, .160 * height, head_z - .09 * height), .095 * height,
            .080 * height),
-         R((nose_x - .075 * length, .145 * height, head_z - .16 * height), .025 * height,
+         R((nose_x - .115 * length, .150 * height, head_z - .15 * height), .033 * height,
            .025 * height)],
-        weights={"head": 1.0}, tag="mask", segments=12, rough=(.006, 29.0), fuse=False,
+        weights={"head": 1.0}, tag="mask", segments=12, rough=(.006, 29.0),
         mirror=True, cap_end="point"))
 
     # Short dark legs and large furred soles suit a branch-walking animal.
@@ -116,13 +120,24 @@ def _paint(ctx, length, height, juvenile):
     coat = nz.mix(russet, np.array([.28, .15, .09]), underside * .60)
     coat *= (.86 + .25 * grain)[..., None]
 
-    # Cream muzzle, brows and cheeks surround dark tear tracks and eyes.
-    head = np.clip(ctx.tag("head") + ctx.tag("jaw"), 0.0, 1.0)
-    side = nz.smoothstep(.035, .09, np.abs(p[..., 1]))
-    brow = head * side * nz.smoothstep(.88 * length, .55 * length, p[..., 0])
-    coat = nz.mix(coat, cream, np.clip(.70 * brow + ctx.tag("mask") + .55 * ctx.tag("ear"), 0, 1))
-    tear = head * side * nz.smoothstep(.38 * length, .31 * length, p[..., 0])
-    coat = nz.mix(coat, dark, tear * .58)
+    # Work in shoulder heights from the eye so the cub has the same facial landmarks.
+    forward = (p[..., 0] - (.345 * length + .033 * height)) / height
+    above = p[..., 2] / height - 1.070
+    side = np.abs(p[..., 1]) / height
+    head = np.clip(ctx.tag("head") + ctx.tag("jaw") + ctx.tag("mask"), 0.0, 1.0)
+    muzzle = nz.smoothstep(.055, .18, forward)
+    cheeks = nz.smoothstep(.065, .15, side) * nz.smoothstep(.085, -.04, above)
+    brow = ((forward + .018) / .115) ** 2 + ((above - .078) / .062) ** 2
+    brows = nz.smoothstep(1.5, .38, brow) * nz.smoothstep(.04, .10, side)
+    pale = np.maximum.reduce([muzzle, cheeks, brows])
+    coat = nz.mix(coat, cream * (.93 + .12 * grain)[..., None],
+                  np.clip(head * pale + ctx.tag("mask") + .65 * ctx.tag("ear"), 0, 1))
+    # A red-brown stripe runs diagonally from each inner eye to the corner of the mouth.
+    along = np.clip((.18 * forward - .145 * above) / (.18 ** 2 + .145 ** 2), 0, 1)
+    distance = np.hypot(forward - .18 * along, above + .145 * along)
+    width = .039 - .013 * along + .009 * (grain - .5)
+    stripe = nz.smoothstep(width + .013, width - .008, distance) * nz.smoothstep(.035, .095, side)
+    coat = nz.mix(coat, np.array([.43, .19, .10]), head * stripe)
     coat = nz.mix(coat, dark, np.clip(ctx.tag("nose") + 2.5 * ctx.tag("eye"), 0, 1))
     # The rig's leg tag also covers shoulder/hip transition pieces, so height-gate the dark socks;
     # otherwise four black joint caps sit visibly on the russet back.
