@@ -514,8 +514,8 @@ from the Release build, visitor zoo, seed 1, after the visit's fill.
   activity (`Kind::shown`) and lets each model's manifest override the closest standard pose.
   Dedicated clips now cover sentry duty, digging, preening, dust bathing, filter feeding,
   rumination, shallow wallowing, penguin and flamingo huddling, giraffe browsing and zebra watch
-  (`docs/ANIMALS.md`); the information panel names every activity. The remaining closest-pose
-  cases are paired social contact; no pose is synchronised between two animals.
+  (`docs/ANIMALS.md`); the information panel names every activity. At Lion Rock a social lion already within reach
+  can rub its head against an awake companion's cheek. Group huddles still use individual poses.
 - **Flamingos are waders.** The routine sent them into the lagoon for every activity but
   sleep, and the lagoon of the present plan is 0.45 to 1.40 m deep everywhere (103 tiles, none
   shallower): they stood in it to the neck. `RoutinePlace` now treats a flamingo as a wader in
@@ -679,3 +679,18 @@ before the final shallow-water case was added. The intermediate focused command
 `./build-asan/tests/zoo_core_tests --gtest_filter='AnimalEthogramTests.*:AnimalMovementTests.*:AnimalBehaviourTests.*'`
 first passed 13 of 15 and then all 15 after fixes. Earlier interrupted CTest runs
 are not counted as completed validation.
+
+
+### Head rubbing at Lion Rock (2026-11-21)
+
+Sara's social activity and Suki's rest can overlap. When both are stationary in the same
+habitat and their faces are within reach, Sara lowers her muzzle and Suki turns her head.
+Their feet keep their positions during the rub. A moving, sleeping or sick animal is
+unavailable. Navigation still brings a social lion beside a companion using body spacing.
+Selecting an approach to a specific cheek from farther away remains open.
+[In-game comparison](evidence/lion-rock-paired-greeting-2026-11-21.jpg)
+
+The posture is based on observations of head rubbing in captive African lions. Figure 1
+of the study shows a standing lion greeting a resting one. The joint angles and
+timing in the game are animation choices.
+[Matoba, Kutsukake and Hasegawa, 2013](https://doi.org/10.1371/journal.pone.0073044)

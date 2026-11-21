@@ -8,6 +8,7 @@
 #include <cstdlib>
 #include <exception>
 #include <fstream>
+#include <stdexcept>
 
 #include <nlohmann/json.hpp>
 
@@ -48,9 +49,9 @@ constexpr float kFloatSunkShare = 0.72f;
 
 // The imported model retains named scene nodes, while its skin palette has anonymous
 // joints in topological order. Match their model-space bind transforms once per model.
-std::array<int, 3> SightBones(const Xna::Model& model, const Animation::Skeleton& skeleton) {
+std::array<int, 3> SkinJoints(const Xna::Model& model, const Animation::Skeleton& skeleton,
+                              const std::array<const char*, 3>& names) {
     std::array<int, 3> result{-1, -1, -1};
-    constexpr std::array names{"hips", "chest", "head"};
     const auto& nodes = model.getBonesProperty();
     std::vector<Matrix> sceneBind(static_cast<std::size_t>(nodes.getCountProperty()));
     model.CopyAbsoluteBoneTransformsTo(sceneBind);
@@ -242,7 +243,7 @@ const AnimalRenderer::Kind* AnimalRenderer::Load(const std::string& model) {
         return nullptr;
     }
     kind->skeleton = Enhanced::SkeletonFromSkinningData(*skin);
-    kind->sightBones = SightBones(*kind->model, kind->skeleton);
+    kind->sightBones = SkinJoints(*kind->model, kind->skeleton, {"hips", "chest", "head"});
     kind->clips = Enhanced::ClipsFromSkinningData(*skin);
     // ClipsFromSkinningData makes the engine-neutral timelines every Actor plays. The imported
     // SkinningData remains owned by ContentManager so the Model's buffers, effects and textures
@@ -300,6 +301,31 @@ const AnimalRenderer::Kind* AnimalRenderer::Load(const std::string& model) {
             kind->floatDepth = still->value("depth_m", kind->floatDepth);
         if (const auto shown = meta.find("activity_clips"); shown != meta.end() && shown->is_object())
             ReadActivityClips(*shown, kind->pose, kind->shown);
+        if (meta.contains("greeting_landmarks_m")) {
+            GreetingRig rig;
+            rig.joints = SkinJoints(*kind->model, kind->skeleton, {"neck1", "neck2", "head"});
+            if (std::ranges::all_of(rig.joints, [](int joint) { return joint >= 0; })) {
+                const auto point = [](const nlohmann::json& value) {
+                    const auto coordinates = value.get<std::array<float, 3>>();
+                    if (!std::ranges::all_of(coordinates, [](float v) { return std::isfinite(v); }))
+                        throw std::runtime_error("non-finite greeting landmark");
+                    return Vector3(coordinates[0], coordinates[1], coordinates[2]);
+                };
+                const auto& marks = meta.at("greeting_landmarks_m");
+                rig.muzzle = point(marks.at("muzzle"));
+                for (std::size_t i = 0; i < rig.cheeks.size(); ++i)
+                    rig.cheeks[i] = point(marks.at("cheeks").at(i));
+                for (std::size_t i = 0; i < kind->skeleton.Count(); ++i) {
+                    const int parent = kind->skeleton.parents[i];
+                    const auto joint = std::ranges::find(rig.joints, static_cast<int>(i));
+                    int level = parent >= 0 ? rig.neckLevel[static_cast<std::size_t>(parent)] : -1;
+                    if (joint != rig.joints.end())
+                        level = static_cast<int>(joint - rig.joints.begin());
+                    rig.neckLevel.push_back(level);
+                }
+                kind->greeting = std::move(rig);
+            }
+        }
     } catch (const std::exception& error) {
         std::printf("zoo: animals: %s.json: %s\n", model.c_str(), error.what());
     }
@@ -400,8 +426,10 @@ void AnimalRenderer::Update(const zoo::Zoo& zoo, float seconds, float tickFracti
         const bool visible = animal.Visible();
         const bool appeared = fresh || (visible && !actor.visible);
         actor.visible = visible;
-        if (!visible)
+        if (!visible) {
+            actor.greeting.reset();
             continue;
+        }
         const float femaleShare = female && look.female != nullptr ? look.female->relativeHeight : 1.0f;
         const float bodyScale = zoo::BodyScale(animal, def, now);
         const float standing = def.shoulderHeightM * femaleShare * bodyScale;
@@ -425,6 +453,7 @@ void AnimalRenderer::Update(const zoo::Zoo& zoo, float seconds, float tickFracti
             const zoo::Vec2 jump = actor.to - actor.from;
             if (jump.x * jump.x + jump.z * jump.z > 16.0f) {
                 actor.from = actor.to;  // carried, not walked
+                actor.greeting.reset();
                 actor.heading = animal.heading;
             }
         }
@@ -440,7 +469,12 @@ void AnimalRenderer::Update(const zoo::Zoo& zoo, float seconds, float tickFracti
             actor.afloat += ((floats ? 1.0f : 0.0f) - actor.afloat) * std::min(1.0f, 2.5f * seconds);
         const float turn = WrapAngle(animal.heading - actor.heading);
         const float most = (2.5f + 1.5f * animal.speed) * seconds;
-        actor.heading = WrapAngle(actor.heading + std::clamp(turn, -most, most));
+        // During a stationary greeting the contacting animals turn their necks. Turning
+        // their whole bodies toward a new interest here would pivot all four planted paws.
+        if (!actor.greeting || animal.moving ||
+            (animal.activity != zoo::AnimalActivity::Socialize && animal.activity != zoo::AnimalActivity::Rest &&
+             animal.activity != zoo::AnimalActivity::Idle))
+            actor.heading = WrapAngle(actor.heading + std::clamp(turn, -most, most));
 
         // What it does.
         if (animal.activity != zoo::AnimalActivity::Vocalize)
@@ -511,6 +545,7 @@ void AnimalRenderer::Update(const zoo::Zoo& zoo, float seconds, float tickFracti
         actor.waterLength = (body + 0.40f + animal.speed * 0.34f) * pulse;
     }
     std::erase_if(actors_, [](const auto& entry) { return !entry.second->seen; });
+    UpdateGreetings(zoo, seconds);
 }
 
 void AnimalRenderer::Submit(CnaEngine::App::Frame& frame, const CnaEngine::Graphics::Camera& camera) const {
@@ -525,7 +560,8 @@ void AnimalRenderer::Submit(CnaEngine::App::Frame& frame, const CnaEngine::Graph
         const BoundingSphere bounds(feet + Vector3(0.0f, 0.5f * actor->standing, 0.0f), actor->bounds);
         if (frustum.Contains(bounds) == ContainmentType::Disjoint)
             continue;
-        frame.Add(*actor->kind->view, actor->world, &actor->animator.SkinPalette());
+        const auto& skin = actor->greeting ? actor->greeting->skin : actor->animator.SkinPalette();
+        frame.Add(*actor->kind->view, actor->world, &skin);
         if (actor->water > 0.02f) {
             const Matrix water = Matrix::CreateScale(actor->waterWidth * actor->water, 1.0f,
                                                      actor->waterLength * actor->water) *
@@ -553,7 +589,9 @@ std::optional<AnimalSightTarget> AnimalRenderer::SightTargetOf(zoo::AnimalId id)
     AnimalSightTarget target{{}, actor.bodyRadius};
     for (std::size_t i = 0; i < target.joints.size(); ++i) {
         const int bone = actor.kind->sightBones[i];
-        if (bone >= 0) {
+        if (actor.greeting && bone == actor.kind->greeting->joints.back()) {
+            target.joints[i] = FromXna(actor.greeting->head);
+        } else if (bone >= 0) {
             const auto local = actor.animator.BoneTransform(bone).getTranslationProperty();
             target.joints[i] = FromXna(Vector3::Transform(local, actor.world));
         } else {

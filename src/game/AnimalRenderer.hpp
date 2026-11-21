@@ -23,6 +23,7 @@
 
 #include "AnimalTextures.hpp"
 #include "Common.hpp"
+#include "LionGreeting.hpp"
 #include "SightLine.hpp"
 #include "zoo/sim/Zoo.hpp"
 
@@ -72,12 +73,19 @@ public:
     const std::vector<std::string>& StandIns() const { return standIns_; }
 
 private:
+    struct GreetingRig {
+        std::array<int, 3> joints;
+        Vector3 muzzle;
+        std::array<Vector3, 2> cheeks;
+        std::vector<int> neckLevel;  ///< deepest neck ancestor, -1 outside the neck
+    };
     struct Kind {
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::Model> model;
         std::unique_ptr<CnaEngine::Graphics::ModelView> view;
         /// The model's textures with mip levels (AnimalTextures.hpp); the view's materials use them.
         std::vector<std::unique_ptr<Microsoft::Xna::Framework::Graphics::Texture2D>> textures;
         CnaEngine::Animation::Skeleton skeleton;
+        std::optional<GreetingRig> greeting;
         std::array<int, 3> sightBones{{-1, -1, -1}};
         std::vector<CnaEngine::Animation::AnimationClip> clips;
         std::array<const CnaEngine::Animation::AnimationClip*, static_cast<std::size_t>(AnimalPose::Count)>
@@ -97,10 +105,22 @@ private:
         /// sidecar (`meta.activity_clips`) where its clips suit a species better.
         std::array<AnimalPose, static_cast<std::size_t>(zoo::AnimalActivity::Count)> shown{};
     };
+    struct GreetingPose {
+        zoo::AnimalId partner;
+        NeckTurns wanted = kNoNeckTurn;
+        NeckTurns turns = kNoNeckTurn;
+        std::vector<Matrix> skin;
+        Vector3 head;
+        bool paired = false;
+    };
     struct Actor {
         explicit Actor(const Kind& k) : kind(&k), animator(k.skeleton) {}
         const Kind* kind;
         CnaEngine::Animation::Animator animator;
+        LionNeck NeckAt(const Vector3& bindPoint) const;
+        void Greet(zoo::AnimalId partner, const NeckTurns& wanted);
+        void ApplyGreeting(float seconds);
+        std::unique_ptr<GreetingPose> greeting;
         AnimalPose pose = AnimalPose::Count;
         zoo::Vec2 from;
         zoo::Vec2 to;
@@ -145,6 +165,7 @@ private:
         bool femaleResolved = false;
         bool juvenileResolved = false;
     };
+    void UpdateGreetings(const zoo::Zoo& zoo, float seconds);
     std::vector<Look> looks_;
     std::unordered_map<zoo::AnimalId, std::unique_ptr<Actor>> actors_;
     std::unique_ptr<Microsoft::Xna::Framework::Graphics::Texture2D> waterTexture_;

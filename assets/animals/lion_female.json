@@ -121,6 +121,25 @@
     },
     "asset_license": "CC-BY-4.0",
     "common_name": "African lion",
+    "greeting_landmarks_m": {
+      "cheeks": [
+        [
+          -0.063212,
+          0.946244,
+          1.1747
+        ],
+        [
+          0.063183,
+          0.946076,
+          1.174661
+        ]
+      ],
+      "muzzle": [
+        0.010131,
+        0.930926,
+        1.19417
+      ]
+    },
     "material_source": "adapted authored base, normal and occlusion",
     "preparation_version": 2,
     "proportion_edits": {

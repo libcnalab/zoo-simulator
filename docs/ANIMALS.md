@@ -943,7 +943,7 @@ named the real activity. Dedicated clips are now made in the pipeline
 | `zebra`, `zebra_female`, `zebra_juvenile` | `sentry` (9 s) | `sentinel` | four planted hooves, a high neck and held scans to either side, with independently turning ears |
 | `flamingo` | `huddle` (9 s) | `huddle` | a two-legged braced stance, with the neck drawn in, the wings held close and a small shiver |
 | `giraffe`, `giraffe_female`, `giraffe_juvenile` | `browse` (12 s) | `browse` | high held reaches to both sides of a crown, taking and stripping leaves with separate bites |
-| `lion`, `lion_female`, `lion_juvenile` | `nuzzle` (7 s) | `socialize` | four planted paws while the lowered muzzle presses and rubs slowly to either side; this is an individual contact pose, not a synchronised pair |
+| `lion`, `lion_female`, `lion_juvenile` | `nuzzle` (7 s) | `socialize` | four planted paws and a side-to-side rub. In a close greeting the other lion turns its cheek towards the muzzle |
 | `kangaroo`, `kangaroo_female`, `kangaroo_juvenile` | `groom` (8 s) | `socialize` | an upright face wash, alternating the five-fingered hands at the muzzle while both hind feet remain planted; this is individual grooming, not a synchronised pair |
 
 Coverage of every species routine's nonstandard or signature action is below. “Default” means
@@ -957,7 +957,7 @@ the model has no dedicated clip and the renderer deliberately uses the nearest s
 | Flamingo | `preen`; `filter_feed`; `huddle` | `preen`; `filter_feed`; `huddle` | grooming, inverted-bill sweep and a compact two-legged cold-weather stance are dedicated |
 | Giraffe | `browse`; `ruminate` | `browse`; `ruminate` | high held reaches take leaves from both sides; a separate slow jaw grind shows chewing the cud |
 | Kangaroo | social rest | `groom` | alternating hands wash the muzzle while the animal remains with the mob; no paired interaction |
-| Lion | social contact | `nuzzle` | a lowered, side-to-side rubbing motion on four planted paws; the partner is not synchronised |
+| Lion | social contact | `nuzzle` | the muzzle and a nearby partner's cheek meet through a small turn of both necks |
 | Meerkat | `sentinel`; `dig` | `sentry`; `dig` | upright scanning with tail support; alternating fore-paw scratches |
 | Ostrich | `dust_bathe` | `dust_bathe` | sitting, wing shaking and neck sweeps |
 | Penguin | `preen`; `huddle` | `preen`; `huddle` | grooming and the tight, tucked upright rest are dedicated |
@@ -991,8 +991,27 @@ quiet wave. The production GLBs each add one 32-bone clip and match independent 
 byte for byte. The opposite contact directions for all three bodies are in
 `evidence/lion-nuzzle-j63-2026-11-21.jpg`. All 135 animation-pipeline tests pass; ASan viewers
 played 440 lockstep frames for every variant and a real 3,000-tick Lion Rock visit drew three
-frames cleanly. The behaviour still selects an individual pose near another lion rather than
-time-aligning two actors, so this does not claim paired physical contact.
+frames cleanly. This first version supplied the individual clip.
+
+**Paired head rubbing at Lion Rock (2026-11-21).** Each lion model now exports a muzzle
+point and two cheek points selected from the head skin. When a stationary lion is
+socialising beside a resting, idle or social partner, the renderer bends both necks
+towards the nearer reachable cheek. The receiver keeps its resting or standing body.
+The three joint rotations fade in and out. The animated head position also supplies
+the target for the binoculars. Each animal participates in at most one greeting per frame.
+
+At 14:13 in seed 1, Sara stands beside the resting lioness Suki. In a 45-frame
+lockstep recording, the muzzle and cheek surface patches came within 2 cm for 31
+frames. Their closest sampled vertices were 0.7 mm apart. Applying the original
+animation matrices at the same body placements left at least 41 cm between those
+patches. This comparison uses 1,746 muzzle vertices and 2,649 cheek vertices from
+the shipped lioness GLB, all with full head-bone weight. Eren was
+farther from Laila and their poses stayed independent during the capture.
+
+The source state is the seed-1 13:00 visit advanced by 8,761 simulation steps.
+The public camera is at `309.40,227.40,16.70,5.34` with 7× binoculars. Frames 23
+and 55 show contact and withdrawal. Visitor avatars were hidden for these crops.
+[The greeting at Lion Rock](evidence/lion-rock-paired-greeting-2026-11-21.jpg)
 
 **Kangaroo social grooming (J64, 2026-11-21).** The buck and joey now map `socialize` to a
 dedicated eight-second `groom` clip. They alternate their separate five-fingered hands at the

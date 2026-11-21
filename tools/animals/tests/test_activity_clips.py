@@ -228,6 +228,22 @@ class FeedingAndRuminationTests(unittest.TestCase):
 
 
 class SocialTests(unittest.TestCase):
+    def test_lion_greeting_landmarks_belong_to_the_head_skin_in_each_model(self):
+        for species in ("lion", "lion_female", "lion_juvenile"):
+            spec, _, _ = clips_of(species)
+            data = spec.sculpt
+            marks = spec.meta["greeting_landmarks_m"]
+            manifest = json.loads((ROOT / "assets/animals" / (species + ".json")).read_text())
+            self.assertEqual(marks, manifest["meta"]["greeting_landmarks_m"])
+            head = data["vertices"][data["weights"][:, data["bone_names"].tolist().index("head")] > .8]
+            muzzle = marks["muzzle"]
+            self.assertLess(marks["cheeks"][0][0], 0)
+            self.assertGreater(marks["cheeks"][1][0], 0)
+            for mark in [muzzle, *marks["cheeks"]]:
+                point = np.array([mark[2], mark[0], mark[1]])
+                self.assertLess(np.min(np.linalg.norm(head - point, axis=1)), 1.e-5, species)
+            self.assertGreater(muzzle[2], max(cheek[2] for cheek in marks["cheeks"]))
+
     def test_lions_nuzzle_side_to_side_on_four_planted_paws(self):
         for species in ("lion", "lion_female", "lion_juvenile"):
             spec, solver, clips = clips_of(species)

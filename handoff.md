@@ -30,6 +30,12 @@ whatever you take up (`docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `docs/V
   adult and juvenile models. Matched close-ups are in
   `docs/evidence/carnivore-eyes-2026-11-21.jpg`. The facial-landmark test reads the
   shipped GLBs and checks that both eyes project through the coat.
+- Sara and Suki now touch faces at Lion Rock during a close greeting. The seed-1 13:00
+  visit advanced 8,761 simulation steps puts them at the glass at 14:13. The resting
+  partner turns her head and keeps her paws planted. See `docs/ANIMALS.md` and
+  `docs/evidence/lion-rock-paired-greeting-2026-11-21.jpg`. Distant approaches and
+  bird flock poses remain open. All 335 active native tests and the animation suite
+  (163 tests) passed after the greeting change.
 - The red panda mother and cubs now have shorter, rounder muzzles, continuous cheek fur,
   pale brows and paired red-brown markings. Their joint animation is unchanged.
   See `docs/evidence/red-panda-faces-2026-11-21.jpg` for matched close-ups and game views.
@@ -768,7 +774,7 @@ whatever you take up (`docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `docs/V
   instead of the ordinary idle pose. All four paws stay planted while the chest and neck lower,
   the muzzle moves through a broad side-to-side rub, the ears settle back and the tail keeps a
   quiet wave. This is deliberately honest individual contact motion: the simulation places a
-  social lion near a group mate but does not time-align or fit two actors. The opposite contact
+  social lion near a group mate. The later paired greeting fits both necks when in reach. The opposite contact
   directions for all three bodies are in `docs/evidence/lion-nuzzle-j63-2026-11-21.jpg`. Each GLB
   grows by about 104 kB, from eight to nine 32-bone clips, and all six production GLB/JSON files
   match independent one-thread exports byte for byte. All 135 animation-pipeline tests pass in
@@ -981,8 +987,8 @@ tests pass. Nobody listened to the audio; preserve that qualification.
   feeding, camel and giraffe rumination, ostrich and elephant dust-bathing, and shallow wallowing
   for bears, tigers and rhinoceroses (elephants reuse their scoop/toss as a wet toss). Penguin
   huddling, flamingo huddling, giraffe browsing and zebra watch now also have dedicated clips for
-  every model variant. Lion contact now has a dedicated individual nuzzle and kangaroo social time
-  an individual face-groom; all synchronised multi-animal contact remains unimplemented. The exact
+  every model variant. Lion contact now fits both necks when partners are in reach. Kangaroo
+  face grooming and the bird flock poses remain individual. The exact
   table and honest visual limitations are in `docs/ANIMALS.md`.
   A5's eight production files match independent exports byte for byte; 107 pipeline tests pass.
   The renderer integration's warning-clean build and all 267 enabled CTest cases passed (the

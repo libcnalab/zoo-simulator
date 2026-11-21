@@ -182,6 +182,25 @@ def _nuzzle(solver, height, phase):
     return pose
 
 
+def _greeting_landmarks(data):
+    """Bind-space facial surface points, in the exported glTF's axes and metres."""
+    names = data['bone_names'].tolist()
+    head = data['vertices'][data['weights'][:, names.index('head')] > .8]
+    forward, side, up = head.T
+
+    def surface(mask):
+        patch = head[mask]
+        middle = np.median(patch, axis=0)
+        point = patch[np.argmin(np.linalg.norm(patch - middle, axis=1))]
+        return [round(float(point[i]), 6) for i in (1, 2, 0)]
+
+    muzzle = surface((forward > np.quantile(forward, .91)) & (up < np.quantile(up, .75)))
+    cheek = ((forward > np.quantile(forward, .60)) & (forward < np.quantile(forward, .84)) &
+             (up > np.quantile(up, .40)) & (up < np.quantile(up, .72)))
+    width = np.quantile(np.abs(side), .58)
+    return {'muzzle': muzzle, 'cheeks': [surface(cheek & (sign * side > width)) for sign in (-1, 1)]}
+
+
 def make_cat(name, kind, height, edits, walk_speed, trot_speed, meta=None):
     data = prepare_instance(SOURCE, edits, height)
     data['height'] = height
@@ -234,6 +253,7 @@ def make_cat(name, kind, height, edits, walk_speed, trot_speed, meta=None):
         metadata['cheek_ruff_cards'] = 150
     else:
         metadata['activity_clips'] = {'socialize': 'nuzzle'}
+        metadata['greeting_landmarks_m'] = _greeting_landmarks(data)
     body_budget = 23000 if kind == 'juvenile' else 36000 if kind == 'male' else 33000
     return Spec(name, data['bones'], hair_parts(data, kind),
                 texture_size=1024, target_tris=body_budget,

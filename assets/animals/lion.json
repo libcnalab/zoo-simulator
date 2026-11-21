@@ -121,6 +121,25 @@
     },
     "asset_license": "CC-BY-4.0",
     "common_name": "African lion",
+    "greeting_landmarks_m": {
+      "cheeks": [
+        [
+          -0.130435,
+          1.032188,
+          1.477018
+        ],
+        [
+          0.130497,
+          1.031985,
+          1.476769
+        ]
+      ],
+      "muzzle": [
+        0.018595,
+        1.011364,
+        1.498754
+      ]
+    },
     "mane_card_locks": 2199,
     "mane_revision": "Short narrow curved locks over opaque undercoat",
     "material_source": "adapted authored base, normal and occlusion",
