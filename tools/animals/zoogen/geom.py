@@ -170,7 +170,7 @@ def _cap_rings(ring, tangent, sign, style, scale):
 
 
 def loft(part):
-    """Return (verts Nx3, tris Mx3, weights list[dict], ring_param N) for a part."""
+    """Return vertices, triangular faces and per-vertex skin weights for a part."""
     rings = _resample(part.rings, part.subdiv)
     if part.radius_scale != 1.0:
         k = part.radius_scale
@@ -181,6 +181,12 @@ def loft(part):
         a = rings[max(i - 1, 0)].c
         b = rings[min(i + 1, n - 1)].c
         tangents.append(unit(b - a))
+    if n == 1:
+        # An isolated cross-section (eyes and nostrils) has no neighbouring centre
+        # from which to infer its axis. Use the animal's forward axis unless the
+        # author chose it as the ring's side. Both end caps then enclose a volume.
+        tangents[0] = (np.array([1., 0., 0.]) if abs(unit(part.side_ref)[0]) < .99
+                       else np.array([0., 1., 0.]))
     start_caps = _cap_rings(rings[0], tangents[0], -1.0, part.cap_start, part.cap_scale)[::-1]
     end_caps = _cap_rings(rings[-1], tangents[-1], +1.0, part.cap_end, part.cap_scale)
     all_rings = start_caps + rings + end_caps

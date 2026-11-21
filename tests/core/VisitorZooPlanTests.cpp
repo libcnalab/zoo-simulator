@@ -321,6 +321,9 @@ const std::map<std::string, std::vector<Named>> kFamilies{
       Child(kFemale, 1.2f), Child(kMale, 0.7f), Child(kFemale, 0.65f)}},
     {"lynx", {Grown(kFemale, 6.0f), Child(kFemale, 0.45f), Child(kMale, 0.45f)}},
     {"red_panda", {Grown(kFemale, 5.0f), Child(kFemale, 0.2f), Child(kMale, 0.2f)}},
+    {"capybara",
+     {Grown(kMale, 5.0f), Grown(kFemale, 4.0f), Grown(kFemale, 3.0f), Grown(kFemale, 5.0f),
+      Child(kFemale, 0.13f), Child(kMale, 0.13f), Child(kMale, 0.13f), Child(kFemale, 0.13f)}},
     {"snow_leopard", {Grown(kFemale, 7.0f), Child(kFemale, 0.45f), Child(kMale, 0.45f)}},
 };
 
@@ -573,8 +576,8 @@ TEST_P(VisitorZooPlan, BothSideGardensReachTheOldGalleriesAndHaveVisitorFaciliti
         EXPECT_EQ(picnicSeats, 12);
         std::set<std::string> services;
         for (const auto& building : zoo_.Objects().Buildings()) {
-            if ((building.origin.x - gate.x) * side >= 80) {
-                const auto& def = zoo_.Definitions().buildings[static_cast<std::size_t>(building.def)];
+            const auto& def = zoo_.Definitions().buildings[static_cast<std::size_t>(building.def)];
+            if (def.placement == Placement::Public && (building.origin.x - gate.x) * side >= 80) {
                 const auto front = FrontTile(def, building.origin, building.facing);
                 EXPECT_TRUE(zoo_.Routes().Reachable(plaza, front, NavProfile::Visitor())) << def.id;
                 services.insert(def.id);
@@ -582,6 +585,58 @@ TEST_P(VisitorZooPlan, BothSideGardensReachTheOldGalleriesAndHaveVisitorFaciliti
         }
         EXPECT_TRUE(services.contains("restroom"));
         EXPECT_TRUE(services.contains(side < 0 ? "ice_cream_stand" : "drinks_stall"));
+    }
+}
+
+TEST_P(VisitorZooPlan, CapybaraFamilyCanSwimAndGrazeBesideTheWestWalk) {
+    const auto gate = zoo_.Map().EntranceTile();
+    const auto& habitats = zoo_.Habitats();
+    const Enclosure* marsh = habitats.Find(habitats.At(TileCoord{gate.x - 79, gate.z - 84}));
+    ASSERT_NE(marsh, nullptr);
+    ASSERT_EQ(marsh->name, "Capybara Marsh");
+    EXPECT_TRUE(marsh->stats.heatedShelter);
+    EXPECT_GE(marsh->stats.shelterCapacity, 8);
+    EXPECT_GE(marsh->stats.waterShare, 0.26f);
+    int shallow = 0;
+    int deep = 0;
+    for (const TileCoord tile : TilesInRect(marsh->min, marsh->max)) {
+        if (habitats.At(tile) == marsh->id && zoo_.Map().HasWater(tile)) {
+            const float depth = zoo_.Map().WaterDepthAt(World::TileCenter(tile));
+            shallow += depth <= 0.4f;
+            deep += depth >= 1.0f;
+        }
+    }
+    EXPECT_GE(shallow, 4);
+    EXPECT_GE(deep, 10);
+    ASSERT_FALSE(marsh->feeders.empty());
+    for (PropId id : marsh->feeders) {
+        const Prop* tray = zoo_.Objects().FindProp(id);
+        ASSERT_NE(tray, nullptr);
+        const auto& kind = KindOf(zoo_, *tray);
+        EXPECT_EQ(kind.id, "forage_tray");
+        EXPECT_LE(kind.feedHeightM, 0.25f);
+        EXPECT_FALSE(zoo_.Map().HasWater(World::TileAt(tray->position)));
+    }
+    const auto family = Group(zoo_, "capybara");
+    ASSERT_EQ(family.size(), 8U);
+    int pups = 0;
+    std::set<AnimalId> mothers;
+    for (const Animal* resident : family) {
+        EXPECT_EQ(resident->home, marsh->id);
+        if (resident->mother) {
+            ++pups;
+            mothers.insert(resident->mother);
+        }
+    }
+    EXPECT_EQ(pups, 4);
+    ASSERT_EQ(mothers.size(), 1U);
+    const Animal* mother = zoo_.Fauna().Find(*mothers.begin());
+    ASSERT_NE(mother, nullptr);
+    EXPECT_EQ(mother->home, marsh->id);
+    EXPECT_EQ(mother->sex, Sex::Female);
+    ASSERT_FALSE(marsh->viewing.empty());
+    for (const auto& spot : marsh->viewing) {
+        EXPECT_TRUE(zoo_.Routes().Reachable(gate, spot.tile, NavProfile::Visitor()));
     }
 }
 
@@ -754,7 +809,7 @@ TEST_P(VisitorZooPlan, FamiliesWithTheirYoungOnTheOpeningDay) {
         EXPECT_GE(static_cast<int>(group.size()), def.groupMin) << species;
         EXPECT_LE(static_cast<int>(group.size()), def.groupMax) << species;
     }
-    EXPECT_EQ(sucklings, 31);
+    EXPECT_EQ(sucklings, 35);
 }
 
 TEST_P(VisitorZooPlan, FamiliesAreWholeWhenTheVisitBegins) {
@@ -839,15 +894,15 @@ TEST_P(VisitorZooPlan, NoLandPlantInOrBesideWater) {
     EXPECT_GT(beside, 0) << "the plan should retain planting on dry banks near water";
 }
 
-TEST_P(VisitorZooPlan, LagoonHasReedsAndOpenHabitatsHaveTallGrass) {
-    int reeds = 0;
+TEST_P(VisitorZooPlan, BothWetlandsHaveShorelineReedsAndOpenHabitatsHaveTallGrass) {
+    std::map<std::string, int> reeds;
     int grass = 0;
     for (const Prop& prop : zoo_.Objects().Props()) {
         const PropDef& kind = KindOf(zoo_, prop);
         if (kind.id == "wetland_reeds") {
             const Enclosure* home = zoo_.Habitats().Find(zoo_.Habitats().At(World::TileAt(prop.position)));
             ASSERT_NE(home, nullptr);
-            EXPECT_EQ(home->name, "Flamingo Lagoon");
+            EXPECT_TRUE(home->name == "Flamingo Lagoon" || home->name == "Capybara Marsh") << home->name;
             EXPECT_FALSE(zoo_.Map().HasWater(World::TileAt(prop.position)));
             const TileCoord at = World::TileAt(prop.position);
             bool waterBeside = false;
@@ -857,7 +912,7 @@ TEST_P(VisitorZooPlan, LagoonHasReedsAndOpenHabitatsHaveTallGrass) {
                 }
             }
             EXPECT_TRUE(waterBeside);
-            ++reeds;
+            ++reeds[home->name];
         } else if (kind.id == "tall_grass") {
             const Enclosure* home = zoo_.Habitats().Find(zoo_.Habitats().At(World::TileAt(prop.position)));
             ASSERT_NE(home, nullptr);
@@ -865,7 +920,8 @@ TEST_P(VisitorZooPlan, LagoonHasReedsAndOpenHabitatsHaveTallGrass) {
             ++grass;
         }
     }
-    EXPECT_GE(reeds, 8);
+    EXPECT_GE(reeds["Flamingo Lagoon"], 8);
+    EXPECT_GE(reeds["Capybara Marsh"], 8);
     EXPECT_GT(grass, 0);
 }
 
@@ -946,7 +1002,7 @@ TEST_P(VisitorZooPlan, BenchesStandInShade) {
             }
         }
     }
-    EXPECT_EQ(benches, 51);
+    EXPECT_EQ(benches, 54);
     // Three walks run between the planted strips of two habitats and have no lawn for a tree; a
     // strip's own planting stays below the eye (VisitorZooHabitatTests). Their benches are the
     // exception, by name, so that a fourth is noticed.

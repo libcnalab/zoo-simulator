@@ -17,7 +17,7 @@ then call `BuildVisitorZoo(zoo, options)`. `withoutSpecies` suppresses animals o
                       /             |                 /
              Polar Sound     Bear Falls — Wolf Wood — Tiger Forest
                   |              \    northern court    /       |
-             Penguin Cove ======= woodland shortcut ======= Lion Rock
+Capybara Marsh — Penguin Cove === woodland shortcut ======= Lion Rock
                   |             Red Dune                        |
              Elephant Valley === central food court ============ |
                   |           shaded garden shortcut       Acacia Plain
@@ -30,7 +30,7 @@ then call `BuildVisitorZoo(zoo, options)`. `withoutSpecies` suppresses animals o
 ```
 
 Two gravel walks link existing galleries through the new land. On the west, follow the path
-from Elephant Valley to Polar Sound for a picnic stop with ice cream and toilets. The eastern
+from Elephant Valley past Capybara Marsh to Polar Sound for a picnic stop with ice cream and toilets. The eastern
 walk links Acacia Plain and Tiger Forest, with drinks, picnic tables and toilets halfway.
 
 The asphalt round bends between habitats; gravel circuits, curved viewing bays and shortcuts
@@ -39,7 +39,7 @@ combine elliptical lobes. Every habitat has a keeper gate, shelter, stocked feed
 enrichment, a public information board and benches. Planting concentrates behind the open
 viewing ground, with woods between habitats and around the perimeter.
 
-The seed-1 zoo contains **99 animals in 17 habitats, 54 buildings and 4,640 props** when every species
+The seed-1 zoo contains **107 animals in 18 habitats, 55 buildings and 4,680 props** when every species
 is included (74 animals and 2,817 props before the plan's rework of
 2026-11-14, below). The farthest public path tile is **78.1 m** walking distance
 from a visitor facility. `VisitorZooTests.DISABLED_PrintPlan` prints these measurements. Families
@@ -75,6 +75,7 @@ diagnostics remain disabled).
 | Lynx Ridge | Eurasian lynx 3 (2) | 1,500 | 500 | Glass S/W | Tall mesh | 0 |
 | Red Panda Canopy | Red panda 3 (2) | 992 | 331 | Glass S/E | Tall mesh | 0 |
 | Snow Leopard Heights | Snow leopard 3 (2) | 1,724 | 575 | High glass S/W | Heavy welded mesh | 0 |
+| Capybara Marsh | Capybara 8 (4) | 988 | 124 | Glass S/E | Wire mesh | 0 |
 
 The areas did not change with the families; the area per animal is our estimate of what reads
 as roomy for the species, **not checked against EAZA or AZA husbandry figures**. Every group
@@ -271,8 +272,7 @@ rest stop. In seed 1 the farthest path anywhere in the park is 78.1 m from a fac
 Tall grass in the woodland glades brings Bear Falls to 43.0% vegetation cover after
 the expansion.
 
-The deterministic opening states for the new default map, and the same visit 500 ticks later,
-are recorded below.
+The following opening states were recorded before the marsh was stocked.
 
 | Fill ticks | Seed | Opening state | After 500 ticks |
 |---:|---:|---:|---:|
@@ -282,6 +282,32 @@ are recorded below.
 | 6000 | 1 | 1284744869770772916 | 8424761712365639015 |
 | 6000 | 2 | 7515209334301186647 | 17005395279587903364 |
 | 6000 | 3 | 14847577528289621555 | 17632415333599148855 |
+
+## Capybara Marsh (2026-11-21)
+
+Between the west picnic stop and Penguin Cove, two short approaches join the marsh gallery to
+the garden walk. The 988 m² enclosure has 54 public viewing tiles. A 272 m² pool has a deep
+centre and a shallow shelf with reed stands along its banks. A heated barn shelters the group,
+and low trays hold hay and grass pellets. One adult male and three adult females share the marsh
+with a litter of four. The group, water and grazing areas follow descriptions of capybaras on
+South American riverbanks. [San Diego Zoo Wildlife Alliance](https://animals.sandiegozoo.org/animals/capybara)
+
+From the public gallery at 13:00 all eight capybaras were outdoors. The binoculars show
+adults and pups paddling together while the mother eats on the bank. The visitor map offers
+28 distinct destinations including the marsh and the adjacent picnic stop. Clicking the
+marsh marker places the visitor at (69, 289) m on the public gallery.
+[Afternoon gallery view and visitor map](evidence/capybara-marsh-2026-11-21.jpg)
+
+Opening states for the default zoo with the marsh, measured again 500 ticks later:
+
+| Fill ticks | Seed | Opening state | After 500 ticks |
+|---:|---:|---:|---:|
+| 600 | 1 | 9139815037628863271 | 2085363316060078965 |
+| 600 | 2 | 16001145640700442961 | 5644383874109006456 |
+| 600 | 3 | 10636984344542905811 | 6304807489940044530 |
+| 6000 | 1 | 14635932311430106990 | 17559413930607931475 |
+| 6000 | 2 | 11509055281480980418 | 77634063221948580 |
+| 6000 | 3 | 3405743328361068634 | 14155488049469946634 |
 
 ## Stand-off welfare measurements
 

@@ -73,7 +73,7 @@ constexpr double kKeepEvery = 120.0;
 
 // Bump when BuildVisitorZoo or the fill sequence changes without changing the data or save
 // version. Data files and every option that affects the filled state are hashed separately.
-constexpr std::uint64_t kVisitCacheRevision = 5;
+constexpr std::uint64_t kVisitCacheRevision = 6;
 
 void CacheHash(std::uint64_t& hash, std::string_view bytes) {
     for (const unsigned char byte : bytes) {

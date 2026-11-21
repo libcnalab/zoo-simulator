@@ -12,14 +12,19 @@ whatever you take up (`docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `docs/V
   two six-seat tables. On seeds 1 and 2 the visitor navigation system offers all 24 picnic seats
   and both adjacent habitat galleries are within 180 m of their rest stop.
   The two older northern extensions contain Lynx Ridge, Red Panda Canopy and Snow Leopard
-  Heights. Seed 1 has 17 habitats and 99 animals. See `docs/VISITOR_ZOO.md`.
-  Filled-visit cache revision 5 covers the wider map. Existing user saves retain their own maps.
+  Heights. Capybara Marsh is on the west walk beside Penguin Cove. Its four adults and four
+  pups bring seed 1 to 107 animals in 18 habitats. See `docs/VISITOR_ZOO.md` and
+  `docs/evidence/capybara-marsh-2026-11-21.jpg`. Revision 6 caches the stocked marsh.
+  All 324 active tests passed across the release build, including the animation suite and
+  both opening-day family inventories. The full deterministic fill hashes also passed.
+  An actual revision-5 visit loaded all 800 guests and 99 animals, preserving the original
+  map and the species identities of all 73 visitors who had recorded sightings.
   Lynx, red panda and snow leopard cubs follow their mothers. On the previous layout their mean
   distances were 0.96 m, 1.04 m and 2.16 m in a five-minute seed-1 visit
   (`docs/ANIMAL_BEHAVIOUR.md`).
   Late starts load the prepared state. The visitor map checks gate connectivity and the player's
-  collision radius before offering a destination. The seed-1 expanded map at 10:30 includes
-  all 17 habitat stops among 27 travel destinations.
+  collision radius before offering a destination. The seed-1 map at 13:00 includes
+  all 18 habitat stops among 28 travel destinations.
 
 - **The game:** Greenhill Zoo, a first-person walk through a zoo (C++23, the simulation core in
   `src/core/zoo/`, the game on CNA / cna-engine in `src/game/`). Zoo management must not come

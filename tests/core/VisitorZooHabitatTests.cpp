@@ -36,7 +36,8 @@ const std::map<std::string, std::vector<std::string>> kResidents{{"Meerkat Looko
                                                                  {"Kangaroo Grove", {"kangaroo"}},
                                                                  {"Lynx Ridge", {"lynx"}},
                                                                  {"Red Panda Canopy", {"red_panda"}},
-                                                                 {"Snow Leopard Heights", {"snow_leopard"}}};
+                                                                 {"Snow Leopard Heights", {"snow_leopard"}},
+                                                                 {"Capybara Marsh", {"capybara"}}};
 
 void ExpectResidents(const Zoo& zoo, bool omitPenguin = false) {
     ASSERT_EQ(zoo.Habitats().All().size(), kResidents.size());
@@ -420,7 +421,7 @@ TEST_P(VisitorZooHabitat, ResidentsAndOmittedPenguins) {
         const auto report =
             BuildVisitorZoo(zoo, omitted ? VisitorZooOptions{{"penguin"}} : VisitorZooOptions{});
         EXPECT_TRUE(report.problems.empty());
-        EXPECT_EQ(report.enclosures, 17);
+        EXPECT_EQ(report.enclosures, 18);
         EXPECT_EQ(report.animals, zoo.AnimalCount());
         ExpectReportedResidents(report, omitted);
         ExpectResidents(zoo, omitted);

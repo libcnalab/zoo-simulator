@@ -89,17 +89,17 @@ TEST(VisitStart, MatchesGameSequence) {
 // a second 20,480-square-metre northern stage adds Snow Leopard Heights, two connected approaches,
 // a mother and two cubs, redundant water points for the three shy northern species, and the
 // visitor spread happens after four fifths of the fill so all seventeen fronts get a group;
-// the three northern species use their own routines and their dependent cubs follow their mothers; the map grows 64 metres on either side,
-// with two public walks, four services and picnic lawns).
+// dependent northern cubs follow their mothers, and two new garden walks on a map 64 m wider per
+// side lead to four picnic tables and a western marsh with a family of eight capybaras).
 void CheckFillHashes(std::int64_t ticks) {
     constexpr std::array<std::array<std::uint64_t, 2>, 3> shortHashes{
-        {{6149812909312757473ULL, 9743607491872979440ULL},
-         {3581511720324067494ULL, 5080038278314224431ULL},
-         {12504103261764293381ULL, 290601053194212960ULL}}};
+        {{9139815037628863271ULL, 2085363316060078965ULL},
+         {16001145640700442961ULL, 5644383874109006456ULL},
+         {10636984344542905811ULL, 6304807489940044530ULL}}};
     constexpr std::array<std::array<std::uint64_t, 2>, 3> fullHashes{
-        {{1284744869770772916ULL, 8424761712365639015ULL},
-         {7515209334301186647ULL, 17005395279587903364ULL},
-         {14847577528289621555ULL, 17632415333599148855ULL}}};
+        {{14635932311430106990ULL, 17559413930607931475ULL},
+         {11509055281480980418ULL, 77634063221948580ULL},
+         {3405743328361068634ULL, 14155488049469946634ULL}}};
     for (const std::uint64_t seed : {1ULL, 2ULL, 3ULL}) {
         Zoo zoo(testdata::GameCatalog(), testdata::GameSpecies(), VisitorZooConfig(seed));
         BuildVisitorZoo(zoo);

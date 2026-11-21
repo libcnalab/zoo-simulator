@@ -43,7 +43,7 @@ it is tired). Sleep timing uses a day/night bias, with a midday
 rest period for crepuscular species. Loose animals roam nearby public tiles,
 drink at open water and keep accumulating needs.
 
-The eighteen shipped species use the internal table in `AnimalProfile.cpp`.
+The nineteen shipped species use the internal table in `AnimalProfile.cpp`.
 Unknown species ids still use the original weighted routine; the species JSON
 schema and loader are unchanged. Table weights and all times and distances below
 are **game-design estimates**, intended to produce plausible ethograms, not
@@ -71,8 +71,9 @@ standing rumination, and flock resting choices become huddling.
 | Eurasian lynx | 10/0/4/2 | boundary patrol | solitary | 16 |
 | Red panda | 6/8/3/1 | foraging and enrichment | solitary | 14 |
 | Snow leopard | 12/0/4/2 | boundary patrol | solitary | 18 |
+| Capybara | 5/11/4/4 | bathing | 4 | 12 |
 
-Lions, tigers, wolves, brown bears, rhinos, kangaroos and the three northern families receive a twilight
+Lions, tigers, wolves, brown bears, rhinos, kangaroos, capybaras and the three northern families receive a twilight
 activity multiplier of 2.4 from 05:00–08:00 and 17:00–21:00, 0.45 at
 11:00–16:00, and 0.8 otherwise. Midday rest weights multiply by 1.5. The other
 profiles have staggered night sleep windows derived from their existing sleep
@@ -153,6 +154,20 @@ Filled-visit cache revision 4 uses the new routines.
 | 1 | 6,000 | 2340672768525208463 | 13221382786027523413 |
 | 2 | 6,000 | 18162814393738903142 | 6724508172774927581 |
 | 3 | 6,000 | 1251580372408499294 | 9508548962437344888 |
+
+### Capybara Marsh
+
+Capybaras graze on dry ground and choose water for bathing. They also seek the water for
+awake rest between 11:00 and 16:00 or when the temperature comes within four degrees of the
+species' upper comfort limit. Morning rest in mild weather stays on land. The four pups
+use their mother as the group anchor while dependent. The simulator checks adult and pup
+destinations at 08:00 and 13:00, including the switch between feeding and resting sites.
+
+In two seed-1 visits, sampled once per second for five minutes after the 6,000-tick fill,
+all four adults and all four pups moved through water deeper than their own shoulder
+height. At 08:00 adults spent 7.5% of the samples in that water and pups 13.8%. At
+13:00 the shares rose to 67.9% and 76.3%. The mean pup-to-mother distance was 2.82 m
+in the morning and 2.89 m in the afternoon. These figures describe those game visits.
 
 ### Group signals and attention
 

@@ -226,6 +226,18 @@ void HayRack(Maker& k) {
     k.m.Use({0.8f, 0.76f, 0.66f}, Pattern::Plain).BoxAt(0.83f, -0.45f, 0.89f, 0.11f, 0.15f, 0.11f);
 }
 
+// A low forage pan puts fresh grass and hay within reach of a grazing rodent.
+void ForageTray(Maker& k) {
+    MeshWriter& tub = k.m.Use(k.def.color, Pattern::Planks);
+    Tub(tub, 0.03f, 1.05f, 0.16f, 0.62f, 0.045f);
+    MeshWriter& hay = k.m.Use(kHay, Pattern::Thatch);
+    for (int i = 0; i < 3; ++i) {
+        const float x = -0.31f + static_cast<float>(i) * 0.30f;
+        hay.Blob(Vector3(x, k.def.feedHeightM - 0.07f, k.R(-0.04f, 0.04f)), Vector3(0.20f, 0.08f, 0.17f),
+                 k.Seed(), 0.18f, 7, 4);
+    }
+}
+
 void Trough(Maker& k) {
     const bool water = k.def.role == zoo::PropRole::WaterTrough;
     if (water) {
@@ -581,6 +593,8 @@ void BuildProp(ModelBuilder& model, const zoo::PropDef& def, std::uint32_t seed)
         HayRack(k);
     } else if (look == "trough") {
         Trough(k);
+    } else if (look == "forage_tray") {
+        ForageTray(k);
     } else if (look == "high_browse") {
         HighBrowse(k);
     } else if (look == "fish_bucket") {

@@ -151,10 +151,12 @@ Vec2 RoutinePlace(const Animal& animal, const SpeciesDef& species, const Behavio
     const bool hot = env.weather.temperatureC > species.tempMaxC - 4.0f;
     const bool coldMorning = hour < 11.0f && env.weather.temperatureC < species.tempMinC + 8.0f;
     const bool rest = RestingActivity(activity) || activity == AnimalActivity::Sleep;
-    const bool wantsWater = (species.id == "flamingo" && activity != AnimalActivity::Sleep) ||
-                            activity == AnimalActivity::Bathe || activity == AnimalActivity::FilterFeed ||
-                            (species.id == "penguin" && activity == AnimalActivity::Wander &&
-                             !env.world.HasWater(World::TileAt(animal.position)));
+    const bool wantsWater =
+        (species.id == "flamingo" && activity != AnimalActivity::Sleep) ||
+        activity == AnimalActivity::Bathe || activity == AnimalActivity::FilterFeed ||
+        (species.id == "capybara" && activity == AnimalActivity::Rest && (midday || hot)) ||
+        (species.id == "penguin" && activity == AnimalActivity::Wander &&
+         !env.world.HasWater(World::TileAt(animal.position)));
     // A flamingo is a wader whatever it is doing: it stands in the shallows, it does not swim out.
     const bool wader = species.id == "flamingo";
     const bool shallow = activity == AnimalActivity::FilterFeed || species.id == "rhino" || wader;

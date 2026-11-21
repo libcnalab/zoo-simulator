@@ -897,6 +897,30 @@
       "look": "statue",
       "color": "#a09b88",
       "color2": "#614b35"
+    },
+    {
+      "id": "forage_tray",
+      "name": "Low forage tray",
+      "role": "feeder",
+      "placement": "enclosure",
+      "radiusM": 0.62,
+      "heightM": 0.24,
+      "blocksWalking": true,
+      "cost": 155,
+      "vegetationM2": 0,
+      "shadeM2": 0,
+      "biome": "",
+      "enrichment": 0,
+      "foods": [
+        "hay",
+        "grass_pellets"
+      ],
+      "capacity": 22,
+      "feedHeightM": 0.22,
+      "beauty": 0,
+      "look": "forage_tray",
+      "color": "#765e48",
+      "color2": "#a59058"
     }
   ]
 }

@@ -28,6 +28,9 @@ builder in `ZooGameVisit.cpp`. An unreadable or damaged entry is reported, ignor
 replaced after a normal build. Automated and scripted runs do not read or write personal cache
 files unless they explicitly supply `--saves`; the empty-map diagnostic is never cached.
 
+Revision 6 includes Capybara Marsh, eight new residents and their bathing routines. The previous
+17-habitat version of the wider map used revision 5. Both revisions use the same 448 × 448 m map.
+
 Revision 3 covers the 17-habitat northern layout and its four-fifths arrival period. A cache
 hit restores the crowd pace directly. Previously it followed the user-save path, where a time
 outside the daytime visit window triggers a fresh fill. At 18:00 a second 600-step visit

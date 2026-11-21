@@ -29,7 +29,7 @@ struct HabitatPlan {
     int rn;
 };
 
-constexpr std::array<HabitatPlan, 17> kHabitats{{
+constexpr std::array<HabitatPlan, 18> kHabitats{{
     {"Meerkat Lookout", "meerkat", 10, 18, 5, 4},
     {"Flamingo Lagoon", "flamingo", 28, 24, 9, 7},
     {"Acacia Plain", "giraffe", 48, 53, 18, 19},
@@ -53,6 +53,8 @@ constexpr std::array<HabitatPlan, 17> kHabitats{{
     // The second northern stage ends in an open alpine bowl, beyond the woodland canopy but with
     // two independent approaches from its old crown.
     {"Snow Leopard Heights", "snow_leopard", 0, 196, 14, 10},
+    // The western marsh needs the wider property. Earlier maps use the northern habitats above.
+    {"Capybara Marsh", "capybara", -79, 84, 8, 10},
 }};
 
 std::vector<TileCoord> RegionTiles(const Script& script, const HabitatPlan& plan) {
@@ -101,7 +103,7 @@ std::vector<TileCoord> PublicOutline(const Script& script, const HabitatPlan& pl
     return tiles;
 }
 
-void Walks(Zoo& zoo, Script& script, bool sideGardens) {
+void Walks(Zoo& zoo, Script& script, std::span<const HabitatPlan> habitats, bool sideGardens) {
     // The plaza leaves a small planting island for its fountain; the two arms meet beyond it.
     script.Path(-10, 0, -3, 13, PathKind::Cobblestone);
     script.Path(3, 0, 10, 13, PathKind::Cobblestone);
@@ -140,6 +142,9 @@ void Walks(Zoo& zoo, Script& script, bool sideGardens) {
                          PathKind::Gravel);
         script.PathAlong({{-67, 52}, {-80, 53}, {-93, 64}, {-99, 78}, {-96, 94}, {-85, 106}, {-65, 115}}, 3,
                          PathKind::Gravel);
+        // The reed marsh lies between the western rest stop and Penguin Cove.
+        script.PathAlong({{-97, 86}, {-90, 86}, {-85, 84}}, 2, PathKind::Boardwalk);
+        script.PathAlong({{-73, 84}, {-65, 87}, {-60, 86}}, 2, PathKind::Gravel);
     }
     script.PathAlong({{-18, 49}, {-6, 46}, {0, 38}, {16, 36}, {27, 39}}, 2, PathKind::Gravel);
     script.PathAlong({{-20, 70}, {-3, 69}, {11, 74}, {28, 77}}, 2, PathKind::Gravel);
@@ -155,12 +160,12 @@ void Walks(Zoo& zoo, Script& script, bool sideGardens) {
     // Walks follow the public rail. Reserve the full band first so nearby circuits
     // and later habitat walks cannot pave over another habitat's clearance.
     std::set<std::pair<int, int>> reserved;
-    for (const HabitatPlan& plan : kHabitats) {
+    for (const HabitatPlan& plan : habitats) {
         for (const TileCoord tile : PublicOutline(script, plan)) {
             reserved.emplace(tile.z, tile.x);
         }
     }
-    for (const HabitatPlan& plan : kHabitats) {
+    for (const HabitatPlan& plan : habitats) {
         std::vector<TileCoord> bay;
         for (const TileCoord tile : PublicOutline(script, plan)) {
             for (int dz = -2; dz <= 2; ++dz) {
@@ -219,6 +224,17 @@ HabitatStyle Style(std::string_view species) {
                 "insect_feeder",  "desert_scrub",
                 "sandstone_rock", {"termite_mound", "log_pile", "termite_mound", "termite_mound"},
                 {"desert_scrub"}};
+    }
+    if (species == "capybara") {
+        return {Terrain::Grass,
+                "wire_mesh",
+                "glass_wall",
+                "heated_barn",
+                "forage_tray",
+                "tall_grass",
+                "sandstone_rock",
+                {"fallen_log", "log_pile", "ball"},
+                {"willow", "birch", "tall_grass", "tall_grass", "tall_grass"}};
     }
     if (species == "flamingo") {
         return {Terrain::Mud,
@@ -485,6 +501,12 @@ std::span<const Resident> Family(std::string_view species) {
         // Red pandas are solitary except while breeding and rearing young: this is a mother with
         // two dependent cubs, not an adult social group.
         static constexpr Resident family[] = {Adult(f, 5.0f), Young(f, 0.2f, 0), Young(m, 0.2f, 0)};
+        return family;
+    }
+    if (species == "capybara") {
+        static constexpr Resident family[] = {Adult(m, 5.0f),     Adult(f, 4.0f),     Adult(f, 3.0f),
+                                              Adult(f, 5.0f),     Young(f, 0.13f, 1), Young(m, 0.13f, 1),
+                                              Young(m, 0.13f, 1), Young(f, 0.13f, 1)};
         return family;
     }
     if (species == "snow_leopard") {
@@ -838,7 +860,9 @@ float HabitatPool(Zoo& zoo, Script& script, const Site& site, const SpeciesDef& 
     }
     const float depth = dish ? Builder::kMinWaterDepth : species.needsDeepWater ? 1.4f : 0.45f;
     // Nearest first: the heart is dug before the shallows, which take its surface.
-    const std::size_t heart = lagoon ? pool.size() / 8 : pool.size();
+    const std::size_t heart = lagoon                       ? pool.size() / 8
+                              : plan.species == "capybara" ? pool.size() * 2 / 3
+                                                           : pool.size();
     const std::span<const TileCoord> all(pool);
     BuildPlan result = builder.PlaceWater(all.first(heart), depth);
     bool whole = result.Ok() && result.skipped == 0;
@@ -995,12 +1019,12 @@ void HabitatPlants(Zoo& zoo, Script& script, const Site& site, const HabitatStyl
     }
 }
 
-// Small reed stands root in the lagoon's sloping, still-dry margin. Their whole catalog circle
+// Small reed stands root in the wetlands' sloping, still-dry margins. Their whole catalog circle
 // remains outside the water; unlike trees and ordinary bushes they may use ground whose shared
 // corner the pool lowered. Hashes spread them around the shore without consuming the sequence used
-// to stock the flock.
-void LagoonReeds(Zoo& zoo, Script& script, const Site& site) {
-    if (site.plan->species != "flamingo") {
+// to stock the residents.
+void ShorelineReeds(Zoo& zoo, Script& script, const Site& site) {
+    if (site.plan->species != "flamingo" && site.plan->species != "capybara") {
         return;
     }
     const int def = zoo.Definitions().PropIndex("wetland_reeds");
@@ -1442,7 +1466,7 @@ void Habitat(Zoo& zoo, Script& script, const HabitatPlan& plan, const VisitorZoo
     }
     Furnish(zoo, script, site, style, poolRadius);
     HabitatPlants(zoo, script, site, style, species.vegetationDensity);
-    LagoonReeds(zoo, script, site);
+    ShorelineReeds(zoo, script, site);
     Enrich(zoo, script, site, style);
     for (const std::string_view resident : Residents(plan)) {
         if (!Omitted(options, resident)) {
@@ -1451,10 +1475,10 @@ void Habitat(Zoo& zoo, Script& script, const HabitatPlan& plan, const VisitorZoo
     }
 }
 
-void StripPlants(Zoo& zoo, Script& script) {
+void StripPlants(Zoo& zoo, Script& script, std::span<const HabitatPlan> habitats) {
     // Plant after the animal groups so decorating the public edge consumes none of
     // the script random sequence used for residents or habitat vegetation.
-    for (const HabitatPlan& plan : kHabitats) {
+    for (const HabitatPlan& plan : habitats) {
         const int depth = StandOffDepth(plan.species);
         if (depth == 0) {
             continue;
@@ -1482,8 +1506,8 @@ void StripPlants(Zoo& zoo, Script& script) {
 /// Cut the V-shaped earthwork after its sparse scrub and rocks have been placed on level ground.
 /// Only vertices surrounded by four reserved tiles move: habitat and public-path lips therefore
 /// retain their exact heights, areas and walking grades. Two strip tiles make the ditch 4 m wide.
-void GradeDryMoats(Zoo& zoo, Script& script) {
-    for (const HabitatPlan& plan : kHabitats) {
+void GradeDryMoats(Zoo& zoo, Script& script, std::span<const HabitatPlan> habitats) {
+    for (const HabitatPlan& plan : habitats) {
         if (plan.species != "elephant" && plan.species != "rhino") {
             continue;
         }
@@ -2054,9 +2078,9 @@ void Facilities(Zoo& zoo, Script& script, bool sideGardens) {
     }
 }
 
-void GroundDetail(Zoo& zoo, Script& script) {
+void GroundDetail(Zoo& zoo, Script& script, std::span<const HabitatPlan> habitats) {
     Builder builder = zoo.FreeBuilder();
-    for (const HabitatPlan& plan : kHabitats) {
+    for (const HabitatPlan& plan : habitats) {
         const EnclosureId id = zoo.Habitats().At(script.Tile(plan.east, plan.north));
         if (!id) {
             continue;
@@ -2166,17 +2190,18 @@ ScenarioReport BuildVisitorZoo(Zoo& zoo, const VisitorZooOptions& options) {
         return script.Finish();
     }
     const bool sideGardens = besideGate >= 103;
-    Walks(zoo, script, sideGardens);
-    for (const HabitatPlan& plan : kHabitats) {
+    const auto habitats = std::span(kHabitats).first(sideGardens ? kHabitats.size() : kHabitats.size() - 1);
+    Walks(zoo, script, habitats, sideGardens);
+    for (const HabitatPlan& plan : habitats) {
         Habitat(zoo, script, plan, options);
     }
     WidenElephantKangarooWalk(zoo, script);
     // What follows stands outside the habitats and asks about none of their figures.
     script.Hold();
-    StripPlants(zoo, script);
-    GradeDryMoats(zoo, script);
+    StripPlants(zoo, script, habitats);
+    GradeDryMoats(zoo, script, habitats);
     Facilities(zoo, script, sideGardens);
-    GroundDetail(zoo, script);
+    GroundDetail(zoo, script, habitats);
     Parkland(zoo, script);
     script.Release();
     // Validate access only after every construction phase has finished. Later path and terrain

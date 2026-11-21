@@ -406,6 +406,34 @@ TEST(AnimalEthogramTests, HabitatWaterShadeAndHighGroundAreUsedWithoutUnsafeTarg
     }
 }
 
+TEST(AnimalEthogramTests, AdultAndYoungCapybarasRestInWaterAtMiddayAndForageOnLand) {
+    HabitatDay habitat("capybara");
+    const SpeciesDef& species = habitat.species.All()[static_cast<std::size_t>(habitat.speciesIndex)];
+    const auto* profile = animal_internal::ProfileFor(species);
+    ASSERT_NE(profile, nullptr);
+    std::array<std::size_t, 4> neighbors{0, 1, 2, 3};
+    std::vector<PropId> scratch;
+    Animal& mother = *habitat.animals.Find(AnimalId{1U});
+    Animal& pup = *habitat.animals.Find(AnimalId{2U});
+    pup.bornTick = habitat.env.time.tick;
+    pup.mother = mother.id;
+    for (const Animal* animal : {&mother, &pup}) {
+        for (const int hour : {8, 13}) {
+            habitat.env.time.shift = (hour - GameTime::kStartHour) * kTicksPerGameHour;
+            for (auto activity : {AnimalActivity::Forage, AnimalActivity::Rest, AnimalActivity::Bathe}) {
+                const bool wet =
+                    activity == AnimalActivity::Bathe || (activity == AnimalActivity::Rest && hour == 13);
+                const auto target = animal_internal::RoutinePlace(
+                    *animal, species, *profile, activity, habitat.enclosures.All().front(), habitat.env,
+                    habitat.animals.All(), neighbors, scratch);
+                EXPECT_EQ(habitat.enclosures.At(target), animal->home);
+                EXPECT_EQ(habitat.world.HasWater(World::TileAt(target)), wet)
+                    << animal->id.value << " at " << hour;
+            }
+        }
+    }
+}
+
 TEST(AnimalEthogramTests, NonSwimmerRoutesAroundEvenShallowWater) {
     HabitatDay habitat("kangaroo");
     Animal* animal = habitat.animals.Find(AnimalId{1U});

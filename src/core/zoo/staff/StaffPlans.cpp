@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 #include <algorithm>
+#include <bit>
 #include <cmath>
 #include <limits>
 
@@ -825,134 +826,96 @@ void PlanBin(const Env& env, const Visitors& visitors, StaffMember& member, Prop
 
 // ---- engaging the crew --------------------------------------------------------------------
 
-/// Pairs up the points so that the pairs are as close as can be. `mate[i]` is the partner
-/// of i, or -1 for the one left over when the number is odd.
+/// Pair neighbouring habitats, leaving remote ones with a dedicated keeper. Among equally
+/// staffed plans, choose the one with the least total distance between paired habitats.
 class Pairing {
 public:
-    explicit Pairing(const std::vector<Vec2>& at)
-        : at_(at), mate_(at.size(), kFree), best_(at.size(), -1), odd_(at.size() % 2 == 1) {
+    explicit Pairing(const std::vector<Vec2>& at) : at_(at), mate_(at.size(), -1) {
         if (at.size() <= kMatchLimit) {
-            Optimal();
+            const std::size_t states = std::size_t{1} << at.size();
+            costs_.resize(states);
+            costs_[0] = {0, 0.0f};
+            choices_.assign(states, -1);
+            auto mask = static_cast<std::uint32_t>(states - 1);
+            CostOf(mask);
+            while (mask != 0) {
+                const auto first = static_cast<std::size_t>(std::countr_zero(mask));
+                const int other = choices_[mask];
+                mask &= mask - 1;
+                if (other >= 0) {
+                    mate_[first] = other;
+                    mate_[static_cast<std::size_t>(other)] = static_cast<int>(first);
+                    mask &= ~(std::uint32_t{1} << other);
+                }
+            }
         } else {
             Greedy();
         }
     }
-    const std::vector<int>& Mates() const { return best_; }
+    const std::vector<int>& Mates() const { return mate_; }
 
 private:
-    static constexpr int kFree = -2;
+    static constexpr float kMaxRoundSpanM = 100.0f;
 
-    float Cost(std::uint32_t mask) {
-        if (mask == 0) {
-            return 0.0f;
-        }
-        if (known_[mask]) {
+    struct Cost {
+        int singles = -1;
+        float distance = 0.0f;
+        auto operator<=>(const Cost&) const = default;
+    };
+
+    Cost CostOf(std::uint32_t mask) {
+        if (costs_[mask].singles >= 0) {
             return costs_[mask];
         }
-        std::size_t first = 0;
-        while ((mask & (std::uint32_t{1} << first)) == 0) {
-            ++first;
-        }
-        const std::uint32_t withoutFirst = mask & ~(std::uint32_t{1} << first);
-        float best = std::numeric_limits<float>::max();
-        int chosen = -1;
-        for (std::size_t other = first + 1; other < at_.size(); ++other) {
-            if ((withoutFirst & (std::uint32_t{1} << other)) == 0) {
+        const auto first = static_cast<std::size_t>(std::countr_zero(mask));
+        const std::uint32_t rest = mask & (mask - 1);
+        Cost best = CostOf(rest);
+        ++best.singles;
+        for (auto candidates = rest; candidates != 0; candidates &= candidates - 1) {
+            const auto other = static_cast<std::size_t>(std::countr_zero(candidates));
+            const float distance = Distance(at_[first], at_[other]);
+            if (distance >= kMaxRoundSpanM) {
                 continue;
             }
-            const float candidate =
-                Distance(at_[first], at_[other]) + Cost(withoutFirst & ~(std::uint32_t{1} << other));
-            if (candidate < best) {
-                best = candidate;
-                chosen = static_cast<int>(other);
+            Cost paired = CostOf(rest & ~(std::uint32_t{1} << other));
+            paired.distance += distance;
+            if (paired < best) {
+                best = paired;
+                choices_[mask] = static_cast<int>(other);
             }
         }
-        known_[mask] = true;
-        costs_[mask] = best;
-        choices_[mask] = chosen;
-        return best;
-    }
-
-    void Reconstruct(std::uint32_t mask) {
-        while (mask != 0) {
-            std::size_t first = 0;
-            while ((mask & (std::uint32_t{1} << first)) == 0) {
-                ++first;
-            }
-            const int other = choices_[mask];
-            mate_[first] = other;
-            mate_[static_cast<std::size_t>(other)] = static_cast<int>(first);
-            mask &= ~(std::uint32_t{1} << first);
-            mask &= ~(std::uint32_t{1} << static_cast<std::size_t>(other));
-        }
-    }
-
-    void Optimal() {
-        const std::size_t states = std::size_t{1} << at_.size();
-        costs_.assign(states, 0.0f);
-        choices_.assign(states, -1);
-        known_.assign(states, false);
-        known_[0] = true;
-        const std::uint32_t all = static_cast<std::uint32_t>(states - 1);
-        std::uint32_t paired = all;
-        if (odd_) {
-            float best = std::numeric_limits<float>::max();
-            for (std::size_t single = 0; single < at_.size(); ++single) {
-                const std::uint32_t candidate = all & ~(std::uint32_t{1} << single);
-                const float cost = Cost(candidate);
-                if (cost < best) {
-                    best = cost;
-                    paired = candidate;
-                }
-            }
-        } else {
-            Cost(paired);
-        }
-        if (odd_) {
-            for (std::size_t single = 0; single < at_.size(); ++single) {
-                if ((paired & (std::uint32_t{1} << single)) == 0) {
-                    mate_[single] = -1;
-                    break;
-                }
-            }
-        }
-        Reconstruct(paired);
-        best_ = mate_;
+        return costs_[mask] = best;
     }
 
     void Greedy() {
         for (;;) {
-            float nearest = std::numeric_limits<float>::max();
+            float nearest = kMaxRoundSpanM;
             std::size_t a = at_.size();
             std::size_t b = at_.size();
             for (std::size_t i = 0; i < at_.size(); ++i) {
                 for (std::size_t j = i + 1; j < at_.size(); ++j) {
-                    if (mate_[i] == kFree && mate_[j] == kFree && Distance(at_[i], at_[j]) < nearest) {
-                        nearest = Distance(at_[i], at_[j]);
-                        a = i;
-                        b = j;
+                    if (mate_[i] < 0 && mate_[j] < 0) {
+                        const float distance = Distance(at_[i], at_[j]);
+                        if (distance < nearest) {
+                            nearest = distance;
+                            a = i;
+                            b = j;
+                        }
                     }
                 }
             }
             if (a == at_.size()) {
-                break;
+                return;
             }
             mate_[a] = static_cast<int>(b);
             mate_[b] = static_cast<int>(a);
         }
-        for (int& mate : mate_) {
-            mate = mate == kFree ? -1 : mate;
-        }
-        best_ = mate_;
     }
 
     const std::vector<Vec2>& at_;
     std::vector<int> mate_;
-    std::vector<int> best_;
-    std::vector<float> costs_;
+    std::vector<Cost> costs_;
     std::vector<int> choices_;
-    std::vector<bool> known_;
-    bool odd_;
 };
 
 /// When the public can come and watch: twice a day, by what the animals eat.

@@ -23,7 +23,7 @@ CATS = ["lion", "lion_female", "lion_juvenile", "tiger", "tiger_female"]
 SPECIES = ["lion", "lion_female", "lion_juvenile", "tiger", "tiger_female",
            "wolf", "wolf_female",
            "wolf_juvenile", "lynx", "lynx_juvenile", "red_panda", "red_panda_juvenile",
-           "snow_leopard", "snow_leopard_juvenile",
+           "snow_leopard", "snow_leopard_juvenile", "capybara", "capybara_juvenile",
            "meerkat_juvenile",
            "brown_bear", "brown_bear_female", "polar_bear", "polar_bear_female",
            "brown_bear_juvenile", "polar_bear_juvenile",
@@ -48,6 +48,19 @@ def make_solver(species):
 
 def joints(world):
     return {n: m[:3, 3] for n, m in world.items()}
+
+
+class GeometryTests(unittest.TestCase):
+    def test_single_ring_facial_features_enclose_a_volume(self):
+        for side in ((0, 1, 0), (1, 0, 0)):
+            part = geom.Part("eye.L", [geom.R((0, 0, 0), .014, .010)], side_ref=side,
+                             weights={"head": 1.0})
+            vertices, triangles, weights = geom.loft(part)
+            self.assertGreater(np.ptp(vertices, axis=0).min(), .018)
+            a, b, c = vertices[triangles].transpose(1, 0, 2)
+            areas = np.linalg.norm(np.cross(b - a, c - a), axis=1)
+            self.assertTrue((areas > 1e-12).all())
+            self.assertEqual(weights, [{"head": 1.0}] * len(vertices))
 
 
 class RigTests(unittest.TestCase):

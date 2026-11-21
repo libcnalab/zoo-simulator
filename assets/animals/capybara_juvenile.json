@@ -1,0 +1,161 @@
+{
+  "bones": 29,
+  "clips": [
+    {
+      "duration": 6.0,
+      "events": [],
+      "frames": 181,
+      "loop": true,
+      "name": "idle",
+      "speed": 0.0
+    },
+    {
+      "duration": 0.6,
+      "events": [
+        {
+          "name": "step",
+          "time": 0.0
+        },
+        {
+          "name": "step",
+          "time": 0.036
+        },
+        {
+          "name": "step",
+          "time": 0.3
+        },
+        {
+          "name": "step",
+          "time": 0.336
+        }
+      ],
+      "frames": 19,
+      "loop": true,
+      "name": "walk",
+      "speed": 0.44
+    },
+    {
+      "duration": 0.4,
+      "events": [
+        {
+          "name": "step",
+          "time": 0.0
+        },
+        {
+          "name": "step",
+          "time": 0.0
+        },
+        {
+          "name": "step",
+          "time": 0.2
+        },
+        {
+          "name": "step",
+          "time": 0.2
+        }
+      ],
+      "frames": 13,
+      "loop": true,
+      "name": "trot",
+      "speed": 0.96
+    },
+    {
+      "duration": 3.0,
+      "events": [],
+      "frames": 91,
+      "loop": true,
+      "name": "eat",
+      "speed": 0.0
+    },
+    {
+      "duration": 2.4,
+      "events": [],
+      "frames": 73,
+      "loop": true,
+      "name": "drink",
+      "speed": 0.0
+    },
+    {
+      "duration": 8.0,
+      "events": [],
+      "frames": 241,
+      "loop": true,
+      "name": "rest",
+      "speed": 0.0
+    },
+    {
+      "duration": 8.0,
+      "events": [],
+      "frames": 241,
+      "loop": true,
+      "name": "sleep",
+      "speed": 0.0
+    },
+    {
+      "duration": 2.6,
+      "events": [
+        {
+          "name": "call",
+          "time": 0.572
+        }
+      ],
+      "frames": 79,
+      "loop": false,
+      "name": "vocalize",
+      "speed": 0.0
+    },
+    {
+      "duration": 1.2333,
+      "events": [],
+      "frames": 38,
+      "loop": true,
+      "name": "swim",
+      "speed": 0.352
+    },
+    {
+      "duration": 2.8,
+      "events": [],
+      "frames": 85,
+      "loop": true,
+      "name": "float",
+      "speed": 0.0
+    }
+  ],
+  "generator": "tools/animals (zoogen)",
+  "license": "MIT",
+  "meta": {
+    "anatomy": "arched barrel rump, blunt muzzle, high senses, webbed four/three toes",
+    "body_length_m": 0.6,
+    "common_name": "Capybara",
+    "float": {
+      "clip": "float",
+      "depth_m": 0.2784
+    },
+    "relative_height": 0.5333333333333333,
+    "roughness": 0.9,
+    "scientific_name": "Hydrochoerus hydrochaeris",
+    "shoulder_height_m": 0.32,
+    "swim": {
+      "clip": "swim",
+      "depth_m": 0.2784
+    },
+    "variant": "juvenile",
+    "variant_of": "capybara"
+  },
+  "name": "capybara_juvenile",
+  "skeleton_bounds_animal_space": {
+    "max": [
+      0.294,
+      0.0384,
+      0.3296
+    ],
+    "min": [
+      -0.177,
+      -0.0384,
+      0.0
+    ]
+  },
+  "texture": 1024,
+  "triangles": 20788,
+  "vertices": 10436
+}

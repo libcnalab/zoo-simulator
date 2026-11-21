@@ -14,10 +14,11 @@ rounds all day.
 
 `Staff::Engage` looks at the zoo as it stands:
 
-- **Keepers**: one for every two habitats. The habitats are paired so that the pairs are
-  as close together as can be (a memoised exact search up to 20 habitats, nearest pairs beyond);
-  an odd one out gets a keeper of its own. Every habitat with a place to work from has a
-  keeper (`Staff::KeeperOf`).
+- **Keepers** share two habitats when their centres are less than 100 m apart. A more
+  remote habitat gets its own keeper. For up to 20 habitats the planner finds the greatest
+  number of nearby pairs and then minimises their combined distance. Larger parks pair
+  the nearest available neighbours within the same limit. Every habitat with a place to
+  work from has a keeper (`Staff::KeeperOf`).
 - **A gardener** when there are flower beds that can be stood beside (at most 24 on the
   round, spread evenly along a walk of short hops from the entrance).
 - **A cleaner** when there are bins (at most 30 on the round, likewise).
@@ -236,7 +237,13 @@ water points in each very shy northern habitat keep feeding and watering outside
 also outside, with one brief inside rake per round so manure cannot accumulate. The new layout's
 staffed week records 13 animal-hours in need against automatic care's 26, and the visitor-paced
 morning 21 against 30. A lockout is owned by the keeper operating it: other staff cannot use its
-open gate as a shortcut. The full crew is now nine keepers, a gardener and a cleaner.
+open gate as a shortcut. That layout had nine keepers, a gardener and a cleaner.
+Adding Capybara Marsh made the old even-habitat rule pair the red panda and snow leopard
+galleries, 113.7 m apart. With the distance limit in force the 18-habitat zoo has ten
+keepers, a gardener and a cleaner. Eight keepers have two stops. Snow Leopard Heights and
+Red Dune each have a dedicated keeper. Penguin Cove shares its keeper with Capybara Marsh.
+The seed-1 staffed week recorded one animal-hour in need, compared with ten under automatic
+care alone. Both morning visits recorded zero.
 The comparison still keeps its separate
 aggregate, duration and peak checks rather than allowing one good average to hide a stranded animal.
 
