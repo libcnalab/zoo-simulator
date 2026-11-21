@@ -7,6 +7,7 @@
 #include <fstream>
 #include <iostream>
 #include <map>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -483,6 +484,46 @@ protected:
     }
     Zoo zoo_;
 };
+
+TEST_P(VisitorZooPlan, NorthernWoodlandLoopUsesExpandedLand) {
+    const World& map = zoo_.Map();
+    const TileCoord gate = map.EntranceTile();
+    EXPECT_EQ(map.Width(), 160);
+    EXPECT_EQ(map.Depth(), 192);
+    EXPECT_EQ(gate.z - map.PropertyMin().z, 179);
+
+    for (const TileCoord tile : {TileCoord{gate.x - 24, gate.z - 163}, TileCoord{gate.x, gate.z - 174},
+                                 TileCoord{gate.x + 38, gate.z - 162}, TileCoord{gate.x, gate.z - 164}}) {
+        ASSERT_TRUE(map.InBounds(tile));
+        EXPECT_NE(map.At(tile).path, PathKind::None) << tile.x << ',' << tile.z;
+        EXPECT_TRUE(zoo_.Routes().Reachable(gate, tile, NavProfile::Visitor())) << tile.x << ',' << tile.z;
+    }
+
+    int northernPaths = 0;
+    for (int z = map.PropertyMin().z; z <= map.PropertyMax().z; ++z) {
+        for (int x = map.PropertyMin().x; x <= map.PropertyMax().x; ++x) {
+            northernPaths += gate.z - z >= 146 && map.At({x, z}).path != PathKind::None ? 1 : 0;
+        }
+    }
+    EXPECT_GE(northernPaths, 180);
+
+    std::set<std::string> services;
+    for (const Building& building : zoo_.Objects().Buildings()) {
+        if (gate.z - building.origin.z < 155) {
+            continue;
+        }
+        services.insert(zoo_.Definitions().buildings[static_cast<std::size_t>(building.def)].id);
+    }
+    EXPECT_TRUE(services.contains("restroom"));
+    EXPECT_TRUE(services.contains("drinks_stall"));
+
+    int picnicTables = 0;
+    for (const Prop& prop : zoo_.Objects().Props()) {
+        picnicTables +=
+            gate.z - World::TileAt(prop.position).z >= 155 && KindOf(zoo_, prop).id == "picnic_table" ? 1 : 0;
+    }
+    EXPECT_GE(picnicTables, 6);
+}
 
 TEST_P(VisitorZooPlan, FamiliesWithTheirYoungOnTheOpeningDay) {
     ExpectFamilies(zoo_, 0.0f);

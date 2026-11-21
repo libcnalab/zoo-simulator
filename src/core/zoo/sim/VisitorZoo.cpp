@@ -103,6 +103,20 @@ void Walks(Zoo& zoo, Script& script) {
          {29, 103}, {34, 109}, {34, 138}, {-12, 141}, {-29, 132}, {-29, 105}, {-29, 92}, {-32, 73},
          {-20, 70}, {-18, 49}, {-26, 37}, {-29, 29},  {-30, 12},  {-10, 8},   {0, 11}},
         3, PathKind::Asphalt);
+    // The larger northern property has a woodland circuit of its own, joined at both ends to the
+    // old predator walk. Its top reaches 348 m from the gate while retaining a three-tile planted
+    // margin before the boundary wall. The centre spur serves the picnic glade below.
+    script.PathAlong({{-12, 141},
+                      {-20, 151},
+                      {-24, 163},
+                      {-18, 170},
+                      {0, 174},
+                      {22, 170},
+                      {38, 162},
+                      {40, 150},
+                      {34, 138}},
+                     3, PathKind::Asphalt);
+    script.PathAlong({{0, 174}, {0, 164}, {6, 153}, {10, 141}}, 2, PathKind::Gravel);
     script.PathAlong({{-18, 49}, {-6, 46}, {0, 38}, {16, 36}, {27, 39}}, 2, PathKind::Gravel);
     script.PathAlong({{-20, 70}, {-3, 69}, {11, 74}, {28, 77}}, 2, PathKind::Gravel);
     script.PathAlong({{-29, 105}, {-8, 103}, {11, 106}, {29, 103}}, 2, PathKind::Gravel);
@@ -1811,6 +1825,9 @@ void WidenThinWalks(Zoo& zoo, Script& script) {
 void Facilities(Zoo& zoo, Script& script) {
     std::vector<ServiceApron> serviceAprons;
     script.PathTiles(script.Ellipse(13, 74, 10.0f, 4.0f), PathKind::Cobblestone);
+    // A second shaded rest place makes the new northern circuit a destination rather than an
+    // empty perimeter path. Its two services are placed below before furniture fills the glade.
+    script.PathAlong(Script::Arc(0, 164, 9.0f, 5.0f, 0.0f, kTwoPi), 2, PathKind::Cobblestone);
     // Trunks stand on unpaved islands; the broad crowns shade the two rows of tables.
     for (int e = 6; e <= 21; e += 3) {
         script.PathTiles({script.Tile(e, 74)}, PathKind::None);
@@ -1843,6 +1860,8 @@ void Facilities(Zoo& zoo, Script& script) {
     Service(zoo, script, serviceAprons, "drinks_stall", -70, 115, Dir::East);
     Service(zoo, script, serviceAprons, "ice_cream_stand", -69, 17, Dir::East);
     Service(zoo, script, serviceAprons, "drinks_stall", -10, 144, Dir::South);
+    Service(zoo, script, serviceAprons, "restroom", -10, 164, Dir::South);
+    Service(zoo, script, serviceAprons, "drinks_stall", 10, 164, Dir::South);
     Service(zoo, script, serviceAprons, "drinks_stall", 66, 123, Dir::West);
     Service(zoo, script, serviceAprons, "drinks_stall", 66, 91, Dir::West);
     Service(zoo, script, serviceAprons, "ice_cream_stand", -67, 84, Dir::East);
@@ -1854,6 +1873,17 @@ void Facilities(Zoo& zoo, Script& script) {
             PublicProp(zoo, script, "picnic_table", script.Point(e, n));
         }
     }
+    for (const int north : {161, 163, 165}) {
+        for (const int east : {-5, -3, 3, 5}) {
+            PublicProp(zoo, script, "picnic_table", script.Point(east, north));
+        }
+    }
+    for (const int east : {-7, 7}) {
+        PublicProp(zoo, script, "bench", script.Point(east, 164), east < 0 ? -kPi * 0.5f : kPi * 0.5f);
+        PublicProp(zoo, script, "litter_bin", script.Point(east, 162));
+        PublicProp(zoo, script, "lamp", script.Point(east, 166));
+    }
+    PublicProp(zoo, script, "info_board", script.Point(0, 168), kPi);
     script.Prop("fountain", script.Point(0, 7));
     script.Prop("statue", script.Point(0, 9));
     script.Prop("fountain", script.Point(23, 71));
@@ -1993,7 +2023,7 @@ ZooConfig VisitorZooConfig(std::uint64_t seed) {
     config.seed = seed;
     config.world.seed = seed;
     config.world.width = 160;
-    config.world.depth = 160;
+    config.world.depth = 192;
     config.world.relief = 0.12f;
     config.sandbox = true;
     config.autoCare = true;
@@ -2005,8 +2035,8 @@ ScenarioReport BuildVisitorZoo(Zoo& zoo, const VisitorZooOptions& options) {
     const World& map = zoo.Map();
     const TileCoord gate = map.EntranceTile();
     if (gate.x - map.PropertyMin().x < 70 || map.PropertyMax().x - gate.x < 70 ||
-        gate.z - map.PropertyMin().z < 145) {
-        script.Problem("the Visitor Zoo needs 70 tiles beside the entrance and 145 tiles north of it");
+        gate.z - map.PropertyMin().z < 179) {
+        script.Problem("the Visitor Zoo needs 70 tiles beside the entrance and 179 tiles north of it");
         return script.Finish();
     }
     Walks(zoo, script);

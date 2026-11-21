@@ -1,13 +1,16 @@
 # Greenhill Zoo — visitor plan
 
-A 160 × 160 tile (320 × 320 m) zoo, with free admission and automatic animal care.
+A 160 × 192 tile (320 × 384 m) zoo, with free admission and automatic animal care. J78 extends
+the map 64 m northward: 122,880 m² in all, 20 % more than the former 160 × 160 map.
 North leads into the zoo from the south gate. Entrance coordinates `(east, north)` mean
 world tile `(entrance.x + east, entrance.z - north)`; one tile is 2 m. The entrance tile is
-`(79,153)`, centred at world `(159,307)` metres. Construct with `VisitorZooConfig(seed)`,
+`(79,185)`, centred at world `(159,371)` metres. Construct with `VisitorZooConfig(seed)`,
 then call `BuildVisitorZoo(zoo, options)`. `withoutSpecies` suppresses animals only.
 
 ```text
                               NORTH
+                   northern woodland circuit + picnic glade
+                      /             |                 \
              Polar Sound     Bear Falls — Wolf Wood — Tiger Forest
                   |              \    northern court    /       |
              Penguin Cove ======= woodland shortcut ======= Lion Rock
@@ -28,9 +31,9 @@ combine elliptical lobes. Every habitat has a keeper gate, shelter, stocked feed
 enrichment, a public information board and benches. Planting concentrates behind the open
 viewing ground, with woods between habitats and around the perimeter.
 
-The seed-1 zoo contains **90 animals in 14 habitats, 41 buildings and 2,806 props** when
+The seed-1 zoo contains **90 animals in 14 habitats, 43 buildings and 3,205 props** when
 every species is included (74 animals and 2,817 props before the plan's rework of
-2026-11-14, below). The farthest public path tile is **75.1 m** walking distance
+2026-11-14, below). The farthest public path tile is **84.8 m** walking distance
 from a visitor facility. `VisitorZooTests.DISABLED_PrintPlan` prints these measurements. Families
 are written out in "The zoo's plan" below. **S** = south; **W/E** = west/east.
 The principal fronts face south and the zoo's centre. Habitat areas are unchanged: the public
@@ -124,9 +127,35 @@ original cable barrier remains behind the elephant/rhino planting.
 The entrance has the gift shop, education centre, refreshments, restroom, fountain and statue.
 The central food court groups burger, drinks and ice-cream stalls around picnic tables and
 acacia islands; another court sits below the northern predators. Restrooms serve the entrance,
-central court and northern court. Additional kiosks serve the outer circuits. There are two
+central court, northern court and the new woodland glade. Additional kiosks serve the outer circuits. There are two
 fountains, two statues, lamps, bins, flower beds and groves along the walks. Feed reserves cover
 at least eighteen hours for the principal species, spanning the 15:00–07:00 care interval.
+
+## Northern woodland expansion (J78, 2026-11-21)
+
+The Visitor Zoo map grows from 160 × 160 to 160 × 192 tiles while retaining its 160-tile width,
+so the entrance and all fourteen established habitats keep their entrance-relative positions.
+The extra 32 rows add 20,480 m² north of the old plan. A three-tile-wide asphalt circuit branches
+from both ends of the predator walk, reaches 348 m north of the gate and leaves a planted margin
+before the boundary wall. A two-tile gravel spine joins its crown to the old northern court.
+
+At `(0,164)`, a cobbled oval surrounds a grass picnic glade. Six collision-valid picnic tables,
+two benches, lamps, bins and an information board sit with a dedicated drinks stall and restroom;
+the path is not cut into narrow teeth around the furniture. In both plan seeds every checked point
+is reachable from the entrance, at least 180 paved tiles lie in the new northern band, ordinary
+walks remain at least 4 m wide and the steepest paved tile is 3.32 %. Seed 1's farthest public path
+is 84.8 m from a visitor facility, below the retained 85 m limit. The larger public parkland raises
+the seed-1 prop count from 2,806 to 3,205 and buildings from 41 to 43. It deliberately adds no
+second copy of an existing species: the open land beside the circuit is reserved for a genuinely
+new habitat in a following pass.
+
+The cost is recorded rather than hidden. In the matched normal off-screen game, scenery rises
+from 2,357,290 to 2,844,153 triangles and from 465 to 511 draw calls. The game built the seed-1
+scenario with all 90 animals and filled 800 visitors; the inspected eye-level glade and before/after
+plans are in `evidence/northern-expansion-j78-2026-11-21.jpg`. The visit-cache revision is bumped so
+an older 160 × 160 cached visit cannot mask the new map. All 307 active CTest cases pass, with 21
+long-running diagnostics disabled as intended. A 3,000-tick ASan/UBSan glade visit also completed
+cleanly with leak detection disabled, loading all 90 animals and simulating 627 visitors.
 
 Catalog limits: there is no low glass wall and no low rail that would hold a flamingo, so the
 small animals stand behind the same 3.5 m glass as the lions. The meerkats' service boundary is

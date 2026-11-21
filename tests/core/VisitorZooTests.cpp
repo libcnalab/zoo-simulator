@@ -184,6 +184,8 @@ void PrintPlan(const Zoo& zoo) {
 }  // namespace
 TEST(VisitorZooTests, CompleteZoo) {
     Zoo zoo(testdata::GameCatalog(), testdata::GameSpecies(), VisitorZooConfig());
+    EXPECT_EQ(zoo.Map().Width(), 160);
+    EXPECT_EQ(zoo.Map().Depth(), 192);
     ExpectNoProblems(BuildVisitorZoo(zoo));
     ExpectConnected(zoo);
     ExpectPublicAccess(zoo);

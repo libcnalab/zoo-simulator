@@ -195,6 +195,19 @@ whatever you take up (`docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `docs/V
   `docs/evidence/kangaroo-anatomy-j77-2026-11-21.jpg` (J77, 2026-11-21). No species now retains
   first-generation anatomy, although kangaroo, ostrich, camel, wolf and meerkat remain authored
   procedural models rather than scans.
+- The Visitor Zoo now extends north from 160 × 160 to 160 × 192 tiles: +20 % / 20,480 m². A
+  three-tile asphalt woodland circuit joins both ends of the old predator walk, reaches 348 m from
+  the gate, and has a two-tile gravel spine to a cobbled picnic glade. The glade has six valid
+  tables, two benches, lamps, bins, an information board, drinks and a restroom. Both seeds keep
+  every ordinary walk at least 4 m wide (maximum slope 3.32 %); all new check points are reachable
+  and seed 1's farthest walk is 84.8 m from a facility. It has 43 buildings and 3,205 props while
+  retaining 90 animals in the original 14 habitats. Normal off-screen scenery rises 2,357,290 ->
+  2,844,153 triangles and 465 -> 511 draw calls. Short and 6,000-tick hashes for seeds 1–3 repeat;
+  the visit-cache revision is 2. All 307 active CTest cases pass (21 diagnostics disabled), and a
+  3,000-tick ASan/UBSan visit of the new glade completed cleanly with leak detection off. The
+  before/after plan and real glade view are in
+  `docs/evidence/northern-expansion-j78-2026-11-21.jpg` (J78, 2026-11-21). The open northern land
+  is intentionally reserved for a genuinely new habitat rather than duplicating an existing one.
 - Adult and juvenile ostriches now have second-pass layered plumage. Four detached feathers
   overlap each folded wing and five more separate the tail fan; a feather-only tangent-space
   normal map adds directional barb relief while leaving the bare skin smooth. The adult has
