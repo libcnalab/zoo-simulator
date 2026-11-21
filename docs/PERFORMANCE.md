@@ -568,3 +568,23 @@ roughly 1.1 seconds to mip preparation in the first paired run. Desktop Linux bu
 now use OpenSSL's accelerated implementation when available, with the portable one
 as a fallback. The allocation counter measures the 64.0 MiB saving directly. Resident
 memory includes the software renderer, driver allocations and allocator behaviour.
+
+## Peak memory while loading the terrain (2026-11-21)
+
+The expanded park has 196 ground chunks. Their base paint images alone total 196 MiB.
+Previously a visit held all of them until every chunk, the ground detail and the land
+beyond the fence were ready. The render thread now releases each paint image as soon
+as it uploads that chunk. On desktop Linux it also releases the CPU copies of the
+smaller mip levels at the same point. A visit can skip computing tile signatures,
+which only the terrain editor uses when repainting a changed tile.
+
+At Lion Rock in the same seed-1 visit, Linux reported a process high-water mark of
+1,248.5 MiB by the time the ground finished loading. With per-chunk release it reported
+1,011.2 MiB and 1,010.8 MiB in two runs. The matched reduction was **237.3 MiB while
+loading the terrain**. Resident memory just after this phase was 971 MiB before and
+982 MiB after. Animals and scenery load later and have their own peaks. These runs used
+the software OpenGL driver and the same two lockstep frames with visitor drawing disabled.
+
+Both new Lion Rock captures matched the reference at every RGB pixel. The editor kept
+its paint images and tile signatures. All eight frames from the scripted editor run
+also matched the reference, including the exposed-earth brush stroke and the new pond.

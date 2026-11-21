@@ -41,12 +41,9 @@ public:
     /// Builds everything for a world (start of a game, after loading one).
     /// Paints and cuts the meshes on several threads, each chunk by itself, so
     /// the result does not depend on how many threads there are.
-    void Build(const zoo::World& world);
-    /// Releases the CPU paint images and tile signatures after building a read-only world. On
-    /// desktop Linux, where visits disable context recovery, also releases static texture staging.
-    /// Afterwards Update still advances animated water, but ignores map and fence revisions.
-    /// A later Build restores the editable state.
-    void DiscardEditCache();
+    /// A read-only visit releases each uploaded chunk's CPU paint image immediately.
+    /// Only an editable map retains the tile signatures needed for incremental changes.
+    void Build(const zoo::World& world, bool editable = true);
     /// Brings at most `maxChunks` changed chunks up to date; call every frame.
     void Update(const zoo::World& world, int maxChunks = 3);
     /// Everything but the detail layer (DrawDetail).
@@ -96,7 +93,7 @@ private:
     };
     std::vector<std::unique_ptr<Land>> land_;
     std::unique_ptr<Microsoft::Xna::Framework::Graphics::Texture2D> apronTexture_;
-    bool editCacheDiscarded_ = false;
+    bool editable_ = true;
     double paintSeconds_ = 0.0;
     double buildSeconds_ = 0.0;
 };

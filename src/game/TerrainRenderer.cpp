@@ -630,9 +630,9 @@ TerrainRenderer::TerrainRenderer(Microsoft::Xna::Framework::Graphics::GraphicsDe
 
 TerrainRenderer::~TerrainRenderer() = default;
 
-void TerrainRenderer::Build(const zoo::World& world) {
+void TerrainRenderer::Build(const zoo::World& world, bool editable) {
     const auto started = std::chrono::steady_clock::now();
-    editCacheDiscarded_ = false;
+    editable_ = editable;
     chunksX_ = world.ChunksX();
     chunksZ_ = world.ChunksZ();
     fenceRevision_ = world.FenceRevision();
@@ -675,17 +675,19 @@ void TerrainRenderer::Build(const zoo::World& world) {
         Chunk& chunk = *chunks_[index];
         const ChunkInfos infos(world, chunk.origin);
         chunk.image = Image(kTexels, kTexels);
-        chunk.signatures.resize(static_cast<std::size_t>(kChunkTiles * kChunkTiles));
+        if (editable)
+            chunk.signatures.resize(static_cast<std::size_t>(kChunkTiles * kChunkTiles));
         for (int tz = 0; tz < kChunkTiles; ++tz) {
             for (int tx = 0; tx < kChunkTiles; ++tx) {
                 const TileCoord tile{chunk.origin.x + tx, chunk.origin.z + tz};
-                std::uint32_t& signature = chunk.signatures[static_cast<std::size_t>(tz * kChunkTiles + tx)];
                 if (world.InBounds(tile)) {
                     PaintTile(infos.At(tile), chunk.origin, chunk.image);
-                    signature = PaintSignature(world, tile);
+                    if (editable) {
+                        const auto indexInChunk = static_cast<std::size_t>(tz * kChunkTiles + tx);
+                        chunk.signatures[indexInChunk] = PaintSignature(world, tile);
+                    }
                 } else {
                     BlankTile(tile, chunk.origin, chunk.image);
-                    signature = 0u;
                 }
             }
         }
@@ -708,6 +710,13 @@ void TerrainRenderer::Build(const zoo::World& world) {
             std::min(chunk.texture->getLevelCountProperty() - 1, static_cast<int>(made.lowerLevels.size()));
         for (int level = 0; level < count; ++level)
             SetLevel(*chunk.texture, level + 1, made.lowerLevels[static_cast<std::size_t>(level)]);
+        if (!editable) {
+            // Once uploaded, this piece of a visitor map will never be repainted.
+            chunk.image = Image();
+#if defined(__linux__) && !defined(__ANDROID__)
+            DiscardCpuTextureCopies(*chunk.texture);
+#endif
+        }
         chunk.material.name = "terrain";
         chunk.material.shading = CnaEngine::Graphics::ShadingModel::PhysicallyBased;
         chunk.material.diffuseColor = Vector3(1.0f, 1.0f, 1.0f);
@@ -786,39 +795,26 @@ void TerrainRenderer::Build(const zoo::World& world) {
     water_.alpha = kWaterAlpha;
 
     BuildApron(world);
-    buildSeconds_ = std::chrono::duration<double>(std::chrono::steady_clock::now() - started).count();
-}
-
-void TerrainRenderer::DiscardEditCache() {
-    for (auto& chunk : chunks_) {
-        chunk->image = Image();
-        std::vector<std::uint32_t>().swap(chunk->signatures);
+    if (!editable) {
 #if defined(__linux__) && !defined(__ANDROID__)
-        // A visit cannot repaint its chunks and desktop context recovery is disabled. Keep the
-        // uploaded chain, without retaining another copy of every smaller mip on the CPU.
-        if (chunk->texture)
-            DiscardCpuTextureCopies(*chunk->texture);
+        for (auto& texture : detailTextures_) {
+            if (texture)
+                DiscardCpuTextureCopies(*texture);
+        }
+        if (apronTexture_)
+            DiscardCpuTextureCopies(*apronTexture_);
 #endif
-    }
-#if defined(__linux__) && !defined(__ANDROID__)
-    for (auto& texture : detailTextures_) {
-        if (texture)
-            DiscardCpuTextureCopies(*texture);
-    }
-    if (apronTexture_)
-        DiscardCpuTextureCopies(*apronTexture_);
-#endif
-    editCacheDiscarded_ = true;
 #if defined(__GLIBC__)
-    // The hundred one-megabyte images otherwise remain as free pages in glibc's arenas.
-    (void)malloc_trim(0);
+        (void)malloc_trim(0);
 #endif
+    }
+    buildSeconds_ = std::chrono::duration<double>(std::chrono::steady_clock::now() - started).count();
 }
 
 void TerrainRenderer::Update(const zoo::World& world, int maxChunks) {
     // Surfaces animates its water by changing the ripples' texture.
     water_.normalTexture = surfaces_.Water().normalTexture;
-    if (editCacheDiscarded_)
+    if (!editable_)
         return;
     if (world.ChunksX() != chunksX_ || world.ChunksZ() != chunksZ_) {
         Build(world);

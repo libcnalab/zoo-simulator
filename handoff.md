@@ -43,6 +43,10 @@ whatever you take up (`docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `docs/V
   13:00 avoids 14 duplicate uploads totalling 64.0 MiB for its 107 animals. Matched
   Lion Rock screenshots with visitor drawing disabled agree at every RGB pixel.
   See `docs/PERFORMANCE.md` for the loading measurements.
+- Visits release each ground chunk's paint image when that chunk goes to the GPU.
+  On the 224 × 224 tile map the process peak through terrain loading fell from
+  1,248.5 to 1,011.2 MiB. The editor retains its paint data. All eight frames of
+  the editor's construction, painting and pond script matched the previous build.
 
 - **The game:** Greenhill Zoo, a first-person walk through a zoo (C++23, the simulation core in
   `src/core/zoo/`, the game on CNA / cna-engine in `src/game/`). Zoo management must not come

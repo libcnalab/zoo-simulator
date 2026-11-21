@@ -422,11 +422,7 @@ void ZooGame::Adopt(std::unique_ptr<zoo::Zoo> zoo) {
 
     if (!keepStatic) {
         terrain_ = std::make_unique<TerrainRenderer>(device, *surfaces_);
-        terrain_->Build(zoo_->Map());
-        // A visit cannot reshape or repaint its world. Keep only the uploaded textures and meshes;
-        // the editor retains the per-chunk CPU images and signatures needed for incremental edits.
-        if (!editor_)
-            terrain_->DiscardEditCache();
+        terrain_->Build(zoo_->Map(), editor_);
     } else {
         std::printf("zoo: static scene unchanged; keeping ground and scenery\n");
     }
