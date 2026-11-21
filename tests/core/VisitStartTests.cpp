@@ -91,16 +91,18 @@ TEST(VisitStart, MatchesGameSequence) {
 // visitor spread happens after four fifths of the fill so all seventeen fronts get a group;
 // dependent northern cubs follow their mothers, and two new garden walks on a map 64 m wider per
 // side lead to four picnic tables and a western marsh with a family of eight capybaras; resting
-// penguins and flamingos use their upright group pose beside a stationary companion).
+// penguins and flamingos use their upright group pose beside a stationary companion; Aldabra Meadow houses
+// three adult tortoises that graze locally. The Snake Pavilion adds two terraria, and visitors
+// now share the Woodland Aviary boardwalk with four Mandarin ducks).
 void CheckFillHashes(std::int64_t ticks) {
     constexpr std::array<std::array<std::uint64_t, 2>, 3> shortHashes{
-        {{9139815037628863271ULL, 2085363316060078965ULL},
-         {16001145640700442961ULL, 5644383874109006456ULL},
-         {10636984344542905811ULL, 6304807489940044530ULL}}};
+        {{11082510491833934291ULL, 3162471487853591516ULL},
+         {3876869180915114079ULL, 3874930504576654737ULL},
+         {16929374773383110532ULL, 2348993242117729354ULL}}};
     constexpr std::array<std::array<std::uint64_t, 2>, 3> fullHashes{
-        {{1054235427821063531ULL, 8043702145645978796ULL},
-         {11740243411003087215ULL, 9360760697049082900ULL},
-         {11257981172144800077ULL, 1213298953784258099ULL}}};
+        {{7492788604367843800ULL, 7007152384411224208ULL},
+         {14526229057177862580ULL, 6730451261041992047ULL},
+         {3040838740475665900ULL, 1585549415693143411ULL}}};
     for (const std::uint64_t seed : {1ULL, 2ULL, 3ULL}) {
         Zoo zoo(testdata::GameCatalog(), testdata::GameSpecies(), VisitorZooConfig(seed));
         BuildVisitorZoo(zoo);

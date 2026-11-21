@@ -238,6 +238,84 @@ void ForageTray(Maker& k) {
     }
 }
 
+void AviaryNet(Maker& k) {
+    // A gently crowned net joins the mesh walls above the foliage.
+    MeshWriter& wire = k.m.Use({0.18f, 0.23f, 0.20f}, Pattern::Metal);
+    constexpr int extent = 13;
+    const auto crown = [](float x, float z) {
+        return 4.8f + 2.0f * (1.0f - x * x / 169.0f) * (1.0f - z * z / 169.0f);
+    };
+    MeshWriter& mesh = k.m.Use({0.19f, 0.24f, 0.21f}, Pattern::WeldMesh);
+    for (int x = -extent; x < extent; x += 2) {
+        for (int z = -extent; z < extent; z += 2) {
+            const float left = static_cast<float>(x), right = left + 2.0f;
+            const float near = static_cast<float>(z), far = near + 2.0f;
+            mesh.QuadTwoSided({left, crown(left, near), near}, {right, crown(right, near), near},
+                              {right, crown(right, far), far}, {left, crown(left, far), far});
+        }
+    }
+    // Hang a name board over each end of the public walk, four metres south of the roof centre.
+    for (float side : {-1.0f, 1.0f}) {
+        const float x = side * extent;
+        wire.BoxAt(x, 4.0f, 2.65f, 0.12f, 0.78f, 3.12f);
+        const float face = x + side * 0.065f;
+        const float left = 4.0f + side * 1.50f;
+        const float right = 4.0f - side * 1.50f;
+        WriteSign(k.m, Sign::WoodlandAviary, {face, 2.67f, left}, {face, 2.67f, right}, {face, 3.42f, right},
+                  {face, 3.42f, left});
+    }
+    for (int row = -12; row <= 12; row += 4) {
+        const float x = static_cast<float>(row);
+        for (int span = -extent; span < extent; span += 2) {
+            const float a = static_cast<float>(span), b = a + 2.0f;
+            wire.Beam({x, crown(x, a), a}, {x, crown(x, b), b}, 0.025f, 0.025f);
+            wire.Beam({a, crown(a, x), x}, {b, crown(b, x), x}, 0.025f, 0.025f);
+        }
+    }
+}
+
+void SnakePavilion(Maker& k) {
+    // The three-tile public aisle between the cases is open at both ends. All posts
+    // stand inside the glass, so visitors can walk the entire length of the gallery.
+    MeshWriter& frame = k.m.Use(k.def.color2, Pattern::Wood);
+    MeshWriter& metal = k.m.Use(k.def.color, Pattern::Sheeting);
+    constexpr float halfWidth = 15.0f;
+    constexpr float halfDepth = 8.8f;
+    constexpr float eave = 3.15f;
+    constexpr float ridge = 4.85f;
+    // Separate roof planes leave the pitched underside visible from the gallery.
+    for (float side : {-1.0f, 1.0f}) {
+        const float x = side * halfWidth;
+        metal.QuadTwoSided({x, eave, -halfDepth}, {x, eave, halfDepth}, {0, ridge, halfDepth},
+                           {0, ridge, -halfDepth});
+        for (float z : {-6.7f, -3.35f, 0.0f, 3.35f, 6.7f}) {
+            frame.BoxAt(side * 12.65f, z, 0, 0.16f, eave, 0.16f);
+            frame.Beam({x, eave - 0.1f, z}, {0, ridge - 0.1f, z}, 0.16f, 0.17f);
+            if (std::abs(z) > 6.0f) {
+                frame.BoxAt(side * 3.2f, z, 0, 0.14f, 4.35f, 0.14f);
+                frame.Beam({side * 3.2f, 3.35f, z}, {side * 2.1f, 4.41f, z}, 0.12f, 0.12f);
+            }
+        }
+        frame.BoxAt(side * 3.2f, 0, 4.24f, 0.16f, 0.21f, halfDepth * 2);
+        for (float z : {-6.0f, 0.0f, 6.0f}) {
+            k.m.Use({0.94f, 0.81f, 0.55f}, Pattern::Plain).BoxAt(side * 3.55f, z, 3.63f, 0.5f, 0.07f, 0.75f);
+        }
+        const float z = side * 7.45f;
+        frame.BoxAt(0, z, 3.14f, 3.9f, 1.02f, 0.16f);
+        const float face = z + side * 0.085f;
+        WriteSign(k.m, Sign::SnakePavilion, {-side * 1.9f, 3.17f, face}, {side * 1.9f, 3.17f, face},
+                  {side * 1.9f, 4.12f, face}, {-side * 1.9f, 4.12f, face});
+    }
+}
+
+void DrinkingBasin(Maker& k) {
+    MeshWriter& stone = k.m.Use(k.def.color, Pattern::Stone);
+    Tub(stone, 0.0f, 0.88f, 0.11f, 0.53f, 0.04f);
+    MeshWriter& water = k.m.Use(kWater, Pattern::Metal);
+    water.Quad(Vector3(-0.39f, 0.085f, 0.22f), Vector3(0.39f, 0.085f, 0.22f), Vector3(0.39f, 0.085f, -0.22f),
+               Vector3(-0.39f, 0.085f, -0.22f));
+}
+
 void Trough(Maker& k) {
     const bool water = k.def.role == zoo::PropRole::WaterTrough;
     if (water) {
@@ -593,6 +671,18 @@ void BuildProp(ModelBuilder& model, const zoo::PropDef& def, std::uint32_t seed)
         HayRack(k);
     } else if (look == "trough") {
         Trough(k);
+    } else if (look == "aviary_net") {
+        AviaryNet(k);
+    } else if (look == "waterfowl_pan") {
+        Tub(k.m.Use(k.def.color, Pattern::Stone), 0, 0.50f, 0.075f, 0.35f, 0.035f);
+        k.m.Use({0.52f, 0.40f, 0.22f}, Pattern::Stone)
+            .Blob({0, 0.055f, 0}, {0.205f, 0.028f, 0.13f}, 7, 0.24f, 10, 4);
+    } else if (look == "prey_tray") {
+        Tub(k.m.Use(k.def.color, Pattern::Stone), 0.0f, 0.44f, 0.055f, 0.32f, 0.025f);
+    } else if (look == "snake_pavilion") {
+        SnakePavilion(k);
+    } else if (look == "drinking_basin") {
+        DrinkingBasin(k);
     } else if (look == "forage_tray") {
         ForageTray(k);
     } else if (look == "high_browse") {

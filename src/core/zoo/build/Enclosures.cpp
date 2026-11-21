@@ -205,7 +205,8 @@ void Enclosures::Rebuild(const World& world, const ZooObjects& objects, const Ca
                 const Fence fence = world.FenceAt(edge);
                 const Barrier barrier = BarrierOf(fence, catalog);
                 ++stats.boundaryEdges;
-                if (fence.gate) {
+                enclosure.walkThrough |= fence.visitorGate;
+                if (fence.gate && !fence.visitorGate) {
                     ++stats.gates;
                     enclosure.gates.push_back(edge);
                 }
@@ -320,6 +321,24 @@ void Enclosures::Rebuild(const World& world, const ZooObjects& objects, const Ca
         stats.waterShare = static_cast<float>(tally.waterTiles) / tiles;
         const float dryM2 = static_cast<float>(stats.tiles - tally.waterTiles) * kTileSize * kTileSize;
         stats.vegetationDensity = dryM2 > 0.0f ? std::min(1.0f, stats.vegetationM2 / dryM2) : 0.0f;
+        float visibilitySum = tally.visibilitySum;
+        if (enclosure.walkThrough) {
+            for (int z = enclosure.min.z; z <= enclosure.max.z; ++z) {
+                for (int x = enclosure.min.x; x <= enclosure.max.x; ++x) {
+                    const TileCoord tile{x, z};
+                    if (codes_[indexOf(tile)] != enclosure.id.value || world.At(tile).path == PathKind::None)
+                        continue;
+                    for (const Dir side : kSides) {
+                        const TileCoord bank = tile + Step(side);
+                        if (world.InBounds(bank) && codes_[indexOf(bank)] == enclosure.id.value &&
+                            world.At(bank).path == PathKind::None && !world.At(bank).building) {
+                            enclosure.viewing.push_back({tile, side, 1.0f, 0.0f});
+                            visibilitySum += 1.0f;
+                        }
+                    }
+                }
+            }
+        }
         std::sort(enclosure.viewing.begin(), enclosure.viewing.end(),
                   [](const ViewingSpot& a, const ViewingSpot& b) {
                       return std::tuple(a.tile.z, a.tile.x, a.side) < std::tuple(b.tile.z, b.tile.x, b.side);
@@ -331,9 +350,8 @@ void Enclosures::Rebuild(const World& world, const ZooObjects& objects, const Ca
             }
         }
         stats.viewingTiles = distinct;
-        stats.visibility = enclosure.viewing.empty()
-                               ? 0.0f
-                               : tally.visibilitySum / static_cast<float>(enclosure.viewing.size());
+        stats.visibility =
+            enclosure.viewing.empty() ? 0.0f : visibilitySum / static_cast<float>(enclosure.viewing.size());
         std::sort(enclosure.gates.begin(), enclosure.gates.end(),
                   [](const EdgeRef& a, const EdgeRef& b) { return EdgeKey(a) < EdgeKey(b); });
     }

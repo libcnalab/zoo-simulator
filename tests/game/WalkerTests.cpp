@@ -49,6 +49,12 @@ const zoo::Zoo& Greenhill() {
         auto made = std::make_unique<zoo::Zoo>(zoo::testdata::GameCatalog(), zoo::testdata::GameSpecies(),
                                                zoo::VisitorZooConfig(1));
         zoo::BuildVisitorZoo(*made);
+        // This tour measures static openings with the simulation frozen. A bird on the
+        // boardwalk is a temporary obstacle in play, tested separately in a stocked aviary.
+        for (const zoo::Animal& resident : made->Fauna().All()) {
+            const auto* home = made->Habitats().Find(resident.home);
+            if (home && home->walkThrough) made->Fauna().Crate(resident.id);
+        }
         return made;
     }();
     return *zoo;
@@ -95,6 +101,84 @@ TEST(Walker, EveryVisitorHabitatHasAClearMapLanding) {
     }
 }
 
+TEST(Walker, CanWalkTheBoardwalkThroughTheAviaryInEitherDirection) {
+    const auto& zoo = Greenhill();
+    const auto gate = zoo.Map().EntranceTile();
+    const Vec2 centre = World::TileCenter({gate.x - 83, gate.z - 125});
+    ASSERT_TRUE(CanLandOnPath(zoo, World::TileAt(centre)));
+    Walker walker;
+    for (float side : {-1.0f, 1.0f}) {
+        walker.Enter(zoo, centre + Vec2{15.0f * side, 0}, -side * kPi * 0.5f);
+        for (int frame = 0; frame < 225; ++frame) {
+            walker.Update(zoo, {.ahead = 1.0f}, kFrame);
+        }
+        EXPECT_GT((centre.x - walker.Position().x) * side, 13.5f);
+        EXPECT_NEAR(walker.Position().z, centre.z, 0.15f);
+    }
+}
+
+TEST(Walker, ThePublicWalkStaysOnTheBoardwalkInsideTheAviary) {
+    const auto& zoo = Greenhill();
+    const auto gate = zoo.Map().EntranceTile();
+    const Vec2 centre = World::TileCenter({gate.x - 83, gate.z - 125});
+    for (const float heading : {0.0f, kPi}) {
+        Walker walker;
+        walker.Enter(zoo, centre, heading);
+        for (int frame = 0; frame < 45; ++frame) {
+            walker.Update(zoo, {.ahead = 1.0f}, kFrame);
+        }
+        EXPECT_EQ(zoo.Map().At(World::TileAt(walker.Position())).path, zoo::PathKind::Boardwalk);
+        EXPECT_GT(zoo::Distance(walker.Position(), centre), 0.6f);
+    }
+}
+
+TEST(Walker, CanPassBesideADuckStandingOnTheBoardwalk) {
+    zoo::Zoo zoo(zoo::testdata::GameCatalog(), zoo::testdata::GameSpecies(), zoo::VisitorZooConfig(1));
+    zoo::BuildVisitorZoo(zoo);
+    const auto gate = zoo.Map().EntranceTile();
+    const TileCoord walk{gate.x - 83, gate.z - 125};
+    const Vec2 centre = World::TileCenter(walk);
+    const auto duck = zoo.SpeciesList().IndexOf("mandarin_duck");
+    const auto& animals = zoo.Fauna().All();
+    const auto bird = std::ranges::find(animals, duck, &zoo::Animal::species);
+    ASSERT_NE(bird, animals.end());
+    zoo.Fauna().Find(bird->id)->position = centre;
+    EXPECT_FALSE(CanLandOnPath(zoo, walk));
+    Walker walker;
+    walker.Enter(zoo, centre - Vec2{2.0f, 0}, kPi * 0.5f);
+    for (int i = 0; i < 60; ++i)
+        walker.Update(zoo, {.ahead = 1.0f}, kFrame);
+    EXPECT_LT(walker.Position().x, centre.x - 0.5f);
+    for (int i = 0; i < 7; ++i)
+        walker.Update(zoo, {.right = 1.0f}, kFrame);
+    for (int i = 0; i < 35; ++i)
+        walker.Update(zoo, {.ahead = 1.0f}, kFrame);
+    EXPECT_GT(walker.Position().x, centre.x + 1.0f);
+}
+
+TEST(Walker, WalksThroughBothPavilionDoorwaysAndStopsAtEachTerrarium) {
+    const auto& zoo = Greenhill();
+    const auto gate = zoo.Map().EntranceTile();
+    const Vec2 centre = World::TileCenter({gate.x + 82, gate.z - 123});
+    Walker walker;
+    for (float side : {-1.0f, 1.0f}) {
+        walker.Enter(zoo, centre + Vec2{0, 10.0f * side}, side > 0 ? kPi : 0.0f);
+        for (int frame = 0; frame < 155; ++frame) {
+            walker.Update(zoo, {.ahead = 1.0f}, kFrame);
+        }
+        EXPECT_GT((centre.z - walker.Position().z) * side, 9.0f);
+        EXPECT_NEAR(walker.Position().x, centre.x, 0.15f);
+        walker.Enter(zoo, centre + Vec2{0, 2.0f}, side * kPi * 0.5f);
+        for (int frame = 0; frame < 75; ++frame) {
+            walker.Update(zoo, {.ahead = 1.0f}, kFrame);
+        }
+        const float across = (walker.Position().x - centre.x) * side;
+        EXPECT_GT(across, 1.0f);
+        EXPECT_LT(across, 3.0f);
+        EXPECT_FALSE(zoo.Habitats().At(walker.Position()));
+    }
+}
+
 TileCoord Beside(TileCoord tile, Dir side) {
     const TileCoord step = zoo::Step(side);
     return {tile.x + step.x, tile.z + step.z};
@@ -122,6 +206,7 @@ std::string Forbidden(const zoo::Zoo& zoo, Vec2 p) {
     switch (zoo.Habitats().RegionAt(tile)) {
         case Region::Enclosure: {
             const zoo::Enclosure* home = zoo.Habitats().Find(zoo.Habitats().At(tile));
+            if (home && home->walkThrough && map.At(tile).path != zoo::PathKind::None) break;
             return "the habitat " + (home != nullptr ? home->name : std::string("?"));
         }
         case Region::StandOff:
@@ -454,6 +539,8 @@ TEST(Walker, NoHabitatAndNoPlantedStripIsEnteredFromAnySide) {
                 if (region != Region::Enclosure && region != Region::StandOff)
                     continue;
                 const zoo::Fence fence = map.FenceOn(tile, side);
+                if (fence.visitorGate)
+                    continue;  // tested by the shared aviary crossing
                 const std::string what = "tile " + std::to_string(x) + ", " + std::to_string(z) +
                                          " towards " + Forbidden(zoo, World::TileCenter(beyond));
                 ASSERT_TRUE(fence.Exists()) << what << ": nothing stands between the visitors and it";

@@ -27,6 +27,10 @@ constexpr BehaviourProfile profiles[] = {
     {"polar_bear", 4, 2, 5, 5, A::Forage, A::Bathe, 0, 15, false},
     {"lynx", 10, 0, 4, 2, A::Forage, A::Patrol, 0, 16, true},
     {"red_panda", 6, 8, 3, 1, A::Forage, A::Play, 0, 14, true},
+    {"mandarin_duck", 4, 3, 6, 6, A::Forage, A::Bathe, 0, 11, false},
+    {"corn_snake", 8, 0, 4, 1, A::Forage, A::Idle, 0, 18, false},
+    {"black_headed_python", 12, 0, 3, 1, A::Forage, A::Idle, 0, 22, true},
+    {"aldabra_tortoise", 8, 12, 5, 0, A::Forage, A::Idle, 0, 18, false},
     {"capybara", 5, 11, 4, 4, A::Forage, A::Bathe, 4, 12, true},
     {"snow_leopard", 12, 0, 4, 2, A::Forage, A::Patrol, 0, 18, true},
 };

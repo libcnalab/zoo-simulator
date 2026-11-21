@@ -188,6 +188,20 @@ void Stepper::Move(Group g) {
                    DistanceSquared(next, all.bystander_) < kBystanderBodyM * kBystanderBodyM &&
                    DistanceSquared(next, all.bystander_) < DistanceSquared(v.position, all.bystander_);
         };
+        const auto entersMovingBody = [&](Vec2 next) {
+            if (fauna.CrowdsResident(env.enclosures, env.species, env.time, next, v.position)) {
+                return true;
+            }
+            // Steering can still aim through a keeper, especially on the last step to a viewing slot.
+            for (const Vec2 body : all.movingObstacles_) {
+                const float after = DistanceSquared(next, body);
+                if (after < kBystanderBodyM * kBystanderBodyM && after < DistanceSquared(v.position, body) &&
+                    env.enclosures.At(next) == env.enclosures.At(body)) {
+                    return true;
+                }
+            }
+            return false;
+        };
         const auto entersStandingVisitor = [&](Vec2 next) {
             const Sites& sites = scr.sites;
             const TileCoord low = World::TileAt(next - Vec2{kQueueBodyM, kQueueBodyM});
@@ -217,7 +231,7 @@ void Stepper::Move(Group g) {
         // settles directly, unless that place has become occupied since the route was planned.
         float slow = 1.0f;
         Vec2 wish = way;
-        if (!last || distance > kSettleM || entersBystander(v.route[index]) ||
+        if (!last || distance > kSettleM || entersBystander(v.route[index]) || entersMovingBody(v.route[index]) ||
             entersStandingVisitor(v.route[index])) {
             const float push = Dodge(i, g, way, slow);
             wish = Normalized(way + Vec2{-way.z, way.x} * (0.9f * push), way);
@@ -235,7 +249,7 @@ void Stepper::Move(Group g) {
         v.heading = TurnTowards(v.heading, wishHeading, turn * kTickSeconds);
         const float stride = v.speed * kTickSeconds;
         if (last && distance <= std::max(stride, 0.03f) && !entersBystander(v.route[index]) &&
-            !entersStandingVisitor(v.route[index])) {
+            !entersMovingBody(v.route[index]) && !entersStandingVisitor(v.route[index])) {
             v.position = v.route[index];
             v.speed = 0.0f;
             index = count;
@@ -268,7 +282,7 @@ void Stepper::Move(Group g) {
                 }
                 v.speed = Distance(v.position, next) / kTickSeconds;
             }
-            if (entersStandingVisitor(next)) {
+            if (entersMovingBody(next) || entersStandingVisitor(next)) {
                 next = v.position;
                 v.speed = 0.0f;
             }

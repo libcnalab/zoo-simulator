@@ -20,6 +20,7 @@ TEST(WorldJson, GeneratedAndEditedWorldRoundTrips) {
     world.SetVertexHeight(7, 8, 2.375f);
     world.SetWater({9, 9}, 1.25f, 0.75f);
     world.SetFence({8, 8, false}, {12, true, 0.625f});
+    world.SetFence({10, 9, true}, {18, true, 0.9f, true});
     const auto restored = WorldFromJson(ToJson(world));
     ASSERT_TRUE(restored.has_value());
     EXPECT_TRUE(world == *restored);

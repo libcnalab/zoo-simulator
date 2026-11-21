@@ -223,7 +223,8 @@ void UpdateSpeciesBehaviour(Animal& animal, const SpeciesDef& species, Env& env,
         }
     }
     const Animal* mother = nullptr;
-    if (animal.mother && AgeYears(animal, env.time) < species.maturityYears * 0.5f) {
+    if (!species.independentYoung && animal.mother &&
+        AgeYears(animal, env.time) < species.maturityYears * 0.5f) {
         for (std::size_t index : neighbors) {
             const Animal& other = animals[index];
             if (other.id == animal.mother && Available(other, animal) && other.Visible()) {

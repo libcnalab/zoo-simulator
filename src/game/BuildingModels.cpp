@@ -671,7 +671,14 @@ void BuildBuilding(ModelBuilder& model, const zoo::BuildingDef& def) {
     k.doorX = -k.W * 0.5f + (static_cast<float>(std::clamp(def.doorOffset, 0, def.width - 1)) + 0.5f) * kTile;
 
     model.ClearLocal();
-    if (def.look == "barn") {
+    if (def.look == "reptile_hide") {
+        MeshWriter& rock = model.Use(def.wallColor, Pattern::Rock);
+        for (float side : {-1.0f, 1.0f}) {
+            rock.BoxAt(side * 0.66f, 0, 0, 0.38f, 0.33f, 1.68f);
+        }
+        rock.BoxAt(0, -0.68f, 0, 1.65f, 0.31f, 0.30f);
+        model.Use(def.roofColor, Pattern::Stone).Blob({0, 0.34f, 0}, {0.96f, 0.17f, 0.96f}, 17, 0.11f, 12, 6);
+    } else if (def.look == "barn") {
         Barn(k);
     } else if (def.look == "hut") {
         Hut(k);

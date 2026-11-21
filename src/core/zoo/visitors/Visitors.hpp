@@ -265,8 +265,9 @@ public:
         bystander_ = position;
         hasBystander_ = true;
     }
+    const Vec2* Bystander() const { return hasBystander_ ? &bystander_ : nullptr; }
     void ClearBystander() { hasBystander_ = false; }
-    /// Other people visitors walk around this tick (the visible staff). Derived from the zoo,
+    /// Moving obstacles visitors give room to this tick, including staff and walk-through residents.
     /// not saved and not part of StateHash, like the player's bystander position.
     void ClearMovingObstacles() { movingObstacles_.clear(); }
     void AddMovingObstacle(Vec2 position) { movingObstacles_.push_back(position); }
@@ -279,7 +280,7 @@ public:
     /// paths to make up their minds there. For a zoo one walks into in mid-morning;
     /// Step() never does this.
     /// Returns the number of people moved.
-    int Spread(const Env& env);
+    int Spread(const Env& env, const Animals& animals);
     /// Starts the day's counters afresh.
     void CloseDay();
     /// Removes everybody and all litter (the ticket price and the rating stay).

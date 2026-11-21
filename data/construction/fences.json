@@ -239,6 +239,36 @@
       "wearPerDay": 0.0015,
       "color": "#315d34",
       "postColor": "#263d2a"
+    },
+    {
+      "id": "aviary_mesh",
+      "name": "Aviary mesh",
+      "kind": 17,
+      "style": "mesh",
+      "heightM": 4.8,
+      "strength": 2,
+      "visibility": 0.86,
+      "cost": 90,
+      "gateCost": 45,
+      "upkeepPerDay": 2,
+      "wearPerDay": 0.0015,
+      "color": "#39544a",
+      "postColor": "#39433e"
+    },
+    {
+      "id": "aviary_curtain",
+      "name": "Aviary visitor curtain",
+      "kind": 18,
+      "style": "mesh",
+      "heightM": 4.8,
+      "strength": 2,
+      "visibility": 0.87,
+      "cost": 90,
+      "gateCost": 45,
+      "upkeepPerDay": 2,
+      "wearPerDay": 0.0015,
+      "color": "#527662",
+      "postColor": "#39433e"
     }
   ]
 }

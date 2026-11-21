@@ -99,11 +99,16 @@ bool ClearOfPlayerProps(const zoo::Zoo& zoo, zoo::Vec2 at) {
 
 bool CanLandOnPath(const zoo::Zoo& zoo, zoo::TileCoord tile) {
     const auto& world = zoo.Map();
-    return world.InBounds(tile) && world.At(tile).path != zoo::PathKind::None &&
-           !world.At(tile).building && !world.At(tile).standOff && !world.HasWater(tile) &&
-           zoo.Habitats().RegionAt(tile) == zoo::Region::Public &&
+    if (!world.InBounds(tile))
+        return false;
+    const auto* home = zoo.Habitats().Find(zoo.Habitats().At(tile));
+    return world.At(tile).path != zoo::PathKind::None && !world.At(tile).building &&
+           !world.At(tile).standOff && !world.HasWater(tile) &&
+           (zoo.Habitats().RegionAt(tile) == zoo::Region::Public || (home && home->walkThrough)) &&
            zoo.Routes().Reachable(world.EntranceTile(), tile, zoo::NavProfile::Visitor()) &&
-           ClearOfPlayerProps(zoo, zoo::World::TileCenter(tile));
+           ClearOfPlayerProps(zoo, zoo::World::TileCenter(tile)) &&
+           !zoo.Fauna().CrowdsResident(zoo.Habitats(), zoo.SpeciesList(), zoo.Time(),
+                                       zoo::World::TileCenter(tile));
 }
 
 Walker::Walker() : world_(4.0f), body_(Body()) {}
@@ -145,11 +150,11 @@ void Walker::Rebuild(const zoo::Zoo& zoo) {
         // Nobody climbs over a fence here, however low it is.
         return std::max(def != nullptr ? def->heightM : 1.2f, 1.0f);
     };
-    // Fences, gates with them: those are the keepers' and stay shut.
+    // Keeper gates stay shut. Visitors can pass through an aviary curtain.
     for (int z = 0; z <= map.Depth(); ++z) {
         for (int x = 0; x < map.Width(); ++x) {
             const zoo::Fence fence = map.FenceAt({x, z, true});
-            if (fence.Exists()) {
+            if (fence.Exists() && !fence.visitorGate) {
                 const float fx = static_cast<float>(x) * tile;
                 const float fz = static_cast<float>(z) * tile;
                 wall(fx, fz, fx + tile, fz, heightOf(fence));
@@ -159,7 +164,7 @@ void Walker::Rebuild(const zoo::Zoo& zoo) {
     for (int z = 0; z < map.Depth(); ++z) {
         for (int x = 0; x <= map.Width(); ++x) {
             const zoo::Fence fence = map.FenceAt({x, z, false});
-            if (fence.Exists()) {
+            if (fence.Exists() && !fence.visitorGate) {
                 const float fx = static_cast<float>(x) * tile;
                 const float fz = static_cast<float>(z) * tile;
                 wall(fx, fz, fx, fz + tile, heightOf(fence));
@@ -266,7 +271,19 @@ void Walker::Update(const zoo::Zoo& zoo, const Input& input, float seconds) {
         const float step = std::min(left, 1.0f / 90.0f);
         const Vector3 before = body_.Feet();
         body_.Step(world_, wish, false, step);
-        if (Wedged(world_, body_)) {
+        const auto here = zoo::World::TileAt({before.X, before.Z});
+        const auto next = zoo::World::TileAt(Position());
+        const auto& map = zoo.Map();
+        // The public walk in a shared exhibit ends at the boardwalk's edge.
+        const zoo::Enclosure* bank = nullptr;
+        if (here != next && map.InBounds(here) && map.InBounds(next) &&
+            map.At(here).path != zoo::PathKind::None && map.At(next).path == zoo::PathKind::None) {
+            bank = zoo.Habitats().Find(zoo.Habitats().At(next));
+        }
+        if ((bank && bank->walkThrough) || zoo.Fauna().CrowdsResident(zoo.Habitats(), zoo.SpeciesList(), zoo.Time(), Position(),
+                                       zoo::Vec2{before.X, before.Z})) {
+            body_.Teleport(world_, before);
+        } else if (Wedged(world_, body_)) {
             if (clear)
                 body_.Teleport(world_, before);
         } else {

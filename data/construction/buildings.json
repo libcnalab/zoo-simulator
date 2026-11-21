@@ -377,6 +377,33 @@
       "look": "house",
       "wallColor": "#c9b997",
       "roofColor": "#79533a"
+    },
+    {
+      "id": "reptile_hide",
+      "name": "Heated reptile hide",
+      "description": "A low heated rock chamber with an opening at substrate level.",
+      "role": "animal_shelter",
+      "placement": "enclosure",
+      "width": 1,
+      "depth": 1,
+      "doorOffset": 0,
+      "heightM": 0.47,
+      "cost": 1800,
+      "upkeepPerDay": 12,
+      "capacity": 1,
+      "heated": true,
+      "cooled": false,
+      "item": "",
+      "itemPrice": 0,
+      "itemCost": 0,
+      "serviceSeconds": 8,
+      "hungerRelief": 0,
+      "thirstRelief": 0,
+      "fun": 0,
+      "education": 0,
+      "look": "reptile_hide",
+      "wallColor": "#907253",
+      "roofColor": "#a58a67"
     }
   ]
 }

@@ -38,6 +38,6 @@ void BuildFencePost(ModelBuilder& model, const FenceLook& look, const Vector3& b
 /// The panel between two ground points (the ends of a tile edge); it follows the
 /// slope. With `gate` it is a gate leaf in the fence's style.
 void BuildFencePanel(ModelBuilder& model, const FenceLook& look, const Vector3& a, const Vector3& b,
-                     bool gate, std::uint32_t seed);
+                     bool gate, std::uint32_t seed, bool visitorGate = false);
 
 }  // namespace zoogame

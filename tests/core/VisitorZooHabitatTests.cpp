@@ -20,24 +20,29 @@ namespace zoo {
 namespace {
 // These are the scenario's promises, independent of the animals actually created (so a missing
 // whole group cannot escape detection). ScenarioReport is checked against them below.
-const std::map<std::string, std::vector<std::string>> kResidents{{"Meerkat Lookout", {"meerkat"}},
-                                                                 {"Flamingo Lagoon", {"flamingo"}},
-                                                                 {"Acacia Plain", {"giraffe", "zebra"}},
-                                                                 {"Ostrich Rise", {"ostrich"}},
-                                                                 {"Lion Rock", {"lion"}},
-                                                                 {"Tiger Forest", {"tiger"}},
-                                                                 {"Wolf Wood", {"wolf"}},
-                                                                 {"Bear Falls", {"brown_bear"}},
-                                                                 {"Polar Sound", {"polar_bear"}},
-                                                                 {"Penguin Cove", {"penguin"}},
-                                                                 {"Elephant Valley", {"elephant"}},
-                                                                 {"Rhino Hollow", {"rhino"}},
-                                                                 {"Red Dune", {"camel"}},
-                                                                 {"Kangaroo Grove", {"kangaroo"}},
-                                                                 {"Lynx Ridge", {"lynx"}},
-                                                                 {"Red Panda Canopy", {"red_panda"}},
-                                                                 {"Snow Leopard Heights", {"snow_leopard"}},
-                                                                 {"Capybara Marsh", {"capybara"}}};
+const std::map<std::string, std::vector<std::string>> kResidents{
+    {"Meerkat Lookout", {"meerkat"}},
+    {"Flamingo Lagoon", {"flamingo"}},
+    {"Acacia Plain", {"giraffe", "zebra"}},
+    {"Ostrich Rise", {"ostrich"}},
+    {"Lion Rock", {"lion"}},
+    {"Tiger Forest", {"tiger"}},
+    {"Wolf Wood", {"wolf"}},
+    {"Bear Falls", {"brown_bear"}},
+    {"Polar Sound", {"polar_bear"}},
+    {"Penguin Cove", {"penguin"}},
+    {"Elephant Valley", {"elephant"}},
+    {"Rhino Hollow", {"rhino"}},
+    {"Red Dune", {"camel"}},
+    {"Kangaroo Grove", {"kangaroo"}},
+    {"Lynx Ridge", {"lynx"}},
+    {"Red Panda Canopy", {"red_panda"}},
+    {"Snow Leopard Heights", {"snow_leopard"}},
+    {"Capybara Marsh", {"capybara"}},
+    {"Aldabra Meadow", {"aldabra_tortoise"}},
+    {"Corn Snake Terrarium", {"corn_snake"}},
+    {"Python Terrarium", {"black_headed_python"}},
+    {"Woodland Aviary", {"mandarin_duck"}}};
 
 void ExpectResidents(const Zoo& zoo, bool omitPenguin = false) {
     ASSERT_EQ(zoo.Habitats().All().size(), kResidents.size());
@@ -229,7 +234,11 @@ void ExpectFronts(const Zoo& zoo) {
             EXPECT_TRUE(found) << static_cast<int>(side);
         }
         for (const ViewingSpot& spot : home.viewing) {
-            EXPECT_EQ(zoo.Habitats().RegionAt(spot.tile), Region::Public);
+            if (home.walkThrough && zoo.Habitats().At(spot.tile) == home.id) {
+                EXPECT_EQ(zoo.Map().At(spot.tile).path, PathKind::Boardwalk);
+            } else {
+                EXPECT_EQ(zoo.Habitats().RegionAt(spot.tile), Region::Public);
+            }
             EXPECT_GE(spot.standOffM, static_cast<float>(depth) * kTileSize);
             EXPECT_TRUE(zoo.Routes().Reachable(zoo.Map().EntranceTile(), spot.tile, NavProfile::Visitor()));
             if (depth == 0) {
@@ -421,7 +430,7 @@ TEST_P(VisitorZooHabitat, ResidentsAndOmittedPenguins) {
         const auto report =
             BuildVisitorZoo(zoo, omitted ? VisitorZooOptions{{"penguin"}} : VisitorZooOptions{});
         EXPECT_TRUE(report.problems.empty());
-        EXPECT_EQ(report.enclosures, 18);
+        EXPECT_EQ(report.enclosures, 22);
         EXPECT_EQ(report.animals, zoo.AnimalCount());
         ExpectReportedResidents(report, omitted);
         ExpectResidents(zoo, omitted);

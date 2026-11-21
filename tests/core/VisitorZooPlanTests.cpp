@@ -321,6 +321,10 @@ const std::map<std::string, std::vector<Named>> kFamilies{
       Child(kFemale, 1.2f), Child(kMale, 0.7f), Child(kFemale, 0.65f)}},
     {"lynx", {Grown(kFemale, 6.0f), Child(kFemale, 0.45f), Child(kMale, 0.45f)}},
     {"red_panda", {Grown(kFemale, 5.0f), Child(kFemale, 0.2f), Child(kMale, 0.2f)}},
+    {"mandarin_duck", {Grown(kMale, 3), Grown(kFemale, 3), Grown(kMale, 2), Grown(kFemale, 2)}},
+    {"corn_snake", {Grown(kMale, 7.0f)}},
+    {"black_headed_python", {Grown(kMale, 7.0f)}},
+    {"aldabra_tortoise", {Grown(kMale, 60.0f), Grown(kFemale, 45.0f), Grown(kFemale, 55.0f)}},
     {"capybara",
      {Grown(kMale, 5.0f), Grown(kFemale, 4.0f), Grown(kFemale, 3.0f), Grown(kFemale, 5.0f),
       Child(kFemale, 0.13f), Child(kMale, 0.13f), Child(kMale, 0.13f), Child(kFemale, 0.13f)}},
@@ -588,6 +592,112 @@ TEST_P(VisitorZooPlan, BothSideGardensReachTheOldGalleriesAndHaveVisitorFaciliti
     }
 }
 
+TEST_P(VisitorZooPlan, TortoiseMeadowHasShallowWaterGroundFeedAndAnAccessibleEastGallery) {
+    const auto& map = zoo_.Map();
+    const TileCoord gate = map.EntranceTile();
+    const Enclosure* meadow = zoo_.Habitats().Find(zoo_.Habitats().At(TileCoord{gate.x + 79, gate.z - 84}));
+    ASSERT_NE(meadow, nullptr);
+    ASSERT_EQ(meadow->name, "Aldabra Meadow");
+    EXPECT_TRUE(meadow->stats.heatedShelter);
+    EXPECT_GE(meadow->stats.shelterCapacity, 3);
+    EXPECT_GE(meadow->stats.waterShare, 0.04f);
+    for (const TileCoord tile : TilesInRect(meadow->min, meadow->max)) {
+        if (zoo_.Habitats().At(tile) == meadow->id && map.HasWater(tile)) {
+            EXPECT_LE(map.WaterDepthAt(World::TileCenter(tile)), Builder::kMinWaterDepth + 0.01f);
+        }
+    }
+    ASSERT_FALSE(meadow->feeders.empty());
+    for (const auto id : meadow->feeders) {
+        const Prop* tray = zoo_.Objects().FindProp(id);
+        ASSERT_NE(tray, nullptr);
+        EXPECT_EQ(KindOf(zoo_, *tray).id, "forage_tray");
+        EXPECT_LE(KindOf(zoo_, *tray).feedHeightM, 0.25f);
+    }
+    ASSERT_EQ(meadow->troughs.size(), 2U);
+    const Prop* front = zoo_.Objects().FindProp(meadow->troughs[0]);
+    const Prop* rear = zoo_.Objects().FindProp(meadow->troughs[1]);
+    ASSERT_NE(front, nullptr);
+    ASSERT_NE(rear, nullptr);
+    EXPECT_EQ(KindOf(zoo_, *front).id, "drinking_basin");
+    EXPECT_EQ(KindOf(zoo_, *rear).id, "drinking_basin");
+    EXPECT_GT(Distance(front->position, rear->position), 10.0f);
+    const auto residents = Group(zoo_, "aldabra_tortoise");
+    ASSERT_EQ(residents.size(), 3U);
+    for (const Animal* animal : residents) {
+        EXPECT_EQ(animal->home, meadow->id);
+    }
+    ASSERT_FALSE(meadow->viewing.empty());
+    const TileCoord restStop{gate.x + 97, gate.z - 80};
+    for (const auto& spot : meadow->viewing) {
+        EXPECT_TRUE(zoo_.Routes().Reachable(restStop, spot.tile, NavProfile::Visitor()));
+    }
+}
+
+TEST_P(VisitorZooPlan, WoodlandAviarySharesAPondsideWalkWithPeopleAndContainsItsFlock) {
+    const auto& map = zoo_.Map();
+    const auto gate = map.EntranceTile();
+    const TileCoord walk{gate.x - 83, gate.z - 125};
+    const Enclosure* home = zoo_.Habitats().Find(zoo_.Habitats().At(walk));
+    ASSERT_NE(home, nullptr);
+    ASSERT_TRUE(home->walkThrough);
+    EXPECT_EQ(home->name, "Woodland Aviary");
+    EXPECT_GT(home->stats.waterShare, 0.20f);
+    EXPECT_TRUE(zoo_.Routes().Reachable(gate, walk, NavProfile::Visitor()));
+    EXPECT_EQ(map.At(walk).path, PathKind::Boardwalk);
+    for (const Dir side : {Dir::West, Dir::East}) {
+        const TileCoord inside{walk.x + (side == Dir::West ? -6 : 6), walk.z};
+        EXPECT_TRUE(map.FenceOn(inside, side).visitorGate);
+        EXPECT_TRUE(zoo_.Routes().CanStep(inside, side, NavProfile::Visitor()));
+        EXPECT_FALSE(zoo_.Routes().CanStep(inside, side, NavProfile::Animal(0.20f, true)));
+    }
+    EXPECT_TRUE(
+        std::ranges::any_of(home->viewing, [&](const ViewingSpot& spot) { return spot.tile == walk; }));
+    const auto flock = Group(zoo_, "mandarin_duck");
+    ASSERT_EQ(flock.size(), 4U);
+    EXPECT_EQ(std::ranges::count_if(flock, [](const Animal* bird) { return bird->sex == Sex::Male; }), 2);
+    for (const Animal* bird : flock)
+        EXPECT_EQ(bird->home, home->id);
+}
+
+TEST_P(VisitorZooPlan, SnakePavilionHasAnOpenAisleBetweenSeparateGlazedHabitats) {
+    const auto gate = zoo_.Map().EntranceTile();
+    const TileCoord centre{gate.x + 82, gate.z - 123};
+    const auto visitor = NavProfile::Visitor();
+    for (int offset = -5; offset <= 5; ++offset) {
+        const TileCoord aisle{centre.x, centre.z + offset};
+        EXPECT_NE(zoo_.Map().At(aisle).path, PathKind::None);
+        EXPECT_FALSE(zoo_.Map().At(aisle).building);
+        EXPECT_TRUE(zoo_.Routes().Reachable(gate, aisle, visitor));
+    }
+    int roofs = 0;
+    for (const Prop& prop : zoo_.Objects().Props()) {
+        if (KindOf(zoo_, prop).id == "snake_pavilion") {
+            ++roofs;
+            EXPECT_EQ(World::TileAt(prop.position), centre);
+        }
+    }
+    EXPECT_EQ(roofs, 1);
+    for (const int side : {-1, 1}) {
+        const TileCoord front{centre.x + side, centre.z};
+        const TileCoord inside{centre.x + 2 * side, centre.z};
+        const auto homeId = zoo_.Habitats().At(inside);
+        const auto* home = zoo_.Habitats().Find(homeId);
+        ASSERT_NE(home, nullptr);
+        EXPECT_FALSE(zoo_.Routes().Passable(inside, visitor));
+        const auto direction = side < 0 ? Dir::West : Dir::East;
+        EXPECT_TRUE(std::ranges::any_of(home->viewing, [&](const ViewingSpot& spot) {
+            return spot.tile == front && spot.side == direction;
+        }));
+        const auto residents = Group(zoo_, side < 0 ? "corn_snake" : "black_headed_python");
+        ASSERT_EQ(residents.size(), 1U);
+        EXPECT_EQ(residents.front()->home, homeId);
+        ASSERT_FALSE(home->feeders.empty());
+        ASSERT_FALSE(home->troughs.empty());
+        EXPECT_EQ(KindOf(zoo_, *zoo_.Objects().FindProp(home->feeders.front())).id, "prey_tray");
+        EXPECT_EQ(KindOf(zoo_, *zoo_.Objects().FindProp(home->troughs.front())).id, "drinking_basin");
+    }
+}
+
 TEST_P(VisitorZooPlan, CapybaraFamilyCanSwimAndGrazeBesideTheWestWalk) {
     const auto gate = zoo_.Map().EntranceTile();
     const auto& habitats = zoo_.Habitats();
@@ -796,11 +906,13 @@ TEST_P(VisitorZooPlan, FamiliesWithTheirYoungOnTheOpeningDay) {
             youngest += AgeYears(*animal, zoo_.Time()) < def.maturityYears * 0.25f ? 1 : 0;
         }
         sucklings += youngest;
-        const bool pair = species == "tiger";
+        const bool allAdults = species == "tiger" || species == "aldabra_tortoise" ||
+                               species == "corn_snake" || species == "black_headed_python" ||
+                               species == "mandarin_duck";
         // A joey under half a year lives in the pouch, which the simulation has not: the zoo's
         // joeys are young at foot, past their first quarter of maturity.
         const bool pouch = species == "kangaroo";
-        EXPECT_EQ(youngest > 0, !pair && !pouch) << species;
+        EXPECT_EQ(youngest > 0, !allAdults && !pouch) << species;
         int grownMales = 0;
         for (const Animal* animal : group) {
             grownMales += animal->sex == Sex::Male && IsAdult(*animal, def, zoo_.Time()) ? 1 : 0;
@@ -991,6 +1103,11 @@ TEST_P(VisitorZooPlan, BenchesStandInShade) {
             ASSERT_NE(bench, nullptr) << home.name;
             float nearest = 1.0e9f;
             for (const Prop& prop : zoo_.Objects().Props()) {
+                if (KindOf(zoo_, prop).id == "snake_pavilion" &&
+                    std::abs(bench->position.x - prop.position.x) < 15.0f * prop.scale &&
+                    std::abs(bench->position.z - prop.position.z) < 8.8f * prop.scale) {
+                    nearest = 0.0f;
+                }
                 if (KindOf(zoo_, prop).role == PropRole::Tree &&
                     !zoo_.Habitats().At(World::TileAt(prop.position))) {
                     nearest = std::min(nearest, Distance(prop.position, bench->position));
@@ -1002,7 +1119,7 @@ TEST_P(VisitorZooPlan, BenchesStandInShade) {
             }
         }
     }
-    EXPECT_EQ(benches, 54);
+    EXPECT_EQ(benches, 66);
     // Three walks run between the planted strips of two habitats and have no lawn for a tree; a
     // strip's own planting stays below the eye (VisitorZooHabitatTests). Their benches are the
     // exception, by name, so that a fourth is noticed.

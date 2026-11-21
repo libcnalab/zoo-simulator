@@ -55,6 +55,7 @@ struct SpeciesDef {
     float bodyRadiusM = 0.6f;
     float walkSpeed = 1.0f;  ///< m/s, relaxed walk
     float runSpeed = 4.0f;   ///< m/s, the fastest gait the animation set shows
+    bool independentYoung = false;  ///< Hatchlings forage without following or nursing from a parent.
     bool canSwim = false;
     bool canClimb = false;
     float jumpHeightM = 1.0f;  ///< how high a barrier it clears

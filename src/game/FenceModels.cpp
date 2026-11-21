@@ -372,8 +372,22 @@ void BuildFencePost(ModelBuilder& model, const FenceLook& look, const Vector3& b
 }
 
 void BuildFencePanel(ModelBuilder& model, const FenceLook& look, const Vector3& a, const Vector3& b,
-                     bool gate, std::uint32_t seed) {
+                     bool gate, std::uint32_t seed, bool visitorGate) {
     const float h = look.height;
+    if (visitorGate) {
+        MeshWriter& frame = model.Use(kGateGreen, Pattern::Metal);
+        for (float side : {0.03f, 0.97f}) {
+            frame.Beam(Along(a, b, side, 0), Along(a, b, side, h), 0.10f, 0.10f);
+        }
+        frame.Beam(Along(a, b, 0, h), Along(a, b, 1, h), 0.12f, 0.14f);
+        MeshWriter& cords = model.Use(look.color, Pattern::Plain);
+        for (int i = 1; i < 12; ++i) {
+            const float t = static_cast<float>(i) / 12.0f;
+            const float gathered = t < 0.5f ? t * 0.30f : 1.0f - (1.0f - t) * 0.30f;
+            cords.Beam(Along(a, b, t, h - 0.06f), Along(a, b, gathered, 0.25f), 0.035f, 0.025f);
+        }
+        return;
+    }
     if (gate) {
         GateFrame(model, a, b, h);
     }

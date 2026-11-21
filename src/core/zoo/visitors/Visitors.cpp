@@ -31,23 +31,29 @@ float PaceOf(const Visitor& visitor) {
 
 namespace {
 
-const ViewingSpot& SpreadFront(const ViewSite& site) {
-    const ViewingSpot* chosen = &site.spots.front();
+const ViewingSpot* SpreadFront(const ViewSite& site, const Env& env, const Animals& animals,
+                               std::size_t groupSize) {
+    const ViewingSpot* chosen = nullptr;
     float best = std::numeric_limits<float>::max();
     for (const ViewingSpot& spot : site.spots) {
         const float score = DistanceSquared(World::TileCenter(spot.tile), site.centre) +
                             (spot.side == Dir::North ? 0.0f : 100000.0f);
-        if (score < best) {
+        if (score >= best) continue;
+        bool clear = true;
+        for (std::size_t slot = 0; slot < groupSize && clear; ++slot) {
+            clear = !animals.CrowdsResident(env.enclosures, env.species, env.time,
+                                            ViewingPosition(spot, static_cast<int>(slot)));
+        }
+        if (clear) {
             best = score;
             chosen = &spot;
         }
     }
-    return *chosen;
+    return chosen;
 }
 
-void SpreadWatchers(std::span<Visitor> group, const ViewSite& site, std::int64_t now, float linger,
-                    Rng& rng) {
-    const ViewingSpot& spot = SpreadFront(site);
+void SpreadWatchers(std::span<Visitor> group, const ViewSite& site, const ViewingSpot& spot,
+                    std::int64_t now, float linger, Rng& rng) {
     for (std::size_t member = 0; member < group.size(); ++member) {
         Visitor& visitor = group[member];
         visitor.slot = static_cast<std::uint8_t>(member);
@@ -282,7 +288,7 @@ void Visitors::SetPace(const VisitorPace& pace) {
     pace_.most = std::clamp(pace.most, 0, kMaxVisitors);
 }
 
-int Visitors::Spread(const Env& env) {
+int Visitors::Spread(const Env& env, const Animals& animals) {
     if (!scratch_) {
         scratch_ = std::make_unique<Scratch>();
     }
@@ -368,9 +374,11 @@ int Visitors::Spread(const Env& env) {
             // scattering the rest over the walks. Short visit fills need this too:
             // random distant paths cannot reach every front in the remaining ticks.
             if (nextView < sites.views.size()) {
-                SpreadWatchers(std::span<Visitor>(visitors_).subspan(first, end - first),
-                               sites.views[nextView], env.time.tick, pace_.linger, rng_);
-                ++nextView;
+                const ViewSite& site = sites.views[nextView++];
+                if (const ViewingSpot* spot = SpreadFront(site, env, animals, end - first)) {
+                    SpreadWatchers(std::span<Visitor>(visitors_).subspan(first, end - first), site, *spot,
+                                   env.time.tick, pace_.linger, rng_);
+                }
             }
         }
         first = end;

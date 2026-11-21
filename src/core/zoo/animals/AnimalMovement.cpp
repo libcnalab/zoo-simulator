@@ -80,9 +80,15 @@ void KeepWaypointsOffProps(std::vector<Vec2>& route, Vec2 start, float girth, co
 
 }  // namespace
 
+float GirthRadius(float bodyRadius, const SpeciesDef& species) {
+    // A rigid shell sweeps its full radius when the animal turns beside a companion.
+    return species.group == "tortoise" ? bodyRadius : bodyRadius * tuning::kBodyWidthFraction;
+}
+
 void AdvanceMovement(Animal& animal, const SpeciesDef& species, const Env& env, int& pathCalls,
                      std::span<const Animal> animals, std::span<const std::size_t> neighbors,
-                     std::vector<PropId>& propScratch, std::vector<NavObstacle>& navScratch) {
+                     std::vector<PropId>& propScratch, std::vector<NavObstacle>& navScratch,
+                     std::span<const Vec2> people) {
     if (!animal.InWorld() || animal.shelter) {
         animal.speed = 0.0f;
         return;
@@ -155,7 +161,12 @@ void AdvanceMovement(Animal& animal, const SpeciesDef& species, const Env& env, 
         return;
     }
     // An errand that takes for ever is one that cannot be done: think again.
-    if (animal.activityTicks > tuning::kWalkGiveUpTicks && animal.activity != AnimalActivity::BreakOut) {
+    // A slow animal that keeps making progress gets time to cover a forty-metre gallery.
+    // Stalled animals still use the much shorter waypoint progress timeout below.
+    const float maxWalkTicks = std::max(static_cast<float>(tuning::kWalkGiveUpTicks),
+                                        40.0f / (species.walkSpeed * tuning::kMotionSecondsPerTick));
+    if (static_cast<float>(animal.activityTicks) > maxWalkTicks &&
+        animal.activity != AnimalActivity::BreakOut) {
         animal.moving = false;
         animal.speed = 0.0f;
         animal.activityLeft = 0;
@@ -163,6 +174,8 @@ void AdvanceMovement(Animal& animal, const SpeciesDef& species, const Env& env, 
         animal.routeIndex = 0;
         return;
     }
+    const float bodyRadius = species.bodyRadiusM * bodyScale;
+    const float girth = GirthRadius(bodyRadius, species);
     if (animal.route.empty()) {
         animal.stallBest = -1.0f;
         animal.stallTicks = 0;
@@ -176,7 +189,6 @@ void AdvanceMovement(Animal& animal, const SpeciesDef& species, const Env& env, 
     } else if (animal.route.empty() && animal.position != animal.target) {
         navScratch.clear();
         const EnclosureId home = env.enclosures.At(animal.position);
-        const float girth = species.bodyRadiusM * bodyScale * tuning::kBodyWidthFraction;
         if (home) {
             const TileCoord from = World::TileAt(animal.position);
             const TileCoord to = World::TileAt(animal.target);
@@ -233,9 +245,7 @@ void AdvanceMovement(Animal& animal, const SpeciesDef& species, const Env& env, 
                 animal.activityLeft = 0;
                 return;
             }
-            KeepWaypointsOffProps(animal.route, animal.position,
-                                  species.bodyRadiusM * bodyScale * tuning::kBodyWidthFraction, env, profile,
-                                  propScratch);
+            KeepWaypointsOffProps(animal.route, animal.position, girth, env, profile, propScratch);
             animal.routeIndex = 0;
         }
     }
@@ -279,9 +289,6 @@ void AdvanceMovement(Animal& animal, const SpeciesDef& species, const Env& env, 
         desiredSpeed < animal.speed ? tuning::kBrakeAcceleration : tuning::kWalkAcceleration;
     animal.speed = Approach(animal.speed, desiredSpeed, acceleration * tuning::kMotionSecondsPerTick);
     const float distanceThisTick = std::min(animal.speed * tuning::kMotionSecondsPerTick, remaining);
-    const float bodyRadius = species.bodyRadiusM * bodyScale;
-    // Between trees it is the width of the body that counts, not its length.
-    const float girth = bodyRadius * tuning::kBodyWidthFraction;
     const Vec2 planned = Normalized(nextDelta) * distanceThisTick;
     Vec2 step = planned;
     // Sliding along what stands in the way. Only what the step comes closer to counts: an
@@ -349,7 +356,7 @@ void AdvanceMovement(Animal& animal, const SpeciesDef& species, const Env& env, 
             const SpeciesDef& otherSpecies = env.species.All()[static_cast<std::size_t>(other.species)];
             const float otherRadius = otherSpecies.bodyRadiusM * BodyScale(other, otherSpecies, env.time);
             const float clearance =
-                girth + otherRadius * tuning::kBodyWidthFraction + tuning::kAnimalClearanceM;
+                girth + GirthRadius(otherRadius, otherSpecies) + tuning::kAnimalClearanceM;
             if (pass == 0) {
                 slide(other.position, clearance);
             } else if (runsInto(other.position, clearance)) {
@@ -388,6 +395,14 @@ void AdvanceMovement(Animal& animal, const SpeciesDef& species, const Env& env, 
             return;
         }
         step = {};
+    }
+    const float personClearance = SharedWalkClearance(bodyRadius);
+    for (const Vec2 person : people) {
+        const float after = DistanceSquared(animal.position + step, person);
+        if (after < personClearance * personClearance && after < DistanceSquared(animal.position, person)) {
+            step = {};
+            break;
+        }
     }
     animal.speed = Length(step) / tuning::kMotionSecondsPerTick;
     animal.position = animal.position + step;

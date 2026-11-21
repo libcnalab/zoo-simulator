@@ -96,9 +96,9 @@ bool ClearPlace(Vec2 point, const Animal& animal, const SpeciesDef& species, con
                                     IsAdult(other, species, env.time)
                                 ? species.aggression * 2.0f
                                 : 0.0f;
-        const float apart = (radius + otherSpecies.bodyRadiusM * BodyScale(other, otherSpecies, env.time)) *
-                                tuning::kBodyWidthFraction +
-                            0.1f + rival;
+        const float otherRadius = otherSpecies.bodyRadiusM * BodyScale(other, otherSpecies, env.time);
+        const float apart =
+            GirthRadius(radius, species) + GirthRadius(otherRadius, otherSpecies) + 0.1f + rival;
         if (DistanceSquared(point, other.position) < apart * apart ||
             (other.moving && DistanceSquared(point, other.target) < apart * apart)) {
             return false;
@@ -173,7 +173,7 @@ Vec2 RoutinePlace(const Animal& animal, const SpeciesDef& species, const Behavio
         if (other.species == animal.species && other.id.value < animal.id.value) {
             ++rank;
         }
-        if (other.id == animal.mother && other.Visible() &&
+        if (!species.independentYoung && other.id == animal.mother && other.Visible() &&
             AgeYears(animal, env.time) < species.maturityYears * 0.5f) {
             anchor = &other;
         }
@@ -256,6 +256,15 @@ Vec2 RoutinePlace(const Animal& animal, const SpeciesDef& species, const Behavio
         float score = -Length(point - favourite) * 0.12f - Length(point - animal.position) * 0.08f;
         if (rest) {
             score -= Length(point - favourite) * 0.2f;
+        }
+        if (species.group == "tortoise" && (rest || FeedingActivity(activity))) {
+            // A trip to the opposite bank can take several minutes at a tortoise's walk.
+            // Graze where grass is available and settle nearby unless better shade merits the trip.
+            const float travelSeconds = Length(point - animal.position) / species.walkSpeed;
+            score -= travelSeconds * 0.24f;
+            if (FeedingActivity(activity) && env.world.At(World::TileAt(point)).terrain == Terrain::Grass) {
+                score += 4.0f;
+            }
         }
         if (activity == AnimalActivity::Idle || activity == AnimalActivity::Preen ||
             activity == AnimalActivity::Sentinel) {

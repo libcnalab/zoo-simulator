@@ -7,6 +7,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <map>
+#include <numbers>
 #include <optional>
 
 #include "GroundPaint.hpp"
@@ -722,6 +723,14 @@ void ZooGame::AddMapPlaces(VisitMap& map) const {
         const zoo::Vec2 centre{
             0.5f * static_cast<float>(enclosure.min.x + enclosure.max.x + 1) * zoo::kTileSize,
             0.5f * static_cast<float>(enclosure.min.z + enclosure.max.z + 1) * zoo::kTileSize};
+        if (enclosure.walkThrough) {
+            if (const auto tile = paved(zoo::World::TileAt(centre), 4);
+                tile && zoo_->Habitats().At(*tile) == enclosure.id) {
+                const auto at = zoo::World::TileCenter(*tile);
+                map.places.push_back({at.x, at.z, std::numbers::pi_v<float>, enclosure.name, true});
+                continue;
+            }
+        }
         const zoo::ViewingSpot* best = nullptr;
         float score = 1.0e9f;
         for (const zoo::ViewingSpot& spot : enclosure.viewing) {
@@ -740,6 +749,17 @@ void ZooGame::AddMapPlaces(VisitMap& map) const {
         map.places.push_back({at.x, at.z,
                               std::atan2(static_cast<float>(toward.x), static_cast<float>(toward.z)),
                               enclosure.name, true});
+    }
+    for (const zoo::Prop& prop : zoo_->Objects().Props()) {
+        const auto& def = zoo_->Definitions().props[static_cast<std::size_t>(prop.def)];
+        if (def.id == "snake_pavilion") {
+            if (const auto tile = paved(zoo::World::TileAt(prop.position), 1)) {
+                const auto at = zoo::World::TileCenter(*tile);
+                // The shared house stays legible when the two nearby terrarium labels move aside.
+                map.labels.insert(map.labels.begin(), {prop.position.x, prop.position.z, def.name, true});
+                map.places.push_back({at.x, at.z, -std::numbers::pi_v<float> * 0.5f, def.name, false});
+            }
+        }
     }
     const std::size_t habitats = map.places.size();
 

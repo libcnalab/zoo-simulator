@@ -23,7 +23,7 @@ std::string ValidJson() {
 TEST(SpeciesTests, LoadsAllFilesInNameOrderAndSupportsLookup) {
     const auto catalog = Catalog();
     ASSERT_TRUE(catalog.Errors().empty()) << (catalog.Errors().empty() ? "" : catalog.Errors().front());
-    ASSERT_EQ(catalog.All().size(), 19U);
+    ASSERT_EQ(catalog.All().size(), 23U);
     for (std::size_t i = 0; i < catalog.All().size(); ++i) {
         if (i > 0) {
             EXPECT_LT(catalog.All()[i - 1].id, catalog.All()[i].id);
@@ -38,7 +38,7 @@ TEST(SpeciesTests, LoadsAllFilesInNameOrderAndSupportsLookup) {
 
 TEST(SpeciesTests, RealDataHasCoherentRelativeValues) {
     const auto c = Catalog();
-    ASSERT_EQ(c.All().size(), 19U);
+    ASSERT_EQ(c.All().size(), 23U);
     EXPECT_EQ(c.Find("elephant")->adultMassKg, 5000.0f);
     EXPECT_LT(c.Find("meerkat")->adultMassKg, c.Find("penguin")->adultMassKg);
     EXPECT_LT(c.Find("polar_bear")->tempMinC, c.Find("lion")->tempMinC);

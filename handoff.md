@@ -26,6 +26,18 @@ whatever you take up (`docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `docs/V
   collision radius before offering a destination. The seed-1 map at 13:00 includes
   all 18 habitat stops among 28 travel destinations.
 
+- A fresh visit has 116 residents of 23 species in 22 habitats. The M map lists 33 destinations.
+  Follow the west garden loop to Woodland Aviary or use its map stop. Four Mandarin ducks share
+  a dry pondside boardwalk with the visitors. Public curtains admit pedestrians at both ends.
+  In the east garden, the Snake Pavilion stop opens onto a covered aisle between a corn snake and
+  a black-headed python in separate terraria. Farther south, three adult giant tortoises occupy
+  Aldabra Meadow. Its map stop leads to the public glass. New starts use visit cache revision 10.
+  A revision-7 visit loaded with its original 107 animals, world and visitor sightings.
+  All 349 active native tests, all 170 procedural animation tests and the three full deterministic
+  visit fills passed. In a five-minute seed-1 afternoon visit all four ducks shared the boardwalk
+  with visitors and three crossed to the opposite bank.
+  See `docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md` and `docs/ANIMALS.md`.
+
 - The lynx, red pandas, snow leopards and wolves now have visible eyes in all nine
   adult and juvenile models. Matched close-ups are in
   `docs/evidence/carnivore-eyes-2026-11-21.jpg`. The facial-landmark test reads the

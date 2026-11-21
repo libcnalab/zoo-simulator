@@ -406,6 +406,72 @@ TEST(AnimalEthogramTests, HabitatWaterShadeAndHighGroundAreUsedWithoutUnsafeTarg
     }
 }
 
+TEST(AnimalEthogramTests, TortoiseGrazesAtItsFeetAndWalksToNearbyShadeAtMidday) {
+    HabitatDay habitat("aldabra_tortoise");
+    const auto& species = habitat.species.All()[static_cast<std::size_t>(habitat.speciesIndex)];
+    const auto* profile = animal_internal::ProfileFor(species);
+    ASSERT_NE(profile, nullptr);
+    Animal& animal = *habitat.animals.Find(AnimalId{1U});
+    const std::array<std::size_t, 4> neighbors{0, 1, 2, 3};
+    std::vector<PropId> scratch;
+    auto targetFor = [&](AnimalActivity activity) {
+        return animal_internal::RoutinePlace(animal, species, *profile, activity,
+                                             habitat.enclosures.All().front(), habitat.env,
+                                             habitat.animals.All(), neighbors, scratch);
+    };
+    animal.position = World::TileCenter({10, 17});
+    EXPECT_LT(Distance(targetFor(AnimalActivity::Forage), animal.position), 0.1f);
+    habitat.env.time.shift = (13 - GameTime::kStartHour) * kTicksPerGameHour;
+    const Vec2 tree = World::TileCenter({18, 23});
+    animal.position = World::TileCenter({18, 20});
+    const Vec2 rest = targetFor(AnimalActivity::Rest);
+    EXPECT_LT(Distance(rest, tree), Distance(animal.position, tree));
+    EXPECT_FALSE(habitat.world.HasWater(World::TileAt(rest)));
+}
+
+TEST(AnimalEthogramTests, TortoiseStartsForWaterEarlierWhenItMustCrossTheHabitat) {
+    HabitatDay habitat("aldabra_tortoise");
+    const SpeciesDef& species = habitat.species.All()[static_cast<std::size_t>(habitat.speciesIndex)];
+    const Enclosure& home = habitat.enclosures.All().front();
+    ASSERT_FALSE(home.troughs.empty());
+    const Prop* water = habitat.objects.FindProp(home.troughs.front());
+    ASSERT_NE(water, nullptr);
+    Animal& animal = *habitat.animals.Find(AnimalId{1U});
+    animal.position = water->position;
+    const float near = animal_internal::ProvisionThresholds(animal, species, habitat.env, &home).thirst;
+    animal.position = water->position - Vec2{0.0f, 18.0f};
+    animal.activity = AnimalActivity::Sleep;
+    const float far = animal_internal::ProvisionThresholds(animal, species, habitat.env, &home).thirst;
+    EXPECT_LE(far + 0.1f, near);
+    EXPECT_GE(far, 0.2f);
+}
+
+TEST(AnimalEthogramTests, WalkingTortoiseKeepsItsRigidShellClearOfACompanion) {
+    HabitatDay habitat("aldabra_tortoise");
+    const auto& species = habitat.species.All()[static_cast<std::size_t>(habitat.speciesIndex)];
+    Animal& walker = *habitat.animals.Find(AnimalId{1U});
+    const Animal& companion = *habitat.animals.Find(AnimalId{2U});
+    walker.position = companion.position + Vec2{-2.5f, 0.15f};
+    const Vec2 start = walker.position;
+    walker.target = companion.position + Vec2{2.5f, 0.15f};
+    walker.route = {walker.target};
+    walker.moving = true;
+    walker.activity = AnimalActivity::Wander;
+    const std::array<std::size_t, 2> neighbors{0, 1};
+    std::vector<PropId> props;
+    std::vector<NavObstacle> obstacles;
+    int paths = 0;
+    float closest = Distance(walker.position, companion.position);
+    for (int step = 0; step < 1800; ++step) {
+        animal_internal::AdvanceMovement(walker, species, habitat.env, paths, habitat.animals.All(),
+                                         neighbors, props, obstacles);
+        closest = std::min(closest, Distance(walker.position, companion.position));
+        ++habitat.env.time.tick;
+    }
+    EXPECT_GT(Distance(walker.position, start), 4.0f);
+    EXPECT_GE(closest, 1.22f);
+}
+
 TEST(AnimalEthogramTests, AdultAndYoungCapybarasRestInWaterAtMiddayAndForageOnLand) {
     HabitatDay habitat("capybara");
     const SpeciesDef& species = habitat.species.All()[static_cast<std::size_t>(habitat.speciesIndex)];

@@ -55,6 +55,7 @@ const std::set<std::string> kKeys = {"id",
                                      "litterMin",
                                      "litterMax",
                                      "birthIntervalYears",
+                                     "independentYoung",
                                      "diet",
                                      "foods",
                                      "foodPerDayKg",
@@ -282,6 +283,8 @@ bool SpeciesCatalog::AddFromJson(std::string_view jsonText, std::string_view ori
         NUM(litterMin);
         NUM(litterMax);
         NUM(birthIntervalYears);
+        if (j.contains("independentYoung"))
+            BOOL(independentYoung);
         {
             auto v = ParseEnum<Diet>(Read<std::string>(j, "diet"), kDietNames);
             if (!v)

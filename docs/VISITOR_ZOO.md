@@ -15,12 +15,12 @@ then call `BuildVisitorZoo(zoo, options)`. `withoutSpecies` suppresses animals o
                                 /             \
        Red Panda Canopy — northern woodland circuit + picnic glade — Lynx Ridge
                       /             |                 /
-             Polar Sound     Bear Falls — Wolf Wood — Tiger Forest
+Woodland Aviary — Polar Sound    Bear Falls — Wolf Wood — Tiger Forest — Snake Pavilion
                   |              \    northern court    /       |
 Capybara Marsh — Penguin Cove === woodland shortcut ======= Lion Rock
                   |             Red Dune                        |
              Elephant Valley === central food court ============ |
-                  |           shaded garden shortcut       Acacia Plain
+                  |           shaded garden shortcut       Acacia Plain — Aldabra Meadow
                   |                                    giraffes + zebras
              Rhino Hollow    Kangaroo Grove — Ostrich Rise      |
                     \           Meerkat Lookout — Flamingo Lagoon
@@ -30,8 +30,9 @@ Capybara Marsh — Penguin Cove === woodland shortcut ======= Lion Rock
 ```
 
 Two gravel walks link existing galleries through the new land. On the west, follow the path
-from Elephant Valley past Capybara Marsh to Polar Sound for a picnic stop with ice cream and toilets. The eastern
-walk links Acacia Plain and Tiger Forest, with drinks, picnic tables and toilets halfway.
+from Elephant Valley past Capybara Marsh and the picnic stop to Woodland Aviary and Polar Sound.
+The eastern walk links Acacia Plain and Tiger Forest via Aldabra Meadow and the Snake Pavilion.
+Both garden walks have drinks, seating and toilets.
 
 The asphalt round bends between habitats; gravel circuits, curved viewing bays and shortcuts
 make shorter visits possible. Boardwalks follow the lagoon and Penguin Cove. Habitat outlines
@@ -309,6 +310,47 @@ measured again 500 ticks later:
 | 6000 | 1 | 1054235427821063531 | 8043702145645978796 |
 | 6000 | 2 | 11740243411003087215 | 9360760697049082900 |
 | 6000 | 3 | 11257981172144800077 | 1213298953784258099 |
+
+## Aldabra Meadow (2026-11-21)
+
+Two gravel approaches connect the east garden rest stop and the Lion Rock walk to a
+988 m² meadow with 54 public viewing tiles. A 56 m² shallow basin, low forage trays,
+shade trees and a heated barn serve three adult Aldabra giant tortoises. The opening
+group consists of one 60-year-old male and two females aged 45 and 55. At the meadow’s introduction in revision 8,
+seed 1 opened with 110 animals of 20 species in 19 habitats and 29 map destinations.
+The narrower legacy property retains its original 17 habitats.
+Clicking Aldabra Meadow places the visitor at (385, 289) m on its southern gallery.
+
+A revision-7 visit loaded with its original 107 animals and 800 guests. Saving it again
+preserved the world, every animal record and each of the 70 visitors' nonempty lists
+of species seen. New visits use cache revision 10 for the reptile and waterfowl exhibits.
+
+## Snake Pavilion and Woodland Aviary
+
+From the east garden loop, a covered aisle passes between two separate terraria. Look through
+the glass for Jamal, the eastern corn snake, and Faris, the black-headed python. Each has a
+heated rock hide, low feeding dishes and a water basin. The Snake Pavilion stop on the visitor
+map lands inside the aisle. [Photographs from the visitor game](evidence/snake-pavilion-2026-11-21.jpg).
+
+A fresh seed-1 visit now has 116 animals of 23 species in 22 habitats. Press M to see the
+33 destinations, including both terraria and the shared pavilion entrance.
+
+The 676 m² Woodland Aviary occupies the west garden. The two net curtains admit visitors to a boardwalk
+between the feeding bank and the pond. The four Mandarin ducks can use the entire habitat,
+including the boardwalk. A two-metre bank separates the level public walkway from the pond. People and birds can meet here without
+opening keeper gates elsewhere in the zoo. Its map stop lands on the boardwalk.
+[Views from the aviary](evidence/woodland-aviary-2026-11-21.jpg).
+
+Revision-10 visit hashes after the morning fill and after 500 additional simulation ticks.
+
+| Fill ticks | Seed | Opening state | After 500 ticks |
+|---:|---:|---:|---:|
+| 600 | 1 | 11082510491833934291 | 3162471487853591516 |
+| 600 | 2 | 3876869180915114079 | 3874930504576654737 |
+| 600 | 3 | 16929374773383110532 | 2348993242117729354 |
+| 6000 | 1 | 7492788604367843800 | 7007152384411224208 |
+| 6000 | 2 | 14526229057177862580 | 6730451261041992047 |
+| 6000 | 3 | 3040838740475665900 | 1585549415693143411 |
 
 ## Stand-off welfare measurements
 

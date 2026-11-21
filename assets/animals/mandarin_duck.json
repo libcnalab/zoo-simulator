@@ -1,0 +1,136 @@
+{
+  "bones": 15,
+  "clips": [
+    {
+      "duration": 0.6,
+      "events": [
+        {
+          "name": "step",
+          "time": 0.0
+        },
+        {
+          "name": "step",
+          "time": 0.3
+        }
+      ],
+      "frames": 19,
+      "loop": true,
+      "name": "walk",
+      "speed": 0.34
+    },
+    {
+      "duration": 0.4,
+      "events": [
+        {
+          "name": "step",
+          "time": 0.0
+        },
+        {
+          "name": "step",
+          "time": 0.2
+        }
+      ],
+      "frames": 13,
+      "loop": true,
+      "name": "trot",
+      "speed": 0.63
+    },
+    {
+      "duration": 4.0,
+      "events": [],
+      "frames": 121,
+      "loop": true,
+      "name": "idle",
+      "speed": 0.0
+    },
+    {
+      "duration": 7.0,
+      "events": [],
+      "frames": 211,
+      "loop": true,
+      "name": "rest",
+      "speed": 0.0
+    },
+    {
+      "duration": 8.0,
+      "events": [],
+      "frames": 241,
+      "loop": true,
+      "name": "sleep",
+      "speed": 0.0
+    },
+    {
+      "duration": 3.0,
+      "events": [],
+      "frames": 91,
+      "loop": true,
+      "name": "eat",
+      "speed": 0.0
+    },
+    {
+      "duration": 3.5,
+      "events": [],
+      "frames": 106,
+      "loop": true,
+      "name": "drink",
+      "speed": 0.0
+    },
+    {
+      "duration": 2.0,
+      "events": [],
+      "frames": 61,
+      "loop": true,
+      "name": "vocalize",
+      "speed": 0.0
+    },
+    {
+      "duration": 5.0,
+      "events": [],
+      "frames": 151,
+      "loop": true,
+      "name": "preen",
+      "speed": 0.0
+    },
+    {
+      "duration": 1.1,
+      "events": [],
+      "frames": 34,
+      "loop": true,
+      "name": "swim",
+      "speed": 0.36
+    }
+  ],
+  "generator": "tools/animals (zoogen)",
+  "license": "MIT",
+  "meta": {
+    "activity_clips": {
+      "preen": "preen"
+    },
+    "body_length_m": 0.49,
+    "common_name": "Mandarin duck",
+    "roughness": 0.84,
+    "scientific_name": "Aix galericulata",
+    "shoulder_height_m": 0.33,
+    "swim": {
+      "clip": "swim",
+      "depth_m": 0.16,
+      "speed": 0.36
+    }
+  },
+  "name": "mandarin_duck",
+  "skeleton_bounds_animal_space": {
+    "max": [
+      0.241,
+      0.069,
+      0.284
+    ],
+    "min": [
+      -0.154,
+      -0.069,
+      0.0
+    ]
+  },
+  "texture": 1024,
+  "triangles": 17592,
+  "vertices": 8830
+}

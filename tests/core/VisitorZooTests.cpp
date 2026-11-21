@@ -42,7 +42,7 @@ void ExpectPublicAccess(const Zoo& zoo) {
     for (const Prop& prop : zoo.Objects().Props()) {
         const PropDef& def = zoo.Definitions().props[static_cast<std::size_t>(prop.def)];
         if (def.role != PropRole::Bench && def.role != PropRole::Lamp && def.role != PropRole::Bin &&
-            def.role != PropRole::InfoBoard) {
+            def.role != PropRole::InfoBoard && def.id != "snake_pavilion") {
             EXPECT_EQ(zoo.Map().At(World::TileAt(prop.position)).path, PathKind::None) << def.id;
         }
     }
@@ -189,7 +189,7 @@ TEST(VisitorZooTests, CompleteZoo) {
     ExpectNoProblems(BuildVisitorZoo(zoo));
     ExpectConnected(zoo);
     ExpectPublicAccess(zoo);
-    EXPECT_EQ(zoo.Habitats().All().size(), 18U);
+    EXPECT_EQ(zoo.Habitats().All().size(), 22U);
     std::set<int> species;
     const Env env = zoo.MakeEnv();
     for (const Animal& animal : zoo.Fauna().All()) {
@@ -212,7 +212,7 @@ TEST(VisitorZooTests, CompleteZoo) {
         EXPECT_GE(Containment(def, enclosure->stats), 0.99f) << def.id;
         EXPECT_GE(enclosure->stats.shelterCapacity, group.allAnimals) << def.id;
     }
-    EXPECT_EQ(species.size(), 19U);
+    EXPECT_EQ(species.size(), 23U);
     PrintPlan(zoo);
     for (const Enclosure& enclosure : zoo.Habitats().All()) {
         EXPECT_GE(enclosure.stats.gates, 1) << enclosure.name;
@@ -237,7 +237,7 @@ TEST(VisitorZooTests, SpeciesCanBeOmittedWithoutRemovingTheirHabitat) {
     Zoo zoo(testdata::GameCatalog(), testdata::GameSpecies(), VisitorZooConfig());
     ExpectNoProblems(BuildVisitorZoo(zoo, {{"flamingo"}}));
     EXPECT_EQ(zoo.AnimalCount(zoo.SpeciesList().IndexOf("flamingo")), 0);
-    EXPECT_EQ(zoo.Habitats().All().size(), 18U);
+    EXPECT_EQ(zoo.Habitats().All().size(), 22U);
     bool lagoon = false;
     for (const Enclosure& enclosure : zoo.Habitats().All()) {
         if (enclosure.name == "Flamingo Lagoon") {

@@ -46,8 +46,8 @@ constexpr std::array<Area, static_cast<std::size_t>(Sign::Count)> kAreas{{
     {512, 320, 512, 128},  // IceCream
     {0, 448, 512, 128},    // Burgers
     {512, 448, 512, 128},  // Education
-    {0, 576, 512, 128},    // Research
-    {512, 576, 512, 128},  // Vet
+    {0, 604, 256, 64},     // Research
+    {256, 604, 256, 64},   // Vet
     {0, 704, 256, 128},    // Staff
     {256, 704, 256, 128},  // StaffOnly
     {512, 704, 256, 128},  // Danger
@@ -56,6 +56,8 @@ constexpr std::array<Area, static_cast<std::size_t>(Sign::Count)> kAreas{{
     {256, 832, 256, 192},  // Board1
     {512, 832, 256, 192},  // Board2
     {768, 832, 256, 192},  // Board3
+    {512, 604, 256, 64},   // Snake Pavilion
+    {768, 604, 256, 64},   // Woodland Aviary
 }};
 
 /// The strokes of a capital on a grid 8 wide (some letters more or less) and 12 high, the
@@ -395,6 +397,8 @@ SignSheet PaintSigns() {
     NameBoard(sheet, Sign::Drinks, "DRINKS", kBlue);
     NameBoard(sheet, Sign::IceCream, "ICE CREAM", Ink{186, 62, 110});
     NameBoard(sheet, Sign::Burgers, "BURGERS", kOrange);
+    NameBoard(sheet, Sign::WoodlandAviary, "WOODLAND AVIARY", kGreen);
+    NameBoard(sheet, Sign::SnakePavilion, "SNAKE PAVILION", kGreen);
     NameBoard(sheet, Sign::Education, "EDUCATION CENTRE", kGreen);
     NameBoard(sheet, Sign::Research, "RESEARCH CENTRE", kSlate);
     NameBoard(sheet, Sign::Vet, "VETERINARY CLINIC", Ink{30, 110, 110});

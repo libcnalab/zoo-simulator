@@ -6,8 +6,13 @@ Each species is defined by one JSON file in `data/species/`. Biological values u
 
 | Common name | Scientific name | Status | Group size | Minimum enclosure m2 | Fence height / strength | Walk / run speed (m/s) | Price | Appeal |
 |---|---|---:|---:|---:|---:|---:|---:|---:|
+| Black-headed python | Aspidites melanocephalus | LC | 1 | 12 | 1.5 m / 2 | 0.15 / 0.27 | 480 | 72 |
+| Eastern corn snake | Pantherophis guttatus | LC | 1 | 8 | 1.5 m / 2 | 0.22 / 0.396 | 120 | 66 |
+| Mandarin duck | Aix galericulata | LC | 2–16 | 55 | 2.0 m / 1 | 0.34 / 0.63 | 480 | 76 |
+| Aldabra giant tortoise | Aldabrachelys gigantea | VU | 1–18 | 140 | 0.9 m / 2 | 0.11 / 0.17 | 7000 | 79 |
 | Brown bear | Ursus arctos | LC | 1–3 | 900 | 4.5 m / 4 | 1.0 / 4 | 8000 | 83 |
 | Bactrian camel | Camelus bactrianus | NE | 2–12 | 700 | 2.3 m / 3 | 1.1 / 4 | 6500 | 73 |
+| Capybara | Hydrochoerus hydrochaeris | LC | 3–18 | 175 | 1.3 m / 2 | 0.71 / 4 | 1100 | 78 |
 | African bush elephant | Loxodonta africana | EN | 3–12 | 1800 | 4.5 m / 5 | 1.3 / 5 | 25000 | 95 |
 | Greater flamingo | Phoenicopterus roseus | LC | 10–100 | 220 | 1.6 m / 2 | 0.7 / 1.5 | 1800 | 78 |
 | Reticulated giraffe | Giraffa reticulata | EN | 2–12 | 700 | 5.0 m / 4 | 1.2 / 5 | 7000 | 87 |
@@ -1110,6 +1115,16 @@ byte.
   also takes a normal map and an occlusion-roughness-metallic map when a model has them and its
   mesh has tangents; the generator writes neither yet.
 
+### Aldabra giant tortoise
+
+The adult male, adult female and juvenile models have a rigid carapace and plastron.
+The neck reaches below the shell rim to graze and drink. Both walking clips keep
+at least three feet planted through each stride. The smaller female has a shorter tail,
+and the juvenile has a flatter dome and a larger head relative to its shell. Each model
+has 24 bones and eight clips. The shell plates, skin and claws were generated with the
+mesh and painted in animal coordinates. The adult body shape and grazing posture follow
+the Smithsonian's description of the species. [Smithsonian’s National Zoo](https://www.nationalzoo.si.edu/animals/aldabra-tortoise)
+
 ### Looking at one animal
 
 ```bash
@@ -1129,3 +1144,15 @@ State of the six animals named first for realism, as the game draws them (2026-1
 toy-like; the elephant is a flat dark grey with no skin relief; the rhino is nearly black, where
 a white rhino is a light dusty grey; the zebra is broken (the head hangs below the chest, stripes
 a hand wide); the penguin is acceptable from standing height.
+
+### Snakes and Mandarin ducks
+
+The two snakes have 24 articulated spine links, a hinged jaw and a forked tongue. The walking
+and faster clips carry a bending wave along the body. Both rest in a loose coil. The corn snake
+has black-bordered saddles and a checked underside. The python has transverse bands and a dark
+head and neck. Each animal is a separate resident of a glass-fronted terrarium.
+
+The Mandarin drake has a red bill, pale brow and raised orange sail feathers. The hen has a
+brown-grey head with a pale eye stripe. Their legs alternate in the land gaits and paddle
+under the body while swimming. Each model has ten clips. The skins and rigs are original to
+the game. Ducklings follow the hen. [Mandarin duck at Honolulu Zoo](https://www.honoluluzoo.org/mandarin-duck/).

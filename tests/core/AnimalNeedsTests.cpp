@@ -125,7 +125,7 @@ TEST(AnimalNeedsTests, StressMovesTowardTheLooseAnimalTargetAtTheDocumentedRates
     EXPECT_NEAR(animals.Find(fallingId)->stress, 0.9f - tuning::kStressFallPerDay * elapsedGameDays, 0.002f);
 }
 
-TEST(AnimalNeedsTests, YoungAnimalSucklesWhileItsMotherIsNearbyAndFed) {
+TEST(AnimalNeedsTests, DependentCalfNursesAndIndependentHatchlingFeedsForItself) {
     World world(40, 40);
     ZooObjects objects;
     Catalog catalog = Catalog::LoadDirectory(std::string(ZOO_SOURCE_DIR) + "/data/construction");
@@ -142,33 +142,43 @@ TEST(AnimalNeedsTests, YoungAnimalSucklesWhileItsMotherIsNearbyAndFed) {
     Enclosures enclosures;
     enclosures.Rebuild(world, objects, catalog);
     Navigator nav(world);
-    Animals animals(23U);
-    const int zebra = species.IndexOf("zebra");
-    ASSERT_GE(zebra, 0);
     std::vector<Event> events;
     Env env{world, objects, enclosures, catalog, species, nav, nullptr, &events, {}, {}};
-    const AnimalId motherId = animals.Add(env, zebra, Sex::Female, 5.0f, World::TileCenter({19, 20}));
-    const AnimalId calfId = animals.Add(env, zebra, Sex::Female, 0.1f, World::TileCenter({20, 20}));
-    ASSERT_TRUE(motherId);
-    ASSERT_TRUE(calfId);
-    Animal* mother = animals.Find(motherId);
-    Animal* calf = animals.Find(calfId);
-    ASSERT_NE(mother, nullptr);
-    ASSERT_NE(calf, nullptr);
-    mother->hunger = 0.2f;
-    mother->activityLeft = kTicksPerDay;
-    calf->mother = motherId;
-    calf->hunger = 0.29f;
-    calf->thirst = 0.29f;
-    calf->activityLeft = kTicksPerDay;
-    for (int tick = 0; tick < kTicksPerDay; ++tick) {
-        env.time.tick = tick;
-        animals.Step(env);
+    for (const std::string_view name : {"zebra", "aldabra_tortoise", "mandarin_duck"}) {
+        SCOPED_TRACE(name);
+        const int kind = species.IndexOf(name);
+        ASSERT_GE(kind, 0);
+        Animals animals(23U);
+        env.time.tick = 0;
+        const AnimalId mother =
+            animals.Add(env, kind, Sex::Female, name == "aldabra_tortoise" ? 45.0f : 5.0f, World::TileCenter({19, 20}));
+        const AnimalId offspring = animals.Add(env, kind, Sex::Female, 0.1f, World::TileCenter({20, 20}));
+        ASSERT_TRUE(mother);
+        ASSERT_TRUE(offspring);
+        animals.Find(mother)->hunger = 0.2f;
+        animals.Find(mother)->activityLeft = kTicksPerDay;
+        Animal& young = *animals.Find(offspring);
+        young.mother = mother;
+        young.hunger = 0.29f;
+        young.thirst = 0.29f;
+        young.activityLeft = kTicksPerDay;
+        for (int tick = 0; tick < kTicksPerDay; ++tick) {
+            env.time.tick = tick;
+            animals.Step(env);
+        }
+        const Animal& grown = *animals.Find(offspring);
+        EXPECT_EQ(grown.mother, mother);
+        if (name != "zebra") {
+            EXPECT_GT(grown.hunger, tuning::kJuvenileNeedCap);
+            EXPECT_GT(grown.thirst, tuning::kJuvenileNeedCap);
+            if (name == "aldabra_tortoise") {
+                EXPECT_FALSE(grown.following);
+            }
+        } else {
+            EXPECT_LE(grown.hunger, tuning::kJuvenileNeedCap);
+            EXPECT_LE(grown.thirst, tuning::kJuvenileNeedCap);
+        }
     }
-    calf = animals.Find(calfId);
-    ASSERT_NE(calf, nullptr);
-    EXPECT_LE(calf->hunger, tuning::kJuvenileNeedCap);
-    EXPECT_LE(calf->thirst, tuning::kJuvenileNeedCap);
 }
 
 TEST(AnimalNeedsTests, AlertsLatchUntilNeedsFallBelowResetThreshold) {

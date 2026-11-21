@@ -336,7 +336,8 @@ BuildPlan Builder::DoFence(std::span<const EdgeRef> edges, int kind, bool gate, 
             const Fence previous = replacements[i];
             const bool toggle = previous.kind == static_cast<std::uint8_t>(kind);
             world_.SetFence(accepted[i],
-                            {static_cast<std::uint8_t>(kind), gate, toggle ? previous.condition : 1.0f});
+                            {static_cast<std::uint8_t>(kind), gate, toggle ? previous.condition : 1.0f,
+                             gate && def->id == "aviary_curtain"});
         }
         enclosures_.Rebuild(world_, objects_, catalog_);
     }

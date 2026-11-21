@@ -1,0 +1,94 @@
+{
+  "bones": 27,
+  "clips": [
+    {
+      "duration": 4.2,
+      "events": [],
+      "frames": 127,
+      "loop": true,
+      "name": "idle",
+      "speed": 0.0
+    },
+    {
+      "duration": 2.2,
+      "events": [],
+      "frames": 67,
+      "loop": true,
+      "name": "walk",
+      "speed": 0.15
+    },
+    {
+      "duration": 1.4667,
+      "events": [],
+      "frames": 45,
+      "loop": true,
+      "name": "trot",
+      "speed": 0.27
+    },
+    {
+      "duration": 6.0,
+      "events": [],
+      "frames": 181,
+      "loop": true,
+      "name": "rest",
+      "speed": 0.0
+    },
+    {
+      "duration": 7.0,
+      "events": [],
+      "frames": 211,
+      "loop": true,
+      "name": "sleep",
+      "speed": 0.0
+    },
+    {
+      "duration": 3.0,
+      "events": [],
+      "frames": 91,
+      "loop": true,
+      "name": "eat",
+      "speed": 0.0
+    },
+    {
+      "duration": 3.8,
+      "events": [],
+      "frames": 115,
+      "loop": true,
+      "name": "drink",
+      "speed": 0.0
+    },
+    {
+      "duration": 2.2,
+      "events": [],
+      "frames": 67,
+      "loop": true,
+      "name": "vocalize",
+      "speed": 0.0
+    }
+  ],
+  "generator": "tools/animals (zoogen)",
+  "license": "MIT",
+  "meta": {
+    "body_length_m": 1.9,
+    "common_name": "Black-headed python",
+    "roughness": 0.58,
+    "scientific_name": "Aspidites melanocephalus",
+    "shoulder_height_m": 0.113
+  },
+  "name": "black_headed_python",
+  "skeleton_bounds_animal_space": {
+    "max": [
+      0.96,
+      0.0,
+      0.0536
+    ],
+    "min": [
+      -0.95,
+      0.0,
+      0.0
+    ]
+  },
+  "texture": 1024,
+  "triangles": 10820,
+  "vertices": 5422
+}

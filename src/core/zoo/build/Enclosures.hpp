@@ -86,6 +86,7 @@ struct Enclosure {
     TileCoord min;  ///< inclusive bounding rectangle
     TileCoord max;
     EnclosureStats stats;
+    bool walkThrough = false;  ///< at least one boundary gate admits visitors
     /// Sorted by (z, x, side); at most one entry per (tile, side).
     std::vector<ViewingSpot> viewing;
     /// Its gate edges, sorted by (horizontal, z, x): where keepers enter.

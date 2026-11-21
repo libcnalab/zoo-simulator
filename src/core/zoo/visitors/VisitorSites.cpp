@@ -166,7 +166,15 @@ void Sites::Refresh(const Env& env) {
         ViewSite site;
         site.enclosure = enclosure.id;
         Vec2 sum;
+        // People come to a walk-through exhibit to see the birds from the boardwalk.
+        // An exhibit whose public door was closed still offers its outside viewing places.
+        const bool enter =
+            enclosure.walkThrough && std::ranges::any_of(enclosure.viewing, [&](const auto& spot) {
+                return env.enclosures.At(spot.tile) == enclosure.id && reachable(spot.tile);
+            });
         for (const ViewingSpot& spot : enclosure.viewing) {
+            if (enter && env.enclosures.At(spot.tile) != enclosure.id)
+                continue;
             if (spot.visibility < 0.05f || !reachable(spot.tile)) {
                 continue;
             }

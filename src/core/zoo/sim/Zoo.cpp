@@ -158,10 +158,36 @@ void Zoo::Step() {
         animals_.SetKeeper(enclosures_.At(member.position), member.position);
         animals_.AddStaffLockout(member.lockout);
     }
+    for (const Enclosure& home : enclosures_.All()) {
+        if (!home.walkThrough)
+            continue;
+        const auto note = [&](Vec2 at) {
+            const auto tile = World::TileAt(at);
+            if (tile.x >= home.min.x && tile.x <= home.max.x && tile.z >= home.min.z &&
+                tile.z <= home.max.z && enclosures_.At(tile) == home.id)
+                animals_.NotePerson(home.id, at);
+        };
+        if (const Vec2* player = visitors_.Bystander())
+            note(*player);
+        for (const Visitor& guest : visitors_.All()) {
+            if (!guest.inside)
+                note(guest.position);
+        }
+    }
     animals_.Step(env);
     visitors_.ClearMovingObstacles();
     for (const StaffMember& member : staff_.All()) {
         visitors_.AddMovingObstacle(member.position);
+    }
+    for (const Animal& animal : animals_.All()) {
+        if (!animal.Visible())
+            continue;
+        const auto tile = World::TileAt(animal.position);
+        if (world_.InBounds(tile) && world_.At(tile).path != PathKind::None) {
+            const Enclosure* home = enclosures_.Find(animal.home);
+            if (home && home->walkThrough)
+                visitors_.AddMovingObstacle(animal.position);
+        }
     }
     visitors_.Step(env, animals_);
     staff_.Step(env, animals_, visitors_);
@@ -573,7 +599,7 @@ ActionError Zoo::TreatAnimal(AnimalId id) {
 
 int Zoo::SpreadVisitors() {
     const Env env = MakeEnv();
-    return visitors_.Spread(env);
+    return visitors_.Spread(env, animals_);
 }
 
 Money Zoo::RefillFeeder(PropId feeder) {

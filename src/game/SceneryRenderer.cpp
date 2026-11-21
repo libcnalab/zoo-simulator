@@ -132,9 +132,10 @@ void WritePanel(ModelBuilder& model, const zoo::World& world, const zoo::Catalog
         if (look.heavy || look.style == zoo::FenceStyle::Moat) {
             look.inward = AnimalSide(world, edge);
         }
-        BuildFencePanel(model, look, a, b, fence.gate,
-                        Scramble(static_cast<std::uint32_t>(x), static_cast<std::uint32_t>(z),
-                                 horizontal ? 1u : 2u));
+        BuildFencePanel(
+            model, look, a, b, fence.gate,
+            Scramble(static_cast<std::uint32_t>(x), static_cast<std::uint32_t>(z), horizontal ? 1u : 2u),
+            fence.visitorGate);
     }
 }
 

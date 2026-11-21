@@ -1,0 +1,131 @@
+{
+  "bones": 24,
+  "clips": [
+    {
+      "duration": 2.5,
+      "events": [
+        {
+          "name": "step",
+          "time": 0.0
+        },
+        {
+          "name": "step",
+          "time": 0.625
+        },
+        {
+          "name": "step",
+          "time": 1.25
+        },
+        {
+          "name": "step",
+          "time": 1.875
+        }
+      ],
+      "frames": 76,
+      "loop": true,
+      "name": "walk",
+      "speed": 0.0407
+    },
+    {
+      "duration": 1.9,
+      "events": [
+        {
+          "name": "step",
+          "time": 0.0
+        },
+        {
+          "name": "step",
+          "time": 0.475
+        },
+        {
+          "name": "step",
+          "time": 0.95
+        },
+        {
+          "name": "step",
+          "time": 1.425
+        }
+      ],
+      "frames": 58,
+      "loop": true,
+      "name": "trot",
+      "speed": 0.0629
+    },
+    {
+      "duration": 9.0,
+      "events": [],
+      "frames": 271,
+      "loop": true,
+      "name": "idle",
+      "speed": 0.0
+    },
+    {
+      "duration": 10.0,
+      "events": [],
+      "frames": 301,
+      "loop": true,
+      "name": "rest",
+      "speed": 0.0
+    },
+    {
+      "duration": 12.0,
+      "events": [],
+      "frames": 361,
+      "loop": true,
+      "name": "sleep",
+      "speed": 0.0
+    },
+    {
+      "duration": 4.5,
+      "events": [],
+      "frames": 136,
+      "loop": true,
+      "name": "eat",
+      "speed": 0.0
+    },
+    {
+      "duration": 5.2,
+      "events": [],
+      "frames": 157,
+      "loop": true,
+      "name": "drink",
+      "speed": 0.0
+    },
+    {
+      "duration": 3.0,
+      "events": [],
+      "frames": 91,
+      "loop": true,
+      "name": "vocalize",
+      "speed": 0.0
+    }
+  ],
+  "generator": "tools/animals (zoogen)",
+  "license": "MIT",
+  "meta": {
+    "body_length_m": 0.518,
+    "common_name": "Aldabra giant tortoise",
+    "relative_height": 0.34258817204301073,
+    "roughness": 0.9,
+    "scientific_name": "Aldabrachelys gigantea",
+    "shoulder_height_m": 0.2548856,
+    "variant": "juvenile",
+    "variant_of": "aldabra_tortoise"
+  },
+  "name": "aldabra_tortoise_juvenile",
+  "skeleton_bounds_animal_space": {
+    "max": [
+      0.2856,
+      0.1295,
+      0.1543
+    ],
+    "min": [
+      -0.2046,
+      -0.1295,
+      0.0
+    ]
+  },
+  "texture": 1024,
+  "triangles": 27068,
+  "vertices": 13622
+}

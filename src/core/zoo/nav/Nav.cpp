@@ -55,7 +55,7 @@ bool EdgeOpen(const World& world, TileCoord from, Dir direction, const NavProfil
     if (fence.kind == kPerimeterFence) {
         return profile.useEntrance;
     }
-    return profile.useGates;
+    return profile.useGates || (fence.visitorGate && profile.pathsOnly);
 }
 
 bool ClearsObstacles(Vec2 from, Vec2 to, std::span<const NavObstacle> obstacles) {

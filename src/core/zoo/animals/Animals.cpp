@@ -327,6 +327,26 @@ const Animal* Animals::Find(AnimalId id) const {
     return it != animals_.end() && it->id == id ? &*it : nullptr;
 }
 
+bool Animals::CrowdsResident(const Enclosures& habitats, const SpeciesCatalog& species, GameTime now,
+                             Vec2 next, std::optional<Vec2> from) const {
+    const auto homeId = habitats.At(next);
+    if (!homeId)
+        return false;
+    const auto* home = habitats.Find(homeId);
+    if (!home || !home->walkThrough)
+        return false;
+    for (const auto& resident : animals_) {
+        if (resident.home != homeId || !resident.Visible())
+            continue;
+        const auto& def = species.All()[static_cast<std::size_t>(resident.species)];
+        const float gap = SharedWalkClearance(def.bodyRadiusM * BodyScale(resident, def, now));
+        const float after = DistanceSquared(next, resident.position);
+        if (after < gap * gap && (!from || after < DistanceSquared(*from, resident.position)))
+            return true;
+    }
+    return false;
+}
+
 void Animals::InEnclosure(const Env& env, EnclosureId enclosure, std::vector<AnimalId>& out) const {
     out.clear();
     for (const Animal& animal : animals_) {
@@ -754,6 +774,13 @@ bool Animals::SecureForStaff(const Env& env, EnclosureId enclosureId) {
             return false;
         }
         if (standing == enclosureId) {
+            // A routine keeper recall can take two animal-clock hours before the last resident
+            // is released and reaches its provisions. Leave a group out if it needs that time.
+            constexpr float holdDays = 2.0f / 24.0f;
+            if (animal.thirst + holdDays * tuning::kThirstPerDay >= tuning::kNeedIssue ||
+                animal.hunger + holdDays * tuning::kHungerPerDay >= tuning::kNeedIssue) {
+                return false;
+            }
             animalIndexes.push_back(index);
         }
     }
@@ -927,6 +954,7 @@ bool Animals::AvoidKeeper(Animal& animal, const SpeciesDef& species, const Env& 
 }
 
 void Animals::StepAnimals(Env& env, const std::vector<Enclosure>& enclosures, int& pathCalls) {
+    std::vector<Vec2> people;
     for (std::size_t index = 0; index < animals_.size();) {
         Animal& animal = animals_[index];
         if (!animal.InWorld()) {
@@ -998,7 +1026,8 @@ void Animals::StepAnimals(Env& env, const std::vector<Enclosure>& enclosures, in
             }
         }
         const Animal* mother = nullptr;
-        if (animal.mother) {
+        // A duckling follows its hen for cover but gathers its own food from hatching.
+        if (animal.mother && !species.independentYoung && species.group != "duck") {
             const auto foundMother = std::lower_bound(
                 animals_.begin(), animals_.end(), animal.mother.value,
                 [](const Animal& candidate, std::uint32_t value) { return candidate.id.value < value; });
@@ -1063,16 +1092,8 @@ void Animals::StepAnimals(Env& env, const std::vector<Enclosure>& enclosures, in
             const float remainingTicks = static_cast<float>(std::max(1, animal.activityLeft));
             animal.thirst = Clamp(animal.thirst - animal.thirst / remainingTicks);
         }
-        const float drinkUrgency =
-            animal.activity == AnimalActivity::Sleep
-                ? (animal_internal::ProfileFor(species) != nullptr ? 0.65f : tuning::kUrgentNeedSleep)
-            : animal.activity == AnimalActivity::Sentinel ? 0.5f
-                                                          : tuning::kThirstUrgent;
-        const float eatUrgency =
-            animal.activity == AnimalActivity::Sleep
-                ? (animal_internal::ProfileFor(species) != nullptr ? 0.65f : tuning::kUrgentNeedSleep)
-            : animal.activity == AnimalActivity::Sentinel ? 0.5f
-                                                          : tuning::kHungerUrgent;
+        const auto [eatUrgency, drinkUrgency] =
+            animal_internal::ProvisionThresholds(animal, species, env, enclosure);
         const bool urgentDrink = animal.thirst > drinkUrgency;
         const bool urgentEat = animal.hunger > eatUrgency;
         bool urgentInterrupt = false;
@@ -1180,8 +1201,15 @@ void Animals::StepAnimals(Env& env, const std::vector<Enclosure>& enclosures, in
                 }
             }
         }
+        people.clear();
+        if (enclosure && enclosure->walkThrough) {
+            for (const auto& person : keepers_) {
+                if (person.enclosure == enclosureId)
+                    people.push_back(person.position);
+            }
+        }
         animal_internal::AdvanceMovement(animal, species, env, pathCalls, animals_, neighbors, propScratch_,
-                                         navScratch_);
+                                         navScratch_, people);
         animal_internal::UpdateFlockRest(animal, species, env, animals_, neighbors);
         animal.heading = TurnTowards(previousHeading, animal.heading,
                                      tuning::kTurnRadiansPerSecond * tuning::kMotionSecondsPerTick);

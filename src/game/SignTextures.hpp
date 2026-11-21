@@ -30,6 +30,8 @@ enum class Sign : std::uint8_t {
     Board1,  ///< print too small to read from where one stands. They name no species: the
     Board2,  ///< board's own text is what the visitor reads on stepping up to it.
     Board3,
+    SnakePavilion,
+    WoodlandAviary,
     Count
 };
 

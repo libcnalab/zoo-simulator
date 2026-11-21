@@ -121,8 +121,12 @@ std::vector<Fence> DecodeFences(const Json& runs, std::size_t expected) {
         const float condition = run["condition"].get<float>();
         if (kind > 255u || !std::isfinite(condition) || condition < 0.0f || condition > 1.0f)
             throw std::runtime_error("fence value is out of range");
+        const bool publicDoor = run.value("visitorGate", false);
+        const bool gate = run["gate"].get<bool>();
+        if (publicDoor && (!gate || kind == 0u || kind == kPerimeterFence))
+            throw std::runtime_error("invalid public aviary gate");
         fences.insert(fences.end(), count,
-                      Fence{static_cast<std::uint8_t>(kind), run["gate"].get<bool>(), condition});
+                      Fence{static_cast<std::uint8_t>(kind), gate, condition, publicDoor});
     }
     if (fences.size() != expected)
         throw std::runtime_error("fence run lengths do not match map size");
@@ -132,7 +136,12 @@ std::vector<Fence> DecodeFences(const Json& runs, std::size_t expected) {
 Json EncodeFences(const std::vector<Fence>& fences) {
     return EncodeRuns(
         fences, [](Fence a, Fence b) { return a == b; },
-        [](Fence f) { return Json{{"kind", f.kind}, {"gate", f.gate}, {"condition", f.condition}}; });
+        [](Fence f) {
+            Json record{{"kind", f.kind}, {"gate", f.gate}, {"condition", f.condition}};
+            if (f.visitorGate)
+                record["visitorGate"] = true;
+            return record;
+        });
 }
 
 }  // namespace

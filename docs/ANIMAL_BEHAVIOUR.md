@@ -23,7 +23,7 @@ sleepers wake at 0.65 and sentinels are relieved at 0.5. Other activities use
 the lower eating and drinking thresholds. Boredom rises with
 playfulness and falls during Play, Socialize and
 Wander. Stress follows a target from poor welfare, visitor crowds, predators or
-being loose; shelter occupancy halves that target. A juvenile younger than one
+being loose; shelter occupancy halves that target. A dependent juvenile younger than one
 quarter of maturity age is kept below 0.3 hunger and thirst while its living
 mother is in the same enclosure and has hunger below 0.9.
 
@@ -76,6 +76,10 @@ can arrive or leave during the same bout.
 | Red panda | 6/8/3/1 | foraging and enrichment | solitary | 14 |
 | Snow leopard | 12/0/4/2 | boundary patrol | solitary | 18 |
 | Capybara | 5/11/4/4 | bathing | 4 | 12 |
+| Mandarin duck | 4/3/6/6 | bathing and foraging on the banks | ducklings follow the hen | 11 |
+| Eastern corn snake | 8/0/4/1 | solitary movement and rest | independent | 18 |
+| Black-headed python | 12/0/3/1 | solitary movement and rest | independent | 22 |
+| Aldabra giant tortoise | 8/12/5/0 | local grazing and midday shade | independent | 18 |
 
 Lions, tigers, wolves, brown bears, rhinos, kangaroos, capybaras and the three northern families receive a twilight
 activity multiplier of 2.4 from 05:00–08:00 and 17:00–21:00, 0.45 at
@@ -172,6 +176,29 @@ all four adults and all four pups moved through water deeper than their own shou
 height. At 08:00 adults spent 7.5% of the samples in that water and pups 13.8%. At
 13:00 the shares rose to 67.9% and 76.3%. The mean pup-to-mother distance was 2.82 m
 in the morning and 2.89 m in the afternoon. These figures describe those game visits.
+
+### Aldabra Meadow
+
+At 0.11 m/s an adult needs about three minutes to cross 20 m. A tortoise weighs travel
+time when choosing a grazing or resting spot. Grass underfoot and shade within walking
+distance can satisfy those needs. Individuals still walk to feed trays and water.
+Hatchlings retain both parent identities in saves and find their own food.
+
+During a five-minute seed-1 visit starting at 13:00, all three animals stayed outdoors
+and maintained full health. Eli travelled 27.4 m, Dalia 20.2 m and Hana 14.8 m.
+Together they moved in 574 of 903 once-per-second samples. The closest two centres
+came to 1.270 m across 6,001 simulation steps. A moving tortoise reserves room for
+the full rigid shell to turn. A separate fixture checks
+that a tortoise on open grass can graze where it stands and will leave that spot for
+nearby shade at midday.
+
+### Woodland Aviary
+
+In a five-minute seed-1 visit from 13:00, all four Mandarin ducks swam and used
+the boardwalk. Three crossed it to the opposite bank. The path served 12 visitors.
+A bird and a visitor were on the path together in 238 of 6,001 simulation steps.
+The smallest distance between their centres was 0.530 m. Visitors choose viewing places
+inside the aviary, and both pedestrians and birds yield space while moving.
 
 ### Group signals and attention
 

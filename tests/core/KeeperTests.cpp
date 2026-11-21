@@ -109,7 +109,7 @@ struct Watch {
 TEST(Keeper, TheVisitorZooHasItsCrew) {
     const auto zoo = VisitorZoo();
     const Staff& staff = zoo->Keepers();
-    ASSERT_EQ(staff.All().size(), 12u);
+    ASSERT_EQ(staff.All().size(), 15u);
     int gardeners = 0;
     int cleaners = 0;
     for (const StaffMember& member : staff.All()) {
@@ -264,13 +264,25 @@ TEST(Keeper, FailedGroupLockoutChangesNoAnimal) {
     const Enclosure* enclosure = zoo->Habitats().Find(habitat);
     ASSERT_NE(enclosure, nullptr);
     ASSERT_FALSE(enclosure->shelters.empty());
+    Env env = zoo->MakeEnv();
+    const auto& animals = zoo->Fauna().All();
+    const auto resident = std::find_if(animals.begin(), animals.end(), [&](const Animal& animal) {
+        return animal.InWorld() && animal.home == habitat;
+    });
+    ASSERT_NE(resident, animals.end());
+    Animal* thirsty = zoo->Fauna().Find(resident->id);
+    const float originalThirst = thirsty->thirst;
+    thirsty->thirst = tuning::kNeedIssue - 0.01f;
+    const auto beforeDrink = zoo->Fauna().StateHash();
+    EXPECT_FALSE(zoo->Fauna().SecureForStaff(env, habitat));
+    EXPECT_EQ(zoo->Fauna().StateHash(), beforeDrink);
+    thirsty->thirst = originalThirst;
     for (BuildingId shelter : enclosure->shelters) {
         Building* building = zoo->Objects().FindBuilding(shelter);
         ASSERT_NE(building, nullptr);
         building->open = false;
     }
     const std::uint64_t before = zoo->Fauna().StateHash();
-    Env env = zoo->MakeEnv();
     EXPECT_FALSE(zoo->Fauna().SecureForStaff(env, habitat));
     EXPECT_EQ(zoo->Fauna().StateHash(), before);
 }

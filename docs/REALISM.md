@@ -36,6 +36,9 @@ loudspeaker stays muted and nobody has listened to any of it.
 | Red panda family in Red Panda Canopy | a new mother and two dedicated cub models inhabit a 992 m² bamboo-and-birch habitat with 54 reachable glass-front views, shelter, water, climbing enrichment and a purpose-built bamboo-and-fruit feeder. The low russet body, masked face, dark branch paws and long ringed tail distinguish the species; clean model exports are byte-reproducible | `docs/ANIMALS.md`, `docs/VISITOR_ZOO.md`, `evidence/red-panda-canopy-j80-2026-11-21.jpg` |
 | Second northern stage and Snow Leopard Heights | another 32 rows bring the map to 160 × 224 tiles and 143,360 m² (+40 % from the original zoo). Two independent asphalt approaches form a loop around a 1,724 m² alpine habitat with 70 reachable high-glass views, climbing and scratching enrichment, an 18-place shelter and two water points. A mother and two cubs use dedicated smoky-rosette models with broad snow paws, rounded ears and body-length thick tails; their procedural origin and close-view limitations are disclosed | `docs/VISITOR_ZOO.md`, `docs/ANIMALS.md`, `evidence/snow-leopard-heights-j81-2026-11-21.jpg` |
 | East and west garden walks | The fenced zoo gains 54,272 m². Visitors can walk from Elephant Valley to Polar Sound on the west side and from Acacia Plain to Tiger Forest on the east. Four picnic tables give 24 accessible seats. Each loop has refreshments and a restroom. | `docs/VISITOR_ZOO.md`, `evidence/east-west-gardens-2026-11-21.jpg` |
+| Woodland Aviary | Four Mandarin ducks swim in a pond and cross the dry visitor boardwalk between its banks. Two public curtains admit visitors under the mesh roof. | `docs/VISITOR_ZOO.md`, `docs/ANIMALS.md`, `evidence/woodland-aviary-2026-11-21.jpg` |
+| Snake Pavilion | An east garden aisle runs between two glass terraria, housing a corn snake and a black-headed python. Each snake has a heated rock hide, a drinking basin and its own feeding trays. | `docs/ANIMALS.md`, `evidence/snake-pavilion-2026-11-21.jpg` |
+| Aldabra Meadow | Three adult giant tortoises occupy the 988 m² east meadow. The visitor map offers a stop at the public glass. Their models have rigid shells, grazing and drinking neck poses and a four-beat walk. | `docs/ANIMALS.md`, `docs/VISITOR_ZOO.md`, `evidence/aldabra-meadow-2026-11-21.jpg` |
 | Capybara Marsh | Four adults and four pups use 988 m² beside the west walk. The group can graze, paddle and float at both ages. In a seed-1 five-minute afternoon sample all eight swam. | `docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `evidence/capybara-marsh-2026-11-21.jpg` |
 | Eyes visible on both sides of the head | Nine lynx, red panda, snow leopard and grey wolf variants have rounded eyes partially set in the cheek. The export regression checks each eye surface and its depth in the surrounding coat. | `docs/ANIMALS.md`, `evidence/carnivore-eyes-2026-11-21.jpg` |
 | Red panda mother and cub facial markings | The shorter, rounder muzzle and continuous cheek fur carry pale brows and red-brown stripes from the eyes to the mouth. The two exports keep their sixteen animations. | `docs/ANIMALS.md`, `evidence/red-panda-faces-2026-11-21.jpg` |
@@ -127,7 +130,7 @@ manifest regression.
 
 ## Open (in the order they hurt)
 
-1. Animals: none of the nineteen species now uses the generic first-generation procedural anatomy.
+1. Animals: none of the twenty species now uses the generic first-generation procedural anatomy.
    The kangaroo, ostrich, camel, wolf and meerkat third passes replace generic masses with tailored
    macropod, ratite, camelid, canid and mongoose outlines; the new lynx starts with its own felid
    trunk, head, feet, ruff, ears and bobtail; the red panda adds its own masked head, branch paws

@@ -20,7 +20,7 @@ Json Entry(std::string_view plural, Json value) {
 TEST(CatalogTests, ShippedDataLoadsAndHasCompleteEnumsAndLookups) {
     const Catalog c = Shipped();
     ASSERT_TRUE(c.errors.empty()) << (c.errors.empty() ? "" : c.errors.front());
-    EXPECT_EQ(c.fences.size(), 16U);
+    EXPECT_EQ(c.fences.size(), 18U);
     EXPECT_EQ(c.foods.size(), 8U);
     EXPECT_GE(c.buildings.size(), 13U);
     EXPECT_GE(c.props.size(), 35U);
@@ -40,7 +40,7 @@ TEST(CatalogTests, HabitatBarrierKindsRemainStable) {
     for (const auto id :
          {"wooden_rail", "wire_mesh", "tall_mesh", "steel_bars", "glass_wall", "concrete_wall",
           "cable_barrier", "hedge", "high_cable_barrier", "high_glass_wall", "heavy_mesh", "stand_off_rail",
-          "paddock_rail", "tall_cable_fence", "dry_moat", "mesh_backed_hedge"}) {
+          "paddock_rail", "tall_cable_fence", "dry_moat", "mesh_backed_hedge", "aviary_mesh", "aviary_curtain"}) {
         const FenceDef* fence = catalog.FindFence(id);
         ASSERT_NE(fence, nullptr);
         EXPECT_EQ(fence->kind, kind);

@@ -39,6 +39,8 @@ struct Fence {
     bool gate = false;
     /// 1 = new, 0 = collapsed. Worn fences let animals escape.
     float condition = 1.0f;
+    /// A walk-through aviary curtain admits people while remaining a boundary for birds.
+    bool visitorGate = false;
 
     constexpr bool Exists() const { return kind != 0; }
     constexpr bool operator==(const Fence&) const = default;

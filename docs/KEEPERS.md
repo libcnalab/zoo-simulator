@@ -52,8 +52,10 @@ zoo happens half way through the job.
   troughs.
 - **Dangerous species.** Feeding, watering, fence checks and sweeping remain on the public
   side. When dirt reaches 0.18 (and periodically every third visit), the keeper operates a
-  four-second secure control at the service gate. Every animal in the habitat must fit into an open,
-  registered shelter whose door its species can use; a loose resident, missing door or short
+  four-second secure control at the service gate. Before a routine recall the keeper checks
+  that every resident can go two animal-clock hours without reaching the hunger or thirst issue
+  threshold. A group that needs a drink or meal sooner keeps access to its provisions. Every animal in the
+  habitat must fit into an open, registered shelter whose door its species can use; a loose resident, missing door or short
   capacity or disconnected route makes the whole operation fail without moving any animal. On
   success the assigned group remains visible while walking to those doors. The keeper waits at
   the outside control until the last dangerous resident is hidden and its separately drawn welded

@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 #pragma once
 
+#include <optional>
+
 #include <cstdint>
 #include <string>
 #include <string_view>
@@ -238,6 +240,10 @@ float AgeYears(const Animal& animal, GameTime now);
 bool IsAdult(const Animal& animal, const SpeciesDef& species, GameTime now);
 /// Body size relative to an adult: from about 0.35 at birth to 1 at maturity (smooth).
 float BodyScale(const Animal& animal, const SpeciesDef& species, GameTime now);
+/// Space for the animal's body and a pedestrian with a small gap, in metres.
+inline float SharedWalkClearance(float animalRadius) {
+    return 0.28f + animalRadius + 0.08f;
+}
 
 /// The animals of a zoo: their needs, behaviour, health, breeding and escapes.
 ///
@@ -261,6 +267,11 @@ public:
     /// Ascending id; dead animals are gone from the list in the step they die.
     const std::vector<Animal>& All() const { return animals_; }
 
+    /// Does a pedestrian at this spot encroach on a resident of a walk-through habitat?
+    /// A pedestrian already too close can always step away.
+    bool CrowdsResident(const Enclosures& habitats, const SpeciesCatalog& species, GameTime now,
+                        Vec2 next, std::optional<Vec2> from = std::nullopt) const;
+
     /// The animals currently inside an enclosure (by position), ascending id.
     void InEnclosure(const Env& env, EnclosureId enclosure, std::vector<AnimalId>& out) const;
     /// The group an animal lives in right now (everything 0 / false when it is not in an enclosure).
@@ -271,17 +282,19 @@ public:
     /// Advances every animal by one tick.
     void Step(Env& env);
 
-    /// Staff currently inside habitats. This is an input rebuilt by Zoo before Step(), not saved,
-    /// compared or hashed; shy animals use it to retreat from a keeper in their own enclosure.
+    /// People currently inside habitats, including guests in a walk-through aviary. This is an input rebuilt
+    /// by Zoo before Step(), not saved, compared or hashed; shy animals use it to retreat from a keeper in
+    /// their own enclosure.
     void ClearKeepers() { keepers_.clear(); }
-    void SetKeeper(EnclosureId enclosure, Vec2 position) {
+    void SetKeeper(EnclosureId enclosure, Vec2 position) { NotePerson(enclosure, position); }
+    void NotePerson(EnclosureId enclosure, Vec2 position) {
         if (enclosure) {
             keepers_.push_back({enclosure, position});
         }
     }
 
     /// Recalls every animal standing in `enclosure` to an assigned registered shelter,
-    /// provided all of them fit and every assigned door is usable by its species. Assignment
+    /// provided their needs allow a routine hold, all fit and each door is usable by its species. Assignment
     /// is atomic: false leaves every animal unchanged. A resident loose outside the habitat
     /// also makes it fail, since the habitat cannot then be made safe for staff. The caller
     /// must hold a staff lockout while they walk and wait until every animal is sheltered.
