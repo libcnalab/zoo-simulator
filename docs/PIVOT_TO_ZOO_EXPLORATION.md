@@ -28,6 +28,12 @@ the morning's crowd already spread over the park.
 | `F4` | diagnostics: visitors simulated / in range / drawn, avatars ready, sound voices |
 | Settings | mouse sensitivity, invert Y, field of view, head bob, volume, diagnostics |
 
+On the expanded plan, the footer names the stop under the pointer. Two northern restrooms
+are distinguished by the nearest habitat centre, Red Panda Canopy or Snow Leopard Heights.
+The names stay the same when crowds shift to another viewing place. Habitat labels take
+priority over kiosk names and leave the coloured markers clear. A line connects a displaced
+habitat label to its enclosure. [Map and both northern stops](evidence/expanded-visitor-map-2026-11-21.jpg).
+
 The walker follows the terrain, is stopped by fences, gates, buildings and the larger props, and
 cannot enter a habitat. There is no money, no build menu and no management HUD in a visit; the
 screen shows the world, a small hint line, and the cards and boards above.

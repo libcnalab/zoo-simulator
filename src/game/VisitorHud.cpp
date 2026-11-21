@@ -6,6 +6,8 @@
 #include <cmath>
 #include <ctime>
 #include <initializer_list>
+#include <limits>
+#include <optional>
 
 #include "HudWidgets.hpp"
 #include "zoo/base/Version.hpp"
@@ -426,6 +428,41 @@ void VisitorHud::Board(ui::Ui& ui, const Visit& visit) {
     KeyHints(ui, panel.MidX(), panel.Bottom() - 36.0f, {{"E", "Step back"}}, 1.0f);
 }
 
+namespace {
+
+std::optional<Box> MapLabelBox(Box anchor, const Box& plan, bool habitat, const std::vector<Box>& placed) {
+    std::optional<Box> best;
+    float distance = std::numeric_limits<float>::infinity();
+    const int reachX = habitat ? 72 : 0;
+    const int reachY = habitat ? 40 : 20;
+    // Start at the habitat; most names can stay at their anchor.
+    for (const int dx : {0, -12, 12, -24, 24, -36, 36, -48, 48, -60, 60, -72, 72}) {
+        if (std::abs(dx) > reachX)
+            break;
+        for (const int dy : {0, -10, 10, -20, 20, -30, 30, -40, 40}) {
+            if (std::abs(dy) > reachY)
+                break;
+            const Box candidate = anchor.Moved(static_cast<float>(dx), static_cast<float>(dy));
+            const float cost = static_cast<float>(dx * dx + dy * dy);
+            if (cost >= distance || candidate.x < plan.x || candidate.Right() > plan.Right() ||
+                candidate.y < plan.y || candidate.Bottom() > plan.Bottom())
+                continue;
+            if (std::ranges::any_of(placed, [&](const Box& other) {
+                    const Box overlap = ui::Intersect(candidate, other);
+                    return overlap.w > 0.0f && overlap.h > 0.0f;
+                }))
+                continue;
+            best = candidate;
+            distance = cost;
+            if (cost == 0.0f)
+                return best;
+        }
+    }
+    return best;
+}
+
+}  // namespace
+
 void VisitorHud::Map(ui::Ui& ui, Visit& visit) {
     using Kind = VisitMap::Kind;
     const VisitMap& map = visit.map;
@@ -436,7 +473,8 @@ void VisitorHud::Map(ui::Ui& ui, Visit& visit) {
     const Box plan{std::round(0.5f * (screen.X - spanX * scale)),
                    std::round(0.5f * (screen.Y - spanZ * scale)) + 8.0f, std::round(spanX * scale),
                    std::round(spanZ * scale)};
-    const Box panel{plan.x - 16.0f, plan.y - 46.0f, plan.w + 32.0f, plan.h + 62.0f};
+    const float panelWidth = std::min(screen.X - 12.0f, std::max(plan.w + 32.0f, 340.0f));
+    const Box panel{plan.MidX() - panelWidth * 0.5f, plan.y - 46.0f, panelWidth, plan.h + 94.0f};
     ui.Paint().Fill({0.0f, 0.0f, screen.X, screen.Y}, ui::Rgb(0, 0, 0, 90));
     ui.Paint().Shadow(panel, 18.0f, 0.5f);
     ui.Paint().Frame(panel, 8.0f, ui::Rgb(238, 232, 214, 250), ui::Rgb(94, 72, 44, 255), 3.0f);
@@ -474,32 +512,54 @@ void VisitorHud::Map(ui::Ui& ui, Visit& visit) {
         const float y1 = std::ceil(plan.y + (shape.z + shape.d - map.minZ) * scale);
         ui.Paint().Fill({x0, y0, x1 - x0, y1 - y0}, color);
     }
-    // The names: the animals first, a house's name moves down or gives way where it would cover one.
+    const auto onPlan = [&](const VisitMap::Place& place) {
+        return Vector2(plan.x + (place.x - map.minX) * scale, plan.y + (place.z - map.minZ) * scale);
+    };
+    // Keep lettering clear of the clickable discs. Habitat names have first claim on the space.
     std::vector<Box> placed;
+    placed.reserve(map.places.size() + map.labels.size());
+    struct PrintedName {
+        const VisitMap::Label& label;
+        Box box;
+        float size;
+    };
+    std::vector<PrintedName> names;
+    names.reserve(map.labels.size());
+    for (const auto& place : map.places) {
+        const auto at = onPlan(place);
+        placed.push_back({at.X - 8.0f, at.Y - 8.0f, 16.0f, 16.0f});
+    }
     for (const VisitMap::Label& label : map.labels) {
         const float size = label.habitat ? theme::kSmall + 1.0f : theme::kSmall - 1.0f;
         const float width = ui.Paint().TextWidth(label.text, size, label.habitat);
         // A name near the plan's edge moves in rather than being cut.
         const float x = std::clamp(std::round(plan.x + (label.x - map.minX) * scale - 0.5f * width),
                                    plan.x + 7.0f, std::max(plan.x + 7.0f, plan.Right() - width - 7.0f));
-        float y = std::round(plan.y + (label.z - map.minZ) * scale - 8.0f);
-        const auto covered = [&] {
-            return std::ranges::any_of(placed, [&](const Box& other) {
-                return x - 5.0f < other.Right() && x + width + 5.0f > other.x && y - 2.0f < other.Bottom() &&
-                       y + 17.0f > other.y;
-            });
-        };
-        int moves = 0;
-        while (covered() && moves < 3) {
-            y += 20.0f;
-            ++moves;
-        }
-        if (covered())
+        const float y = std::round(plan.y + (label.z - map.minZ) * scale - 8.0f);
+        const auto best =
+            MapLabelBox({x - 5.0f, y - 2.0f, width + 10.0f, 19.0f}, plan, label.habitat, placed);
+        if (!best)
             continue;
-        placed.push_back({x - 5.0f, y - 2.0f, width + 10.0f, 19.0f});
-        ui.Paint().Round({x - 5.0f, y - 2.0f, width + 10.0f, 19.0f}, 4.0f,
+        placed.push_back(*best);
+        names.push_back({label, *best, size});
+        // A displaced name has a leader back to its habitat. Draw these below all the lettering.
+        if (label.habitat) {
+            const float cx = plan.x + (label.x - map.minX) * scale;
+            const float cy = plan.y + (label.z - map.minZ) * scale;
+            const float edgeX = std::clamp(cx, best->x, best->Right());
+            const float edgeY = std::clamp(cy, best->y, best->Bottom());
+            if (std::hypot(cx - edgeX, cy - edgeY) > 5.0f) {
+                const auto ink = ui::Rgb(65, 59, 45, 210);
+                ui.Paint().Fill({std::min(cx, edgeX), cy, std::abs(cx - edgeX) + 1.0f, 1.5f}, ink);
+                ui.Paint().Fill({edgeX, std::min(cy, edgeY), 1.5f, std::abs(cy - edgeY) + 1.0f}, ink);
+                ui.Paint().Disc(Vector2(cx, cy), 2.5f, ink);
+            }
+        }
+    }
+    for (const auto& [label, box, size] : names) {
+        ui.Paint().Round(box, 4.0f,
                          label.habitat ? ui::Rgb(38, 34, 28, 200) : ui::Rgb(255, 255, 255, 190));
-        ui.Paint().Text(label.text, Vector2(x, y), size,
+        ui.Paint().Text(label.text, Vector2(box.x + 5.0f, box.y + 2.0f), size,
                         label.habitat ? ui::Rgb(250, 244, 226, 255) : ui::Rgb(60, 50, 40, 255),
                         label.habitat);
     }
@@ -507,9 +567,6 @@ void VisitorHud::Map(ui::Ui& ui, Visit& visit) {
     // within reach, so that markers close together still each have their turn.
     int hovered = -1;
     float nearest = 13.0f * 13.0f;
-    const auto onPlan = [&](const VisitMap::Place& place) {
-        return Vector2(plan.x + (place.x - map.minX) * scale, plan.y + (place.z - map.minZ) * scale);
-    };
     if (ui.Hovered(plan)) {
         for (std::size_t i = 0; i < map.places.size(); ++i) {
             const Vector2 at = onPlan(map.places[i]);
@@ -540,33 +597,21 @@ void VisitorHud::Map(ui::Ui& ui, Visit& visit) {
                         ui::Rgb(200, 40, 40, 255));
     ui.Paint().Disc(you, 7.0f, ui::Rgb(255, 255, 255, 255));
     ui.Paint().Disc(you, 5.0f, ui::Rgb(214, 40, 40, 255));
-    if (hovered >= 0) {
-        const std::string text = "Go to " + map.places[static_cast<std::size_t>(hovered)].name;
-        const float size = theme::kSmall + 1.0f;
-        const float wide = ui.Paint().TextWidth(text, size, true) + 16.0f;
-        const Vector2 at = onPlan(map.places[static_cast<std::size_t>(hovered)]);
-        const Box tip{std::clamp(std::round(at.X - 0.5f * wide), plan.x + 4.0f, plan.Right() - wide - 4.0f),
-                      at.Y - 40.0f < plan.y + 4.0f ? at.Y + 14.0f : at.Y - 40.0f, wide, 26.0f};
-        ui.Paint().Round(tip, 5.0f, ui::Rgb(38, 34, 28, 235));
-        ui.Paint().Text(text, Vector2(tip.x + 8.0f, tip.y + 4.0f), size, ui::Rgb(250, 244, 226, 255), true);
-    }
     ui.Paint().PopClip();
-    const float width = ui.Paint().TextWidth("You are here", theme::kSmall, true);
-    ui.Paint().Disc(Vector2(panel.x + 26.0f, panel.Bottom() - 14.0f), 5.0f, ui::Rgb(214, 40, 40, 255));
-    ui.Paint().Text("You are here", Vector2(panel.x + 38.0f, panel.Bottom() - 22.0f), theme::kSmall,
-                    ui::Rgb(38, 34, 28, 255), true);
-    // The legend of the places one can go to.
-    float x = panel.x + 54.0f + width;
-    ui.Paint().Disc(Vector2(x, panel.Bottom() - 14.0f), 6.0f, ui::Rgb(34, 110, 62, 255));
-    x += ui.Paint().Text("Habitat", Vector2(x + 10.0f, panel.Bottom() - 22.0f), theme::kSmall,
-                         ui::Rgb(38, 34, 28, 255)) +
-         28.0f;
-    ui.Paint().Disc(Vector2(x, panel.Bottom() - 14.0f), 5.0f, ui::Rgb(38, 84, 160, 255));
-    x += ui.Paint().Text("Building", Vector2(x + 10.0f, panel.Bottom() - 22.0f), theme::kSmall,
-                         ui::Rgb(38, 34, 28, 255)) +
-         28.0f;
-    ui.Paint().Text("Click a place to go there", Vector2(x, panel.Bottom() - 22.0f), theme::kSmall,
-                    ui::Rgb(104, 92, 74, 255));
+    float legendX = panel.x + 24.0f;
+    const float legendY = plan.Bottom() + 12.0f;
+    const auto legend = [&](std::string_view name, ui::Rgba color, bool bold = false) {
+        ui.Paint().Disc(Vector2(legendX, legendY), 5.0f, color);
+        legendX += ui.Paint().Text(name, Vector2(legendX + 10.0f, legendY - 8.0f), theme::kSmall,
+                                   ui::Rgb(38, 34, 28, 255), bold) + 28.0f;
+    };
+    legend("You are here", ui::Rgb(214, 40, 40, 255), true);
+    legend("Habitat", ui::Rgb(34, 110, 62, 255));
+    legend("Facility", ui::Rgb(38, 84, 160, 255));
+    const std::string action = hovered < 0 ? "Click a place to go there"
+                                           : "Go to " + map.places[static_cast<std::size_t>(hovered)].name;
+    ui.LabelIn({panel.x + 16.0f, legendY + 7.0f, panel.w - 32.0f, 23.0f}, action, theme::kSmall,
+               ui::Rgb(64, 55, 42, 255), Align::Left, hovered >= 0);
 }
 
 void VisitorHud::Diagnostics(ui::Ui& ui, const Visit& visit) {

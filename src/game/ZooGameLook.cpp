@@ -701,7 +701,6 @@ void ZooGame::AddMapPlaces(VisitMap& map) const {
         const auto at = zoo::World::TileCenter(*entrance);
         map.places.push_back({at.x, at.z, gate.yaw, "Entrance", false});
     }
-    const std::size_t firstHabitat = map.places.size();
 
     // A habitat: at its main front, the viewing place farthest to the south (the side the walks
     // come from), looking straight across the barrier; a place where people stand at the glass
@@ -800,20 +799,21 @@ void ZooGame::AddMapPlaces(VisitMap& map) const {
             continue;
         map.places.push_back(std::move(group.place));
     }
-    // Two restrooms are told apart by the habitat nearest to each.
+    // Use the fixed habitat centres. Viewing places move as visitors gather at the glass.
     std::map<std::string, int> named;
     for (std::size_t i = habitats; i < map.places.size(); ++i)
         ++named[map.places[i].name];
     for (std::size_t i = habitats; i < map.places.size(); ++i) {
         VisitMap::Place& place = map.places[i];
-        if (named[place.name] < 2 || habitats == firstHabitat)
+        if (named[place.name] < 2)
             continue;
-        const VisitMap::Place* near = nullptr;
-        for (std::size_t h = firstHabitat; h < habitats; ++h)
-            if (near == nullptr || std::hypot(map.places[h].x - place.x, map.places[h].z - place.z) <
-                                       std::hypot(near->x - place.x, near->z - place.z))
-                near = &map.places[h];
-        place.name += " by " + near->name;
+        const VisitMap::Label* near = nullptr;
+        for (const auto& label : map.labels)
+            if (label.habitat && (near == nullptr || std::hypot(label.x - place.x, label.z - place.z) <
+                                                       std::hypot(near->x - place.x, near->z - place.z)))
+                near = &label;
+        if (near != nullptr)
+            place.name += " by " + near->text;
     }
 }
 

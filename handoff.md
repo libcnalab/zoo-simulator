@@ -15,6 +15,8 @@ whatever you take up (`docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `docs/V
   The visitor map checks gate connectivity and the player's collision radius before offering
   a destination. A seed-1 visit at 10:30 offered 25 stops, including all 17 habitats. Clicking
   Snow Leopard Heights put the player at its glass, at (167 m, 65 m).
+  All 17 habitat names fit the 720p map. The footer identifies the pointed stop, including
+  the two separate northern restrooms. See `docs/evidence/expanded-visitor-map-2026-11-21.jpg`.
 
 - **The game:** Greenhill Zoo, a first-person walk through a zoo (C++23, the simulation core in
   `src/core/zoo/`, the game on CNA / cna-engine in `src/game/`). Zoo management must not come
