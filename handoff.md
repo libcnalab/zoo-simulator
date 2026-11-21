@@ -26,6 +26,11 @@ whatever you take up (`docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `docs/V
   collision radius before offering a destination. The seed-1 map at 13:00 includes
   all 18 habitat stops among 28 travel destinations.
 
+- The lynx, red pandas, snow leopards and wolves now have visible eyes in all nine
+  adult and juvenile models. Matched close-ups are in
+  `docs/evidence/carnivore-eyes-2026-11-21.jpg`. The facial-landmark test reads the
+  shipped GLBs and checks that both eyes project through the coat.
+
 - **The game:** Greenhill Zoo, a first-person walk through a zoo (C++23, the simulation core in
   `src/core/zoo/`, the game on CNA / cna-engine in `src/game/`). Zoo management must not come
   back as the primary gameplay.

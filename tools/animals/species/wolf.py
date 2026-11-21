@@ -76,7 +76,8 @@ def _refine_anatomy(spec, juvenile=False):
         R((ear_x - .018 * length, .118 * height, head_z + .165 * height),
           .015 * height, .012 * height),
     ]
-    eye = (nose_x - .155 * length, .075 * height, head_z + .015 * height)
+    eye = (nose_x - .155 * length + .033 * height, (.123 if juvenile else .099) * height,
+           head_z + .050 * height)
     eye_size = .023 * height if juvenile else .018 * height
     parts["eye.L"].rings = [R(eye, eye_size, eye_size)]
     parts["nose"].rings = [
@@ -114,6 +115,9 @@ def _female_shape(spec):
                "front_paw.L": .94, "hind_paw.L": .94,
                "tail": .93, "tail_tuft": .92}
     for part in spec.parts:
+        if part.name == "eye.L":
+            # Recess the eye in the narrower skull of the adult female.
+            part.rings[0].c[1] = .092 * spec.meta["shoulder_height_m"]
         factor = factors.get(part.name)
         if factor is None:
             continue

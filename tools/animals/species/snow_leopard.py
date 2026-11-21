@@ -49,7 +49,8 @@ def _shape(spec, juvenile):
         R((nose_x - .03 * length, 0, head_z - .045 * height), .045 * height, .03 * height),
         R((nose_x + .008 * length, 0, head_z - .058 * height), .036 * height, .024 * height),
     ]
-    eye = (nose_x - .14 * length, .092 * height, head_z + .02 * height)
+    eye = (nose_x - .14 * length + .033 * height, (.147 if juvenile else .137) * height,
+           head_z + .055 * height)
     eye_size = (.028 if juvenile else .022) * height
     parts["eye.L"].rings = [R(eye, eye_size, .78 * eye_size)]
 

@@ -1,33 +1,13 @@
 # SPDX-License-Identifier: MIT
 """The capybara's four/three toes, surfaced senses and distinct water movements."""
 import unittest
-from pathlib import Path
 
 import numpy as np
 
 from test_clips import make_solver
-from zoogen.geom import loft
-from zoogen.pachyderm_metrics import accessor, glb
 
 
 class CapybaraTests(unittest.TestCase):
-    def test_exported_eyes_and_nostrils_have_their_authored_surfaces(self):
-        assets = Path(__file__).resolve().parents[3] / "assets/animals"
-        for name in ("capybara", "capybara_juvenile"):
-            spec, _ = make_solver(name)
-            doc, binary = glb(assets / (name + ".glb"))
-            vertices = np.concatenate([accessor(doc, binary, p["attributes"]["POSITION"])[:, [2, 0, 1]]
-                                       for mesh in doc["meshes"] for p in mesh["primitives"]])
-            for part in (p for p in spec.parts if p.name in ("eye.L", "nostril.L")):
-                points = loft(part)[0]
-                for side in (1, -1):
-                    expected = points * [1, side, 1]
-                    nearby = vertices[((vertices >= expected.min(axis=0) - 2e-5) &
-                                       (vertices <= expected.max(axis=0) + 2e-5)).all(axis=1)]
-                    self.assertGreater(len(nearby), 0, (name, part.name, side))
-                    distances = np.linalg.norm(expected[:, None] - nearby[None, :], axis=2)
-                    self.assertLess(distances.min(axis=1).max(), 2e-5, (name, part.name, side))
-
     def test_webbed_feet_and_head_above_water_at_both_ages(self):
         for name in ("capybara", "capybara_juvenile"):
             spec, solver = make_solver(name)

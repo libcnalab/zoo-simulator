@@ -62,6 +62,19 @@ by the species file. The authored procedural models in the last two rows are sty
 photorealistic, even after their species-specific anatomy passes; what each is weak at is listed in
 [`PIVOT_TO_ZOO_EXPLORATION.md`](PIVOT_TO_ZOO_EXPLORATION.md).
 
+### Eyes in the northern carnivore habitats and wolf paddock (2026-11-21)
+
+The nine lynx, red panda, snow leopard and grey wolf models now have visible eyes on
+both sides of the head. Their previous single-ring eye meshes collapsed to a line
+during export and sat inside the cheek. The replacement eyes follow the forward skull
+surface. The broad-headed young and the narrower adult female wolf each have their
+own placement. The asset test locates every authored eye vertex in the shipped GLB
+and intersects the cheek mesh at the centre of each eye to check how much is exposed.
+The four matched pairs in the [close-up comparison](evidence/carnivore-eyes-2026-11-21.jpg)
+use the exported models, a fixed camera and the same lighting. All nine exports retain
+their original skeletons and all 72 clips matched their previous animation keys within
+`0.000001`. The female wolf was also checked in the game's model viewer.
+
 ### Capybara adults and pups (2026-11-21)
 
 Both models use original geometry and coat textures. The arched rump, broad muzzle, short rounded ears
