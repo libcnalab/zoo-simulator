@@ -7,19 +7,19 @@ whatever you take up (`docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `docs/V
 
 ## 0. Start here
 
-- Current northern layout on `develop` includes Lynx Ridge, Red Panda Canopy and Snow Leopard
-  Heights. The two extensions added 40,960 m². Seed 1 has 17 habitats, 99 animals and a
-  78.1 m maximum walk to a facility. See `docs/VISITOR_ZOO.md` for the plan and game views.
-  Filled-visit cache revision 4 covers the expanded layout and its northern family routines.
-  Lynx, red panda and snow leopard cubs now follow their mothers. Their mean distances are
-  0.96 m, 1.04 m and 2.16 m in a five-minute seed-1 visit (`docs/ANIMAL_BEHAVIOUR.md`).
-  Late starts now load the exact
-  prepared state. The old cache path could run the entire visitor fill twice at 18:00.
-  The visitor map checks gate connectivity and the player's collision radius before offering
-  a destination. A seed-1 visit at 10:30 offered 25 stops, including all 17 habitats. Clicking
-  Snow Leopard Heights put the player at its glass, at (167 m, 65 m).
-  All 17 habitat names fit the 720p map. The footer identifies the pointed stop, including
-  the two separate northern restrooms. See `docs/evidence/expanded-visitor-map-2026-11-21.jpg`.
+- The default map is now 224 × 224 tiles, 448 × 448 m including the border. The new east and
+  west walks add 54,272 m² inside the fence. Both rest stops have refreshments, a restroom and
+  two six-seat tables. On seeds 1 and 2 the visitor navigation system offers all 24 picnic seats
+  and both adjacent habitat galleries are within 180 m of their rest stop.
+  The two older northern extensions contain Lynx Ridge, Red Panda Canopy and Snow Leopard
+  Heights. Seed 1 has 17 habitats and 99 animals. See `docs/VISITOR_ZOO.md`.
+  Filled-visit cache revision 5 covers the wider map. Existing user saves retain their own maps.
+  Lynx, red panda and snow leopard cubs follow their mothers. On the previous layout their mean
+  distances were 0.96 m, 1.04 m and 2.16 m in a five-minute seed-1 visit
+  (`docs/ANIMAL_BEHAVIOUR.md`).
+  Late starts load the prepared state. The visitor map checks gate connectivity and the player's
+  collision radius before offering a destination. The seed-1 expanded map at 10:30 includes
+  all 17 habitat stops among 27 travel destinations.
 
 - **The game:** Greenhill Zoo, a first-person walk through a zoo (C++23, the simulation core in
   `src/core/zoo/`, the game on CNA / cna-engine in `src/game/`). Zoo management must not come

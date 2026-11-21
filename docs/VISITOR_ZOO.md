@@ -1,11 +1,12 @@
 # Greenhill Zoo — visitor plan
 
-A 160 × 224 tile (320 × 448 m) zoo, with free admission and automatic animal care. J78 and J81
-extend the map 128 m northward in two stages: 143,360 m² in all, 40 % more than the former
-160 × 160 map.
+Greenhill has free admission and automatic animal care. Its 224 × 224 tile map measures
+448 × 448 m (200,704 m²). The fenced zoo occupies 424 × 424 m (179,776 m²).
+The third expansion adds 64 m on each side of the previous map, including 54,272 m² inside
+the property. The two earlier extensions added 128 m to the north.
 North leads into the zoo from the south gate. Entrance coordinates `(east, north)` mean
 world tile `(entrance.x + east, entrance.z - north)`; one tile is 2 m. The entrance tile is
-`(79,217)`, centred at world `(159,435)` metres. Construct with `VisitorZooConfig(seed)`,
+`(111,217)`, centred at world `(223,435)` metres. Construct with `VisitorZooConfig(seed)`,
 then call `BuildVisitorZoo(zoo, options)`. `withoutSpecies` suppresses animals only.
 
 ```text
@@ -28,14 +29,18 @@ then call `BuildVisitorZoo(zoo, options)`. `withoutSpecies` suppresses animals o
                                   SOUTH GATE
 ```
 
+Two gravel walks link existing galleries through the new land. On the west, follow the path
+from Elephant Valley to Polar Sound for a picnic stop with ice cream and toilets. The eastern
+walk links Acacia Plain and Tiger Forest, with drinks, picnic tables and toilets halfway.
+
 The asphalt round bends between habitats; gravel circuits, curved viewing bays and shortcuts
 make shorter visits possible. Boardwalks follow the lagoon and Penguin Cove. Habitat outlines
 combine elliptical lobes. Every habitat has a keeper gate, shelter, stocked feeders, water,
 enrichment, a public information board and benches. Planting concentrates behind the open
 viewing ground, with woods between habitats and around the perimeter.
 
-The seed-1 zoo contains **99 animals in 17 habitats, 50 buildings and 3,631 props** when
-every species is included (74 animals and 2,817 props before the plan's rework of
+The seed-1 zoo contains **99 animals in 17 habitats, 54 buildings and 4,640 props** when every species
+is included (74 animals and 2,817 props before the plan's rework of
 2026-11-14, below). The farthest public path tile is **78.1 m** walking distance
 from a visitor facility. `VisitorZooTests.DISABLED_PrintPlan` prints these measurements. Families
 are written out in "The zoo's plan" below. **S** = south; **W/E** = west/east.
@@ -247,6 +252,36 @@ small animals stand behind the same 3.5 m glass as the lions. The meerkats' serv
 now a lower green wildlife hedge with its real containment mesh hidden in the foliage. Tigers and
 bears need a 4 m barrier of strength 4: their viewing fronts are the 4.5 m `high_glass_wall`, the
 rest of the boundary 4.5 m `heavy_mesh`.
+
+## East and west garden walks (2026-11-21)
+
+Both walks turn back into the zoo at a different habitat gallery. Walking west from Elephant
+Valley, visitors pass willows and a stop for ice cream before reaching Polar Sound. On the
+eastern side, the refreshment stop stands among acacias on the walk from the giraffes and
+zebras at Acacia Plain to Tiger Forest. Each stop has a restroom. The 160-tile-wide layout is
+still available to callers building a zoo to the previous dimensions.
+
+On seeds 1 and 2 the visitor simulation offers all four picnic tables, six seats each.
+The visitor map offers 27 distinct destinations, including both picnic stops. Clicking them
+places the player on the west walk at (31, 269) m and on the east walk at (415, 267) m.
+At 10:30 on seed 1, 15 visitors were within 20 m of the west plaza and 12 were within 20 m
+of the east plaza. The plan and both views are in `evidence/east-west-gardens-2026-11-21.jpg`.
+A gallery from each of the four bordering habitats is within 180 m of its respective
+rest stop. In seed 1 the farthest path anywhere in the park is 78.1 m from a facility.
+Tall grass in the woodland glades brings Bear Falls to 43.0% vegetation cover after
+the expansion.
+
+The deterministic opening states for the new default map, and the same visit 500 ticks later,
+are recorded below.
+
+| Fill ticks | Seed | Opening state | After 500 ticks |
+|---:|---:|---:|---:|
+| 600 | 1 | 6149812909312757473 | 9743607491872979440 |
+| 600 | 2 | 3581511720324067494 | 5080038278314224431 |
+| 600 | 3 | 12504103261764293381 | 290601053194212960 |
+| 6000 | 1 | 1284744869770772916 | 8424761712365639015 |
+| 6000 | 2 | 7515209334301186647 | 17005395279587903364 |
+| 6000 | 3 | 14847577528289621555 | 17632415333599148855 |
 
 ## Stand-off welfare measurements
 

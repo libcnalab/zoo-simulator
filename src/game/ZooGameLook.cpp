@@ -786,6 +786,15 @@ void ZooGame::AddMapPlaces(VisitMap& map) const {
         group->shop = group->shop || def.role == Role::GiftShop;
         group->education = group->education || def.role == Role::EducationCenter;
     }
+    const int picnicTable = zoo_->Definitions().PropIndex("picnic_table");
+    std::vector<zoo::PropId> nearby;
+    const auto picnicArea = [&](const VisitMap::Place& place) {
+        zoo_->Objects().PropsNear({place.x, place.z}, 18.0f, nearby);
+        return std::ranges::count_if(nearby, [&](zoo::PropId id) {
+            const zoo::Prop* prop = zoo_->Objects().FindProp(id);
+            return prop && prop->def == picnicTable;
+        }) >= 2;
+    };
     for (Group& group : groups) {
         if (group.education)
             group.place.name = "Education centre";
@@ -793,6 +802,8 @@ void ZooGame::AddMapPlaces(VisitMap& map) const {
             group.place.name = "Gift shop";
         else if (group.stalls >= 2)
             group.place.name = "Food court";
+        else if (group.restroom && group.stalls > 0 && picnicArea(group.place))
+            group.place.name = "Picnic area and restroom";
         else if (group.restroom)
             group.place.name = "Visitor restroom";
         else

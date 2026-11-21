@@ -184,7 +184,7 @@ void PrintPlan(const Zoo& zoo) {
 }  // namespace
 TEST(VisitorZooTests, CompleteZoo) {
     Zoo zoo(testdata::GameCatalog(), testdata::GameSpecies(), VisitorZooConfig());
-    EXPECT_EQ(zoo.Map().Width(), 160);
+    EXPECT_EQ(zoo.Map().Width(), 224);
     EXPECT_EQ(zoo.Map().Depth(), 224);
     ExpectNoProblems(BuildVisitorZoo(zoo));
     ExpectConnected(zoo);
@@ -263,6 +263,15 @@ TEST(VisitorZooTests, EqualSeedsMatchAndOtherSeedsBuild) {
         ExpectConnected(other);
         EXPECT_NE(first.StateHash(), other.StateHash());
     }
+}
+
+TEST(VisitorZooTests, PreviousMapWidthRetainsTheNorthernCircuit) {
+    ZooConfig config = VisitorZooConfig();
+    config.world.width = 160;
+    Zoo zoo(testdata::GameCatalog(), testdata::GameSpecies(), config);
+    ExpectNoProblems(BuildVisitorZoo(zoo));
+    ExpectConnected(zoo);
+    EXPECT_EQ(zoo.Fauna().All().size(), 99U);
 }
 
 TEST(VisitorZooTests, SmallMapsReportTheirLimits) {

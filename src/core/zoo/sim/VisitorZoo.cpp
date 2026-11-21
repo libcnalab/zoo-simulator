@@ -101,7 +101,7 @@ std::vector<TileCoord> PublicOutline(const Script& script, const HabitatPlan& pl
     return tiles;
 }
 
-void Walks(Zoo& zoo, Script& script) {
+void Walks(Zoo& zoo, Script& script, bool sideGardens) {
     // The plaza leaves a small planting island for its fountain; the two arms meet beyond it.
     script.Path(-10, 0, -3, 13, PathKind::Cobblestone);
     script.Path(3, 0, 10, 13, PathKind::Cobblestone);
@@ -133,6 +133,14 @@ void Walks(Zoo& zoo, Script& script) {
     // joins them into a loop, so a closed side never strands visitors at the far end.
     script.PathAlong({{-18, 170}, {-17, 178}, {-14, 184}, {0, 196}}, 3, PathKind::Asphalt);
     script.PathAlong({{22, 170}, {18, 178}, {14, 184}, {0, 196}}, 3, PathKind::Asphalt);
+    if (sideGardens) {
+        // Each side garden connects two existing habitat galleries. The new land can be crossed
+        // on a circuit, with a rest stop halfway along the outer walk.
+        script.PathAlong({{65, 53}, {78, 53}, {90, 62}, {98, 78}, {98, 92}, {88, 109}, {62, 123}}, 3,
+                         PathKind::Gravel);
+        script.PathAlong({{-67, 52}, {-80, 53}, {-93, 64}, {-99, 78}, {-96, 94}, {-85, 106}, {-65, 115}}, 3,
+                         PathKind::Gravel);
+    }
     script.PathAlong({{-18, 49}, {-6, 46}, {0, 38}, {16, 36}, {27, 39}}, 2, PathKind::Gravel);
     script.PathAlong({{-20, 70}, {-3, 69}, {11, 74}, {28, 77}}, 2, PathKind::Gravel);
     script.PathAlong({{-29, 105}, {-8, 103}, {11, 106}, {29, 103}}, 2, PathKind::Gravel);
@@ -325,7 +333,8 @@ HabitatStyle Style(std::string_view species) {
                 "granite_boulder",
                 {"climbing_frame", "log_pile", "tyre_swing", "ball"},
                 // A mixed mountain wood: pines alone, at the cover a bear asks for, stood as a plantation.
-                {"pine", "pine", "spruce", "spruce", "oak", "oak", "oak", "birch", "juniper", "juniper"}};
+                {"pine", "pine", "spruce", "spruce", "oak", "oak", "oak", "birch", "juniper", "juniper",
+                 "tall_grass"}};
     }
     if (species == "polar_bear") {
         return {Terrain::Snow,
@@ -1907,12 +1916,16 @@ void WidenThinWalks(Zoo& zoo, Script& script) {
     }
 }
 
-void Facilities(Zoo& zoo, Script& script) {
+void Facilities(Zoo& zoo, Script& script, bool sideGardens) {
     std::vector<ServiceApron> serviceAprons;
     script.PathTiles(script.Ellipse(13, 74, 10.0f, 4.0f), PathKind::Cobblestone);
     // A second shaded rest place makes the new northern circuit a destination rather than an
     // empty perimeter path. Its two services are placed below before furniture fills the glade.
     script.PathAlong(Script::Arc(0, 164, 9.0f, 5.0f, 0.0f, kTwoPi), 2, PathKind::Cobblestone);
+    if (sideGardens) {
+        script.PathTiles(script.Ellipse(96, 80, 5.0f, 4.0f), PathKind::Cobblestone);
+        script.PathTiles(script.Ellipse(-97, 80, 5.0f, 4.0f), PathKind::Cobblestone);
+    }
     // Trunks stand on unpaved islands; the broad crowns shade the two rows of tables.
     for (int e = 6; e <= 21; e += 3) {
         script.PathTiles({script.Tile(e, 74)}, PathKind::None);
@@ -1954,6 +1967,12 @@ void Facilities(Zoo& zoo, Script& script) {
     Service(zoo, script, serviceAprons, "drinks_stall", 66, 123, Dir::West);
     Service(zoo, script, serviceAprons, "drinks_stall", 66, 91, Dir::West);
     Service(zoo, script, serviceAprons, "ice_cream_stand", -67, 84, Dir::East);
+    if (sideGardens) {
+        Service(zoo, script, serviceAprons, "restroom", 92, 82, Dir::East);
+        Service(zoo, script, serviceAprons, "drinks_stall", 92, 77, Dir::East);
+        Service(zoo, script, serviceAprons, "restroom", -92, 82, Dir::West);
+        Service(zoo, script, serviceAprons, "ice_cream_stand", -92, 77, Dir::West);
+    }
     WidenServiceAprons(zoo, script, serviceAprons);
     WidenThinWalks(zoo, script);
     TrimTeeth(zoo, script);
@@ -1971,6 +1990,16 @@ void Facilities(Zoo& zoo, Script& script) {
         PublicProp(zoo, script, "bench", script.Point(east, 164), east < 0 ? -kPi * 0.5f : kPi * 0.5f);
         PublicProp(zoo, script, "litter_bin", script.Point(east, 162));
         PublicProp(zoo, script, "lamp", script.Point(east, 166));
+    }
+    if (sideGardens) {
+        for (const int side : {-1, 1}) {
+            for (const int north : {78, 82}) {
+                PublicProp(zoo, script, "picnic_table", script.Point(side < 0 ? -103 : 102, north));
+            }
+            PublicProp(zoo, script, "bench", script.Point(side * 101, 80),
+                       side < 0 ? -kPi * 0.5f : kPi * 0.5f);
+            PublicProp(zoo, script, "litter_bin", script.Point(side * 100, 77));
+        }
     }
     PublicProp(zoo, script, "info_board", script.Point(0, 168), kPi);
     script.Prop("fountain", script.Point(0, 7));
@@ -2119,7 +2148,7 @@ ZooConfig VisitorZooConfig(std::uint64_t seed) {
     config.name = "Greenhill Zoo";
     config.seed = seed;
     config.world.seed = seed;
-    config.world.width = 160;
+    config.world.width = 224;
     config.world.depth = 224;
     config.world.relief = 0.12f;
     config.sandbox = true;
@@ -2131,12 +2160,13 @@ ScenarioReport BuildVisitorZoo(Zoo& zoo, const VisitorZooOptions& options) {
     Script script(zoo);
     const World& map = zoo.Map();
     const TileCoord gate = map.EntranceTile();
-    if (gate.x - map.PropertyMin().x < 70 || map.PropertyMax().x - gate.x < 70 ||
-        gate.z - map.PropertyMin().z < 211) {
+    const int besideGate = std::min(gate.x - map.PropertyMin().x, map.PropertyMax().x - gate.x);
+    if (besideGate < 70 || gate.z - map.PropertyMin().z < 211) {
         script.Problem("the Visitor Zoo needs 70 tiles beside the entrance and 211 tiles north of it");
         return script.Finish();
     }
-    Walks(zoo, script);
+    const bool sideGardens = besideGate >= 103;
+    Walks(zoo, script, sideGardens);
     for (const HabitatPlan& plan : kHabitats) {
         Habitat(zoo, script, plan, options);
     }
@@ -2145,7 +2175,7 @@ ScenarioReport BuildVisitorZoo(Zoo& zoo, const VisitorZooOptions& options) {
     script.Hold();
     StripPlants(zoo, script);
     GradeDryMoats(zoo, script);
-    Facilities(zoo, script);
+    Facilities(zoo, script, sideGardens);
     GroundDetail(zoo, script);
     Parkland(zoo, script);
     script.Release();

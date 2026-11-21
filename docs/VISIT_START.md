@@ -37,6 +37,9 @@ before the first frame. The fresh and cached starts now both yield the former ha
 Revision 4 covers the new activity choices and maternal following for the lynx, red panda
 and snow leopard families. See the six opening and continuation hashes in `docs/ANIMAL_BEHAVIOUR.md`.
 
+Revision 5 starts fresh visits on the 224 × 224 tile map. Its six deterministic starts are
+recorded under “East and west garden walks” in `docs/VISITOR_ZOO.md`.
+
 In matched one-frame software-GL runs, the fresh path built and filled in 2.58 s and stored a
 2,431,686-byte entry. The second run loaded it in 0.04 s with the same state hash
 `2609457543749151601`, reducing startup through `visitors and tools` from 8.15 to 5.65 s. A

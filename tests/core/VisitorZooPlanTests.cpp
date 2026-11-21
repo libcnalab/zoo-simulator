@@ -2,10 +2,12 @@
 #include <gtest/gtest.h>
 
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
+#include <limits>
 #include <map>
 #include <set>
 #include <string>
@@ -14,6 +16,7 @@
 #include "TestData.hpp"
 #include "zoo/sim/VisitStart.hpp"
 #include "zoo/sim/VisitorZoo.hpp"
+#include "zoo/visitors/VisitorInternal.hpp"
 
 namespace zoo {
 namespace {
@@ -492,7 +495,7 @@ protected:
 TEST_P(VisitorZooPlan, NorthernWoodlandLoopUsesExpandedLand) {
     const World& map = zoo_.Map();
     const TileCoord gate = map.EntranceTile();
-    EXPECT_EQ(map.Width(), 160);
+    EXPECT_EQ(map.Width(), 224);
     EXPECT_EQ(map.Depth(), 224);
     EXPECT_EQ(gate.z - map.PropertyMin().z, 211);
 
@@ -527,6 +530,59 @@ TEST_P(VisitorZooPlan, NorthernWoodlandLoopUsesExpandedLand) {
             gate.z - World::TileAt(prop.position).z >= 155 && KindOf(zoo_, prop).id == "picnic_table" ? 1 : 0;
     }
     EXPECT_GE(picnicTables, 6);
+}
+
+TEST_P(VisitorZooPlan, BothSideGardensReachTheOldGalleriesAndHaveVisitorFacilities) {
+    const auto& map = zoo_.Map();
+    const auto gate = map.EntranceTile();
+    visitors_detail::Sites sites;
+    sites.Refresh(zoo_.MakeEnv());
+    for (const int side : {-1, 1}) {
+        SCOPED_TRACE(side);
+        const TileCoord plaza{gate.x + side * 97, gate.z - 80};
+        ASSERT_TRUE(map.IsProperty(plaza));
+        ASSERT_TRUE(zoo_.Routes().Reachable(gate, plaza, NavProfile::Visitor()));
+        // A disconnected arm could still reach the plaza by going all around the old zoo.
+        // The southern and northern galleries must each have their own short way in.
+        std::vector<float> distances;
+        zoo_.Routes().DistanceField(std::array{plaza}, NavProfile::Visitor(), distances);
+        for (const auto name :
+             {side < 0 ? "Elephant Valley" : "Acacia Plain", side < 0 ? "Polar Sound" : "Tiger Forest"}) {
+            float shortest = std::numeric_limits<float>::infinity();
+            for (const auto& home : zoo_.Habitats().All()) {
+                if (home.name != name) {
+                    continue;
+                }
+                for (const auto& spot : home.viewing) {
+                    const auto index = static_cast<std::size_t>(spot.tile.z * map.Width() + spot.tile.x);
+                    const float tiles = distances[index];
+                    if (tiles >= 0.0f) {
+                        shortest = std::min(shortest, tiles * kTileSize);
+                    }
+                }
+            }
+            EXPECT_LT(shortest, 180.0f) << name;
+        }
+        int picnicSeats = 0;
+        for (const auto& seat : sites.benches) {
+            if ((World::TileAt(seat.position).x - gate.x) * side >= 80 &&
+                KindOf(zoo_, *zoo_.Objects().FindProp(seat.id)).id == "picnic_table") {
+                picnicSeats += seat.seats;
+            }
+        }
+        EXPECT_EQ(picnicSeats, 12);
+        std::set<std::string> services;
+        for (const auto& building : zoo_.Objects().Buildings()) {
+            if ((building.origin.x - gate.x) * side >= 80) {
+                const auto& def = zoo_.Definitions().buildings[static_cast<std::size_t>(building.def)];
+                const auto front = FrontTile(def, building.origin, building.facing);
+                EXPECT_TRUE(zoo_.Routes().Reachable(plaza, front, NavProfile::Visitor())) << def.id;
+                services.insert(def.id);
+            }
+        }
+        EXPECT_TRUE(services.contains("restroom"));
+        EXPECT_TRUE(services.contains(side < 0 ? "ice_cream_stand" : "drinks_stall"));
+    }
 }
 
 TEST_P(VisitorZooPlan, LynxRidgeOccupiesTheNorthernExtension) {
