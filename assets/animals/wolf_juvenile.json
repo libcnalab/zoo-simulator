@@ -109,6 +109,7 @@
   "license": "MIT",
   "meta": {
     "age_shape": "Older pup: shorter muzzle and body, broader skull and paws",
+    "anatomy": "Third-pass canid outline: monotonic broad muzzle, narrow deep chest, abdominal tuck and lean digitigrade limbs",
     "body_length_m": 0.78,
     "common_name": "Grey wolf",
     "relative_height": 0.575,
@@ -134,5 +135,5 @@
   },
   "texture": 1024,
   "triangles": 15528,
-  "vertices": 7772
+  "vertices": 7776
 }

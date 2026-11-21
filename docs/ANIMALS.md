@@ -104,8 +104,35 @@ check that the female is smaller without acquiring juvenile proportions, as well
 gait, clip contacts, texture maps and manifest. All 31 game-side tests pass, and a 3,000-tick
 AddressSanitizer Wolf Wood run imported the male, female and pup models and kept all six residents
 outside. The close `vocalize` viewer and habitat frame are in
-`evidence/wolf-female-j68-2026-11-21.jpg`. The slimmer silhouette is visible, while the rounded
-face and lofted joints remain limitations of the same stylised first-generation wolf anatomy.
+`evidence/wolf-female-j68-2026-11-21.jpg`. The slimmer silhouette is visible, while the lofted
+joints remain a limitation of the procedural anatomy.
+
+### Grey-wolf anatomy, third pass (2026-11-21)
+
+All three wolf variants now share a canid-specific outline pass. The former head sections moved
+backwards as well as forwards along the skull, which made a rounded knot rather than a muzzle;
+six strictly advancing sections now form a broad, tapered and blockier snout. A dedicated neck,
+narrow deep chest, visible abdominal tuck, leaner digitigrade leg sleeves, large feet, rounded ear
+tips and a tail brush which narrows to its tip replace the generic quadruped masses. The older pup
+keeps its independently shorter face and proportionally broader cranium, while the adult female
+keeps her 95 %-height lighter build.
+
+These choices follow the National Park Service descriptions of wolves as long-legged,
+large-footed and narrow-chested relative to domestic dogs
+([North Cascades](https://www.nps.gov/noca/learn/nature/wolf-description-and-biology.htm)), with a
+thicker, blockier muzzle and smaller, less pointed ears than coyotes
+([Denali](https://www.nps.gov/dena/learn/nature/research-mesocarnivores.htm)); the Animal Diversity
+Web independently describes the broader snout and shorter ears
+([ADW](https://animaldiversity.org/accounts/Canis_lupus/)). This is still authored procedural
+anatomy, not a scan or an individual anatomical study.
+
+The adult male and female remain 18,528 triangles and the pup 15,528; all three have 33 manifest
+bones and the standard eight clips. Their production GLBs are respectively 2,833,016, 2,920,944
+and 2,725,660 bytes and match independent single-threaded exports byte for byte. The before/after
+walk, male and female profiles, pup and a 3,000-tick Wolf Wood integration frame are inspected in
+`evidence/wolf-anatomy-j74-2026-11-21.jpg`. All 146 animal-pipeline tests and all 305 active CTest
+cases pass (21 measurement diagnostics remain disabled); a separate 3,000-tick AddressSanitizer
+Wolf Wood run also completed cleanly with leak detection off and all six wolves outdoors.
 
 ### Meerkat pup (2026-11-20)
 

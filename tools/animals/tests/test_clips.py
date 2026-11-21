@@ -540,6 +540,25 @@ class AnatomyTests(unittest.TestCase):
             self.assertGreater(brush[1].ry, brush[0].ry)
             self.assertLess(brush[-1].ry, .2 * brush[1].ry)
 
+    def test_wolves_have_a_monotonic_canid_head_and_tucked_lean_body(self):
+        for species in ("wolf", "wolf_female", "wolf_juvenile"):
+            spec = importlib.import_module("species." + species).make_spec()
+            parts = {part.name: part for part in spec.parts}
+            height = spec.meta["shoulder_height_m"]
+            skull = parts["skull"].rings
+            self.assertTrue(all(a.c[0] < b.c[0] for a, b in zip(skull, skull[1:])))
+            self.assertGreater(skull[3].ry, .63 * skull[1].ry)
+            torso = parts["torso"].rings
+            abdomen_bottom = torso[2].c[2] - torso[2].dn
+            chest_bottom = torso[4].c[2] - torso[4].dn
+            self.assertGreater(abdomen_bottom, chest_bottom + .035 * height)
+            self.assertLess(max(ring.ry for ring in torso), .19 * height)
+            self.assertLess(parts["front_leg.L"].rings[0].ry, .075 * height)
+            self.assertGreater(parts["front_paw.L"].rings[-1].ry,
+                               parts["front_leg.L"].rings[-1].ry)
+            self.assertGreater(parts["ear.L"].rings[-1].ry, .01 * height)
+            self.assertIn("Third-pass canid outline", spec.meta["anatomy"])
+
     def test_wolf_exports_carry_the_coat_normal_map_and_tangents(self):
         root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
         for species, triangle_limit in (("wolf", 20000), ("wolf_female", 20000),

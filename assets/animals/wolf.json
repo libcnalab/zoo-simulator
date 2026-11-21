@@ -108,6 +108,7 @@
   "generator": "tools/animals (zoogen)",
   "license": "MIT",
   "meta": {
+    "anatomy": "Third-pass canid outline: monotonic broad muzzle, narrow deep chest, abdominal tuck and lean digitigrade limbs",
     "body_length_m": 1.5,
     "common_name": "Grey wolf",
     "roughness": 0.9,

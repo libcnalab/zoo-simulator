@@ -146,6 +146,17 @@ whatever you take up (`docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `docs/V
   comparisons, grounded sentry and a seed-1/tick-3000 Meerkat Lookout frame selecting three-year-old
   Nala were opened in `docs/evidence/meerkat-anatomy-j73-2026-11-21.jpg` (J73, 2026-11-21).
   The body remains authored procedural anatomy rather than a scan and has no individual hair cards.
+- The adult male, adult female and older-pup grey wolves now have a third anatomy pass. A strictly
+  advancing six-section broad muzzle, dedicated neck, narrow deep chest, abdominal tuck, lean
+  digitigrade limbs, large paws, rounded ear tips and a brush tapered through its tip replace the
+  backtracking round head, generic trunk masses and club-ended tail. Male and female remain 18,528
+  triangles, the pup 15,528; all have 33 manifest bones and eight clips. Their 2,833,016 / 2,920,944
+  / 2,725,660-byte production GLBs match independent single-threaded exports byte for byte. All
+  146 animal-pipeline tests and all 305 active CTest cases pass (21 diagnostics disabled); a
+  3,000-tick ASan Wolf Wood run completed cleanly with leak detection off and all six residents
+  outside. The before/after walks, profiles, pup and habitat integration frame were opened in
+  `docs/evidence/wolf-anatomy-j74-2026-11-21.jpg` (J74, 2026-11-21). This remains authored
+  procedural anatomy rather than a scan.
 - Adult and juvenile ostriches now have second-pass layered plumage. Four detached feathers
   overlap each folded wing and five more separate the tail fan; a feather-only tangent-space
   normal map adds directional barb relief while leaving the bare skin smooth. The adult has
