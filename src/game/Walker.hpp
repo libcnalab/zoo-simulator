@@ -76,8 +76,9 @@ private:
     bool stepped_ = false;
 };
 
-/// Radius of the solid part of a prop for somebody walking, including furniture
-/// which the simulation's visitors may pass through but the player's body may not.
-float PlayerPropRadius(const zoo::PropDef& def);
+/// Whether the player's body fits between the placed props at this position.
+bool ClearOfPlayerProps(const zoo::Zoo& zoo, zoo::Vec2 at);
+/// Whether the player can arrive at this tile centre from the visitor map.
+bool CanLandOnPath(const zoo::Zoo& zoo, zoo::TileCoord tile);
 
 }  // namespace zoogame

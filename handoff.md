@@ -1,4 +1,4 @@
-# Handoff: Zoo Simulator (state of 2026-11-20)
+# Handoff: Zoo Simulator (state of 2026-11-21)
 
 For the next agent, who starts without any earlier context. Read this file first, then
 `docs/REALISM.md` (progress log and the honest list of what is open), and the document of
@@ -12,6 +12,9 @@ whatever you take up (`docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `docs/V
   78.1 m maximum walk to a facility. See `docs/VISITOR_ZOO.md` for the plan and game views.
   Filled-visit cache revision 3 covers the expanded layout. Late starts now load the exact
   prepared state. The old cache path could run the entire visitor fill twice at 18:00.
+  The visitor map checks gate connectivity and the player's collision radius before offering
+  a destination. A seed-1 visit at 10:30 offered 25 stops, including all 17 habitats. Clicking
+  Snow Leopard Heights put the player at its glass, at (167 m, 65 m).
 
 - **The game:** Greenhill Zoo, a first-person walk through a zoo (C++23, the simulation core in
   `src/core/zoo/`, the game on CNA / cna-engine in `src/game/`). Zoo management must not come

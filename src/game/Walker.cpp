@@ -66,11 +66,10 @@ float WrapAngle(float a) {
     return a;
 }
 
-}  // namespace
-
-float PlayerPropRadius(const zoo::PropDef& def) {
+/// Radius of the part the player collides with, including furniture simulation visitors pass.
+float PlayerPropRadius(const zoo::PropDef& def, float scale) {
     if (def.blocksWalking)
-        return def.radiusM;
+        return def.radiusM * scale;
     switch (def.role) {
         case zoo::PropRole::Bench:
             return 0.55f;
@@ -83,6 +82,28 @@ float PlayerPropRadius(const zoo::PropDef& def) {
         default:
             return 0.0f;  // flower beds are stepped over
     }
+}
+
+}  // namespace
+
+bool ClearOfPlayerProps(const zoo::Zoo& zoo, zoo::Vec2 at) {
+    return std::ranges::none_of(zoo.Objects().Props(), [&](const zoo::Prop& prop) {
+        if (prop.def < 0)
+            return false;
+        const auto& def = zoo.Definitions().props[static_cast<std::size_t>(prop.def)];
+        const float radius = PlayerPropRadius(def, prop.scale);
+        const float clearance = radius + Walker::kBodyRadius;
+        return radius > 0.0f && zoo::DistanceSquared(at, prop.position) < clearance * clearance;
+    });
+}
+
+bool CanLandOnPath(const zoo::Zoo& zoo, zoo::TileCoord tile) {
+    const auto& world = zoo.Map();
+    return world.InBounds(tile) && world.At(tile).path != zoo::PathKind::None &&
+           !world.At(tile).building && !world.At(tile).standOff && !world.HasWater(tile) &&
+           zoo.Habitats().RegionAt(tile) == zoo::Region::Public &&
+           zoo.Routes().Reachable(world.EntranceTile(), tile, zoo::NavProfile::Visitor()) &&
+           ClearOfPlayerProps(zoo, zoo::World::TileCenter(tile));
 }
 
 Walker::Walker() : world_(4.0f), body_(Body()) {}
@@ -177,7 +198,7 @@ void Walker::Rebuild(const zoo::Zoo& zoo) {
 
     for (const zoo::Prop& prop : zoo.Objects().Props()) {
         const zoo::PropDef& def = catalog.props[static_cast<std::size_t>(prop.def)];
-        const float radius = PlayerPropRadius(def) * (def.blocksWalking ? prop.scale : 1.0f);
+        const float radius = PlayerPropRadius(def, prop.scale);
         if (radius <= 0.0f)
             continue;
         const float floor = DrawnGroundHeight(map, prop.position);

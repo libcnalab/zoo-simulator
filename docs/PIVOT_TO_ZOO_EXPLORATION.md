@@ -22,7 +22,7 @@ the morning's crowd already spread over the park.
 | Looking at an animal | a card fades in: its name, species, sex and age, what it is doing |
 | `B`, right mouse button held | binoculars (since 2026-11-14): the view narrows to a seventh (7 x), eased up over a quarter of a second behind two round eyepieces; the head turns seven times slower, one stands still, and an animal's card is shown up to 300 m away (70 m without) |
 | `E` | read the information board one stands at (range, diet, facts, who lives here) |
-| `M` | the visitor map: every habitat by name, buildings, "You are here"; since 2026-11-14 the mouse is free over it and twenty places are marked (the entrance, each habitat at its main front, the gift shop, the education centre, two food courts, a restroom): a click on one takes you there. A habitat's place is the viewing place farthest to the south, passed over for a free one where people stand at the glass; a house's place is a few steps before its door |
+| `M` | Open the zoo map and click a marker to travel. Each destination needs a public path connected to the entrance, with room for the player's body beside benches, lamps and other solid props. Habitat markers favour quieter viewing places on the southern front. Facility markers place the player near the door. |
 | `Esc` | the pause menu (Resume, Save Visit, Load Visit, Settings, Back to the Title); the mouse is released and the world stands |
 | `F5` | save the visit; the visit is also kept every two minutes for *Continue Visit* |
 | `F4` | diagnostics: visitors simulated / in range / drawn, avatars ready, sound voices |

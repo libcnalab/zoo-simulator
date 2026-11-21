@@ -67,6 +67,34 @@ TEST(Walker, DamagedSavedHeadingsAreReducedInBoundedTime) {
     }
 }
 
+TEST(Walker, MapLandingsKeepBodyRoomAroundFurniture) {
+    zoo::Zoo zoo(zoo::testdata::GameCatalog(), zoo::testdata::GameSpecies(), zoo::VisitorZooConfig(1));
+    const auto gate = zoo.Map().EntranceTile();
+    const TileCoord path{gate.x, gate.z - 2};
+    const Vec2 centre = World::TileCenter(path);
+    ASSERT_TRUE(CanLandOnPath(zoo, path));
+    const int bench = zoo.Definitions().PropIndex("bench");
+    ASSERT_GE(bench, 0);
+    const auto obstacle = zoo.FreeBuilder().PlaceProp(bench, centre + Vec2{0.6f, 0.0f});
+    ASSERT_TRUE(obstacle.Ok());
+    EXPECT_FALSE(CanLandOnPath(zoo, path));
+    ASSERT_TRUE(zoo.FreeBuilder().RemoveProp(obstacle.prop).Ok());
+    EXPECT_TRUE(CanLandOnPath(zoo, path));
+    EXPECT_FALSE(CanLandOnPath(zoo, {-1, -1}));
+    const std::array<TileCoord, 1> island{{{gate.x, gate.z - 12}}};
+    ASSERT_TRUE(zoo.FreeBuilder().PlacePath(island, zoo::PathKind::Asphalt).Ok());
+    EXPECT_FALSE(CanLandOnPath(zoo, island.front()));
+}
+
+TEST(Walker, EveryVisitorHabitatHasAClearMapLanding) {
+    const auto& zoo = Greenhill();
+    for (const auto& habitat : zoo.Habitats().All()) {
+        EXPECT_TRUE(std::ranges::any_of(habitat.viewing, [&](const auto& spot) {
+            return CanLandOnPath(zoo, spot.tile);
+        })) << habitat.name;
+    }
+}
+
 TileCoord Beside(TileCoord tile, Dir side) {
     const TileCoord step = zoo::Step(side);
     return {tile.x + step.x, tile.z + step.z};

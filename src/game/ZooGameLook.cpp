@@ -444,19 +444,7 @@ std::optional<ZooGame::Pose> ZooGame::StandPose(std::string_view what) const {
                     const float forward = spot.standOffM > 0.0f ? 0.5f : 0.2f;
                     const zoo::Vec2 at{middle.x + forward * static_cast<float>(toward.x),
                                        middle.z + forward * static_cast<float>(toward.z)};
-                    const bool occupied =
-                        std::ranges::any_of(zoo_->Objects().Props(), [&](const zoo::Prop& prop) {
-                            if (prop.def < 0)
-                                return false;
-                            const zoo::PropDef& def =
-                                zoo_->Definitions().props[static_cast<std::size_t>(prop.def)];
-                            const float solid =
-                                PlayerPropRadius(def) * (def.blocksWalking ? prop.scale : 1.0f);
-                            const float clear = solid + Walker::kBodyRadius;
-                            return solid > 0.0f &&
-                                   zoo::DistanceSquared(at, prop.position) < clear * clear;
-                        });
-                    if (occupied)
+                    if (!ClearOfPlayerProps(*zoo_, at))
                         continue;
                     const float dx = animal.position.x - at.x;
                     const float dz = animal.position.z - at.z;
@@ -693,11 +681,6 @@ void ZooGame::BuildVisitMap() {
 }
 
 void ZooGame::AddMapPlaces(VisitMap& map) const {
-    const zoo::World& world = zoo_->Map();
-    const auto standable = [&](zoo::TileCoord t) {
-        return world.InBounds(t) && world.At(t).path != zoo::PathKind::None && !world.At(t).building &&
-               !world.At(t).standOff && !world.HasWater(t);
-    };
     // The paved tile nearest to `tile` within `reach` tiles, nearest first.
     const auto paved = [&](zoo::TileCoord tile, int reach) -> std::optional<zoo::TileCoord> {
         std::optional<zoo::TileCoord> best;
@@ -705,7 +688,7 @@ void ZooGame::AddMapPlaces(VisitMap& map) const {
         for (int dz = -reach; dz <= reach; ++dz)
             for (int dx = -reach; dx <= reach; ++dx) {
                 const zoo::TileCoord next{tile.x + dx, tile.z + dz};
-                if (dx * dx + dz * dz < distance && standable(next)) {
+                if (dx * dx + dz * dz < distance && CanLandOnPath(*zoo_, next)) {
                     distance = dx * dx + dz * dz;
                     best = next;
                 }
@@ -714,7 +697,11 @@ void ZooGame::AddMapPlaces(VisitMap& map) const {
     };
 
     const Pose gate = EntrancePose();
-    map.places.push_back({gate.x, gate.z, gate.yaw, "Entrance", false});
+    if (const auto entrance = paved(zoo::World::TileAt({gate.x, gate.z}), 6)) {
+        const auto at = zoo::World::TileCenter(*entrance);
+        map.places.push_back({at.x, at.z, gate.yaw, "Entrance", false});
+    }
+    const std::size_t firstHabitat = map.places.size();
 
     // A habitat: at its main front, the viewing place farthest to the south (the side the walks
     // come from), looking straight across the barrier; a place where people stand at the glass
@@ -741,12 +728,10 @@ void ZooGame::AddMapPlaces(VisitMap& map) const {
         const zoo::ViewingSpot* best = nullptr;
         float score = 1.0e9f;
         for (const zoo::ViewingSpot& spot : enclosure.viewing) {
-            if (!standable(spot.tile))
-                continue;
             const zoo::Vec2 at = zoo::World::TileCenter(spot.tile);
             const float next = std::hypot(at.x - centre.x, at.z - (centre.z + 100.0f)) +
                                15.0f * static_cast<float>(people(spot.tile));
-            if (next < score) {
+            if (next < score && CanLandOnPath(*zoo_, spot.tile)) {
                 score = next;
                 best = &spot;
             }
@@ -821,10 +806,10 @@ void ZooGame::AddMapPlaces(VisitMap& map) const {
         ++named[map.places[i].name];
     for (std::size_t i = habitats; i < map.places.size(); ++i) {
         VisitMap::Place& place = map.places[i];
-        if (named[place.name] < 2 || habitats <= 1)
+        if (named[place.name] < 2 || habitats == firstHabitat)
             continue;
         const VisitMap::Place* near = nullptr;
-        for (std::size_t h = 1; h < habitats; ++h)
+        for (std::size_t h = firstHabitat; h < habitats; ++h)
             if (near == nullptr || std::hypot(map.places[h].x - place.x, map.places[h].z - place.z) <
                                        std::hypot(near->x - place.x, near->z - place.z))
                 near = &map.places[h];
