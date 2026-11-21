@@ -30,6 +30,7 @@ STILL_CLIPS = {"idle", "eat", "drink", "rest", "sleep", "sentry", "dig", "preen"
                "ruminate", "filter_feed", "bathe", "huddle", "browse", "nuzzle", "groom"}
 EXPECTED = {
     "brown_bear": {"bathe": "bathe"},
+    "brown_bear_female": {"bathe": "bathe"},
     "brown_bear_juvenile": {"bathe": "bathe"},
     "polar_bear": {"bathe": "bathe"},
     "polar_bear_female": {"bathe": "bathe"},
@@ -269,8 +270,8 @@ class SocialTests(unittest.TestCase):
 
 class BatheTests(unittest.TestCase):
     def test_wallowing_species_lie_low_and_roll_their_bodies(self):
-        species_names = ("brown_bear", "brown_bear_juvenile", "polar_bear",
-                         "polar_bear_female", "polar_bear_juvenile", "rhino",
+        species_names = ("brown_bear", "brown_bear_female", "brown_bear_juvenile",
+                         "polar_bear", "polar_bear_female", "polar_bear_juvenile", "rhino",
                          "rhino_juvenile", "tiger", "tiger_female")
         for species in species_names:
             spec, solver, clips = clips_of(species)

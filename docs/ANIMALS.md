@@ -46,7 +46,7 @@ while geometry, textures and animations remain identical.
 | `zoogen/rigged.py`, `pachyderm.py`, `pachyderm_motion.py` on a prepared third-party rigged model (below) | rhino, rhino_female, rhino_juvenile, elephant, elephant_female, elephant_juvenile |
 | `zoogen/scan.py` on a prepared third-party static sculpt, rigged by us (below) | zebra, zebra_female, zebra_juvenile |
 | `zoogen/giraffe2.py` on a prepared head-and-neck scan, body modelled by us (below) | giraffe, giraffe_female, giraffe_juvenile |
-| `zoogen/sculpt.py`, `bear.py` on a prepared third-party sculpt, rigged by us (below) | brown_bear, brown_bear_juvenile, polar_bear, polar_bear_female, polar_bear_juvenile |
+| `zoogen/sculpt.py`, `bear.py` on a prepared third-party sculpt, rigged by us (below) | brown_bear, brown_bear_female, brown_bear_juvenile, polar_bear, polar_bear_female, polar_bear_juvenile |
 | `zoogen/quadruped.py`, `wild_quadruped.py`, `anatomy.py` | wolf, wolf_female, wolf_juvenile, camel, camel_female, camel_juvenile, meerkat, meerkat_juvenile |
 | `zoogen/birdscan.py` on a prepared third-party scan or sculpt, rigged by us (below) | penguin, penguin_juvenile, flamingo, flamingo_juvenile |
 | `zoogen/biped.py` | ostrich, ostrich_female, ostrich_juvenile, kangaroo, kangaroo_female, kangaroo_juvenile |
@@ -456,13 +456,14 @@ difference is deliberately subtle rather than an unsupported reshape.
 Codex task S10: "Strong Bear" by Pebegou (CC BY 4.0), an upright, roaring brown bear sculpt
 without a skeleton. `tools/animals/prepare_bear.py` drops the scene's butterflies, decimates
 the bear, fits our 33 bones in the upright pose, weights it, closes the jaw by 39 degrees and
-bakes it down onto four legs; `zoogen/bear.py` builds five models from it, with the source's
+bakes it down onto four legs; `zoogen/bear.py` builds six models from it, with the source's
 fur detail and normal maps. **The polar bears come from the same brown-bear sculpt**: a longer
 neck, a narrower head and a white coat are ours.
 
 | Model | Triangles | Withers | What it is |
 |---|---:|---:|---|
 | `brown_bear` | 30,000 | 1.20 m | adult, `swim` (0.86 m under the surface) |
+| `brown_bear_female` | 30,000 | 1.10 m | adult female: lighter build, `swim` (0.79 m under the surface) |
 | `brown_bear_juvenile` | 19,500 | | cub: larger head, collar marking, `swim` |
 | `polar_bear` | 30,000 | 1.49 m | adult, `swim` (1.37 m under the surface) |
 | `polar_bear_female` | 30,000 | 1.34 m | adult female: lighter build, `swim` (1.21 m under the surface) |
@@ -510,6 +511,26 @@ view and labelled habitat frame are in `evidence/polar-bear-female-j71-2026-11-2
 still the same converted upright brown-bear sculpt, and the narrower female build is restrained
 art direction from the documented size and neck dimorphism rather than a full morphometric
 reconstruction.
+
+**Adult female Eurasian brown bear (J72, 2026-11-21).** `brown_bear_female` gives Bear
+Falls' ten-year-old mother Mara her own body instead of the generic adult model. Animal
+Diversity Web reports that adult male brown bears average 8–10 % larger than females
+([ADW](https://animaldiversity.org/accounts/Ursus_arctos/)). The game's 92 %-height female
+therefore follows the published midpoint after expressing the relationship as female/male;
+the source describes a species-wide average rather than a measurement of this zoo's Eurasian
+population, so the value remains an explicit visual approximation. The female also has a modestly
+narrower neck, chest, hips and upper limbs. Her dark autumn coat, pronounced shoulder hump,
+broad paws and 105 short outline fur clumps remain unchanged.
+
+The 30,000-triangle, 33-bone model retains all ten adult clips; `swim` scales to 0.72 m/s and a
+0.79 m depth. Its 5,601,752-byte production GLB and manifest match an independent single-threaded
+export byte for byte. Twelve focused bear and bathing tests plus the three all-species reach,
+sliding and ground tests pass, as do all 31 renderer tests. A 3,000-tick AddressSanitizer Bear
+Falls run imported the female and juvenile bodies and kept Mara and both cubs outside. The close
+walking view and controlled in-habitat frame, whose HUD identifies Mara while the cubs rest beside
+her, are in `evidence/brown-bear-female-j72-2026-11-21.jpg`. As with the other bears, this remains
+a reposed upright sculpt; the lighter female build is restrained art direction, not a dedicated
+morphometric reconstruction.
 
 Honest state: **these are improved but still not realistic bears**. They replace the old lofted
 blobs with a real sculpt's head, paws and surface, but the source was an upright roaring brown
@@ -688,7 +709,7 @@ named the real activity. Dedicated clips are now made in the pipeline
 | `camel`, `camel_female`, `camel_juvenile` | `ruminate` (10 s) | `ruminate` | standing with a slow asymmetric sideways jaw grind and a small head movement |
 | `flamingo` | `filter_feed` (7 s) | `filter_feed` | the fitted inverted-bill feeding posture, sweeping a broad irregular arc through the shallows |
 | `giraffe`, `giraffe_female`, `giraffe_juvenile` | `ruminate` (10 s) | `ruminate` | standing, with a deliberate lateral cud grind slower and broader than the incidental idle chew |
-| `brown_bear`, `brown_bear_juvenile`, `polar_bear`, `polar_bear_female`, `polar_bear_juvenile` | `bathe` (9 s) | `bathe` | lying in the shallows, rolling the shoulders and paddling with alternating forepaws |
+| `brown_bear`, `brown_bear_female`, `brown_bear_juvenile`, `polar_bear`, `polar_bear_female`, `polar_bear_juvenile` | `bathe` (9 s) | `bathe` | lying in the shallows, rolling the shoulders and paddling with alternating forepaws |
 | `tiger` | `bathe` (8 s) | `bathe` | lying low, rolling its chest and batting water with alternating forepaws |
 | `rhino`, `rhino_juvenile` | `bathe` (10 s) | `bathe` | a low wallow, rocking the barrel while the muzzle and tail sweep |
 | `elephant`, `elephant_female`, `elephant_juvenile` | `dust_bathe` (16 s) | `bathe` | hot-weather bathing reuses the fitting scrape, trunk scoop and toss as a wet mud toss |

@@ -1,0 +1,223 @@
+{
+  "bones": 33,
+  "clips": [
+    {
+      "duration": 6.0,
+      "events": [],
+      "frames": 181,
+      "loop": true,
+      "name": "idle",
+      "speed": 0.0
+    },
+    {
+      "duration": 0.9333,
+      "events": [
+        {
+          "name": "step",
+          "time": 0.0
+        },
+        {
+          "name": "step",
+          "time": 0.112
+        },
+        {
+          "name": "step",
+          "time": 0.4667
+        },
+        {
+          "name": "step",
+          "time": 0.5787
+        }
+      ],
+      "frames": 29,
+      "loop": true,
+      "name": "walk",
+      "speed": 1.0
+    },
+    {
+      "duration": 0.5667,
+      "events": [
+        {
+          "name": "step",
+          "time": 0.0
+        },
+        {
+          "name": "step",
+          "time": 0.0567
+        },
+        {
+          "name": "step",
+          "time": 0.272
+        },
+        {
+          "name": "step",
+          "time": 0.3287
+        }
+      ],
+      "frames": 18,
+      "loop": true,
+      "name": "trot",
+      "speed": 2.5
+    },
+    {
+      "duration": 3.0,
+      "events": [],
+      "frames": 91,
+      "loop": true,
+      "name": "eat",
+      "speed": 0.0
+    },
+    {
+      "duration": 2.4,
+      "events": [],
+      "frames": 73,
+      "loop": true,
+      "name": "drink",
+      "speed": 0.0
+    },
+    {
+      "duration": 8.0,
+      "events": [],
+      "frames": 241,
+      "loop": true,
+      "name": "rest",
+      "speed": 0.0
+    },
+    {
+      "duration": 8.0,
+      "events": [],
+      "frames": 241,
+      "loop": true,
+      "name": "sleep",
+      "speed": 0.0
+    },
+    {
+      "duration": 2.6,
+      "events": [
+        {
+          "name": "call",
+          "time": 0.572
+        }
+      ],
+      "frames": 79,
+      "loop": false,
+      "name": "vocalize",
+      "speed": 0.0
+    },
+    {
+      "duration": 9.0,
+      "events": [],
+      "frames": 271,
+      "loop": true,
+      "name": "bathe",
+      "speed": 0.0
+    },
+    {
+      "duration": 1.5,
+      "events": [],
+      "frames": 46,
+      "loop": true,
+      "name": "swim",
+      "speed": 0.7176
+    }
+  ],
+  "generator": "tools/animals (zoogen)",
+  "license": "CC-BY-4.0",
+  "meta": {
+    "activity_clips": {
+      "bathe": "bathe"
+    },
+    "anatomy_revision": "Smoothed reposed shoulders and closed resting mouth",
+    "asset_license": "CC-BY-4.0",
+    "common_name": "Eurasian brown bear",
+    "derivation": "Reposed brown-bear sculpt",
+    "outline_fur_clumps": 105,
+    "proportion_edits": {
+      "chest": {
+        "scale": [
+          1,
+          0.95,
+          1
+        ]
+      },
+      "ear": {
+        "scale": [
+          0.85,
+          0.85,
+          0.85
+        ]
+      },
+      "head": {
+        "scale": [
+          0.94,
+          1.03,
+          1
+        ]
+      },
+      "hips": {
+        "scale": [
+          1.12,
+          0.96,
+          1
+        ]
+      },
+      "neck1": {
+        "scale": [
+          0.64,
+          0.98,
+          1
+        ]
+      },
+      "thigh": {
+        "scale": [
+          1,
+          0.97,
+          1
+        ]
+      },
+      "upper_arm": {
+        "scale": [
+          1,
+          0.96,
+          1
+        ]
+      }
+    },
+    "relative_height": 0.92,
+    "rest_mouth_closure_deg": 7.0,
+    "rest_pose": "Sternal recumbency, chin on forepaws",
+    "roughness": 0.9,
+    "scientific_name": "Ursus arctos",
+    "sex": "female",
+    "shoulder_height_m": 1.104,
+    "sleep_pose": "Lying on side with folded legs",
+    "source_author": "Pedro B. Goulart (Pebegou)",
+    "source_pose": "Upright roaring brown-bear-like sculpt; species identification is visual",
+    "source_title": "Strong Bear",
+    "source_url": "https://sketchfab.com/3d-models/1d1bb459a39a428282ce4cb46bdc3ed5",
+    "swim": {
+      "clip": "swim",
+      "depth_m": 0.79488,
+      "speed_mps": 0.7176000000000001
+    },
+    "variant": "female",
+    "variant_of": "brown_bear",
+    "water_origin_convention": "Place the asset origin at water surface - depth_m"
+  },
+  "name": "brown_bear_female",
+  "skeleton_bounds_animal_space": {
+    "max": [
+      1.1456,
+      0.2639,
+      1.0809
+    ],
+    "min": [
+      -0.7093,
+      -0.2639,
+      0.0
+    ]
+  },
+  "texture": 2048,
+  "triangles": 30000,
+  "vertices": 15530
+}

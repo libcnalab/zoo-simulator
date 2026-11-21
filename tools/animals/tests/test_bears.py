@@ -13,8 +13,8 @@ from test_pachyderms import accessor, glb
 from zoogen import quadruped
 
 ROOT = Path(__file__).resolve().parents[3]
-SPECIES = ('brown_bear', 'brown_bear_juvenile', 'polar_bear', 'polar_bear_female',
-           'polar_bear_juvenile')
+SPECIES = ('brown_bear', 'brown_bear_female', 'brown_bear_juvenile', 'polar_bear',
+           'polar_bear_female', 'polar_bear_juvenile')
 STANDARD = {'idle', 'walk', 'trot', 'eat', 'drink', 'rest', 'sleep', 'vocalize'}
 
 
@@ -72,10 +72,11 @@ class BearTests(unittest.TestCase):
                 if 'juvenile' in name:
                     self.assertEqual(manifest['meta']['variant'], 'juvenile')
                     self.assertEqual(manifest['meta']['variant_of'], name.removesuffix('_juvenile'))
-                if name == 'polar_bear_female':
+                if name.endswith('_female'):
                     self.assertEqual(manifest['meta']['variant'], 'female')
-                    self.assertEqual(manifest['meta']['variant_of'], 'polar_bear')
-                    self.assertAlmostEqual(manifest['meta']['relative_height'], .89)
+                    self.assertEqual(manifest['meta']['variant_of'], name.removesuffix('_female'))
+                    expected_share = .89 if name.startswith('polar') else .92
+                    self.assertAlmostEqual(manifest['meta']['relative_height'], expected_share)
                 water = manifest['meta']['swim']
                 self.assertEqual(water['clip'], 'swim')
                 depth_share = .91 if name.startswith('polar') else .72
@@ -194,6 +195,25 @@ class BearTests(unittest.TestCase):
         self.assertLess(width(female, ('neck1', 'neck2')),
                         width(male, ('neck1', 'neck2')) * .96)
         self.assertLess(width(female, ('chest',)), width(male, ('chest',)) * .97)
+
+    def test_female_brown_bear_is_smaller_and_more_lightly_built(self):
+        male, _, _ = self.cases['brown_bear']
+        female, _, _ = self.cases['brown_bear_female']
+        self.assertAlmostEqual(female.meta['shoulder_height_m'],
+                               .92 * male.meta['shoulder_height_m'])
+        self.assertEqual(female.meta['sex'], 'female')
+
+        def width(spec, bones):
+            data = spec.sculpt
+            names = data['bone_names'].tolist()
+            influence = data['weights'][:, [names.index(bone) for bone in bones]].sum(axis=1)
+            points = data['vertices'][influence > .5]
+            return np.ptp(points[:, 1]) / spec.meta['shoulder_height_m']
+
+        self.assertLess(width(female, ('neck1', 'neck2')),
+                        width(male, ('neck1', 'neck2')) * .96)
+        self.assertLess(width(female, ('spine2', 'chest')),
+                        width(male, ('spine2', 'chest')) * .98)
 
     def test_second_pass_closes_mouth_smooths_shoulders_and_shortens_outline_fur(self):
         for name, (spec, _, _) in self.cases.items():

@@ -619,9 +619,9 @@ def family_preview(output):
     import bpy
     from . import build
     scene = build.reset_scene()
-    names = ('brown_bear', 'brown_bear_juvenile', 'polar_bear',
-             'polar_bear_female', 'polar_bear_juvenile')
-    for name, offset in zip(names, (-2.4, -1.2, 0, 1.2, 2.4)):
+    names = ('brown_bear', 'brown_bear_female', 'brown_bear_juvenile',
+             'polar_bear', 'polar_bear_female', 'polar_bear_juvenile')
+    for name, offset in zip(names, (-3.0, -1.8, -.6, .6, 1.8, 3.0)):
         bpy.ops.import_scene.gltf(filepath=str(Path.cwd() / 'assets/animals' / (name + '.glb')))
         imported = list(bpy.context.selected_objects)
         roots = [ob for ob in imported if ob.parent is None]
