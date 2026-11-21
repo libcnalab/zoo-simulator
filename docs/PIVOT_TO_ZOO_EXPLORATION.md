@@ -41,6 +41,14 @@ of 15 degrees. Turning toward the opening at 10.4 degrees reveals Esme. Openings
 branches and the rectangular leaf textures stay transparent to this test.
 [Views through the gallery trees](evidence/trees-and-binoculars-2026-11-21.jpg)
 
+Buildings now hide animal cards wherever their visible structure crosses the sightline.
+At 13:00 the west restroom used to identify Sara through its closed door, and the ice
+cream kiosk near Red Dune identified Ines through its wall. Both cards disappear from
+those positions. Walking six metres along the path beside the restroom reveals Sara's
+card again. Open spans in the education pavilion remain clear above the half-height
+walls and between the timber posts.
+[Views at Capybara Marsh and Red Dune](evidence/buildings-and-animal-cards-2026-11-21.jpg)
+
 On the expanded plan, the footer names the stop under the pointer. Two northern restrooms
 are distinguished by the nearest habitat centre, Red Panda Canopy or Snow Leopard Heights.
 The names stay the same when crowds shift to another viewing place. Habitat labels take

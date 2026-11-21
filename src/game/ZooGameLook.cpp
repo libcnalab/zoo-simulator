@@ -156,7 +156,7 @@ void ZooGame::LookAtAnimals(float seconds) {
     const auto& species = zoo_->SpeciesList().All();
     const zoo::Animal* found = nullptr;
     std::optional<GazeHit> best;
-    std::optional<float> treeCover;
+    std::optional<float> obstruction;
     float checkedDistance = 0.0f;
     // Through binoculars the eyes reach across the zoo and are as precise as the view is narrow.
     const float magnified = Magnification();
@@ -170,11 +170,11 @@ void ZooGame::LookAtAnimals(float seconds) {
         const auto hit = AimAtAnimal(*target, eye, gaze, reach, magnified);
         if (!hit || (best && !(*hit < *best)))
             continue;
-        if (!treeCover && hit->depth > checkedDistance) {
+        if (!obstruction && hit->depth > checkedDistance) {
             checkedDistance = hit->depth;
-            treeCover = scenery_->TreeInSight(ToXna(eye), ToXna(gaze), checkedDistance);
+            obstruction = scenery_->ObstructionInSight(ToXna(eye), ToXna(gaze), checkedDistance);
         }
-        if (treeCover && *treeCover < hit->depth)
+        if (obstruction && *obstruction < hit->depth)
             continue;
         best = hit;
         found = &animal;

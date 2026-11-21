@@ -588,3 +588,15 @@ the software OpenGL driver and the same two lockstep frames with visitor drawing
 Both new Lion Rock captures matched the reference at every RGB pixel. The editor kept
 its paint images and tile signatures. All eight frames from the scripted editor run
 also matched the reference, including the exposed-earth brush stroke and the new pond.
+
+## Buildings in the sightline (2026-11-21)
+
+The expanded park places 55 buildings drawn from 11 designs. Each design shares one
+local triangle index across all its placements. A ray enters the building's local
+coordinates and checks its bounding box before testing triangles. Rotating a kiosk
+or placing it on raised ground uses the same placement as its rendered model.
+
+Two 70-frame software-GL visits measured 0.05 ms per frame for animal identification
+while looking at the kiosk that hid Ines and 0.06 ms looking past the restroom towards
+Sara. Each timing covers the last 29 frame intervals and includes the existing checks
+against animated bodies and trees.

@@ -54,7 +54,7 @@ void Crag(MeshWriter& w, const Vector3& foot, const Vector3& radii, std::uint32_
                 t == 0 ? -shape.sink : level[static_cast<std::size_t>(t)] + stray;
         }
     }
-    const auto ring = [&](int level, float radius) {
+    const auto ring = [&](int tier, float radius) {
         CragRing r;
         r.at.resize(count);
         float mean = 0.0f;
@@ -63,7 +63,7 @@ void Crag(MeshWriter& w, const Vector3& foot, const Vector3& radii, std::uint32_
             const float angle = bearing[i] + rng.Range(-0.07f, 0.07f);
             const float x = std::cos(angle) * radii.X * reach;
             const float z = std::sin(angle) * radii.Z * reach;
-            const float y = rise[static_cast<std::size_t>(level) * count + i];
+            const float y = rise[static_cast<std::size_t>(tier) * count + i];
             r.at[i] = foot + Vector3(x, y + shape.dip * x, z);
             mean += y;
         }

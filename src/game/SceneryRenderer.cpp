@@ -85,6 +85,11 @@ struct SceneryRenderer::Cell {
     bool lastX = false, lastZ = false;
     StaticBatch fences;
     StaticBatch objects;
+    struct Building {
+        const BuildingSight* sight;
+        Matrix localFromWorld;
+    };
+    std::vector<Building> buildings;
     std::uint64_t fenceHash = 0, fenceWanted = 0;
     std::uint64_t objectHash = 0, objectWanted = 0;
     bool fencesBuilt = false, objectsBuilt = false;
@@ -426,6 +431,7 @@ void SceneryRenderer::BuildFences(const zoo::World& world, Cell& cell) {
 
 void SceneryRenderer::BuildObjects(const zoo::World& world, const zoo::ZooObjects& objects, Cell& cell) {
     ModelBuilder model;
+    cell.buildings.clear();
     std::vector<zoo::PropId> ids;
     objects.PropsInTiles({cell.x0, cell.z0}, {cell.x1 - 1, cell.z1 - 1}, ids);
     for (const zoo::PropId id : ids) {
@@ -459,8 +465,11 @@ void SceneryRenderer::BuildObjects(const zoo::World& world, const zoo::ZooObject
         const Vector3 centre(
             (static_cast<float>(building.origin.x) + static_cast<float>(size.x) * 0.5f) * kTile, ground,
             (static_cast<float>(building.origin.z) + static_cast<float>(size.z) * 0.5f) * kTile);
-        model.SetTransform(Placement(centre, FacingAngle(building.facing)));
+        const Matrix placement = Placement(centre, FacingAngle(building.facing));
+        model.SetTransform(placement);
         BuildBuilding(model, def);
+        const BuildingSight& sight = buildingGeometry_.try_emplace(building.def, def).first->second;
+        cell.buildings.push_back({&sight, Matrix::Invert(placement)});
     }
     model.ClearTransform();
     cell.objects.Build(device_, surfaces_, model);
@@ -635,9 +644,21 @@ void SceneryRenderer::DiscardEditCache(bool discardCpuTextureCopies) {
     editCacheDiscarded_ = true;
 }
 
-std::optional<float> SceneryRenderer::TreeInSight(const Vector3& eye, const Vector3& direction, float reach) {
+std::optional<float> SceneryRenderer::ObstructionInSight(const Vector3& eye, const Vector3& direction, float reach) {
     const Microsoft::Xna::Framework::Ray ray(eye, direction);
     std::optional<float> nearest;
+    for (const auto& cell : cells_) {
+        for (const auto& building : cell->buildings) {
+            // Building placements only rotate and translate, so both rays measure distance in metres.
+            const Microsoft::Xna::Framework::Ray local(
+                Vector3::Transform(eye, building.localFromWorld),
+                Vector3::TransformNormal(direction, building.localFromWorld));
+            if (const auto distance = building.sight->Distance(local, reach)) {
+                reach = *distance;
+                nearest = reach;
+            }
+        }
+    }
     for (const auto& grove : groves_) {
         if (grove->trees.empty())
             continue;

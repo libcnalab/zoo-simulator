@@ -26,6 +26,9 @@ if(ZOO_BUILD_GAME AND TARGET CnaEngine::Core)
                                   "${CMAKE_SOURCE_DIR}/src/game/AnimalWater.cpp"
                                   "${CMAKE_SOURCE_DIR}/src/game/KeeperAppearance.cpp"
                                   "${CMAKE_SOURCE_DIR}/src/game/MeshWriter.cpp"
+                                  "${CMAKE_SOURCE_DIR}/src/game/BuildingModels.cpp"
+                                  "${CMAKE_SOURCE_DIR}/src/game/RockModels.cpp"
+                                  "${CMAKE_SOURCE_DIR}/src/game/SignTextures.cpp"
                                   "${CMAKE_SOURCE_DIR}/src/game/FoliageTextures.cpp"
                                   "${CMAKE_SOURCE_DIR}/src/game/PlantModels.cpp")
     target_link_libraries(zoo_game_tests PRIVATE Zoo::Core zoo_warnings CnaEngine::Graphics CNA::GamerServices

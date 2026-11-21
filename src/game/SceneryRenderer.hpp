@@ -25,6 +25,8 @@ class Zoo;
 
 namespace zoogame {
 
+class BuildingSight;
+
 /// Draws everything that stands on the ground and does not move: fences and
 /// gates, the entrance, buildings, trees, rocks, feeders, benches.
 ///
@@ -77,8 +79,8 @@ public:
     void Submit(CnaEngine::App::Frame& frame, const Vector3& eye);
     /// Submits everything in full detail.
     void Submit(CnaEngine::App::Frame& frame) const;
-    /// Distance to the nearest solid part of a tree between the eye and the animal.
-    std::optional<float> TreeInSight(const Vector3& eye, const Vector3& direction, float reach);
+    /// Distance to the nearest solid part of a tree or building between the eye and the animal.
+    std::optional<float> ObstructionInSight(const Vector3& eye, const Vector3& direction, float reach);
 
     /// Triangles and draw calls of everything in full detail; a frame draws what is in view
     /// of it, and the far groves with fewer triangles.
@@ -114,6 +116,7 @@ private:
     std::vector<std::unique_ptr<Cell>> cells_;
     std::vector<std::unique_ptr<Grove>> groves_;
     std::list<TreeGeometry> treeGeometry_;
+    std::map<int, BuildingSight> buildingGeometry_;
     int width_ = 0;
     int depth_ = 0;
     int cellTiles_ = kEditCellTiles;

@@ -686,6 +686,29 @@ void BuildBuilding(ModelBuilder& model, const zoo::BuildingDef& def) {
     model.ClearLocal();
 }
 
+BuildingSight::BuildingSight(const zoo::BuildingDef& def) {
+    using Microsoft::Xna::Framework::BoundingBox;
+    ModelBuilder model;
+    BuildBuilding(model, def);
+    for (const ModelPart& part : model.Parts()) {
+        const auto pattern = part.finish.pattern;
+        if (part.writer.Empty() || pattern == Pattern::Glass || pattern == Pattern::Pane ||
+            pattern == Pattern::WireMesh || pattern == Pattern::WeldMesh)
+            continue;
+        const auto& mesh = part.writer.mesh;
+        bounds_ = BoundingBox::CreateMerged(bounds_, mesh.Bounds());
+        solids_.AddTriangles(mesh.positions, mesh.indices, Matrix::getIdentityProperty());
+    }
+}
+
+std::optional<float> BuildingSight::Distance(const Microsoft::Xna::Framework::Ray& localRay, float reach) const {
+    const auto entry = localRay.Intersects(bounds_);
+    if (!entry || *entry > reach)
+        return std::nullopt;
+    const auto hit = solids_.Raycast(localRay, reach);
+    return hit ? std::optional<float>(hit->distance) : std::nullopt;
+}
+
 void BuildEntranceArch(ModelBuilder& model, float width) {
     const float half = width * 0.5f;
     const float pillar = 1.0f;

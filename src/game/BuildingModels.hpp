@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: MIT
 #pragma once
 
+#include <optional>
+
+#include "CnaEngine/Collision/StaticWorld.hpp"
 #include "MeshWriter.hpp"
 #include "zoo/build/Catalog.hpp"
 
@@ -15,6 +18,17 @@ namespace zoogame {
 /// The shape follows BuildingDef::look ("house", "barn", "hut", "kiosk",
 /// "pavilion", "cave"), the size and the colours; unknown looks give a house.
 void BuildBuilding(ModelBuilder& model, const zoo::BuildingDef& def);
+
+/// Opaque surfaces in a building's own coordinates, shared by every placement of its design.
+class BuildingSight {
+public:
+    explicit BuildingSight(const zoo::BuildingDef& def);
+    std::optional<float> Distance(const Microsoft::Xna::Framework::Ray& localRay, float reach) const;
+
+private:
+    Microsoft::Xna::Framework::BoundingBox bounds_;
+    CnaEngine::Collision::StaticWorld solids_{1.5f};
+};
 
 /// The zoo's entrance: two brick pillars carrying a roofed sign board over a
 /// gateway `width` metres wide, the gate leaves swung open inwards. In its own
