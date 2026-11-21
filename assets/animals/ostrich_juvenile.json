@@ -99,6 +99,7 @@
       "dust_bathe": "dust_bathe"
     },
     "age_shape": "Chick: shorter neck and face, larger head, eye and feet",
+    "anatomy": "third-pass ratite trunk, muscular thighs, large eyes and nostrils",
     "body_length_m": 1.17,
     "common_name": "Common ostrich",
     "relative_height": 0.4708333333333333,
@@ -124,6 +125,6 @@
     ]
   },
   "texture": 1024,
-  "triangles": 17992,
-  "vertices": 9032
+  "triangles": 18432,
+  "vertices": 9256
 }

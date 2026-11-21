@@ -169,6 +169,18 @@ whatever you take up (`docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `docs/V
   outside. The before/after profiles, face, cow, calf and habitat frame were opened in
   `docs/evidence/camel-anatomy-j75-2026-11-21.jpg` (J75, 2026-11-21). This remains authored
   procedural anatomy rather than a scan.
+- The common-ostrich cock, hen and chick now have a third anatomy pass. A rump-heavy seven-section
+  trunk, separate deforming upper-thigh plumage, four-section head, approximately 4.4 cm eye and
+  separate bill-base nostril replace the symmetric `egg_body`, thin upper legs and indistinct face.
+  The chick transform reseats and enlarges the eye and nostril and scales the new thigh mass. Cock
+  and hen have 20,432 triangles / 10,256 vertices; the chick has 18,432 / 9,256; all retain 19 bones
+  and nine clips. Their 2,844,888 / 2,787,576 / 2,987,464-byte GLBs and three manifests match
+  independent single-threaded exports byte for byte. All 148 animal-pipeline tests and all 305
+  active CTest cases pass (21 diagnostics disabled); a 3,000-tick ASan Ostrich Rise run completed
+  cleanly with leak detection off, all seven residents outside and four-month-old Inez selected.
+  The before/after profiles, adult/chick four-view sheets, face crop and habitat frame were opened in
+  `docs/evidence/ostrich-anatomy-j76-2026-11-21.jpg` (J76, 2026-11-21). This remains authored
+  procedural anatomy rather than a scan; only kangaroo retains first-generation anatomy.
 - Adult and juvenile ostriches now have second-pass layered plumage. Four detached feathers
   overlap each folded wing and five more separate the tail fan; a feather-only tangent-space
   normal map adds directional barb relief while leaving the bare skin smooth. The adult has

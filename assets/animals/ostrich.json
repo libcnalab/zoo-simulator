@@ -98,6 +98,7 @@
     "activity_clips": {
       "dust_bathe": "dust_bathe"
     },
+    "anatomy": "third-pass ratite trunk, muscular thighs, large eyes and nostrils",
     "body_length_m": 2.1,
     "common_name": "Common ostrich",
     "roughness": 0.93,
@@ -120,6 +121,6 @@
     ]
   },
   "texture": 1024,
-  "triangles": 19992,
-  "vertices": 10032
+  "triangles": 20432,
+  "vertices": 10256
 }

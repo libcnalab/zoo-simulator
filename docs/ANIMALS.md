@@ -212,8 +212,8 @@ bones and nine clips. Their 2.79 / 2.86 MB production GLBs match independent fre
 
 The same-camera comparisons and a seed-1 Ostrich Rise run after 3,000 simulation ticks are in
 `evidence/ostrich-feathers-j13-2026-11-20.jpg`. The wings and tail now read as layered plumage,
-but the underlying egg body remains stylised and the body surface has no individual feather
-cards or sculpted feather tracts.
+but at that stage the underlying egg body remained stylised. The third anatomy pass below
+replaces it; the body surface still has no individual feather cards or sculpted feather tracts.
 
 ### Adult ostrich hen (2026-11-21)
 
@@ -231,6 +231,30 @@ the sex/age selection rules and completed a 3,000-tick Ostrich Rise run under Ad
 with all seven residents outside. A close dust-bathing view and that real habitat run are in
 `evidence/ostrich-hen-j66-2026-11-21.jpg`; the habitat HUD happens to identify the selected
 four-month-old chick, while the brown adult hens and black cock are visible together behind it.
+
+### Third-pass ostrich anatomy (2026-11-21)
+
+All three common-ostrich variants now share a ratite-specific anatomy pass instead of the
+original symmetric `egg_body`. A seven-section feathered trunk carries its greatest width over
+the rump, rises toward the breast and gives the lower breast a deeper contour than the back.
+Separate, deforming upper-thigh plumage now makes the powerful proximal leg mass visible before
+it tapers into the bare knee and long lower leg. The head uses four advancing skull sections, a
+larger approximately 4.4 cm eye and a separate dark nostril seated at the base of the broad,
+flat bill. The chick transform explicitly reseats and enlarges both facial landmarks and scales
+the new thigh mass with the rest of its juvenile leg.
+
+The cock and hen each have 20,432 triangles and 10,256 vertices; the chick has 18,432 triangles
+and 9,256 vertices. All retain the same 19-bone rig and nine clips, including grounded feet in
+the walk/trot and the existing ten-second `dust_bathe`. Production sizes are 2,844,888,
+2,787,576 and 2,987,464 bytes for cock, hen and chick. Their before/after profiles and four-view
+adult/juvenile sheets were opened and checked in
+`evidence/ostrich-anatomy-j76-2026-11-21.jpg`. All 148 animal-pipeline tests pass, and all six
+production files match independent single-threaded exports byte for byte. All 305 active CTest
+cases pass (21 diagnostics disabled). A 3,000-tick AddressSanitizer Ostrich Rise run imported
+cock, hen and chick, kept all seven residents outside, selected four-month-old Inez and exited
+cleanly; leak detection was disabled for the documented managed-session limitation. This remains
+authored procedural anatomy rather than a scan, and the feather tracts remain texture/normal-map
+detail rather than individual geometry.
 
 ### Bactrian camel calf (2026-11-20)
 

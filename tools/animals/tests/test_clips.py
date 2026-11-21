@@ -380,8 +380,8 @@ class AnatomyTests(unittest.TestCase):
         hen = importlib.import_module("species.ostrich_female").make_spec()
         adult_parts = {part.name: part for part in adult.parts}
         hen_parts = {part.name: part for part in hen.parts}
-        self.assertLess(hen_parts["egg_body"].rings[2].ry,
-                        adult_parts["egg_body"].rings[2].ry)
+        self.assertLess(hen_parts["feathered_trunk"].rings[2].ry,
+                        adult_parts["feathered_trunk"].rings[2].ry)
         self.assertLess(hen_parts["tail_plume"].rings[1].up,
                         adult_parts["tail_plume"].rings[1].up)
         self.assertEqual(hen.meta["variant_of"], "ostrich")
@@ -401,6 +401,31 @@ class AnatomyTests(unittest.TestCase):
             self.assertTrue(all(not part.fuse and part.tag == "plume" for part in tail))
             self.assertIsNotNone(spec.surface_height)
             self.assertEqual(spec.meta["surface_detail"], "layered feather normal map")
+
+    def test_ostriches_have_ratite_trunks_muscular_thighs_and_facial_landmarks(self):
+        for species in ("ostrich", "ostrich_female", "ostrich_juvenile"):
+            spec = importlib.import_module("species." + species).make_spec()
+            parts = {part.name: part for part in spec.parts}
+            trunk = parts["feathered_trunk"]
+            thigh = parts["thigh_plumage.L"]
+            leg = parts["leg.L"]
+            eye = parts["eye.L"]
+            bill = parts["broad_bill"]
+            nostril = parts["nostril.L"]
+
+            self.assertEqual(len(trunk.rings), 7)
+            self.assertGreater(trunk.rings[3].ry, trunk.rings[5].ry)
+            self.assertGreater(trunk.rings[5].dn, trunk.rings[5].up)
+            self.assertGreater(thigh.rings[0].ry, 1.8 * leg.rings[0].ry)
+            self.assertGreater(thigh.rings[0].up, thigh.rings[-1].up)
+            self.assertTrue(thigh.mirror)
+            self.assertGreater(eye.rings[0].ry / spec.meta["shoulder_height_m"], .008)
+            self.assertTrue(nostril.mirror)
+            self.assertFalse(nostril.fuse)
+            self.assertEqual(nostril.tag, "nostril")
+            self.assertGreater(nostril.rings[0].c[0], bill.rings[0].c[0])
+            self.assertLess(nostril.rings[-1].c[0], bill.rings[-1].c[0])
+            self.assertIn("third-pass ratite", spec.meta["anatomy"])
 
     def test_ostrich_exports_carry_the_feather_normal_map_and_tangents(self):
         root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))

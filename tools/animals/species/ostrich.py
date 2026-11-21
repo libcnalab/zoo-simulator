@@ -37,22 +37,29 @@ def _skeleton():
 
 
 def _parts(bones):
-    parts = [Part("egg_body", [
-        R((-1.00, 0, 1.27), .09, .10), R((-.79, 0, 1.27), .28, .26, .24),
-        R((-.45, 0, 1.27), .39, .34, .32), R((-.10, 0, 1.27), .40, .35, .34),
-        R((.20, 0, 1.29), .33, .31, .32), R((.43, 0, 1.34), .18, .20, .23),
+    parts = [Part("feathered_trunk", [
+        # A rump-heavy ratite trunk rather than a symmetric egg: the back rises toward the
+        # breast while the ventral contour stays deep before tucking into the neck root.
+        R((-1.03, 0, 1.30), .08, .10, .08), R((-.83, 0, 1.30), .25, .24, .21),
+        R((-.57, 0, 1.31), .37, .31, .27), R((-.29, 0, 1.31), .42, .35, .32),
+        R((.00, 0, 1.32), .39, .34, .36), R((.25, 0, 1.36), .30, .28, .38),
+        R((.44, 0, 1.41), .16, .18, .24),
     ], chain=biped.chain(bones, "hips", "chest"), segments=36, rough=(.008, 22), cap_scale=.4),
         Part("bare_neck", [R(NECK[0], .105, .13), R(NECK[1], .061, .068),
               R(NECK[2], .048, .052), R(NECK[3], .045, .048), R(NECK[4], .049, .053)],
              chain=biped.chain(bones, "neck1", "neck2", "neck3", "neck4", "head"),
              segments=24, tag="bare", cap_start="flat", cap_end="flat"),
-        Part("skull", [R((.60, 0, 2.325), .043, .050, .048),
-            R((.69, 0, 2.33), .074, .069, .056), R((.78, 0, 2.315), .057, .042, .037)],
+        Part("skull", [R((.59, 0, 2.325), .039, .047, .043),
+            R((.65, 0, 2.337), .061, .063, .057), R((.72, 0, 2.337), .076, .071, .059),
+            R((.79, 0, 2.315), .055, .040, .035)],
              weights={"head": 1}, segments=24, tag="bare", cap_scale=.3),
         Part("broad_bill", [R((.77, 0, 2.31), .057, .019),
              R((.88, 0, 2.31), .060, .016), R((.98, 0, 2.305), .032, .012)],
              weights={"head": 1}, segments=20, tag="beak", cap_scale=.25),
-        biped.eye_part((.722, .060, 2.347), .017),
+        biped.eye_part((.724, .064, 2.350), .022),
+        Part("nostril.L", [R((.817, .052, 2.322), .008, .006),
+            R((.839, .054, 2.321), .007, .005)], weights={"head": 1}, mirror=True,
+             fuse=False, segments=10, tag="nostril", cap_scale=.35),
         Part("folded_wing.L", [R((.20, .25, 1.39), .040, .075),
             R((-.10, .37, 1.28), .045, .13), R((-.45, .37, 1.22), .045, .13),
             R((-.72, .31, 1.22), .025, .08)], weights={"wing.L": 1},
@@ -61,6 +68,11 @@ def _parts(bones):
              R((-1.23, 0, 1.38), .22, .13), R((-1.40, 0, 1.31), .085, .055)],
              weights={"tail1": 1}, segments=24,
              tag="plume", rough=(.025, 18), cap_scale=.4),
+        Part("thigh_plumage.L", [R((-.18, .17, 1.23), .15, .20),
+            R((-.22, .17, 1.11), .145, .18), R((-.29, .17, .98), .12, .145),
+            R((-.37, .17, .83), .085, .10), R((-.43, .17, .72), .052, .062)],
+             chain=biped.chain(bones, "thigh.L", "shin.L"), mirror=True,
+             segments=20, tag="body", cap_start="flat", cap_end="round"),
         Part("leg.L", [R((-.18, .17, 1.22), .075, .10), R((-.29, .17, .98), .073, .082),
             R((-.46, .17, .66), .044, .052), R((-.32, .17, .42), .028, .032),
             R((-.12, .17, .095), .026, .031)],
@@ -116,7 +128,8 @@ def paint(ctx, juvenile=False, female=False, scale=1.0):
         claw = ctx.tag("digit") * nz.smoothstep(.21, .25, P[..., 0])
         color = nz.mix(color, np.array([.15, .11, .08]), claw)
         color = nz.mix(color, np.array([.47, .39, .28]), ctx.tag("beak"))
-        color = nz.mix(color, np.array([.045, .025, .012]), ctx.tag("eye"))
+        color = nz.mix(color, np.array([.045, .025, .012]),
+                       np.maximum(ctx.tag("eye"), ctx.tag("nostril")))
         return color
     if female:
         # Adult hens are brown rather than black-and-white. Fine mottling keeps the layered
@@ -137,7 +150,8 @@ def paint(ctx, juvenile=False, female=False, scale=1.0):
         claw = ctx.tag("digit") * nz.smoothstep(.21, .25, P[..., 0])
         color = nz.mix(color, np.array([.13, .10, .075]), claw)
         color = nz.mix(color, np.array([.49, .43, .35]), ctx.tag("beak"))
-        color = nz.mix(color, np.array([.045, .025, .012]), ctx.tag("eye"))
+        color = nz.mix(color, np.array([.045, .025, .012]),
+                       np.maximum(ctx.tag("eye"), ctx.tag("nostril")))
         return color
     black = np.array([.027, .025, .026])
     white = np.array([.84, .82, .73])
@@ -151,7 +165,8 @@ def paint(ctx, juvenile=False, female=False, scale=1.0):
     claw = ctx.tag("digit") * nz.smoothstep(.21, .25, ctx.x)
     color = nz.mix(color, np.array([.15, .11, .08]), claw)
     color = nz.mix(color, np.array([.58, .48, .37]), ctx.tag("beak"))
-    color = nz.mix(color, np.array([.045, .025, .012]), ctx.tag("eye"))
+    color = nz.mix(color, np.array([.045, .025, .012]),
+                   np.maximum(ctx.tag("eye"), ctx.tag("nostril")))
     return color
 
 
@@ -302,7 +317,7 @@ def _juvenile_shape(spec):
             shorten_neck(bone.head)
             shorten_neck(bone.tail)
     for part in spec.parts:
-        if part.name in {"bare_neck", "skull", "broad_bill", "eye.L"}:
+        if part.name in {"bare_neck", "skull", "broad_bill", "eye.L", "nostril.L"}:
             for ring in part.rings:
                 shorten_neck(ring.c)
         if part.name == "skull":
@@ -312,15 +327,19 @@ def _juvenile_shape(spec):
                 ring.dn *= 1.30
         elif part.name == "eye.L":
             for ring in part.rings:
+                ring.c[1] *= 1.36
                 ring.ry *= 1.48
                 ring.up *= 1.48
                 ring.dn *= 1.48
+        elif part.name == "nostril.L":
+            for ring in part.rings:
+                ring.c[1] *= 1.12
         elif part.name == "broad_bill":
             for ring in part.rings:
                 ring.ry *= 1.12
                 ring.up *= 1.10
                 ring.dn *= 1.10
-        elif part.name == "egg_body":
+        elif part.name == "feathered_trunk":
             for ring in part.rings:
                 ring.ry *= 1.08
                 ring.up *= 1.08
@@ -339,7 +358,8 @@ def _juvenile_shape(spec):
                 ring.ry *= .62
                 ring.up *= .62
                 ring.dn *= .62
-        elif part.name in {"leg.L", "ankle.L"} or part.name.startswith("digit"):
+        elif part.name in {"thigh_plumage.L", "leg.L", "ankle.L"} \
+                or part.name.startswith("digit"):
             for ring in part.rings:
                 ring.ry *= 1.12
                 ring.up *= 1.08
@@ -370,9 +390,14 @@ def _juvenile_shape(spec):
 def _female_shape(spec):
     """Give the hen a lighter adult build without disturbing the shared adult rig."""
     for part in spec.parts:
-        if part.name == "egg_body":
+        if part.name == "feathered_trunk":
             for ring in part.rings:
                 ring.ry *= .94
+                ring.up *= .96
+                ring.dn *= .96
+        elif part.name == "thigh_plumage.L":
+            for ring in part.rings:
+                ring.ry *= .95
                 ring.up *= .96
                 ring.dn *= .96
         elif part.name in {"folded_wing.L", "tail_plume"} \
@@ -404,6 +429,7 @@ def make_spec(juvenile=False, female=False):
                 meta={"common_name": "Common ostrich", "scientific_name": "Struthio camelus",
                       "shoulder_height_m": 2.4, "body_length_m": 2.1, "sex": "male", "roughness": .93,
                       "surface_detail": "layered feather normal map",
+                      "anatomy": "third-pass ratite trunk, muscular thighs, large eyes and nostrils",
                       # The game's clip for a still activity (AnimalRenderer).
                       "activity_clips": {"dust_bathe": "dust_bathe"}})
     if juvenile:
