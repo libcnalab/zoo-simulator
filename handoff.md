@@ -50,7 +50,9 @@ whatever you take up (`docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `docs/V
 - A Linux desktop visit now shares identical animal textures across models. Seed 1 at
   13:00 avoids 14 duplicate uploads totalling 64.0 MiB for its 107 animals. Matched
   Lion Rock screenshots with visitor drawing disabled agree at every RGB pixel.
-  See `docs/PERFORMANCE.md` for the loading measurements.
+  Once bone animations are converted, visits also release 14.24 MiB of spare key
+  capacity across the same 49 models. A matched Lion Rock view identified the
+  resting cub Zain and agreed at all 921,600 pixels. See `docs/PERFORMANCE.md`.
 - Visits release each ground chunk's paint image when that chunk goes to the GPU.
   On the 224 × 224 tile map the process peak through terrain loading fell from
   1,248.5 to 1,011.2 MiB. The editor retains its paint data. All eight frames of

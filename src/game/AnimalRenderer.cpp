@@ -250,6 +250,20 @@ const AnimalRenderer::Kind* AnimalRenderer::Load(const std::string& model) {
     // Do not retain both deep copies of every bone key for the lifetime of the visit.
     auto& importedClips = const_cast<Xna::SkinningData*>(skin)->AnimationClips;
     decltype(skin->AnimationClips){}.swap(importedClips);
+    // The converter grows each vector as it reads the track. After import every key is
+    // immutable, and all actors of this kind borrow the finished clips for the entire visit.
+    std::size_t releasedKeyBytes = 0;
+    for (auto& clip : kind->clips) {
+        for (auto& track : clip.tracks) {
+            const auto capacity = track.keys.capacity();
+            track.keys.shrink_to_fit();
+            releasedKeyBytes += (capacity - track.keys.capacity()) * sizeof(Animation::BoneKey);
+        }
+    }
+    if (std::getenv("ZOO_LOAD_TIMING") != nullptr) {
+        std::printf("zoo: animation keys: %s released %zu bytes of spare capacity\n",
+                    model.c_str(), releasedKeyBytes);
+    }
     for (std::size_t i = 0; i < kClipNames.size(); ++i) {
         for (const auto& clip : kind->clips) {
             if (clip.name == kClipNames[i])

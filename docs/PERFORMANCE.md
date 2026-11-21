@@ -615,3 +615,17 @@ frame with the crosshair on the board and 0.11 ms with it on Ines's head. Checki
 every row's bounds individually in the first implementation took 0.32 and 0.30 ms
 from those spots. All four measurements cover the last 29 intervals of a 70-frame
 software-GL visit with 800 visitors, 107 animals and 7× binoculars.
+
+## Storage for animal animation keys (2026-11-21)
+
+The animation importer grows each bone's array as it converts a clip. Once all
+keys are available, the game releases the unused capacity. With 49 models loaded
+for the 107 animals in seed 1 at 13:00, the before/after capacities differ by
+14,932,148 bytes (14.24 MiB). `ZOO_LOAD_TIMING=1` reports the measured bytes
+for each model. The key times, translations, rotations and scales stay in order.
+
+Two 24-frame lockstep visits at Lion Rock used the same save and disabled visitor
+drawing for the image comparison. Both identified the resting cub Zain and their
+1280 × 720 frames agreed at every RGB pixel. Immediately after loading the animals,
+the process reported 3,529 and 3,515 MiB resident. The capacity measurement counts
+the animation arrays directly.
