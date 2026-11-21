@@ -15,7 +15,7 @@ rounds all day.
 `Staff::Engage` looks at the zoo as it stands:
 
 - **Keepers**: one for every two habitats. The habitats are paired so that the pairs are
-  as close together as can be (an exact search up to 14 habitats, nearest pairs beyond);
+  as close together as can be (a memoised exact search up to 20 habitats, nearest pairs beyond);
   an odd one out gets a keeper of its own. Every habitat with a place to work from has a
   keeper (`Staff::KeeperOf`).
 - **A gardener** when there are flower beds that can be stood beside (at most 24 on the
@@ -222,6 +222,13 @@ remain at or below that 0.70 line. The diagnostic names the particular animal, h
 behind each maximum so a layout-dependent change can be investigated rather than dismissed as noise.
 With J50's animated dangerous recalls, the staffed week records 10 animal-hours in need against
 16 under automatic care, with worst hunger 0.739 against 0.770 and thirst 0.762 against 0.730.
+After the northern expansion reached 16 habitats, the former 14-habitat exact-search limit made
+the greedy fallback leave Lynx Ridge and Red Panda Canopy as its final pair: one keeper had a
+204 m cross-zoo round. J80's bit-mask solver finds the global minimum without enumerating every
+pairing. No two-stop round is now 100 m or longer. The staffed week records 18 animal-hours in
+need against 20 under automatic care (worst hunger 0.702 against 0.745); at visitor pace the
+comparison is 10 against 13 (0.628 against 0.681). The crew size remains eight keepers, a
+gardener and a cleaner.
 The comparison still keeps its separate
 aggregate, duration and peak checks rather than allowing one good average to hide a stranded animal.
 

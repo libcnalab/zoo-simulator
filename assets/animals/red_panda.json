@@ -1,0 +1,135 @@
+{
+  "bones": 33,
+  "clips": [
+    {
+      "duration": 6.0,
+      "events": [],
+      "frames": 181,
+      "loop": true,
+      "name": "idle",
+      "speed": 0.0
+    },
+    {
+      "duration": 0.7667,
+      "events": [
+        {
+          "name": "step",
+          "time": 0.0
+        },
+        {
+          "name": "step",
+          "time": 0.1917
+        },
+        {
+          "name": "step",
+          "time": 0.3833
+        },
+        {
+          "name": "step",
+          "time": 0.575
+        }
+      ],
+      "frames": 24,
+      "loop": true,
+      "name": "walk",
+      "speed": 0.72
+    },
+    {
+      "duration": 0.5,
+      "events": [
+        {
+          "name": "step",
+          "time": 0.0
+        },
+        {
+          "name": "step",
+          "time": 0.0
+        },
+        {
+          "name": "step",
+          "time": 0.25
+        },
+        {
+          "name": "step",
+          "time": 0.25
+        }
+      ],
+      "frames": 16,
+      "loop": true,
+      "name": "trot",
+      "speed": 1.65
+    },
+    {
+      "duration": 3.0,
+      "events": [],
+      "frames": 91,
+      "loop": true,
+      "name": "eat",
+      "speed": 0.0
+    },
+    {
+      "duration": 2.4,
+      "events": [],
+      "frames": 73,
+      "loop": true,
+      "name": "drink",
+      "speed": 0.0
+    },
+    {
+      "duration": 8.0,
+      "events": [],
+      "frames": 241,
+      "loop": true,
+      "name": "rest",
+      "speed": 0.0
+    },
+    {
+      "duration": 8.0,
+      "events": [],
+      "frames": 241,
+      "loop": true,
+      "name": "sleep",
+      "speed": 0.0
+    },
+    {
+      "duration": 2.6,
+      "events": [
+        {
+          "name": "call",
+          "time": 0.572
+        }
+      ],
+      "frames": 79,
+      "loop": false,
+      "name": "vocalize",
+      "speed": 0.0
+    }
+  ],
+  "generator": "tools/animals (zoogen)",
+  "license": "MIT",
+  "meta": {
+    "anatomy": "Species-specific red panda: compact low trunk, masked rounded head, pointed ears, broad branch paws and long gently tapered ringed tail",
+    "body_length_m": 0.6,
+    "common_name": "Red panda",
+    "roughness": 0.9,
+    "scientific_name": "Ailurus fulgens",
+    "shoulder_height_m": 0.32,
+    "surface_detail": "anisotropic thick-coat normal map"
+  },
+  "name": "red_panda",
+  "skeleton_bounds_animal_space": {
+    "max": [
+      0.294,
+      0.0384,
+      0.3296
+    ],
+    "min": [
+      -0.402,
+      -0.0384,
+      0.0
+    ]
+  },
+  "texture": 1024,
+  "triangles": 19200,
+  "vertices": 9608
+}

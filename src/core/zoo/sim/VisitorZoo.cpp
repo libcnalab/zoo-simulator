@@ -29,7 +29,7 @@ struct HabitatPlan {
     int rn;
 };
 
-constexpr std::array<HabitatPlan, 15> kHabitats{{
+constexpr std::array<HabitatPlan, 16> kHabitats{{
     {"Meerkat Lookout", "meerkat", 10, 18, 5, 4},
     {"Flamingo Lagoon", "flamingo", 28, 24, 9, 7},
     {"Acacia Plain", "giraffe", 48, 53, 18, 19},
@@ -47,6 +47,9 @@ constexpr std::array<HabitatPlan, 15> kHabitats{{
     // The northern extension's first new habitat: outside the woodland loop, with a long inward
     // gallery and a quiet planted margin against the property wall.
     {"Lynx Ridge", "lynx", 58, 160, 12, 10},
+    // A cool, densely planted canopy on the extension's quieter western arc. Its broad public
+    // front leaves the picnic glade open while the back trees screen the property boundary.
+    {"Red Panda Canopy", "red_panda", -44, 160, 10, 8},
 }};
 
 std::vector<TileCoord> RegionTiles(const Script& script, const HabitatPlan& plan) {
@@ -120,6 +123,9 @@ void Walks(Zoo& zoo, Script& script) {
                       {34, 138}},
                      3, PathKind::Asphalt);
     script.PathAlong({{0, 174}, {0, 164}, {6, 153}, {10, 141}}, 2, PathKind::Gravel);
+    // Join the west gallery of Red Panda Canopy to the woodland circuit. Its own continuous
+    // perimeter walk meets this short spur at the eastern viewing front.
+    script.PathAlong({{-24, 163}, {-32, 163}}, 3, PathKind::Gravel);
     script.PathAlong({{-18, 49}, {-6, 46}, {0, 38}, {16, 36}, {27, 39}}, 2, PathKind::Gravel);
     script.PathAlong({{-20, 70}, {-3, 69}, {11, 74}, {28, 77}}, 2, PathKind::Gravel);
     script.PathAlong({{-29, 105}, {-8, 103}, {11, 106}, {29, 103}}, 2, PathKind::Gravel);
@@ -280,6 +286,18 @@ HabitatStyle Style(std::string_view species) {
                 {"spruce", "spruce", "spruce", "pine", "birch", "birch", "juniper", "juniper",
                  "juniper"}};
     }
+    if (species == "red_panda") {
+        return {Terrain::ForestFloor,
+                "tall_mesh",
+                "glass_wall",
+                "small_shelter",
+                "bamboo_feeder",
+                "bamboo_clump",
+                "granite_boulder",
+                {"climbing_frame", "fallen_log", "log_pile", "tyre_swing"},
+                {"bamboo_clump", "bamboo_clump", "bamboo_clump", "bamboo_clump", "birch", "birch",
+                 "oak", "tropical_fern", "tropical_fern"}};
+    }
     if (species == "brown_bear") {
         return {Terrain::ForestFloor,
                 "heavy_mesh",
@@ -435,6 +453,12 @@ std::span<const Resident> Family(std::string_view species) {
         // Eurasian lynx are solitary outside the breeding season: the public group is a mother
         // with two still-dependent kittens, not an invented adult pair or pack.
         static constexpr Resident family[] = {Adult(f, 6.0f), Young(f, 0.45f, 0), Young(m, 0.45f, 0)};
+        return family;
+    }
+    if (species == "red_panda") {
+        // Red pandas are solitary except while breeding and rearing young: this is a mother with
+        // two dependent cubs, not an adult social group.
+        static constexpr Resident family[] = {Adult(f, 5.0f), Young(f, 0.2f, 0), Young(m, 0.2f, 0)};
         return family;
     }
     if (species == "brown_bear") {
@@ -1888,6 +1912,7 @@ void Facilities(Zoo& zoo, Script& script) {
     Service(zoo, script, serviceAprons, "drinks_stall", -10, 144, Dir::South);
     Service(zoo, script, serviceAprons, "restroom", -10, 164, Dir::South);
     Service(zoo, script, serviceAprons, "drinks_stall", 10, 164, Dir::South);
+    Service(zoo, script, serviceAprons, "drinks_stall", -30, 167, Dir::South);
     Service(zoo, script, serviceAprons, "drinks_stall", 66, 123, Dir::West);
     Service(zoo, script, serviceAprons, "drinks_stall", 66, 91, Dir::West);
     Service(zoo, script, serviceAprons, "ice_cream_stand", -67, 84, Dir::East);

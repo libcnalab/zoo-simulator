@@ -18,6 +18,7 @@ Each species is defined by one JSON file in `data/species/`. Biological values u
 | Common ostrich | Struthio camelus | LC | 2–20 | 500 | 2.4 m / 3 | 1.2 / 8 | 3500 | 70 |
 | African penguin | Spheniscus demersus | CR | 10–60 | 180 | 1.8 m / 2 | 0.5 / 1.2 | 1500 | 90 |
 | Polar bear | Ursus maritimus | VU | 1–3 | 1200 | 4.5 m / 4 | 1.0 / 4 | 12000 | 94 |
+| Red panda | Ailurus fulgens | EN | 1–3 | 180 | 2.5 m / 2 | 0.72 / 4 | 7200 | 91 |
 | Southern white rhinoceros | Ceratotherium simum simum | NT | 2–8 | 1000 | 2.0 m / 5 | 1.2 / 4 | 12000 | 82 |
 | Bengal tiger | Panthera tigris tigris | EN | 1–2 | 800 | 4.0 m / 4 | 1.0 / 5 | 8500 | 90 |
 | Grey wolf | Canis lupus | LC | 4–10 | 600 | 2.5 m / 3 | 1.2 / 6 | 4500 | 76 |
@@ -48,7 +49,7 @@ while geometry, textures and animations remain identical.
 | `zoogen/scan.py` on a prepared third-party static sculpt, rigged by us (below) | zebra, zebra_female, zebra_juvenile |
 | `zoogen/giraffe2.py` on a prepared head-and-neck scan, body modelled by us (below) | giraffe, giraffe_female, giraffe_juvenile |
 | `zoogen/sculpt.py`, `bear.py` on a prepared third-party sculpt, rigged by us (below) | brown_bear, brown_bear_female, brown_bear_juvenile, polar_bear, polar_bear_female, polar_bear_juvenile |
-| `zoogen/quadruped.py`, `wild_quadruped.py`, `anatomy.py` | wolf, wolf_female, wolf_juvenile, camel, camel_female, camel_juvenile, meerkat, meerkat_juvenile, lynx, lynx_juvenile |
+| `zoogen/quadruped.py`, `wild_quadruped.py`, `anatomy.py` | wolf, wolf_female, wolf_juvenile, camel, camel_female, camel_juvenile, meerkat, meerkat_juvenile, lynx, lynx_juvenile, red_panda, red_panda_juvenile |
 | `zoogen/birdscan.py` on a prepared third-party scan or sculpt, rigged by us (below) | penguin, penguin_juvenile, flamingo, flamingo_juvenile |
 | `zoogen/biped.py` | ostrich, ostrich_female, ostrich_juvenile, kangaroo, kangaroo_female, kangaroo_juvenile |
 
@@ -59,6 +60,26 @@ Each has the same eight clips, which the game picks from what the animal is doin
 by the species file. The authored procedural models in the last two rows are stylised, not
 photorealistic, even after their species-specific anatomy passes; what each is weak at is listed in
 [`PIVOT_TO_ZOO_EXPLORATION.md`](PIVOT_TO_ZOO_EXPLORATION.md).
+
+### Red panda mother and cubs (2026-11-21)
+
+Red Panda Canopy holds a five-year-old mother and two 0.2-year-old cubs. The
+[Smithsonian National Zoo](https://nationalzoo.si.edu/animals/red-panda) supplies the adult mass,
+body and tail ranges, bamboo-heavy diet, solitary adult life and mother-with-cubs grouping. The
+[EAZA Red Panda Best Practice Guidelines](https://media.eaza.net/uploads/EAZA_Best_Practice_Guidelines_Red_Panda_final_Dec_2021_1_ffc7f12345.pdf)
+support the cool planted habitat, shade, elevated resting and climbing choices. Gameplay speed,
+ration and price remain explicitly estimated in the species source.
+
+The dedicated adult and cub share a compact low trunk, short dark limbs, broad branch paws,
+rounded masked face, pointed ears, cream cheek fans and a long seven-ring tail. The cub has a
+shorter 0.24 m body, proportionally broader head, larger eyes, ears and paws, and shorter-stride
+locomotion. Both have 33 bones, eight clips and a 1,024 px coat with tangent-space fur relief.
+The adult is 19,200 triangles and 2,662,672 bytes; the cub is 17,200 triangles and 2,439,552
+bytes. Their single-threaded clean exports match the production GLB and JSON files byte for byte.
+The close turntables and the inspected in-game view after 3,000 simulation ticks are in
+`evidence/red-panda-canopy-j80-2026-11-21.jpg`. All 155 animation-pipeline tests pass; the final
+3,000-tick ASan/UBSan game visit imported both models without a sanitizer finding (leak detection
+is disabled because LeakSanitizer cannot run under the debugger/ptrace environment).
 
 ### Eurasian lynx and kittens (2026-11-21)
 

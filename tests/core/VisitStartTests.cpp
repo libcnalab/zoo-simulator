@@ -83,16 +83,18 @@ TEST(VisitStart, MatchesGameSequence) {
 // visibly slides from a safe-side release operation; followers keep a stable route to a moving
 // group leader's destination rather than restarting that route every second; the property is
 // twenty percent larger and its connected northern woodland circuit has its own rest facilities;
-// Lynx Ridge occupies that new land with a mother and two kittens).
+// Lynx Ridge occupies that new land with a mother and two kittens; Red Panda Canopy adds a mother
+// and two dependent cubs, a western gallery and its drinks service; keeper rounds remain globally
+// shortest after the expansion rather than leaving the two far ends as one 204-metre pair).
 void CheckFillHashes(std::int64_t ticks) {
     constexpr std::array<std::array<std::uint64_t, 2>, 3> shortHashes{
-        {{8589116879854160112ULL, 15034094341894294209ULL},
-         {15466430642088228403ULL, 17602288642352067438ULL},
-         {3824360136924393707ULL, 2421407190512508692ULL}}};
+        {{9189558889285717062ULL, 5851662021286206431ULL},
+         {6187100894483772529ULL, 5468215856064001408ULL},
+         {5053765842369807655ULL, 296767987657518656ULL}}};
     constexpr std::array<std::array<std::uint64_t, 2>, 3> fullHashes{
-        {{8343945210946785595ULL, 13801231797417561075ULL},
-         {8806038572886504078ULL, 14414817922022180733ULL},
-         {2418807773619647334ULL, 6930456969462016331ULL}}};
+        {{16658822985523581208ULL, 2683378792623248226ULL},
+         {7617932910519089239ULL, 1349239739326152201ULL},
+         {2501148456037985372ULL, 9105269680446185720ULL}}};
     for (const std::uint64_t seed : {1ULL, 2ULL, 3ULL}) {
         Zoo zoo(testdata::GameCatalog(), testdata::GameSpecies(), VisitorZooConfig(seed));
         BuildVisitorZoo(zoo);

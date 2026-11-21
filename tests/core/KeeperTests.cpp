@@ -142,6 +142,15 @@ TEST(Keeper, TheVisitorZooHasItsCrew) {
     // One keeper's two feedings do not fall together.
     for (const StaffMember& member : staff.All()) {
         if (member.role == StaffRole::Keeper && member.round.size() == 2) {
+            const Enclosure* first = zoo->Habitats().Find(member.round[0].enclosure);
+            const Enclosure* second = zoo->Habitats().Find(member.round[1].enclosure);
+            ASSERT_NE(first, nullptr);
+            ASSERT_NE(second, nullptr);
+            const Vec2 firstCentre = (World::TileCenter(first->min) + World::TileCenter(first->max)) * 0.5f;
+            const Vec2 secondCentre =
+                (World::TileCenter(second->min) + World::TileCenter(second->max)) * 0.5f;
+            EXPECT_LT(Distance(firstCentre, secondCentre), 100.0f)
+                << first->name << " and " << second->name << " make an impractical keeper round";
             for (std::size_t slot = 0; slot < 2; ++slot) {
                 EXPECT_GE(std::abs(member.round[0].feedHours[slot] - member.round[1].feedHours[slot]), 0.7f);
             }

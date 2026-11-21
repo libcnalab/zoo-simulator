@@ -493,6 +493,30 @@
       "color2": "#614b35"
     },
     {
+      "id": "bamboo_feeder",
+      "name": "Bamboo feeder",
+      "role": "feeder",
+      "placement": "enclosure",
+      "radiusM": 0.8,
+      "heightM": 1.5,
+      "blocksWalking": true,
+      "cost": 260,
+      "vegetationM2": 0,
+      "shadeM2": 0,
+      "biome": "",
+      "enrichment": 0,
+      "foods": [
+        "bamboo",
+        "fruit_veg"
+      ],
+      "capacity": 24,
+      "feedHeightM": 0.35,
+      "beauty": 0,
+      "look": "trough",
+      "color": "#718054",
+      "color2": "#4c5e38"
+    },
+    {
       "id": "fish_bucket_stand",
       "name": "Fish bucket stand",
       "role": "feeder",

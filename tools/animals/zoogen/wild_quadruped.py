@@ -425,7 +425,8 @@ def make_wild_quadruped(config):
         walk = quad.Gait("walk", period=walk_period,
                          stance=walk_speed * walk_period * walk_duty, duty=walk_duty,
                          offsets=walk_offsets, lift=config.get("walk_lift", 0.08), bob=0.012,
-                         hip_yaw=4.0, chest_yaw=3.0, tail_sway=7.0)
+                         hip_yaw=4.0, chest_yaw=3.0, tail_sway=7.0,
+                         drop=config.get("walk_drop"))
         fast = quad.Gait("trot", period=trot_period,
                          stance=trot_speed * trot_period * trot_duty, duty=trot_duty,
                          offsets=(quad.PACE if config.get("fast_pattern") == "pace" else
@@ -434,7 +435,8 @@ def make_wild_quadruped(config):
                                   quad.TROT),
                          lift=config.get("fast_lift", 0.12), bob=-0.016,
                          hip_yaw=3.0, chest_yaw=2.0, tail_sway=5.0,
-                         swing_pitch=54.0)
+                         swing_pitch=config.get("fast_swing_pitch", 54.0),
+                         drop=config.get("fast_drop"))
         head_down = quad.HeadDown(body_pitch=20.0, crouch=0.09, chest=13.0,
                                   neck=(48.0, 40.0), head=20.0)
         if wolf:

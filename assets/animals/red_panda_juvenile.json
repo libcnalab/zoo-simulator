@@ -1,0 +1,139 @@
+{
+  "bones": 33,
+  "clips": [
+    {
+      "duration": 6.0,
+      "events": [],
+      "frames": 181,
+      "loop": true,
+      "name": "idle",
+      "speed": 0.0
+    },
+    {
+      "duration": 0.5333,
+      "events": [
+        {
+          "name": "step",
+          "time": 0.0
+        },
+        {
+          "name": "step",
+          "time": 0.1333
+        },
+        {
+          "name": "step",
+          "time": 0.2667
+        },
+        {
+          "name": "step",
+          "time": 0.4
+        }
+      ],
+      "frames": 17,
+      "loop": true,
+      "name": "walk",
+      "speed": 0.42
+    },
+    {
+      "duration": 0.3667,
+      "events": [
+        {
+          "name": "step",
+          "time": 0.0
+        },
+        {
+          "name": "step",
+          "time": 0.0
+        },
+        {
+          "name": "step",
+          "time": 0.1833
+        },
+        {
+          "name": "step",
+          "time": 0.1833
+        }
+      ],
+      "frames": 12,
+      "loop": true,
+      "name": "trot",
+      "speed": 0.85
+    },
+    {
+      "duration": 3.0,
+      "events": [],
+      "frames": 91,
+      "loop": true,
+      "name": "eat",
+      "speed": 0.0
+    },
+    {
+      "duration": 2.4,
+      "events": [],
+      "frames": 73,
+      "loop": true,
+      "name": "drink",
+      "speed": 0.0
+    },
+    {
+      "duration": 8.0,
+      "events": [],
+      "frames": 241,
+      "loop": true,
+      "name": "rest",
+      "speed": 0.0
+    },
+    {
+      "duration": 8.0,
+      "events": [],
+      "frames": 241,
+      "loop": true,
+      "name": "sleep",
+      "speed": 0.0
+    },
+    {
+      "duration": 2.6,
+      "events": [
+        {
+          "name": "call",
+          "time": 0.572
+        }
+      ],
+      "frames": 79,
+      "loop": false,
+      "name": "vocalize",
+      "speed": 0.0
+    }
+  ],
+  "generator": "tools/animals (zoogen)",
+  "license": "MIT",
+  "meta": {
+    "age_shape": "Cub: shorter body, broader skull, larger eyes, ears and paws",
+    "anatomy": "Species-specific red panda: compact low trunk, masked rounded head, pointed ears, broad branch paws and long gently tapered ringed tail",
+    "body_length_m": 0.46,
+    "common_name": "Red panda",
+    "relative_height": 0.75,
+    "roughness": 0.9,
+    "scientific_name": "Ailurus fulgens",
+    "shoulder_height_m": 0.24,
+    "surface_detail": "anisotropic thick-coat normal map",
+    "variant": "juvenile",
+    "variant_of": "red_panda"
+  },
+  "name": "red_panda_juvenile",
+  "skeleton_bounds_animal_space": {
+    "max": [
+      0.25,
+      0.0288,
+      0.2472
+    ],
+    "min": [
+      -0.3082,
+      -0.0288,
+      0.0
+    ]
+  },
+  "texture": 1024,
+  "triangles": 17200,
+  "vertices": 8608
+}

@@ -317,6 +317,7 @@ const std::map<std::string, std::vector<Named>> kFamilies{
      {Grown(kMale, 6.0f), Grown(kFemale, 4.0f), Grown(kFemale, 5.0f), Grown(kFemale, 7.0f),
       Child(kFemale, 1.2f), Child(kMale, 0.7f), Child(kFemale, 0.65f)}},
     {"lynx", {Grown(kFemale, 6.0f), Child(kFemale, 0.45f), Child(kMale, 0.45f)}},
+    {"red_panda", {Grown(kFemale, 5.0f), Child(kFemale, 0.2f), Child(kMale, 0.2f)}},
 };
 
 // Purpose-built alternatives to exposed chain-link, by habitat.
@@ -465,7 +466,7 @@ void ExpectFamilies(const Zoo& zoo, float aged) {
             EXPECT_EQ(mother->home, animal.home);
             EXPECT_TRUE(IsAdult(*mother, def, zoo.Time()));
             if (species == "elephant" || species == "brown_bear" || species == "polar_bear" ||
-                species == "lynx") {
+                species == "lynx" || species == "red_panda") {
                 EXPECT_EQ(father, nullptr);  // mother group; the sire is not resident here
             } else {
                 ASSERT_NE(father, nullptr) << i;
@@ -574,6 +575,53 @@ TEST_P(VisitorZooPlan, LynxRidgeOccupiesTheNorthernExtension) {
     }
 }
 
+TEST_P(VisitorZooPlan, RedPandaCanopyOccupiesTheNorthernExtension) {
+    const TileCoord gate = zoo_.Map().EntranceTile();
+    const Enclosure* canopy = nullptr;
+    for (const Enclosure& home : zoo_.Habitats().All()) {
+        if (home.name == "Red Panda Canopy") {
+            canopy = &home;
+            break;
+        }
+    }
+    ASSERT_NE(canopy, nullptr);
+    EXPECT_EQ(zoo_.Habitats().At(TileCoord{gate.x - 44, gate.z - 160}), canopy->id);
+    EXPECT_GE(canopy->stats.areaM2, 900.0f);
+    EXPECT_GE(canopy->stats.shelterCapacity, 3);
+    EXPECT_GE(canopy->enrichments.size(), 2U);
+    EXPECT_GE(canopy->viewing.size(), 45U);
+
+    std::set<std::string> enrichmentKinds;
+    for (const PropId id : canopy->enrichments) {
+        const Prop* prop = zoo_.Objects().FindProp(id);
+        ASSERT_NE(prop, nullptr);
+        enrichmentKinds.insert(KindOf(zoo_, *prop).id);
+    }
+    EXPECT_TRUE(enrichmentKinds.contains("climbing_frame"));
+    EXPECT_TRUE(enrichmentKinds.contains("fallen_log"));
+
+    int habitatTiles = 0;
+    for (const TileCoord tile : TilesInRect(canopy->min, canopy->max)) {
+        if (zoo_.Habitats().At(tile) == canopy->id) {
+            ++habitatTiles;
+            EXPECT_GE(gate.z - tile.z, 151);
+        }
+    }
+    EXPECT_EQ(habitatTiles * 4, static_cast<int>(canopy->stats.areaM2));
+
+    const std::vector<const Animal*> residents = Group(zoo_, "red_panda");
+    ASSERT_EQ(residents.size(), 3U);
+    int cubs = 0;
+    for (const Animal* resident : residents) {
+        EXPECT_EQ(resident->home, canopy->id);
+        cubs += resident->mother ? 1 : 0;
+    }
+    EXPECT_EQ(cubs, 2);
+    for (const ViewingSpot& spot : canopy->viewing) {
+        EXPECT_TRUE(zoo_.Routes().Reachable(gate, spot.tile, NavProfile::Visitor()));
+    }
+}
+
 TEST_P(VisitorZooPlan, FamiliesWithTheirYoungOnTheOpeningDay) {
     ExpectFamilies(zoo_, 0.0f);
     // The young of the year are small enough to be drawn as young and to need their mothers.
@@ -599,7 +647,7 @@ TEST_P(VisitorZooPlan, FamiliesWithTheirYoungOnTheOpeningDay) {
         EXPECT_GE(static_cast<int>(group.size()), def.groupMin) << species;
         EXPECT_LE(static_cast<int>(group.size()), def.groupMax) << species;
     }
-    EXPECT_EQ(sucklings, 27);
+    EXPECT_EQ(sucklings, 29);
 }
 
 TEST_P(VisitorZooPlan, FamiliesAreWholeWhenTheVisitBegins) {
@@ -791,7 +839,7 @@ TEST_P(VisitorZooPlan, BenchesStandInShade) {
             }
         }
     }
-    EXPECT_EQ(benches, 45);
+    EXPECT_EQ(benches, 48);
     // Three walks run between the planted strips of two habitats and have no lawn for a tree; a
     // strip's own planting stays below the eye (VisitorZooHabitatTests). Their benches are the
     // exception, by name, so that a fourth is noticed.

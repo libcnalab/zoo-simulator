@@ -9,7 +9,7 @@ then call `BuildVisitorZoo(zoo, options)`. `withoutSpecies` suppresses animals o
 
 ```text
                               NORTH
-              northern woodland circuit + picnic glade — Lynx Ridge
+       Red Panda Canopy — northern woodland circuit + picnic glade — Lynx Ridge
                       /             |                 /
              Polar Sound     Bear Falls — Wolf Wood — Tiger Forest
                   |              \    northern court    /       |
@@ -31,7 +31,7 @@ combine elliptical lobes. Every habitat has a keeper gate, shelter, stocked feed
 enrichment, a public information board and benches. Planting concentrates behind the open
 viewing ground, with woods between habitats and around the perimeter.
 
-The seed-1 zoo contains **93 animals in 15 habitats, 45 buildings and 3,234 props** when
+The seed-1 zoo contains **96 animals in 16 habitats, 47 buildings and 3,287 props** when
 every species is included (74 animals and 2,817 props before the plan's rework of
 2026-11-14, below). The farthest public path tile is **84.8 m** walking distance
 from a visitor facility. `VisitorZooTests.DISABLED_PrintPlan` prints these measurements. Families
@@ -65,6 +65,7 @@ diagnostics remain disabled).
 | Red Dune | Camel 5 (2) | 1,616 | 323 | Public rail, planting, timber paddock fence S/E | Timber paddock fence | 1 tile / 2 m |
 | Kangaroo Grove | Kangaroo 7 (3) | 1,136 | 162 | Public rail, planting, timber paddock fence S/E | Timber paddock fence | 1 tile / 2 m |
 | Lynx Ridge | Eurasian lynx 3 (2) | 1,500 | 500 | Glass S/W | Tall mesh | 0 |
+| Red Panda Canopy | Red panda 3 (2) | 992 | 331 | Glass S/E | Tall mesh | 0 |
 
 The areas did not change with the families; the area per animal is our estimate of what reads
 as roomy for the species, **not checked against EAZA or AZA husbandry figures**. Every group
@@ -181,6 +182,33 @@ plan and the inspected in-game public view are in
 `evidence/lynx-ridge-j79-2026-11-21.jpg`. All 309 active CTest cases pass (21 diagnostics are
 disabled as intended), and a 3,000-tick ASan/UBSan visit completed cleanly with all three lynxes
 outdoors and 637 visitors simulated.
+
+## Red Panda Canopy (J80, 2026-11-21)
+
+Red Panda Canopy occupies 992 m² on the western side of the northern extension, centred 320 m
+north and 88 m west of the gate. A short three-tile-wide gravel spur joins its continuous public
+gallery to the woodland circuit. Its 54 glass-front viewing tiles are reachable in both plan
+seeds; the remaining 3.5 m tall-mesh boundary encloses bamboo, birch, oak and fern cover, granite,
+a climbing frame and fallen log. Water covers 2.8 %, planted cover 22.9 %, and an eight-animal
+shelter and new low bamboo-and-fruit feeder support the opening family.
+
+The residents are a five-year-old mother and two 0.2-year-old cubs. This mother group, the
+bamboo-heavy diet and the compact masked body with a long ringed tail follow the
+[Smithsonian National Zoo](https://nationalzoo.si.edu/animals/red-panda); the varied elevations,
+shade and climbing furnishings follow the
+[EAZA Red Panda Best Practice Guidelines](https://media.eaza.net/uploads/EAZA_Best_Practice_Guidelines_Red_Panda_final_Dec_2021_1_ffc7f12345.pdf).
+The zoo rises to 96 animals, 16 habitats, 47 buildings and 3,287 props. A dedicated western drinks
+stall keeps the farthest public walk at 84.77 m from a facility, below the 85 m design limit.
+Adult and cub turntables and the inspected 3,000-tick public view are in
+`evidence/red-panda-canopy-j80-2026-11-21.jpg`; that run loaded all 96 animals, kept all three
+pandas outdoors and simulated 650 visitors. Expanding from 15 to 16 habitats also exposed the
+old keeper-pairing fallback: it assigned the two new habitats at opposite ends of the northern
+land to one 204 m round. The exact memoised planner now gives all eight keepers globally shortest
+two-habitat rounds; the staffed week improves on automatic care at 18 against 20 animal-hours in
+need, and the visitor-paced morning at 10 against 13. All 311 active CTest cases pass (21
+diagnostics remain disabled), as do all 155 animal-pipeline tests. A final 3,000-tick ASan/UBSan
+visit completed without a sanitizer finding with leak detection disabled, loading all 96 animals,
+47 buildings and 3,287 props and simulating 649 visitors.
 
 Catalog limits: there is no low glass wall and no low rail that would hold a flamingo, so the
 small animals stand behind the same 3.5 m glass as the lions. The meerkats' service boundary is
@@ -413,8 +441,8 @@ Golden hashes of `tests/core/VisitStartTests.cpp`, recorded again for the plan:
 ## The zoo as the game visits it
 
 The game builds this scenario without any species that has no model in `assets/animals/`
-(`withoutSpecies`); such a habitat would stand finished but empty. Since 2026-11-12 all fifteen
-species have one, so a seed-1 visit has all **90 animals in fourteen habitats**.
+(`withoutSpecies`); such a habitat would stand finished but empty. All seventeen current species
+have production models, so a seed-1 visit has all **96 animals in sixteen habitats**.
 
 The ice-cream kiosk formerly in the narrow Elephant Valley/Kangaroo gap is relocated
 near entrance coordinates `(-5,18)`, facing north, to keep refreshment access around the wider
