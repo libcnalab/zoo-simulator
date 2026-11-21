@@ -90,11 +90,22 @@
       "loop": true,
       "name": "vocalize",
       "speed": 0.0
+    },
+    {
+      "duration": 8.0,
+      "events": [],
+      "frames": 241,
+      "loop": true,
+      "name": "groom",
+      "speed": 0.0
     }
   ],
   "generator": "tools/animals (zoogen)",
   "license": "MIT",
   "meta": {
+    "activity_clips": {
+      "socialize": "groom"
+    },
     "age_shape": "Joey at foot: large head, eyes, ears and feet; slim thighs and tail",
     "body_length_m": 0.82,
     "common_name": "Red kangaroo",

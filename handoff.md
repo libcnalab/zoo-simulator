@@ -642,6 +642,19 @@ whatever you take up (`docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `docs/V
   seconds). ASan viewers played 440 lockstep frames for each body, and a real ASan Lion Rock visit
   loaded all 90 animals, ran 3,000 fill steps and drew three frames cleanly (leak detection off for
   the documented `ptrace` limitation; J63, 2026-11-21).
+- J64 gives the adult and joey red kangaroos a dedicated eight-second `groom` for `socialize`
+  instead of ordinary idle/rest. Each alternates its separate five-fingered hands at the muzzle,
+  lowers and turns the head towards the contact, and keeps both hind feet planted exactly. This is
+  individual grooming while near the mob, not time-aligned mutual grooming. Both hand contacts
+  for both bodies are in `docs/evidence/kangaroo-groom-j64-2026-11-21.jpg`. Each 28-bone GLB grows
+  by about 71 kB, from eight to nine clips (243 runtime tracks), and all four production GLB/JSON
+  files match independent one-thread exports byte for byte. All 136 animation-pipeline tests pass
+  in 337.41 seconds, all 31 game-side tests pass, and all 305 active CTest cases pass (the
+  pipeline's second run took 384.30 seconds). ASan viewers played 500 lockstep frames for each
+  body; a real ASan Kangaroo Grove visit loaded all 90 animals, ran 3,000 fill steps and drew three
+  frames cleanly. Its endpoint selected sleeping Zuri, so it proves habitat integration but is not
+  claimed as live grooming evidence (leak detection off for the documented `ptrace` limitation;
+  J64, 2026-11-21).
 - The stopped G7c audio audit is recovered and finished. Calls now follow `Vocalize`, social,
   play and documented feeding cues rather than a timer; takes do not repeat immediately, spatial
   pan is capped at 0.60, birds fade with daylight, crowd level follows its people, and footsteps
@@ -833,9 +846,9 @@ tests pass. Nobody listened to the audio; preserve that qualification.
   feeding, camel and giraffe rumination, ostrich and elephant dust-bathing, and shallow wallowing
   for bears, tigers and rhinoceroses (elephants reuse their scoop/toss as a wet toss). Penguin
   huddling, flamingo huddling, giraffe browsing and zebra watch now also have dedicated clips for
-  every model variant. Lion contact now has a dedicated individual nuzzle; all synchronised
-  multi-animal contact remains unimplemented. The exact table and honest visual limitations are
-  in `docs/ANIMALS.md`.
+  every model variant. Lion contact now has a dedicated individual nuzzle and kangaroo social time
+  an individual face-groom; all synchronised multi-animal contact remains unimplemented. The exact
+  table and honest visual limitations are in `docs/ANIMALS.md`.
   A5's eight production files match independent exports byte for byte; 107 pipeline tests pass.
   The renderer integration's warning-clean build and all 267 enabled CTest cases passed (the
   pipeline was rerun after the last visual refinement). The inspected evidence is

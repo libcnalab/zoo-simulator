@@ -363,6 +363,27 @@ def _lying(solver, sleeping):
     return pose
 
 
+def _groom(solver, phase):
+    """An upright face wash, alternating the two hands while the hind feet stay planted."""
+    angle = math.tau * phase
+    reaches = {"L": max(0, math.sin(angle)) ** 2,
+               "R": max(0, -math.sin(angle)) ** 2}
+    pose = _stand(solver)
+    engagement = reaches["L"] + reaches["R"]
+    pose.r("chest", ry=5 * engagement)
+    pose.r("neck1", ry=7 * engagement, rz=6 * (reaches["R"] - reaches["L"]))
+    pose.r("head", ry=8 * engagement, rz=10 * (reaches["R"] - reaches["L"]))
+    for side, reach in reaches.items():
+        sign = 1 if side == "L" else -1
+        pose.r("upper_arm." + side, ry=-80 * reach, rz=-sign * 25 * reach)
+        pose.r("forearm." + side, ry=-40 * reach)
+        pose.r("hand." + side, ry=-8 * reach, rz=sign * 6 * reach)
+        pose.r("fingers." + side, ry=12 * reach)
+    for side, sign in (("L", 1), ("R", -1)):
+        pose.r("ear." + side, rz=sign * 8 * engagement)
+    return pose
+
+
 def _clips(solver):
     def crawl(phase):
         return _crawl(solver, phase)
@@ -400,6 +421,7 @@ def _clips(solver):
                 result.r("head", rz=2 * math.sin(angle))
             return result
         clips.append(Clip(name, 5, pose))
+    clips.append(Clip("groom", 8, lambda phase: _groom(solver, phase)))
     return clips
 
 
@@ -504,6 +526,7 @@ def _juvenile_clips(solver):
                 result.r("head", rz=2 * math.sin(angle))
             return result
         clips.append(Clip(name, 5, pose))
+    clips.append(Clip("groom", 8, lambda phase: _groom(solver, phase)))
     return clips
 
 
@@ -516,7 +539,8 @@ def make_spec(juvenile=False):
                 meta={"common_name": "Red kangaroo", "scientific_name": "Osphranter rufus",
                       "shoulder_height_m": 1.6, "body_length_m": 1.5,
                       "sex": "male", "roughness": .9,
-                      "surface_detail": "anisotropic short-fur normal map"})
+                      "surface_detail": "anisotropic short-fur normal map",
+                      "activity_clips": {"socialize": "groom"}})
     if juvenile:
         _juvenile_shape(spec)
     return spec

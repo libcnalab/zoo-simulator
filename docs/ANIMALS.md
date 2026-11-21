@@ -555,6 +555,7 @@ named the real activity. Dedicated clips are now made in the pipeline
 | `flamingo` | `huddle` (9 s) | `huddle` | a two-legged braced stance, with the neck drawn in, the wings held close and a small shiver |
 | `giraffe`, `giraffe_female`, `giraffe_juvenile` | `browse` (12 s) | `browse` | high held reaches to both sides of a crown, taking and stripping leaves with separate bites |
 | `lion`, `lion_female`, `lion_juvenile` | `nuzzle` (7 s) | `socialize` | four planted paws while the lowered muzzle presses and rubs slowly to either side; this is an individual contact pose, not a synchronised pair |
+| `kangaroo`, `kangaroo_juvenile` | `groom` (8 s) | `socialize` | an upright face wash, alternating the five-fingered hands at the muzzle while both hind feet remain planted; this is individual grooming, not a synchronised pair |
 
 Coverage of every species routine's nonstandard or signature action is below. “Default” means
 the model has no dedicated clip and the renderer deliberately uses the nearest standard pose.
@@ -566,7 +567,7 @@ the model has no dedicated clip and the renderer deliberately uses the nearest s
 | Elephant | `dust_bathe`; hot-weather `bathe` | `dust_bathe` for both | scrape, gather and toss dry dust or wet mud with the trunk |
 | Flamingo | `preen`; `filter_feed`; `huddle` | `preen`; `filter_feed`; `huddle` | grooming, inverted-bill sweep and a compact two-legged cold-weather stance are dedicated |
 | Giraffe | `browse`; `ruminate` | `browse`; `ruminate` | high held reaches take leaves from both sides; a separate slow jaw grind shows chewing the cud |
-| Kangaroo | social rest | ordinary `rest` / `idle` | a close resting mob; no paired interaction clip |
+| Kangaroo | social rest | `groom` | alternating hands wash the muzzle while the animal remains with the mob; no paired interaction |
 | Lion | social contact | `nuzzle` | a lowered, side-to-side rubbing motion on four planted paws; the partner is not synchronised |
 | Meerkat | `sentinel`; `dig` | `sentry`; `dig` | upright scanning with tail support; alternating fore-paw scratches |
 | Ostrich | `dust_bathe` | `dust_bathe` | sitting, wing shaking and neck sweeps |
@@ -588,7 +589,7 @@ sitting-up watch it always was.
 
 Not made: preening for the ostrich (its routine never preens), group-synchronised huddles beyond
 individual poses, and paired/synchronised social contact. Lions now have the individual contact
-half of that interaction.
+half of that interaction, and kangaroos have individual grooming during social time.
 What is weak: no sand or dust is thrown (the game has no particles for it), the elephant's toss
 reaches above the forehead rather than over the back (ten trunk joints at most 48 degrees each),
 the flamingo's bill and neck are buried in the wing when it preens there, as a real one's are, so
@@ -603,6 +604,17 @@ byte for byte. The opposite contact directions for all three bodies are in
 played 440 lockstep frames for every variant and a real 3,000-tick Lion Rock visit drew three
 frames cleanly. The behaviour still selects an individual pose near another lion rather than
 time-aligning two actors, so this does not claim paired physical contact.
+
+**Kangaroo social grooming (J64, 2026-11-21).** The adult and joey now map `socialize` to a
+dedicated eight-second `groom` clip. They alternate their separate five-fingered hands at the
+muzzle, lower and turn the head towards each contact, and hold both hind feet exactly in place.
+The production GLBs each add one 28-bone, 241-frame clip and match independent one-thread exports
+byte for byte. Both hand contacts for both bodies are in
+`evidence/kangaroo-groom-j64-2026-11-21.jpg`. All 136 animation-pipeline tests pass; ASan viewers
+played 500 lockstep frames for each variant and a real 3,000-tick Kangaroo Grove visit drew three
+frames cleanly. The habitat endpoint selected a sleeping animal, so only the viewers and direct
+contact regression are claimed as grooming evidence. This is individual grooming while near the
+mob, not time-aligned mutual grooming.
 
 All listed viewer phases and the final evidence sheet were opened after integration on current
 `develop` (`evidence/animal-clips-a1-2026-11-14.jpg`). In the Visitor Zoo at 09:00 after 600

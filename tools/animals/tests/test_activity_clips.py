@@ -27,7 +27,7 @@ ACTIVITIES = {"idle", "wander", "forage", "eat", "drink", "rest", "sleep", "play
               "bathe", "dust_bathe", "preen", "sentinel", "dig", "filter_feed", "patrol", "huddle"}
 # The clips a still animal may play (AnimalRenderer's still poses).
 STILL_CLIPS = {"idle", "eat", "drink", "rest", "sleep", "sentry", "dig", "preen", "dust_bathe",
-               "ruminate", "filter_feed", "bathe", "huddle", "browse", "nuzzle"}
+               "ruminate", "filter_feed", "bathe", "huddle", "browse", "nuzzle", "groom"}
 EXPECTED = {
     "brown_bear": {"bathe": "bathe"},
     "brown_bear_juvenile": {"bathe": "bathe"},
@@ -56,6 +56,8 @@ EXPECTED = {
     "lion": {"socialize": "nuzzle"},
     "lion_female": {"socialize": "nuzzle"},
     "lion_juvenile": {"socialize": "nuzzle"},
+    "kangaroo": {"socialize": "groom"},
+    "kangaroo_juvenile": {"socialize": "groom"},
     "zebra": {"sentinel": "sentry"},
     "zebra_female": {"sentinel": "sentry"},
     "zebra_juvenile": {"sentinel": "sentry"},
@@ -235,6 +237,29 @@ class SocialTests(unittest.TestCase):
             muzzle = np.asarray(muzzle)
             self.assertGreater(np.ptp(muzzle[:, 1]), .20 * height, species)
             self.assertGreater(np.ptp(muzzle[:, 2]), .04 * height, species)
+
+    def test_kangaroos_alternate_hands_at_the_muzzle_on_planted_hind_feet(self):
+        for species in ("kangaroo", "kangaroo_juvenile"):
+            spec, solver, clips = clips_of(species)
+            height = spec.meta["shoulder_height_m"]
+            tips = {"L": [], "R": []}
+            distances = {"L": [], "R": []}
+            for index in range(64):
+                pose = clips["groom"].pose(index / 64)
+                world = solver.solve(pose)
+                muzzle = quadruped.muzzle(solver, pose)
+                for key in ("L", "R"):
+                    toe = world[spec.rig.legs[key].toes][:3, 3]
+                    self.assertTrue(np.allclose(toe, solver.toe_base(key), atol=1e-6),
+                                    species + "/" + key)
+                    hand = "fingers." + key
+                    tip = solver.point(world, hand, solver.tail[hand])
+                    tips[key].append(tip)
+                    distances[key].append(np.linalg.norm(tip - muzzle))
+            for key in ("L", "R"):
+                self.assertLess(min(distances[key]), .10 * height, species + "/" + key)
+                self.assertGreater(np.ptp(np.asarray(tips[key])[:, 2]), .25 * height,
+                                   species + "/" + key)
 
 
 class BatheTests(unittest.TestCase):

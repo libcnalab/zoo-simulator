@@ -593,7 +593,8 @@ class BipedTests(unittest.TestCase):
             activity = {"penguin": {"preen", "huddle"},
                         "flamingo": {"preen", "filter_feed", "huddle"},
                         "flamingo_juvenile": {"preen", "filter_feed", "huddle"},
-                        "ostrich": {"dust_bathe"}, "ostrich_juvenile": {"dust_bathe"}}
+                        "ostrich": {"dust_bathe"}, "ostrich_juvenile": {"dust_bathe"},
+                        "kangaroo": {"groom"}, "kangaroo_juvenile": {"groom"}}
             water = {"penguin": {"swim", "float"},
                      "flamingo": {"swim"}, "flamingo_juvenile": {"swim"}}
             self.assertEqual(set(clips),
@@ -695,7 +696,7 @@ class BipedTests(unittest.TestCase):
         self.assertLessEqual(manifest["triangles"], 20000)
         clips = {clip["name"]: clip for clip in manifest["clips"]}
         self.assertEqual(set(clips), {"idle", "walk", "trot", "eat", "drink", "rest",
-                                      "sleep", "vocalize"})
+                                      "sleep", "vocalize", "groom"})
         self.assertAlmostEqual(clips["walk"]["speed"], .58, delta=.02)
         self.assertAlmostEqual(clips["trot"]["speed"], 2.2, delta=.02)
 
