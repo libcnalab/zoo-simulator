@@ -279,7 +279,7 @@ def _close_resting_mouth(data, degrees=-7.0):
     data['tails'][jaw] = rotation @ (data['tails'][jaw] - pivot) + pivot
 
 
-def make_bear(name, polar, juvenile, height, edits):
+def make_bear(name, polar, juvenile, height, edits, metadata=None):
     data = prepare_instance(SOURCE, {'root': {'scale': [1, .78, 1]}, **edits}, height)
     names = data['bone_names'].tolist()
     vertices = data['vertices']
@@ -346,6 +346,8 @@ def make_bear(name, polar, juvenile, height, edits):
     if juvenile:
         parent = 'polar_bear' if polar else 'brown_bear'
         meta.update(variant_of=parent, variant='juvenile', relative_height=height / (1.5 if polar else 1.2))
+    if metadata:
+        meta.update(metadata)
     # Brown bears carry a pronounced shoulder hump above the water. The deeper
     # polar placement would split their visible silhouette into a head and rump.
     swim_depth = (.91 if polar else .72) * height
@@ -617,8 +619,9 @@ def family_preview(output):
     import bpy
     from . import build
     scene = build.reset_scene()
-    names = ('brown_bear', 'brown_bear_juvenile', 'polar_bear', 'polar_bear_juvenile')
-    for name, offset in zip(names, (-2.0, -.75, .55, 2.0)):
+    names = ('brown_bear', 'brown_bear_juvenile', 'polar_bear',
+             'polar_bear_female', 'polar_bear_juvenile')
+    for name, offset in zip(names, (-2.4, -1.2, 0, 1.2, 2.4)):
         bpy.ops.import_scene.gltf(filepath=str(Path.cwd() / 'assets/animals' / (name + '.glb')))
         imported = list(bpy.context.selected_objects)
         roots = [ob for ob in imported if ob.parent is None]

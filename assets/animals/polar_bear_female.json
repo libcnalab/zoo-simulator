@@ -1,0 +1,230 @@
+{
+  "bones": 33,
+  "clips": [
+    {
+      "duration": 6.0,
+      "events": [],
+      "frames": 181,
+      "loop": true,
+      "name": "idle",
+      "speed": 0.0
+    },
+    {
+      "duration": 0.9333,
+      "events": [
+        {
+          "name": "step",
+          "time": 0.0
+        },
+        {
+          "name": "step",
+          "time": 0.112
+        },
+        {
+          "name": "step",
+          "time": 0.4667
+        },
+        {
+          "name": "step",
+          "time": 0.5787
+        }
+      ],
+      "frames": 29,
+      "loop": true,
+      "name": "walk",
+      "speed": 1.0
+    },
+    {
+      "duration": 0.5667,
+      "events": [
+        {
+          "name": "step",
+          "time": 0.0
+        },
+        {
+          "name": "step",
+          "time": 0.0567
+        },
+        {
+          "name": "step",
+          "time": 0.272
+        },
+        {
+          "name": "step",
+          "time": 0.3287
+        }
+      ],
+      "frames": 18,
+      "loop": true,
+      "name": "trot",
+      "speed": 2.5
+    },
+    {
+      "duration": 3.0,
+      "events": [],
+      "frames": 91,
+      "loop": true,
+      "name": "eat",
+      "speed": 0.0
+    },
+    {
+      "duration": 2.4,
+      "events": [],
+      "frames": 73,
+      "loop": true,
+      "name": "drink",
+      "speed": 0.0
+    },
+    {
+      "duration": 8.0,
+      "events": [],
+      "frames": 241,
+      "loop": true,
+      "name": "rest",
+      "speed": 0.0
+    },
+    {
+      "duration": 8.0,
+      "events": [],
+      "frames": 241,
+      "loop": true,
+      "name": "sleep",
+      "speed": 0.0
+    },
+    {
+      "duration": 2.6,
+      "events": [
+        {
+          "name": "call",
+          "time": 0.572
+        }
+      ],
+      "frames": 79,
+      "loop": false,
+      "name": "vocalize",
+      "speed": 0.0
+    },
+    {
+      "duration": 9.0,
+      "events": [],
+      "frames": 271,
+      "loop": true,
+      "name": "bathe",
+      "speed": 0.0
+    },
+    {
+      "duration": 1.5,
+      "events": [],
+      "frames": 46,
+      "loop": true,
+      "name": "swim",
+      "speed": 0.8678
+    }
+  ],
+  "generator": "tools/animals (zoogen)",
+  "license": "CC-BY-4.0",
+  "meta": {
+    "activity_clips": {
+      "bathe": "bathe"
+    },
+    "anatomy_revision": "Smoothed reposed shoulders and closed resting mouth",
+    "asset_license": "CC-BY-4.0",
+    "common_name": "Polar bear",
+    "derivation": "Re-proportioned and repainted brown-bear sculpt",
+    "outline_fur_clumps": 105,
+    "proportion_edits": {
+      "chest": {
+        "scale": [
+          1,
+          0.94,
+          1
+        ]
+      },
+      "ear": {
+        "scale": [
+          0.72,
+          0.72,
+          0.72
+        ]
+      },
+      "foot": {
+        "scale": [
+          1.12,
+          1.2,
+          1
+        ]
+      },
+      "hand": {
+        "scale": [
+          1.15,
+          1.18,
+          1
+        ]
+      },
+      "head": {
+        "scale": [
+          0.78,
+          0.83,
+          0.9
+        ]
+      },
+      "hips": {
+        "scale": [
+          1.16,
+          0.9,
+          1
+        ]
+      },
+      "neck1": {
+        "scale": [
+          0.96,
+          0.86,
+          0.9
+        ]
+      },
+      "neck2": {
+        "scale": [
+          1.02,
+          0.9,
+          1
+        ]
+      }
+    },
+    "relative_height": 0.89,
+    "rest_mouth_closure_deg": 7.0,
+    "rest_pose": "Sternal recumbency, chin on forepaws",
+    "roughness": 0.9,
+    "scientific_name": "Ursus maritimus",
+    "sex": "female",
+    "shoulder_height_m": 1.335,
+    "sleep_pose": "Lying on side with folded legs",
+    "source_author": "Pedro B. Goulart (Pebegou)",
+    "source_pose": "Upright roaring brown-bear-like sculpt; species identification is visual",
+    "source_title": "Strong Bear",
+    "source_url": "https://sketchfab.com/3d-models/1d1bb459a39a428282ce4cb46bdc3ed5",
+    "swim": {
+      "clip": "swim",
+      "depth_m": 1.21485,
+      "speed_mps": 0.86775
+    },
+    "variant": "female",
+    "variant_of": "polar_bear",
+    "water_origin_convention": "Place the asset origin at water surface - depth_m"
+  },
+  "name": "polar_bear_female",
+  "skeleton_bounds_animal_space": {
+    "max": [
+      2.0621,
+      0.3499,
+      1.4503
+    ],
+    "min": [
+      -1.0233,
+      -0.3499,
+      0.0
+    ]
+  },
+  "texture": 2048,
+  "triangles": 30000,
+  "vertices": 15530
+}
