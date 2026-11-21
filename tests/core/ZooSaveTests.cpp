@@ -77,6 +77,32 @@ TEST(ZooSaveTests, ALoadedZooLivesOnLikeTheOriginal) {
     EXPECT_TRUE(zoo->SameState(*loaded));
 }
 
+TEST(ZooSaveTests, VisitorsRememberSpeciesByNameAcrossCatalogChanges) {
+    const auto zoo = LivedInZoo();
+    auto saved = ZooToJson(*zoo);
+    auto& body = saved.at("zoo");
+    auto& visitors = body.at("visitors").at("visitors");
+    ASSERT_FALSE(visitors.empty());
+    const auto& catalog = zoo->SpeciesList();
+    const auto elephant = std::uint64_t{1} << catalog.IndexOf("elephant");
+    const auto zebra = std::uint64_t{1} << catalog.IndexOf("zebra");
+    const auto verify = [&]() {
+        std::string error;
+        auto loaded = ZooFromJson(saved, zoo->Definitions(), catalog, &error);
+        ASSERT_NE(loaded, nullptr) << error;
+        ASSERT_FALSE(loaded->Guests().All().empty());
+        EXPECT_EQ(loaded->Guests().All().front().seenSpecies, elephant | zebra);
+    };
+    // The first guest saw a zebra, an elephant and a since-removed species.
+    body["seen_species_order"] = {"zebra", "meerkat", "elephant", "removed"};
+    visitors.front()["seen_species"] = 0b1101;
+    verify();
+    // The preceding shipped catalog had eighteen entries and no order table.
+    body.erase("seen_species_order");
+    visitors.front()["seen_species"] = (std::uint64_t{1} << 17) | (std::uint64_t{1} << 2);
+    verify();
+}
+
 TEST(ZooSaveTests, FilesAreWrittenWholeAndSummarised) {
     const std::unique_ptr<Zoo> zoo = LivedInZoo();
     const std::string path = TempFile("roundtrip.zoo");

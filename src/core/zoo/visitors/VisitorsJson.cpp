@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 #include "zoo/visitors/VisitorsJson.hpp"
 
+#include <bit>
 #include <stdexcept>
 
 namespace zoo {
@@ -259,6 +260,19 @@ Visitors VisitorsJsonAccess::Load(const Json& json) {
     visitors.leftToday_ = json.at("left_today").get<int>();
     visitors.arrivedEver_ = json.at("arrived_ever").get<std::int64_t>();
     return visitors;
+}
+
+void VisitorsJsonAccess::RemapSeenSpecies(Visitors& visitors, std::span<const std::uint64_t> bits) {
+    for (Visitor& guest : visitors.visitors_) {
+        std::uint64_t mapped = 0;
+        for (auto seen = guest.seenSpecies; seen != 0; seen &= seen - 1) {
+            const auto index = static_cast<std::size_t>(std::countr_zero(seen));
+            if (index < bits.size()) {
+                mapped |= bits[index];
+            }
+        }
+        guest.seenSpecies = mapped;
+    }
 }
 
 Json ToJson(const Visitors& visitors) {

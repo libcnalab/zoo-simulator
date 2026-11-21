@@ -6,6 +6,7 @@
 #include <nlohmann/json.hpp>
 
 #include <optional>
+#include <span>
 #include <string>
 
 namespace zoo {
@@ -18,6 +19,7 @@ std::optional<Visitors> VisitorsFromJson(const nlohmann::json& json, std::string
 struct VisitorsJsonAccess {
     static nlohmann::json Save(const Visitors& visitors);
     static Visitors Load(const nlohmann::json& json);
+    static void RemapSeenSpecies(Visitors& visitors, std::span<const std::uint64_t> bits);
 };
 
 }  // namespace zoo

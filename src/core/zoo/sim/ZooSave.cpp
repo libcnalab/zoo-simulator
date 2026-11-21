@@ -73,6 +73,74 @@ bool ViewersSaved(const Json& animals) {
                                [](const Json& item) { return item.is_object() && item.contains("viewers"); });
 }
 
+// A guest remembers at most 64 species. Record the catalog once for the entire crowd.
+std::vector<std::string> SeenSpeciesOrder(const SpeciesCatalog& catalog) {
+    std::vector<std::string> order;
+    for (const SpeciesDef& species : catalog.All()) {
+        if (order.size() == 64) {
+            break;
+        }
+        order.push_back(species.id);
+    }
+    return order;
+}
+
+std::vector<std::string> LegacySeenSpeciesOrder(const Json& body, const SpeciesCatalog& catalog) {
+    // Greenhill's stock catalogs grew in three stages before saves recorded the order.
+    // Named habitats identify a stage even when a player omitted its residents.
+    std::set<std::string> habitats;
+    for (const auto& home : body.at("enclosures").at("enclosures")) {
+        habitats.insert(home.at("name").get<std::string>());
+    }
+    std::vector<std::string> order{"brown_bear", "camel", "elephant", "flamingo", "giraffe",
+                                   "kangaroo",   "lion",  "meerkat",  "ostrich",  "penguin",
+                                   "polar_bear", "rhino", "tiger",    "wolf",     "zebra"};
+    if (std::ranges::any_of(order, [&](const auto& id) { return !catalog.Find(id); })) {
+        return SeenSpeciesOrder(catalog);
+    }
+    std::set<std::string> residents;
+    for (const auto& animal : body.at("animals").at("animals")) {
+        residents.insert(animal.at("species").get<std::string>());
+    }
+    const bool greenhill = habitats.contains("Meerkat Lookout") || habitats.contains("Penguin Cove");
+    const bool leopard =
+        !greenhill || habitats.contains("Snow Leopard Heights") || residents.contains("snow_leopard");
+    const bool panda = leopard || habitats.contains("Red Panda Canopy") || residents.contains("red_panda");
+    if (panda || habitats.contains("Lynx Ridge") || residents.contains("lynx")) {
+        order.emplace_back("lynx");
+    }
+    if (panda) {
+        order.emplace_back("red_panda");
+    }
+    if (leopard) {
+        order.emplace_back("snow_leopard");
+    }
+    std::ranges::sort(order);
+    return order;
+}
+
+void RestoreSeenSpecies(Visitors& guests, const Json& body, const SpeciesCatalog& catalog) {
+    const auto saved = body.find("seen_species_order");
+    if (saved != body.end() && (!saved->is_array() || saved->size() > 64)) {
+        throw std::runtime_error("invalid seen_species_order");
+    }
+    const auto order =
+        saved == body.end() ? LegacySeenSpeciesOrder(body, catalog) : saved->get<std::vector<std::string>>();
+    if (order == SeenSpeciesOrder(catalog)) {
+        return;
+    }
+    if (std::ranges::find(order, "") != order.end() ||
+        std::set<std::string>(order.begin(), order.end()).size() != order.size()) {
+        throw std::runtime_error("invalid species names in seen_species_order");
+    }
+    std::vector<std::uint64_t> bits;
+    for (const auto& name : order) {
+        const int index = catalog.IndexOf(name);
+        bits.push_back(index >= 0 && index < 64 ? std::uint64_t{1} << index : 0);
+    }
+    VisitorsJsonAccess::RemapSeenSpecies(guests, bits);
+}
+
 // Keep the optional reservation layer in the zoo envelope: older world documents
 // remain readable, and absent reservations mean the pre-stand-off layout.
 Json StandOffToJson(const World& world) {
@@ -310,6 +378,7 @@ Json ZooToJson(const Zoo& zoo) {
               {"finance", ToJson(zoo.Accounts())},
               {"animals", ToJson(zoo.Fauna(), zoo.SpeciesList())},
               {"visitors", ToJson(zoo.Guests())},
+              {"seen_species_order", SeenSpeciesOrder(zoo.SpeciesList())},
               {"staff", ToJson(zoo.Keepers())},
               {"notifications", std::move(notifications)},
               {"next_notification", ZooAccess::NextNotification(zoo)},
@@ -397,6 +466,9 @@ std::unique_ptr<Zoo> ZooFromJson(const Json& json, const Catalog& catalog, const
                                                : std::optional<Visitors>(Visitors(config.seed));
         if (!visitors) {
             throw std::runtime_error(part);
+        }
+        if (visitors->Count() > 0) {
+            RestoreSeenSpecies(*visitors, body, species);
         }
         // Saves from before there were keepers open as a zoo without staff.
         std::optional<Staff> staff =

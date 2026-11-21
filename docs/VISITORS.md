@@ -265,6 +265,13 @@ present values before the initial sentinel or after the saved clock are refused.
 After loading, a zoo continues tick for tick as the one that was saved
 (`VisitorTests.ASaveKeepsEveryVisitorWhereItWas`).
 
+The zoo records up to 64 species IDs in `seen_species_order`. Each visitor group's
+species sightings refer to that list. When a new species changes the catalog order,
+the group retains credit for the animals it saw. Earlier Greenhill saves identify
+their catalog generation through the northern habitat names and their residents.
+Older custom zoos with the stock catalog and no such landmarks use the last
+18-species order, since their original order was never recorded.
+
 ## Determinism and cost
 
 The visitors draw from their own generator seeded from the zoo's seed and are
