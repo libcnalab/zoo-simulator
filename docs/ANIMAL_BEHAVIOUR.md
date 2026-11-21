@@ -49,7 +49,11 @@ schema and loader are unchanged. Table weights and all times and distances below
 are **game-design estimates**, intended to produce plausible ethograms, not
 claims about measured wild or captive populations. Rest includes awake rest;
 Sleep remains a separate need-driven activity. Giraffe resting choices become
-standing rumination, and flock resting choices become huddling.
+standing rumination. A resting penguin or flamingo takes its upright flock pose when a
+stationary companion of the same species stands nearby. Both birds must be able to stand
+at the local water depth. The simulation uses one and a half times their mean body length
+as the distance cutoff. A bird resting alone uses its ordinary resting pose. A companion
+can arrive or leave during the same bout.
 
 | Species | Rest/feed/walk/signature weights | Signature | Spread (m) | Awake still bound (motion s) |
 |---|---|---|---:|---:|
@@ -694,3 +698,23 @@ The posture is based on observations of head rubbing in captive African lions. F
 of the study shows a standing lion greeting a resting one. The joint angles and
 timing in the game are animation choices.
 [Matoba, Kutsukake and Hasegawa, 2013](https://doi.org/10.1371/journal.pone.0073044)
+
+## Resting birds at Penguin Cove and Flamingo Lagoon (2026-11-21)
+
+A bird can settle alone, then stand with a companion when one stops beside it. The pose
+changes during the same resting bout. A swimming bird, a bird passing on its way elsewhere
+and one already in the shelter do not count as standing company.
+
+The seed-1 Penguin Cove visit at 13:00 was sampled once per motion second for five minutes.
+Previously, 725 of 1,087 stationary penguin samples with the flock pose had no stationary
+companion within the distance cutoff. After the change all 381 flock samples had a companion
+in range. The remaining 937 stationary resting samples used ordinary rest. No flamingo
+settled to rest in that visit. A separate test moves a companion in and out for both species
+and covers deep water and the flamingo shelf.
+
+At the same camera and time, the binoculars identify Lina resting on the bank and Idris
+standing with Nadia nearby. [Matched public gallery views](evidence/penguin-cove-flock-rest-2026-11-21.jpg)
+
+Across three default seeds, the complete saves after a 6,000-step fill and again 500 steps
+later differ only in bird activity and in the happiness of two to eight visitors per seed.
+Watching ordinary rest and watching a flock have different values in the visitor simulation.

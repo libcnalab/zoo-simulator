@@ -298,16 +298,17 @@ adults and pups paddling together while the mother eats on the bank. The visitor
 marsh marker places the visitor at (69, 289) m on the public gallery.
 [Afternoon gallery view and visitor map](evidence/capybara-marsh-2026-11-21.jpg)
 
-Opening states for the default zoo with the marsh, measured again 500 ticks later:
+Opening states for the default zoo with the marsh and the revision-7 flock resting behaviour,
+measured again 500 ticks later:
 
 | Fill ticks | Seed | Opening state | After 500 ticks |
 |---:|---:|---:|---:|
 | 600 | 1 | 9139815037628863271 | 2085363316060078965 |
 | 600 | 2 | 16001145640700442961 | 5644383874109006456 |
 | 600 | 3 | 10636984344542905811 | 6304807489940044530 |
-| 6000 | 1 | 14635932311430106990 | 17559413930607931475 |
-| 6000 | 2 | 11509055281480980418 | 77634063221948580 |
-| 6000 | 3 | 3405743328361068634 | 14155488049469946634 |
+| 6000 | 1 | 1054235427821063531 | 8043702145645978796 |
+| 6000 | 2 | 11740243411003087215 | 9360760697049082900 |
+| 6000 | 3 | 11257981172144800077 | 1213298953784258099 |
 
 ## Stand-off welfare measurements
 

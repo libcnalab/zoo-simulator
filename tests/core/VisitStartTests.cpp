@@ -90,16 +90,17 @@ TEST(VisitStart, MatchesGameSequence) {
 // a mother and two cubs, redundant water points for the three shy northern species, and the
 // visitor spread happens after four fifths of the fill so all seventeen fronts get a group;
 // dependent northern cubs follow their mothers, and two new garden walks on a map 64 m wider per
-// side lead to four picnic tables and a western marsh with a family of eight capybaras).
+// side lead to four picnic tables and a western marsh with a family of eight capybaras; resting
+// penguins and flamingos use their upright group pose beside a stationary companion).
 void CheckFillHashes(std::int64_t ticks) {
     constexpr std::array<std::array<std::uint64_t, 2>, 3> shortHashes{
         {{9139815037628863271ULL, 2085363316060078965ULL},
          {16001145640700442961ULL, 5644383874109006456ULL},
          {10636984344542905811ULL, 6304807489940044530ULL}}};
     constexpr std::array<std::array<std::uint64_t, 2>, 3> fullHashes{
-        {{14635932311430106990ULL, 17559413930607931475ULL},
-         {11509055281480980418ULL, 77634063221948580ULL},
-         {3405743328361068634ULL, 14155488049469946634ULL}}};
+        {{1054235427821063531ULL, 8043702145645978796ULL},
+         {11740243411003087215ULL, 9360760697049082900ULL},
+         {11257981172144800077ULL, 1213298953784258099ULL}}};
     for (const std::uint64_t seed : {1ULL, 2ULL, 3ULL}) {
         Zoo zoo(testdata::GameCatalog(), testdata::GameSpecies(), VisitorZooConfig(seed));
         BuildVisitorZoo(zoo);

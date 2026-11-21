@@ -28,6 +28,7 @@ builder in `ZooGameVisit.cpp`. An unreadable or damaged entry is reported, ignor
 replaced after a normal build. Automated and scripted runs do not read or write personal cache
 files unless they explicitly supply `--saves`; the empty-map diagnostic is never cached.
 
+Revision 7 records whether resting penguins and flamingos have a companion beside them at opening.
 Revision 6 includes Capybara Marsh, eight new residents and their bathing routines. The previous
 17-habitat version of the wider map used revision 5. Both revisions use the same 448 × 448 m map.
 

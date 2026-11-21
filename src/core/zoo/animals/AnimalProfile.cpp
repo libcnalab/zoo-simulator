@@ -72,9 +72,6 @@ AnimalActivity ProfileActivity(const Animal& animal, const SpeciesDef& species,
     float remaining = roll * total;
     for (std::size_t index = 0; index < choices.size(); ++index) {
         if (remaining < weights[index]) {
-            if (choices[index] == A::Rest && (species.id == "penguin" || species.id == "flamingo")) {
-                return A::Huddle;
-            }
             if (choices[index] == A::Rest && species.id == "giraffe") {
                 return A::Ruminate;
             }

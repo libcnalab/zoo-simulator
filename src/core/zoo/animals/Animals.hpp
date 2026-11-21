@@ -46,7 +46,7 @@ enum class AnimalActivity : std::uint8_t {
     Dig,         ///< excavating and investigating substrate
     FilterFeed,  ///< feeding head down in shallow water
     Patrol,      ///< purposeful boundary travel, distinct from stereotypic pacing
-    Huddle,      ///< resting upright in a flock; flamingos use one leg
+    Huddle,      ///< resting upright beside another settled bird
     Count
 };
 std::string_view ToString(AnimalActivity v);  // "idle", "wander", ... (save format)

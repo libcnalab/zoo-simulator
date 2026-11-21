@@ -538,6 +538,47 @@ TEST(AnimalEthogramTests, NorthernCubsRejoinTheirMotherAndStopFollowingWhenSepar
     }
 }
 
+TEST(AnimalEthogramTests, RestingFlockBirdsChangePoseAsCompanionsArriveAndLeave) {
+    for (const std::string_view name : {"penguin", "flamingo"}) {
+        SCOPED_TRACE(name);
+        HabitatDay habitat(name);
+        Animal& bird = *habitat.animals.Find(AnimalId{1U});
+        Animal& other = *habitat.animals.Find(AnimalId{2U});
+        const auto& species = *habitat.species.Find(name);
+        const std::array<std::size_t, 4> group{0, 1, 2, 3};
+        const auto update = [&] {
+            animal_internal::UpdateFlockRest(bird, species, habitat.env, habitat.animals.All(), group);
+            return bird.activity;
+        };
+        animal_internal::StartActivity(bird, AnimalActivity::Huddle, bird.position, 35);
+        const auto duration = bird.activityLeft;
+        EXPECT_EQ(update(), AnimalActivity::Rest);
+        other.position = bird.position + Vec2{species.bodyLengthM, 0.0f};
+        animal_internal::StartActivity(other, AnimalActivity::Idle, other.position, 15);
+        EXPECT_EQ(update(), AnimalActivity::Huddle);
+        other.moving = true;
+        EXPECT_EQ(update(), AnimalActivity::Rest);
+        other.moving = false;
+        bird.moving = true;
+        EXPECT_EQ(update(), AnimalActivity::Rest);
+        bird.moving = false;
+        other.loose = true;
+        EXPECT_EQ(update(), AnimalActivity::Rest);
+        other.loose = false;
+        EXPECT_EQ(update(), AnimalActivity::Huddle);
+        const Vec2 shore = bird.position;
+        bird.position = World::TileCenter({25, 23});
+        other.position = bird.position + Vec2{0.4f, 0.0f};
+        EXPECT_EQ(update(), name == "penguin" ? AnimalActivity::Rest : AnimalActivity::Huddle);
+        bird.position = shore;
+        EXPECT_EQ(update(), AnimalActivity::Rest);
+        EXPECT_EQ(bird.activityLeft, duration);
+        EXPECT_EQ(bird.target, shore);
+        bird.activity = AnimalActivity::Preen;
+        EXPECT_EQ(update(), AnimalActivity::Preen);
+    }
+}
+
 TEST(AnimalEthogramTests, FollowerKeepsRouteToMovingLeaderDestination) {
     HabitatDay habitat("penguin");
     Animal* leader = habitat.animals.Find(AnimalId{1U});

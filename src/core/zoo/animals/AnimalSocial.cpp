@@ -116,6 +116,34 @@ const Animal* GroupLeader(const Animal& animal, const SpeciesDef& species, const
     return fallback;
 }
 
+void UpdateFlockRest(Animal& animal, const SpeciesDef& species, const Env& env,
+                     std::span<const Animal> animals, std::span<const std::size_t> neighbors) {
+    if ((animal.activity != AnimalActivity::Rest && animal.activity != AnimalActivity::Huddle) ||
+        (species.id != "penguin" && species.id != "flamingo"))
+        return;
+    animal.activity = AnimalActivity::Rest;
+    const float scale = BodyScale(animal, species, env.time);
+    const float standingDepth =
+        species.shoulderHeightM *
+        (species.id == "flamingo" ? tuning::kWaderStandingFraction : tuning::kWadingShoulderFraction);
+    if (!animal.home || animal.moving || animal.loose || !animal.Visible() ||
+        env.world.WaterDepthAt(animal.position) > standingDepth * scale)
+        return;
+    for (std::size_t index : neighbors) {
+        const Animal& other = animals[index];
+        if (other.id == animal.id || !Available(other, animal) || !other.Visible() || other.moving)
+            continue;
+        const float otherScale = BodyScale(other, species, env.time);
+        // The group pose reads as a shared bout within one and a half body lengths.
+        const float reach = 1.5f * species.bodyLengthM * (scale + otherScale) * 0.5f;
+        if (DistanceSquared(animal.position, other.position) <= reach * reach &&
+            env.world.WaterDepthAt(other.position) <= standingDepth * otherScale) {
+            animal.activity = AnimalActivity::Huddle;
+            return;
+        }
+    }
+}
+
 void UpdateSpeciesBehaviour(Animal& animal, const SpeciesDef& species, Env& env,
                             std::span<const Animal> animals, std::span<const std::size_t> neighbors,
                             int viewers, Rng& rng, std::vector<PropId>& propScratch) {

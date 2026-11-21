@@ -28,6 +28,8 @@ void UpdateSpeciesBehaviour(Animal& animal, const SpeciesDef& species, Env& env,
                             int viewers, Rng& rng, std::vector<PropId>& propScratch);
 const Animal* GroupLeader(const Animal& animal, const SpeciesDef& species, const Env& env,
                           std::span<const Animal> animals, std::span<const std::size_t> neighbors);
+void UpdateFlockRest(Animal& animal, const SpeciesDef& species, const Env& env,
+                     std::span<const Animal> animals, std::span<const std::size_t> neighbors);
 bool TryEscape(Animal& animal, const SpeciesDef& species, const Env& env, Rng& rng);
 bool AdvanceHealth(Animal& animal, const SpeciesDef& species, const Env& env, DeathCause& cause);
 

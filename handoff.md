@@ -34,8 +34,13 @@ whatever you take up (`docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `docs/V
   visit advanced 8,761 simulation steps puts them at the glass at 14:13. The resting
   partner turns her head and keeps her paws planted. See `docs/ANIMALS.md` and
   `docs/evidence/lion-rock-paired-greeting-2026-11-21.jpg`. Distant approaches and
-  bird flock poses remain open. All 335 active native tests and the animation suite
+  coordinated movements by a group remain open. All 335 active native tests and the animation suite
   (163 tests) passed after the greeting change.
+- Resting penguins and flamingos now use their group pose when a stationary companion
+  is close enough to stand with them. At Penguin Cove the binoculars identify Lina lying
+  alone and Idris standing with Nadia. See `docs/evidence/penguin-cove-flock-rest-2026-11-21.jpg`.
+  All 336 native tests and the three full deterministic visit fills passed. Visit cache revision 7
+  records the updated opening activities.
 - The red panda mother and cubs now have shorter, rounder muzzles, continuous cheek fur,
   pale brows and paired red-brown markings. Their joint animation is unchanged.
   See `docs/evidence/red-panda-faces-2026-11-21.jpg` for matched close-ups and game views.
