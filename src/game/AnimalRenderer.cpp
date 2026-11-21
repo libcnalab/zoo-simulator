@@ -228,11 +228,13 @@ const AnimalRenderer::Kind* AnimalRenderer::Load(const std::string& model) {
 #if defined(__linux__) && !defined(__ANDROID__)
     content_.getGraphicsDeviceInternal().SetContextRecoveryEnabled(false);
 #endif
-    kind->textures = GiveMipmaps(*kind->view, kDiscardAnimalCpuMipCopies);
+    kind->textures = GiveMipmaps(*kind->view, kDiscardAnimalCpuMipCopies, &textureCache_);
     if (std::getenv("ZOO_LOAD_TIMING") != nullptr) {
         std::printf("zoo: model: %s load/view %.3f s, mipmaps %.3f s\n", model.c_str(),
                     std::chrono::duration<double>(loaded - started).count(),
                     std::chrono::duration<double>(std::chrono::steady_clock::now() - loaded).count());
+        std::printf("zoo: shared animal textures: %zu mip chains, %zu bytes reused\n",
+                    textureCache_.SharedCount(), textureCache_.SharedBytes());
     }
     const auto* skin = Enhanced::FindSkinningData(*kind->model);
     if (skin == nullptr) {

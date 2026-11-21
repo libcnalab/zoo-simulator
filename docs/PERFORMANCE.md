@@ -1,12 +1,13 @@
 # Performance: what was measured, what was changed
 
-Everything here was measured on the development machine, on its real graphics hardware:
+The initial frame-rate measurements used the development machine's graphics hardware:
 AMD Ryzen 7 PRO 7840U with the integrated Radeon 780M (Mesa, OpenGL through EGL), 1280x720,
 without a window (`SDL_VIDEODRIVER=offscreen` renders on the GPU's render node, it is not a
 software rasteriser) and without sound output (`SDL_AUDIODRIVER=dummy`). `tools/bench/bench.sh`
-runs the matrix; each figure is one run of `./zoo-simulator --bench --frames 300`, the default
+runs the matrix. Each figure in that matrix is one run of `./zoo-simulator --bench --frames 300`, the default
 visit: 800 visitors, 74 animals, 10:30 in the morning. Nobody watched these runs on a monitor;
-the pictures named below are screenshots the game wrote itself.
+the pictures named below are screenshots the game wrote itself. Later memory measurements
+identify the software-GL environment in their respective sections.
 
 The machine is shared with other compile jobs, so single runs differ by 10-30 % between
 repetitions. The first run of the second matrix ("entrance", 53.5 fps) ran while tests were being
@@ -534,3 +535,36 @@ In three seed-1 software-GL visits at 13:00, the `--bench` animal gaze section a
 toward Esme, and 0.05 ms looking across Capybara Marsh. Each run measured 29 frame
 intervals after 40 warm-up frames at 1280 × 720. This section includes both matching the
 displayed animal and checking tree cover. [Views used for the measurements](evidence/trees-and-binoculars-2026-11-21.jpg)
+
+## Textures shared by animal models (2026-11-21)
+
+Several GLBs contain the same image. All six brown and polar bear models use the same
+normal map, for example. The adult lions and tigers also share a normal map, and the
+lion family shares its mane cutout texture. In a Linux desktop visit, animal models
+can now share an uploaded texture and its smaller mip levels. The renderer matches
+the dimensions, every channel of the capped base image (SHA-256), and the settings
+that determine the smaller levels, including colour space and alpha cutoff.
+
+Each model still owns its texture wrapper. Unloading one wrapper leaves the others
+usable. A weak reference in the index lets the GPU allocation go when its last owner
+releases it. Set `ZOO_LOAD_TIMING=1` to report the cumulative number of uploads
+avoided and their uncompressed RGBA8 size, including mip levels.
+
+The seed-1 visit at 13:00 loads 49 model variants for 107 animals. It reused 14
+chains, avoiding 67,108,856 bytes of GPU image storage (64.0 MiB). At Lion Rock,
+the 1280 × 720 lockstep images with visitor drawing disabled matched at all 921,600
+RGB pixels. Both runs showed Zain resting and drew 53 animals. All 40 game tests
+passed, including the two checks for independent model lifetimes, filtering settings
+and changes to a single pixel.
+
+| Lion Rock, 13:00 (software GL) | Resident immediately after loading animals, before / after | Total time preparing animal mipmaps, before / after |
+|---|---:|---:|
+| Full visit | 3,677 / 3,569 MB | 2.96 / 3.79 s |
+| Visitor drawing disabled | 3,677 / 3,508 MB | 3.64 / 3.41 s |
+
+The timings include image matching and uploading. They varied in both directions under
+host load. The first implementation used Sharp Runtime's portable SHA-256 and added
+roughly 1.1 seconds to mip preparation in the first paired run. Desktop Linux builds
+now use OpenSSL's accelerated implementation when available, with the portable one
+as a fallback. The allocation counter measures the 64.0 MiB saving directly. Resident
+memory includes the software renderer, driver allocations and allocator behaviour.

@@ -81,6 +81,71 @@ TEST(AnimalTextures, SharedColourAndNormalMapKeepDistinctFiltering) {
     EXPECT_EQ(Level(*source, 0, 2, 2), image.Bytes());
 }
 
+TEST(AnimalTextures, IdenticalCoatsFromSeparateModelsShareOnlyTheirUploadedImage) {
+    Xna::GraphicsDevice device;
+    AnimalTextureCache cache;
+    const auto image = Pattern();
+    auto first = Graphics::UploadTexture(device, image, {}, false);
+    auto second = Graphics::UploadTexture(device, image, {}, false);
+    auto secondRecord = CNA::Internal::ContentOwnershipAccess::Record(*second);
+    const auto duplicate = second->GetRendererWeak();
+    Graphics::Material a, b;
+    a.baseTexture = first.get();
+    b.baseTexture = second.get();
+    std::array firstModel{&a}, secondModel{&b};
+    EXPECT_TRUE(GiveMaterialMipmaps(firstModel, true, &cache).empty());
+    EXPECT_TRUE(GiveMaterialMipmaps(secondModel, true, &cache).empty());
+    EXPECT_EQ(a.baseTexture, first.get());
+    EXPECT_EQ(b.baseTexture, second.get());
+    EXPECT_TRUE(duplicate.expired());
+    EXPECT_EQ(first->GetRendererWeak().lock(), second->GetRendererWeak().lock());
+    EXPECT_TRUE(second->GetCpuPixelsWeak().expired());
+    EXPECT_EQ(cache.SharedCount(), 1u);
+    EXPECT_EQ(cache.SharedBytes(), (64u + 16u + 4u + 1u) * 4u);
+    secondRecord->Dispose();
+    first->Dispose();
+    const auto shared = second->GetRendererWeak();
+    EXPECT_FALSE(shared.expired());
+    EXPECT_FALSE(second->getIsDisposedProperty());
+    EXPECT_EQ(second->getLevelCountProperty(), 4);
+    second->Dispose();
+    EXPECT_TRUE(shared.expired());
+    auto next = Graphics::UploadTexture(device, image, {}, false);
+    b.baseTexture = next.get();
+    EXPECT_TRUE(GiveMaterialMipmaps(secondModel, true, &cache).empty());
+    EXPECT_EQ(cache.SharedCount(), 1u);
+    EXPECT_EQ(next->getLevelCountProperty(), 4);
+}
+
+TEST(AnimalTextures, IndependentCoatsKeepDifferencesInPixelsAndFiltering) {
+    Xna::GraphicsDevice device;
+    AnimalTextureCache cache;
+    auto image = Pattern();
+    auto texture = [&](bool srgb, std::optional<int> cutoff = {}) {
+        return cache.Upload(device, image, {.rounding = Graphics::MipRounding::Nearest, .srgb = srgb,
+                                            .alphaTestReference = cutoff});
+    };
+    const auto opaque = texture(true);
+    const auto normal = texture(false);
+    const auto cutout = texture(true, 128);
+    const auto harderCutout = texture(true, 170);
+    const auto truncated = cache.Upload(device, image, {.rounding = Graphics::MipRounding::Truncate,
+                                                        .srgb = true, .alphaTestReference = {}});
+    Graphics::Image reshaped(4, 16);
+    reshaped.Bytes() = image.Bytes();
+    const auto rectangular = cache.Upload(device, reshaped, {.rounding = Graphics::MipRounding::Nearest,
+                                                             .srgb = true, .alphaTestReference = {}});
+    image.Set(7, 7, Color(1, 2, 3, 4));
+    const auto changed = texture(true);
+    EXPECT_EQ(cache.SharedCount(), 0u);
+    EXPECT_NE(opaque->GetRendererWeak().lock(), normal->GetRendererWeak().lock());
+    EXPECT_NE(opaque->GetRendererWeak().lock(), cutout->GetRendererWeak().lock());
+    EXPECT_NE(cutout->GetRendererWeak().lock(), harderCutout->GetRendererWeak().lock());
+    EXPECT_NE(opaque->GetRendererWeak().lock(), truncated->GetRendererWeak().lock());
+    EXPECT_NE(opaque->GetRendererWeak().lock(), rectangular->GetRendererWeak().lock());
+    EXPECT_NE(opaque->GetRendererWeak().lock(), changed->GetRendererWeak().lock());
+}
+
 TEST(AnimalTextures, OversizedAtlasStartsAtOneK) {
     Xna::GraphicsDevice device;
     const Graphics::Image image(2048, 1024, Color(23, 71, 149, 255));

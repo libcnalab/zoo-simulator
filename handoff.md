@@ -39,6 +39,10 @@ whatever you take up (`docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `docs/V
   At `--hour 13 --view 309,289.5,15,-6.45`, a fork blocks Ravi and his card. Looking through
   the neighbouring gap shows Esme. `docs/evidence/trees-and-binoculars-2026-11-21.jpg` records
   both views. Individual leaf textures, buildings and visitors are outside the tree check.
+- A Linux desktop visit now shares identical animal textures across models. Seed 1 at
+  13:00 avoids 14 duplicate uploads totalling 64.0 MiB for its 107 animals. Matched
+  Lion Rock screenshots with visitor drawing disabled agree at every RGB pixel.
+  See `docs/PERFORMANCE.md` for the loading measurements.
 
 - **The game:** Greenhill Zoo, a first-person walk through a zoo (C++23, the simulation core in
   `src/core/zoo/`, the game on CNA / cna-engine in `src/game/`). Zoo management must not come

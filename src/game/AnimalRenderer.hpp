@@ -21,6 +21,7 @@
 #include "Microsoft/Xna/Framework/Graphics/Model.hpp"
 #include "Microsoft/Xna/Framework/Graphics/Texture2D.hpp"
 
+#include "AnimalTextures.hpp"
 #include "Common.hpp"
 #include "SightLine.hpp"
 #include "zoo/sim/Zoo.hpp"
@@ -132,6 +133,7 @@ private:
     Microsoft::Xna::Framework::Content::ContentManager& content_;
     const zoo::SpeciesCatalog& species_;
     std::optional<std::filesystem::path> directory_;
+    AnimalTextureCache textureCache_;
     std::unordered_map<std::string, std::unique_ptr<Kind>> kinds_;
     /// Per species index: the kinds it is drawn with.
     struct Look {
