@@ -49,7 +49,7 @@ while geometry, textures and animations remain identical.
 | `zoogen/sculpt.py`, `bear.py` on a prepared third-party sculpt, rigged by us (below) | brown_bear, brown_bear_juvenile, polar_bear, polar_bear_juvenile |
 | `zoogen/quadruped.py`, `wild_quadruped.py`, `anatomy.py` | wolf, wolf_juvenile, camel, camel_juvenile, meerkat, meerkat_juvenile |
 | `zoogen/birdscan.py` on a prepared third-party scan or sculpt, rigged by us (below) | penguin, penguin_juvenile, flamingo, flamingo_juvenile |
-| `zoogen/biped.py` | ostrich, ostrich_juvenile, kangaroo, kangaroo_juvenile |
+| `zoogen/biped.py` | ostrich, ostrich_juvenile, kangaroo, kangaroo_female, kangaroo_juvenile |
 
 Each has the same eight clips, which the game picks from what the animal is doing: `idle`,
 `walk`, `trot` (the fast gait, a hop for the kangaroo), `eat`, `drink`, `rest`, `sleep`,
@@ -203,6 +203,25 @@ The same-camera comparisons and a seed-1 Kangaroo Grove run after 3,000 simulati
 `evidence/kangaroo-coat-j14-2026-11-20.jpg`. Hop and crawl phases plus close views of all digits
 were inspected after integration. The feet and coat now carry species detail, but the face and
 underlying lofted body remain stylised and the coat has no individual hair cards.
+
+J65 gives the four adult females at Kangaroo Grove their own `kangaroo_female` body instead of
+drawing them as red bucks. The [Australian Museum's red-kangaroo account](https://australian.museum/learn/animals/mammals/red-kangaroo/)
+records females up to 1.1 m head-body length against 1.4 m for males and describes their usual
+colour as blue-grey. The game uses that size ratio as an approximation and draws the doe at 79 %
+of the male's standing height, with a narrower torso, head, thighs, forearms and especially
+support tail. A separate smoke-blue coat
+keeps the pale belly, lower limbs, muzzle markings and tail tip; natural colour variation means
+this is a typical sex-specific look, not a claim that every female is grey.
+
+The 19,384-triangle, 28-bone model retains all nine adult clips, including the planted-foot
+eight-second face wash. Keeping the authored skeleton in adult coordinates lets every validated
+contact and gait remain identical while `relative_height` performs the whole-body game scale.
+The production GLB and manifest match an independent single-thread export byte for byte. All 137
+animal-pipeline tests and 31 game tests pass; a 3,000-tick ASan visit loaded the variant, drew all
+seven Kangaroo Grove residents and selected one-year-old female Zuri without a sanitizer report.
+The close grooming pose and that habitat endpoint are in
+`evidence/kangaroo-doe-j65-2026-11-21.jpg`. The female is now biologically distinguishable, but
+like the buck and joey retains the stylised first-generation face and lofted anatomy.
 
 ### Big cats from a sculpt (2026-11-13)
 
@@ -555,7 +574,7 @@ named the real activity. Dedicated clips are now made in the pipeline
 | `flamingo` | `huddle` (9 s) | `huddle` | a two-legged braced stance, with the neck drawn in, the wings held close and a small shiver |
 | `giraffe`, `giraffe_female`, `giraffe_juvenile` | `browse` (12 s) | `browse` | high held reaches to both sides of a crown, taking and stripping leaves with separate bites |
 | `lion`, `lion_female`, `lion_juvenile` | `nuzzle` (7 s) | `socialize` | four planted paws while the lowered muzzle presses and rubs slowly to either side; this is an individual contact pose, not a synchronised pair |
-| `kangaroo`, `kangaroo_juvenile` | `groom` (8 s) | `socialize` | an upright face wash, alternating the five-fingered hands at the muzzle while both hind feet remain planted; this is individual grooming, not a synchronised pair |
+| `kangaroo`, `kangaroo_female`, `kangaroo_juvenile` | `groom` (8 s) | `socialize` | an upright face wash, alternating the five-fingered hands at the muzzle while both hind feet remain planted; this is individual grooming, not a synchronised pair |
 
 Coverage of every species routine's nonstandard or signature action is below. “Default” means
 the model has no dedicated clip and the renderer deliberately uses the nearest standard pose.
@@ -605,7 +624,7 @@ played 440 lockstep frames for every variant and a real 3,000-tick Lion Rock vis
 frames cleanly. The behaviour still selects an individual pose near another lion rather than
 time-aligning two actors, so this does not claim paired physical contact.
 
-**Kangaroo social grooming (J64, 2026-11-21).** The adult and joey now map `socialize` to a
+**Kangaroo social grooming (J64, 2026-11-21).** The buck and joey now map `socialize` to a
 dedicated eight-second `groom` clip. They alternate their separate five-fingered hands at the
 muzzle, lower and turn the head towards each contact, and hold both hind feet exactly in place.
 The production GLBs each add one 28-bone, 241-frame clip and match independent one-thread exports
@@ -614,7 +633,8 @@ byte for byte. Both hand contacts for both bodies are in
 played 500 lockstep frames for each variant and a real 3,000-tick Kangaroo Grove visit drew three
 frames cleanly. The habitat endpoint selected a sleeping animal, so only the viewers and direct
 contact regression are claimed as grooming evidence. This is individual grooming while near the
-mob, not time-aligned mutual grooming.
+mob, not time-aligned mutual grooming. The J65 doe variant inherits and independently validates
+the same clip.
 
 All listed viewer phases and the final evidence sheet were opened after integration on current
 `develop` (`evidence/animal-clips-a1-2026-11-14.jpg`). In the Visitor Zoo at 09:00 after 600
@@ -666,7 +686,7 @@ byte.
   them uses the one model for everybody. A model is scaled by height:
   `species shoulder height x share of its sex x growth / meta.shoulder_height_m` of the model
   drawn, so a variant states its own height. (Lion, elephant, zebra, rhinoceros, giraffe, wolf,
-  meerkat, ostrich, both bears and penguin have variants so far.)
+  meerkat, ostrich, kangaroo, both bears and penguin have variants so far.)
   Since J24 each alternate is imported only when a current animal needs it; a later birth or an
   animal growing into its adult female body loads that model on the following renderer update.
   Greenhill's adult-only brown- and polar-bear pairs therefore no longer retain their two unused

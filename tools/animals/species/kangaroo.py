@@ -20,6 +20,7 @@ TAIL = [(-.24, 0, .60), (-.48, 0, .40), (-.72, 0, .22),
 CONTACT = {"L": .025, "R": .025, "FL": .040, "FR": .040}
 JUVENILE_SCALE = .55
 JUVENILE_TAIL = .88
+FEMALE_RELATIVE_HEIGHT = .79
 
 
 def _skeleton():
@@ -164,6 +165,35 @@ def paint_juvenile(ctx):
     return color
 
 
+def paint_female(ctx):
+    """The smoke-blue coat of a red kangaroo doe, with a pale belly and tail tip."""
+    blue_grey = np.array([.39, .39, .38])
+    pale = np.array([.78, .72, .62])
+    grain = nz.fbm(ctx.P * [2, 3, 5], 70, 3, seed=97)
+    front = nz.smoothstep(-.03, .12, ctx.x) * nz.smoothstep(-.2, .75, ctx.N[..., 0])
+    color = nz.mix(blue_grey, pale, front * .76)
+    limb_pale = ctx.tag("limb") * (.20 + .34 * nz.smoothstep(.55, .25, ctx.z))
+    color = nz.mix(color, pale * .96, limb_pale + ctx.tag("foot") * .54)
+    muzzle_mask = ctx.tag("head") * nz.smoothstep(.36, .49, ctx.x)
+    color = nz.mix(color, pale, muzzle_mask)
+    cheek_height = 1.345 - .17 * (ctx.x - .31)
+    cheek = ctx.tag("head") * nz.smoothstep(.075, .045, np.abs(ctx.x - .34))
+    dark = cheek * nz.smoothstep(.012, .005, np.abs(ctx.z - cheek_height))
+    light = cheek * nz.smoothstep(.012, .005, np.abs(ctx.z - (cheek_height - .027)))
+    color = nz.mix(color, np.array([.23, .22, .21]), dark)
+    color = nz.mix(color, np.array([.88, .82, .71]), light)
+    inner_ear = ctx.tag("ear") * nz.smoothstep(-.1, .6, ctx.N[..., 0])
+    color = nz.mix(color, np.array([.46, .31, .30]), inner_ear)
+    tail_tip = ctx.tag("tail") * nz.smoothstep(-1.02, -1.27, ctx.x)
+    color = nz.mix(color, pale * .94, tail_tip)
+    claw = (ctx.tag("hind_digit") * nz.smoothstep(.105, .155, ctx.x)
+            + ctx.tag("finger") * nz.smoothstep(.295, .335, ctx.x))
+    color = nz.mix(color, np.array([.11, .085, .065]), np.clip(claw, 0, 1))
+    color *= (.93 + .12 * grain)[..., None]
+    color = nz.mix(color, np.array([.045, .032, .022]), ctx.tag("eye") + ctx.tag("nose"))
+    return color
+
+
 def surface_height(ctx, scale=1.0):
     """Dense short-fur relief, excluding the nose, eyes and smooth distal digits."""
     P = ctx.P / scale
@@ -301,6 +331,40 @@ def _juvenile_shape(spec):
                       "relative_height": scale,
                       "age_shape": "Joey at foot: large head, eyes, ears and feet; slim thighs and tail",
                       "sex": "juvenile"})
+
+
+def _female_shape(spec):
+    """Keep the adult rig and contacts, but remove the buck's massive build.
+
+    The renderer applies ``relative_height`` to the whole authored asset. Keeping the rig in
+    adult coordinates lets the doe share every validated adult clip while still appearing
+    substantially smaller in a habitat.
+    """
+    scales = {
+        "pear_body": (.88, .91),
+        "deer_head": (.92, .94),
+        "hind_leg.L": (.82, .86),
+        "forearm.L": (.86, .90),
+        "small_hand.L": (.90, .92),
+        "muscular_tail": (.74, .78),
+    }
+    for part in spec.parts:
+        if part.name not in scales:
+            continue
+        side, vertical = scales[part.name]
+        for ring in part.rings:
+            ring.ry *= side
+            ring.up *= vertical
+            ring.dn *= vertical
+
+    spec.name = "kangaroo_female"
+    spec.paint = paint_female
+    spec.target_tris = 14000
+    spec.meta.update({"common_name": "Red kangaroo doe", "sex": "female",
+                      "variant_of": "kangaroo", "variant": "female",
+                      "relative_height": FEMALE_RELATIVE_HEIGHT,
+                      "coat": "Blue-grey above with a pale belly, lower limbs and tail tip",
+                      "age_shape": "Light adult build with a narrow torso, thighs and support tail"})
 
 
 def _stand(solver):
@@ -530,7 +594,9 @@ def _juvenile_clips(solver):
     return clips
 
 
-def make_spec(juvenile=False):
+def make_spec(juvenile=False, female=False):
+    if juvenile and female:
+        raise ValueError("juvenile and female kangaroo variants are mutually exclusive")
     bones, rig = _skeleton()
     spec = Spec("kangaroo", bones, _parts(bones), paint=paint,
                 surface_height=surface_height, surface_strength=1.0, voxel=.007,
@@ -543,4 +609,6 @@ def make_spec(juvenile=False):
                       "activity_clips": {"socialize": "groom"}})
     if juvenile:
         _juvenile_shape(spec)
+    elif female:
+        _female_shape(spec)
     return spec

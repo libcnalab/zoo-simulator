@@ -1,0 +1,138 @@
+{
+  "bones": 28,
+  "clips": [
+    {
+      "duration": 0.6,
+      "events": [
+        {
+          "name": "step",
+          "time": 0.0
+        },
+        {
+          "name": "step",
+          "time": 0.0
+        },
+        {
+          "name": "step",
+          "time": 0.228
+        },
+        {
+          "name": "step",
+          "time": 0.228
+        }
+      ],
+      "frames": 19,
+      "loop": true,
+      "name": "walk",
+      "speed": 1.0
+    },
+    {
+      "duration": 0.5,
+      "events": [
+        {
+          "name": "step",
+          "time": 0.0
+        },
+        {
+          "name": "step",
+          "time": 0.0
+        }
+      ],
+      "frames": 16,
+      "loop": true,
+      "name": "trot",
+      "speed": 2.8
+    },
+    {
+      "duration": 5.0,
+      "events": [],
+      "frames": 151,
+      "loop": true,
+      "name": "idle",
+      "speed": 0.0
+    },
+    {
+      "duration": 5.0,
+      "events": [],
+      "frames": 151,
+      "loop": true,
+      "name": "eat",
+      "speed": 0.0
+    },
+    {
+      "duration": 5.0,
+      "events": [],
+      "frames": 151,
+      "loop": true,
+      "name": "drink",
+      "speed": 0.0
+    },
+    {
+      "duration": 5.0,
+      "events": [],
+      "frames": 151,
+      "loop": true,
+      "name": "rest",
+      "speed": 0.0
+    },
+    {
+      "duration": 5.0,
+      "events": [],
+      "frames": 151,
+      "loop": true,
+      "name": "sleep",
+      "speed": 0.0
+    },
+    {
+      "duration": 5.0,
+      "events": [],
+      "frames": 151,
+      "loop": true,
+      "name": "vocalize",
+      "speed": 0.0
+    },
+    {
+      "duration": 8.0,
+      "events": [],
+      "frames": 241,
+      "loop": true,
+      "name": "groom",
+      "speed": 0.0
+    }
+  ],
+  "generator": "tools/animals (zoogen)",
+  "license": "MIT",
+  "meta": {
+    "activity_clips": {
+      "socialize": "groom"
+    },
+    "age_shape": "Light adult build with a narrow torso, thighs and support tail",
+    "body_length_m": 1.5,
+    "coat": "Blue-grey above with a pale belly, lower limbs and tail tip",
+    "common_name": "Red kangaroo doe",
+    "relative_height": 0.79,
+    "roughness": 0.9,
+    "scientific_name": "Osphranter rufus",
+    "sex": "female",
+    "shoulder_height_m": 1.6,
+    "surface_detail": "anisotropic short-fur normal map",
+    "variant": "female",
+    "variant_of": "kangaroo"
+  },
+  "name": "kangaroo_female",
+  "skeleton_bounds_animal_space": {
+    "max": [
+      0.5,
+      0.17,
+      1.57
+    ],
+    "min": [
+      -1.36,
+      -0.17,
+      0.0
+    ]
+  },
+  "texture": 1024,
+  "triangles": 19384,
+  "vertices": 9736
+}

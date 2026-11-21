@@ -57,6 +57,7 @@ EXPECTED = {
     "lion_female": {"socialize": "nuzzle"},
     "lion_juvenile": {"socialize": "nuzzle"},
     "kangaroo": {"socialize": "groom"},
+    "kangaroo_female": {"socialize": "groom"},
     "kangaroo_juvenile": {"socialize": "groom"},
     "zebra": {"sentinel": "sentry"},
     "zebra_female": {"sentinel": "sentry"},
@@ -239,7 +240,7 @@ class SocialTests(unittest.TestCase):
             self.assertGreater(np.ptp(muzzle[:, 2]), .04 * height, species)
 
     def test_kangaroos_alternate_hands_at_the_muzzle_on_planted_hind_feet(self):
-        for species in ("kangaroo", "kangaroo_juvenile"):
+        for species in ("kangaroo", "kangaroo_female", "kangaroo_juvenile"):
             spec, solver, clips = clips_of(species)
             height = spec.meta["shoulder_height_m"]
             tips = {"L": [], "R": []}

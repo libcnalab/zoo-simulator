@@ -28,7 +28,7 @@ SPECIES = ["lion", "lion_female", "lion_juvenile", "tiger", "wolf", "wolf_juveni
            "elephant", "giraffe",
            "giraffe_female", "giraffe_juvenile", "meerkat",
            "penguin", "penguin_juvenile", "ostrich", "ostrich_juvenile", "flamingo",
-           "flamingo_juvenile", "kangaroo", "kangaroo_juvenile"]
+           "flamingo_juvenile", "kangaroo", "kangaroo_female", "kangaroo_juvenile"]
 
 
 def make_solver(species):
@@ -550,7 +550,8 @@ class AnatomyTests(unittest.TestCase):
 
 BIPEDS = [species for species in SPECIES
           if species in ("penguin", "ostrich", "ostrich_juvenile", "flamingo",
-                         "flamingo_juvenile", "kangaroo", "kangaroo_juvenile")]
+                         "flamingo_juvenile", "kangaroo", "kangaroo_female",
+                         "kangaroo_juvenile")]
 
 
 class BipedTests(unittest.TestCase):
@@ -558,10 +559,10 @@ class BipedTests(unittest.TestCase):
         root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
         for species in BIPEDS:
             spec, _ = make_solver(species)
-            data_species = species.removesuffix("_juvenile")
+            data_species = species.removesuffix("_juvenile").removesuffix("_female")
             with open(os.path.join(root, "data", "species", data_species + ".json")) as source:
                 data = json.load(source)
-            if species.endswith("_juvenile"):
+            if species.endswith(("_juvenile", "_female")):
                 self.assertEqual(spec.meta["variant_of"], data_species)
             else:
                 self.assertEqual(spec.meta["shoulder_height_m"], data["shoulderHeightM"])
@@ -577,10 +578,10 @@ class BipedTests(unittest.TestCase):
         budgets = {"penguin": (6000, 12000), "ostrich": (12000, 24000),
                    "ostrich_juvenile": (9000, 20000),
                    "flamingo": (8000, 16000), "flamingo_juvenile": (8000, 16000),
-                   "kangaroo": (12000, 24000),
+                   "kangaroo": (12000, 24000), "kangaroo_female": (10000, 22000),
                    "kangaroo_juvenile": (10000, 20000)}
         for species in BIPEDS:
-            data_species = species.removesuffix("_juvenile")
+            data_species = species.removesuffix("_juvenile").removesuffix("_female")
             with open(os.path.join(root, "data", "species", data_species + ".json")) as source:
                 data = json.load(source)
             with open(os.path.join(root, "assets", "animals", species + ".json")) as source:
@@ -594,7 +595,8 @@ class BipedTests(unittest.TestCase):
                         "flamingo": {"preen", "filter_feed", "huddle"},
                         "flamingo_juvenile": {"preen", "filter_feed", "huddle"},
                         "ostrich": {"dust_bathe"}, "ostrich_juvenile": {"dust_bathe"},
-                        "kangaroo": {"groom"}, "kangaroo_juvenile": {"groom"}}
+                        "kangaroo": {"groom"}, "kangaroo_female": {"groom"},
+                        "kangaroo_juvenile": {"groom"}}
             water = {"penguin": {"swim", "float"},
                      "flamingo": {"swim"}, "flamingo_juvenile": {"swim"}}
             self.assertEqual(set(clips),
@@ -700,8 +702,23 @@ class BipedTests(unittest.TestCase):
         self.assertAlmostEqual(clips["walk"]["speed"], .58, delta=.02)
         self.assertAlmostEqual(clips["trot"]["speed"], 2.2, delta=.02)
 
+    def test_kangaroo_doe_is_smaller_slighter_and_blue_grey(self):
+        adult = importlib.import_module("species.kangaroo").make_spec()
+        doe = importlib.import_module("species.kangaroo_female").make_spec()
+        adult_parts = {part.name: part for part in adult.parts}
+        doe_parts = {part.name: part for part in doe.parts}
+        for name in ("pear_body", "hind_leg.L", "forearm.L", "muscular_tail"):
+            self.assertLess(doe_parts[name].rings[0].ry, adult_parts[name].rings[0].ry)
+        self.assertLess(doe_parts["muscular_tail"].rings[1].ry,
+                        .8 * adult_parts["muscular_tail"].rings[1].ry)
+        self.assertEqual(doe.meta["variant_of"], "kangaroo")
+        self.assertEqual(doe.meta["variant"], "female")
+        self.assertEqual(doe.meta["sex"], "female")
+        self.assertAlmostEqual(doe.meta["relative_height"], .79)
+        self.assertIn("Blue-grey", doe.meta["coat"])
+
     def test_kangaroos_have_species_specific_hind_toes_fingers_and_short_fur(self):
-        for species in ("kangaroo", "kangaroo_juvenile"):
+        for species in ("kangaroo", "kangaroo_female", "kangaroo_juvenile"):
             spec = importlib.import_module("species." + species).make_spec()
             hind = [part for part in spec.parts if part.name.startswith("hind_digit.")]
             fingers = [part for part in spec.parts if part.name.startswith("finger.")]
@@ -714,7 +731,8 @@ class BipedTests(unittest.TestCase):
 
     def test_kangaroo_exports_carry_short_fur_normal_map_and_tangents(self):
         root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
-        for species, triangle_limit in (("kangaroo", 22000), ("kangaroo_juvenile", 20000)):
+        for species, triangle_limit in (("kangaroo", 22000), ("kangaroo_female", 22000),
+                                        ("kangaroo_juvenile", 20000)):
             glb = os.path.join(root, "assets", "animals", species + ".glb")
             with open(glb, "rb") as source:
                 self.assertEqual(source.read(4), b"glTF")
@@ -753,7 +771,8 @@ class BipedTests(unittest.TestCase):
     def test_kangaroo_hop_is_synchronous_with_flight(self):
         if "kangaroo" not in BIPEDS:
             return
-        for species, scale in (("kangaroo", 1.0), ("kangaroo_juvenile", .55)):
+        for species, scale in (("kangaroo", 1.0), ("kangaroo_female", 1.0),
+                               ("kangaroo_juvenile", .55)):
             spec, solver = make_solver(species)
             hop = next(clip for clip in spec.clips(solver) if clip.name == "trot")
             flight = 0
@@ -773,7 +792,8 @@ class BipedTests(unittest.TestCase):
     def test_kangaroo_crawl_supports_and_tail_do_not_slide(self):
         if "kangaroo" not in BIPEDS:
             return
-        for species, scale in (("kangaroo", 1.0), ("kangaroo_juvenile", .55)):
+        for species, scale in (("kangaroo", 1.0), ("kangaroo_female", 1.0),
+                               ("kangaroo_juvenile", .55)):
             spec, solver = make_solver(species)
             walk = next(clip for clip in spec.clips(solver) if clip.name == "walk")
             tail_contacts = 0
@@ -855,7 +875,8 @@ class BipedTests(unittest.TestCase):
     def test_kangaroo_feeds_on_four_contacts_and_rests_on_an_elbow(self):
         if "kangaroo" not in BIPEDS:
             return
-        for species, scale in (("kangaroo", 1.0), ("kangaroo_juvenile", .55)):
+        for species, scale in (("kangaroo", 1.0), ("kangaroo_female", 1.0),
+                               ("kangaroo_juvenile", .55)):
             spec, solver = make_solver(species)
             clips = {clip.name: clip for clip in spec.clips(solver)}
             for name in ("eat", "drink"):
