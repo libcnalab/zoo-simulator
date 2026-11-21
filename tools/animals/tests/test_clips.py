@@ -982,6 +982,8 @@ class SculptCatTests(unittest.TestCase):
             expected = {"idle", "walk", "trot", "eat", "drink", "rest", "sleep", "vocalize"}
             if species == "tiger":
                 expected.update(("bathe", "swim"))
+            else:
+                expected.add("nuzzle")
             self.assertEqual(set(clips), expected)
             expected_height = dict(lion=1.15, lion_female=1.05, lion_juvenile=.45, tiger=1.0)[species]
             self.assertAlmostEqual(manifest["meta"]["shoulder_height_m"], expected_height)

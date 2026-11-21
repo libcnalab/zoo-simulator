@@ -103,11 +103,22 @@
       "loop": false,
       "name": "vocalize",
       "speed": 0.0
+    },
+    {
+      "duration": 7.0,
+      "events": [],
+      "frames": 211,
+      "loop": true,
+      "name": "nuzzle",
+      "speed": 0.0
     }
   ],
   "generator": "tools/animals (zoogen)",
   "license": "CC-BY-4.0",
   "meta": {
+    "activity_clips": {
+      "socialize": "nuzzle"
+    },
     "asset_license": "CC-BY-4.0",
     "common_name": "African lion",
     "mane_card_locks": 2199,

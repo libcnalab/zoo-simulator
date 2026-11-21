@@ -105,6 +105,8 @@ def clips(solver, height, walk_speed, trot_speed, kind, lie_drop):
         swim = Clip('swim', 1.2, partial(_swim, solver, height), speed=.9 * height)
         swim.contact_keys = []
         result.append(swim)
+    else:
+        result.append(Clip('nuzzle', 7, partial(_nuzzle, solver, height)))
     return result
 
 
@@ -159,6 +161,27 @@ def _swim(solver, height, phase):
     return pose
 
 
+def _nuzzle(solver, height, phase):
+    """A planted social rub: lower the head and press each cheek towards a nearby pride mate."""
+    angle = math.tau * phase
+    engage = .5 - .5 * math.cos(2 * angle)
+    side = math.sin(angle)
+    pose = quad.stand(solver, Pose())
+    pose.move('hips', dx=.012 * height * engage, dy=.018 * height * side,
+              dz=-.010 * height * engage)
+    pose.r('hips', rx=-1.5 * side)
+    pose.r('chest', rx=2.2 * side, ry=5 * engage, rz=5 * side)
+    pose.r('neck1', rx=-5 * side, ry=10 * engage, rz=15 * side)
+    pose.r('neck2', rx=-4 * side, ry=8 * engage, rz=14 * side)
+    pose.r('head', rx=-8 * side, ry=10 * engage, rz=20 * side)
+    for ear in solver.rig.ears:
+        sign = 1 if ear.endswith('.L') else -1
+        pose.r(ear, rz=sign * 8 * engage, ry=5 * engage)
+    for index, tail in enumerate(solver.rig.tail):
+        pose.r(tail, rz=(3 + index) * math.sin(angle - .35 * index))
+    return pose
+
+
 def make_cat(name, kind, height, edits, walk_speed, trot_speed, meta=None):
     data = prepare_instance(SOURCE, edits, height)
     data['height'] = height
@@ -209,6 +232,8 @@ def make_cat(name, kind, height, edits, walk_speed, trot_speed, meta=None):
         metadata['water_origin_convention'] = 'Place the asset origin at water surface - depth_m'
         metadata['cheek_ruff_revision'] = 'Layered warm cream locks with irregular roots'
         metadata['cheek_ruff_cards'] = 150
+    else:
+        metadata['activity_clips'] = {'socialize': 'nuzzle'}
     body_budget = 23000 if kind == 'juvenile' else 36000 if kind == 'male' else 33000
     return Spec(name, data['bones'], hair_parts(data, kind),
                 texture_size=1024, target_tris=body_budget,

@@ -27,7 +27,7 @@ ACTIVITIES = {"idle", "wander", "forage", "eat", "drink", "rest", "sleep", "play
               "bathe", "dust_bathe", "preen", "sentinel", "dig", "filter_feed", "patrol", "huddle"}
 # The clips a still animal may play (AnimalRenderer's still poses).
 STILL_CLIPS = {"idle", "eat", "drink", "rest", "sleep", "sentry", "dig", "preen", "dust_bathe",
-               "ruminate", "filter_feed", "bathe", "huddle", "browse"}
+               "ruminate", "filter_feed", "bathe", "huddle", "browse", "nuzzle"}
 EXPECTED = {
     "brown_bear": {"bathe": "bathe"},
     "brown_bear_juvenile": {"bathe": "bathe"},
@@ -53,6 +53,9 @@ EXPECTED = {
     "giraffe": {"browse": "browse", "ruminate": "ruminate"},
     "giraffe_female": {"browse": "browse", "ruminate": "ruminate"},
     "giraffe_juvenile": {"browse": "browse", "ruminate": "ruminate"},
+    "lion": {"socialize": "nuzzle"},
+    "lion_female": {"socialize": "nuzzle"},
+    "lion_juvenile": {"socialize": "nuzzle"},
     "zebra": {"sentinel": "sentry"},
     "zebra_female": {"sentinel": "sentry"},
     "zebra_juvenile": {"sentinel": "sentry"},
@@ -214,6 +217,24 @@ class FeedingAndRuminationTests(unittest.TestCase):
                     self.assertAlmostEqual(world[leg.toes][2, 3], solver.toe_base(key)[2], places=6)
                 jaw.append(world[spec.rig.jaw][:3, :3])
             self.assertGreater(max(np.linalg.norm(matrix - jaw[0]) for matrix in jaw), .04, species)
+
+
+class SocialTests(unittest.TestCase):
+    def test_lions_nuzzle_side_to_side_on_four_planted_paws(self):
+        for species in ("lion", "lion_female", "lion_juvenile"):
+            spec, solver, clips = clips_of(species)
+            height = spec.meta["shoulder_height_m"]
+            muzzle = []
+            for index in range(48):
+                pose = clips["nuzzle"].pose(index / 48)
+                world = solver.solve(pose)
+                muzzle.append(quadruped.muzzle(solver, pose))
+                for key, leg in spec.rig.legs.items():
+                    self.assertTrue(np.allclose(world[leg.toes][:3, 3], solver.toe_base(key),
+                                                atol=1e-6), species + "/" + key)
+            muzzle = np.asarray(muzzle)
+            self.assertGreater(np.ptp(muzzle[:, 1]), .20 * height, species)
+            self.assertGreater(np.ptp(muzzle[:, 2]), .04 * height, species)
 
 
 class BatheTests(unittest.TestCase):

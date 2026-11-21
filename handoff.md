@@ -630,6 +630,18 @@ whatever you take up (`docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `docs/V
   seconds. ASan viewers played more than one cycle for both flamingo bodies, and a real ASan
   Flamingo Lagoon visit loaded all 90 animals, ran 3,000 fill steps and drew three frames cleanly
   (leak detection off for the documented `ptrace` limitation; J62, 2026-11-21).
+- J63 gives the male lion, lioness and cub a dedicated seven-second `nuzzle` for `socialize`
+  instead of the ordinary idle pose. All four paws stay planted while the chest and neck lower,
+  the muzzle moves through a broad side-to-side rub, the ears settle back and the tail keeps a
+  quiet wave. This is deliberately honest individual contact motion: the simulation places a
+  social lion near a group mate but does not time-align or fit two actors. The opposite contact
+  directions for all three bodies are in `docs/evidence/lion-nuzzle-j63-2026-11-21.jpg`. Each GLB
+  grows by about 104 kB, from eight to nine 32-bone clips, and all six production GLB/JSON files
+  match independent one-thread exports byte for byte. All 135 animation-pipeline tests pass in
+  334.57 seconds; all 305 active CTest cases also pass (the pipeline's second run took 379.09
+  seconds). ASan viewers played 440 lockstep frames for each body, and a real ASan Lion Rock visit
+  loaded all 90 animals, ran 3,000 fill steps and drew three frames cleanly (leak detection off for
+  the documented `ptrace` limitation; J63, 2026-11-21).
 - The stopped G7c audio audit is recovered and finished. Calls now follow `Vocalize`, social,
   play and documented feeding cues rather than a timer; takes do not repeat immediately, spatial
   pan is capped at 0.60, birds fade with daylight, crowd level follows its people, and footsteps
@@ -821,8 +833,9 @@ tests pass. Nobody listened to the audio; preserve that qualification.
   feeding, camel and giraffe rumination, ostrich and elephant dust-bathing, and shallow wallowing
   for bears, tigers and rhinoceroses (elephants reuse their scoop/toss as a wet toss). Penguin
   huddling, flamingo huddling, giraffe browsing and zebra watch now also have dedicated clips for
-  every model variant. Lion contact and all synchronised multi-animal contact remain nearest
-  individual poses. The exact table and honest visual limitations are in `docs/ANIMALS.md`.
+  every model variant. Lion contact now has a dedicated individual nuzzle; all synchronised
+  multi-animal contact remains unimplemented. The exact table and honest visual limitations are
+  in `docs/ANIMALS.md`.
   A5's eight production files match independent exports byte for byte; 107 pipeline tests pass.
   The renderer integration's warning-clean build and all 267 enabled CTest cases passed (the
   pipeline was rerun after the last visual refinement). The inspected evidence is

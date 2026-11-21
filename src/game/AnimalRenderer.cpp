@@ -36,7 +36,7 @@ constexpr float kPi = 3.14159265f;
 constexpr std::array<const char*, static_cast<std::size_t>(AnimalPose::Count)> kClipNames = {
     "idle", "walk", "trot", "eat", "drink", "rest", "sleep", "vocalize", "swim", "float",
     "sentry", "dig", "preen", "dust_bathe", "ruminate", "filter_feed", "bathe", "huddle",
-    "browse"};
+    "browse", "nuzzle"};
 
 /// Up to this share of its growing time an animal is drawn with the model of the young.
 constexpr float kJuvenileShare = 0.5f;
@@ -121,7 +121,7 @@ void ReadActivityClips(const nlohmann::json& clips, const PoseClips& present, Sh
              {AnimalPose::Idle, AnimalPose::Eat, AnimalPose::Drink, AnimalPose::Rest, AnimalPose::Sleep,
               AnimalPose::Sentry, AnimalPose::Dig, AnimalPose::Preen, AnimalPose::DustBathe,
               AnimalPose::Ruminate, AnimalPose::FilterFeed, AnimalPose::Bathe, AnimalPose::Huddle,
-              AnimalPose::Browse}) {
+              AnimalPose::Browse, AnimalPose::Nuzzle}) {
             const auto index = static_cast<std::size_t>(pose);
             if (clip == kClipNames[index] && present[index] != nullptr)
                 shown[activity] = pose;

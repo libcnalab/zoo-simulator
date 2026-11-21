@@ -554,6 +554,7 @@ named the real activity. Dedicated clips are now made in the pipeline
 | `zebra`, `zebra_female`, `zebra_juvenile` | `sentry` (9 s) | `sentinel` | four planted hooves, a high neck and held scans to either side, with independently turning ears |
 | `flamingo` | `huddle` (9 s) | `huddle` | a two-legged braced stance, with the neck drawn in, the wings held close and a small shiver |
 | `giraffe`, `giraffe_female`, `giraffe_juvenile` | `browse` (12 s) | `browse` | high held reaches to both sides of a crown, taking and stripping leaves with separate bites |
+| `lion`, `lion_female`, `lion_juvenile` | `nuzzle` (7 s) | `socialize` | four planted paws while the lowered muzzle presses and rubs slowly to either side; this is an individual contact pose, not a synchronised pair |
 
 Coverage of every species routine's nonstandard or signature action is below. “Default” means
 the model has no dedicated clip and the renderer deliberately uses the nearest standard pose.
@@ -566,7 +567,7 @@ the model has no dedicated clip and the renderer deliberately uses the nearest s
 | Flamingo | `preen`; `filter_feed`; `huddle` | `preen`; `filter_feed`; `huddle` | grooming, inverted-bill sweep and a compact two-legged cold-weather stance are dedicated |
 | Giraffe | `browse`; `ruminate` | `browse`; `ruminate` | high held reaches take leaves from both sides; a separate slow jaw grind shows chewing the cud |
 | Kangaroo | social rest | ordinary `rest` / `idle` | a close resting mob; no paired interaction clip |
-| Lion | social contact | `idle` (default) | rubbing or nuzzling; still missing |
+| Lion | social contact | `nuzzle` | a lowered, side-to-side rubbing motion on four planted paws; the partner is not synchronised |
 | Meerkat | `sentinel`; `dig` | `sentry`; `dig` | upright scanning with tail support; alternating fore-paw scratches |
 | Ostrich | `dust_bathe` | `dust_bathe` | sitting, wing shaking and neck sweeps |
 | Penguin | `preen`; `huddle` | `preen`; `huddle` | grooming and the tight, tucked upright rest are dedicated |
@@ -586,11 +587,22 @@ bill tip lies on the plumage, 0.5 to 3 cm out from the scan's surface, at the he
 sitting-up watch it always was.
 
 Not made: preening for the ostrich (its routine never preens), group-synchronised huddles beyond
-individual poses, and paired social-contact clips.
+individual poses, and paired/synchronised social contact. Lions now have the individual contact
+half of that interaction.
 What is weak: no sand or dust is thrown (the game has no particles for it), the elephant's toss
 reaches above the forehead rather than over the back (ten trunk joints at most 48 degrees each),
 the flamingo's bill and neck are buried in the wing when it preens there, as a real one's are, so
 from some sides the bird simply looks headless for a moment.
+
+**Lion social nuzzling (J63, 2026-11-21).** The male, lioness and cub now map `socialize` to a
+dedicated seven-second `nuzzle` clip. All four paws remain planted while the chest and neck lower,
+the muzzle moves through a broad side-to-side rub, the ears settle back and the tail continues a
+quiet wave. The production GLBs each add one 32-bone clip and match independent one-thread exports
+byte for byte. The opposite contact directions for all three bodies are in
+`evidence/lion-nuzzle-j63-2026-11-21.jpg`. All 135 animation-pipeline tests pass; ASan viewers
+played 440 lockstep frames for every variant and a real 3,000-tick Lion Rock visit drew three
+frames cleanly. The behaviour still selects an individual pose near another lion rather than
+time-aligning two actors, so this does not claim paired physical contact.
 
 All listed viewer phases and the final evidence sheet were opened after integration on current
 `develop` (`evidence/animal-clips-a1-2026-11-14.jpg`). In the Visitor Zoo at 09:00 after 600
