@@ -34,6 +34,7 @@ EXPECTED = {
     "polar_bear": {"bathe": "bathe"},
     "polar_bear_juvenile": {"bathe": "bathe"},
     "camel": {"ruminate": "ruminate"},
+    "camel_female": {"ruminate": "ruminate"},
     "camel_juvenile": {"ruminate": "ruminate"},
     "meerkat": {"sentinel": "sentry", "dig": "dig"},
     "meerkat_juvenile": {"sentinel": "sentry", "dig": "dig"},
@@ -210,7 +211,7 @@ class FeedingAndRuminationTests(unittest.TestCase):
             self.assertGreater(np.ptp(tips[:, 1]), .20 * scale)
 
     def test_ruminants_stand_and_grind_the_jaw(self):
-        for species in ("camel", "camel_juvenile", "giraffe", "giraffe_female",
+        for species in ("camel", "camel_female", "camel_juvenile", "giraffe", "giraffe_female",
                         "giraffe_juvenile"):
             spec, solver, clips = clips_of(species)
             jaw = []

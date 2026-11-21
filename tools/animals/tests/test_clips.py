@@ -24,7 +24,8 @@ SPECIES = ["lion", "lion_female", "lion_juvenile", "tiger", "wolf", "wolf_juveni
            "meerkat_juvenile",
            "brown_bear", "polar_bear",
            "brown_bear_juvenile", "polar_bear_juvenile",
-           "zebra", "zebra_female", "zebra_juvenile", "rhino", "camel", "camel_juvenile",
+           "zebra", "zebra_female", "zebra_juvenile", "rhino", "camel", "camel_female",
+           "camel_juvenile",
            "elephant", "giraffe",
            "giraffe_female", "giraffe_juvenile", "meerkat",
            "penguin", "penguin_juvenile", "ostrich", "ostrich_female", "ostrich_juvenile", "flamingo",
@@ -252,9 +253,27 @@ class AnatomyTests(unittest.TestCase):
         self.assertAlmostEqual(clips["walk"]["speed"], .72, delta=.02)
         self.assertAlmostEqual(clips["trot"]["speed"], 1.55, delta=.02)
 
+    def test_camel_cow_is_smaller_and_more_lightly_built(self):
+        bull = importlib.import_module("species.camel").make_spec()
+        cow = importlib.import_module("species.camel_female").make_spec()
+        bull_parts = {part.name: part for part in bull.parts}
+        cow_parts = {part.name: part for part in cow.parts}
+        self.assertLess(cow_parts["torso"].rings[3].ry,
+                        bull_parts["torso"].rings[3].ry)
+        self.assertLess(cow_parts["neck_mane"].rings[2].up,
+                        bull_parts["neck_mane"].rings[2].up)
+        self.assertLess(cow_parts["hump.front"].rings[2].up,
+                        bull_parts["hump.front"].rings[2].up)
+        self.assertLess(cow_parts["front_leg.L"].rings[2].ry,
+                        bull_parts["front_leg.L"].rings[2].ry)
+        self.assertEqual(cow.meta["variant_of"], "camel")
+        self.assertEqual(cow.meta["variant"], "female")
+        self.assertEqual(cow.meta["sex"], "female")
+        self.assertAlmostEqual(cow.meta["relative_height"], .92)
+
     def test_camels_have_a_shaggy_mane_tail_tuft_and_split_nails(self):
         adult_mane_roughness = None
-        for species in ("camel", "camel_juvenile"):
+        for species in ("camel", "camel_female", "camel_juvenile"):
             spec = importlib.import_module("species." + species).make_spec()
             parts = {part.name: part for part in spec.parts}
             self.assertIsNotNone(spec.surface_height)
@@ -268,13 +287,13 @@ class AnatomyTests(unittest.TestCase):
             self.assertTrue(all(part.mirror and part.tag == "nail" for part in nails))
             if species == "camel":
                 adult_mane_roughness = parts["neck_mane"].rough[0]
-            else:
+            elif species == "camel_juvenile":
                 self.assertAlmostEqual(parts["neck_mane"].rough[0],
                                        adult_mane_roughness * .60)
 
     def test_camel_exports_carry_the_coat_normal_map_and_tangents(self):
         root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
-        for species in ("camel", "camel_juvenile"):
+        for species in ("camel", "camel_female", "camel_juvenile"):
             glb = os.path.join(root, "assets", "animals", species + ".glb")
             with open(glb, "rb") as source:
                 self.assertEqual(source.read(4), b"glTF")
@@ -529,7 +548,8 @@ class AnatomyTests(unittest.TestCase):
         self.assertTrue(np.allclose(np.sort(vertices[:, 1]), np.sort(-left[:, 1])))
 
     def test_ungulate_leg_skins_overlap_their_foot_tops(self):
-        for species, foot_name in (("camel", "pad"), ("camel_juvenile", "pad"),
+        for species, foot_name in (("camel", "pad"), ("camel_female", "pad"),
+                                   ("camel_juvenile", "pad"),
                                    ("giraffe", "hoof")):
             spec = importlib.import_module("species." + species).make_spec()
             for end in ("front", "hind"):

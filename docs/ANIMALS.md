@@ -47,7 +47,7 @@ while geometry, textures and animations remain identical.
 | `zoogen/scan.py` on a prepared third-party static sculpt, rigged by us (below) | zebra, zebra_female, zebra_juvenile |
 | `zoogen/giraffe2.py` on a prepared head-and-neck scan, body modelled by us (below) | giraffe, giraffe_female, giraffe_juvenile |
 | `zoogen/sculpt.py`, `bear.py` on a prepared third-party sculpt, rigged by us (below) | brown_bear, brown_bear_juvenile, polar_bear, polar_bear_juvenile |
-| `zoogen/quadruped.py`, `wild_quadruped.py`, `anatomy.py` | wolf, wolf_juvenile, camel, camel_juvenile, meerkat, meerkat_juvenile |
+| `zoogen/quadruped.py`, `wild_quadruped.py`, `anatomy.py` | wolf, wolf_juvenile, camel, camel_female, camel_juvenile, meerkat, meerkat_juvenile |
 | `zoogen/birdscan.py` on a prepared third-party scan or sculpt, rigged by us (below) | penguin, penguin_juvenile, flamingo, flamingo_juvenile |
 | `zoogen/biped.py` | ostrich, ostrich_female, ostrich_juvenile, kangaroo, kangaroo_female, kangaroo_juvenile |
 
@@ -189,6 +189,26 @@ The inspected same-camera comparisons and a seed-1 Red Dune run after 3,000 simu
 in `evidence/camel-coat-j11-2026-11-20.jpg`. The adult's full humps and the calf's low developing
 humps remain clearly distinct. The underlying lofted anatomy and face are still simple rather
 than scan-based, and the coat has no individual long hair cards.
+
+### Adult Bactrian camel cow (2026-11-21)
+
+`camel_female` gives Red Dune's two adult females their own body instead of drawing every adult
+at the bull's size. [Animal Diversity Web](https://animaldiversity.org/accounts/Camelus_bactrianus/)
+records male-larger sexual dimorphism and says adult males are often much larger, while also
+noting that exact sex-specific measurements have not been established in the scholarly
+literature. The game's 92 %-height ratio is therefore a deliberately conservative visual
+approximation rather than a claimed biological constant. At the same adult skeleton size, the
+cow has a narrower torso, neck, winter mane, head, legs and humps; she retains the same coat
+colour because the source does not support a sex-specific colour change.
+
+The 21,760-triangle, 36-bone model carries the same nine clips as the bull, including the
+ten-second planted-foot `ruminate` cycle. Its 3.34 MB production GLB matches an independent
+single-threaded export byte for byte. The 139-test procedural suite checks the shape, broad-pad
+ankle overlap, gait and clip contacts, surface maps and manifest; all 31 game-side tests also
+pass. A 3,000-tick AddressSanitizer Red Dune run imported bull, cow and calf models and kept all
+five residents outside. The close viewer and habitat frame are in
+`evidence/camel-cow-j67-2026-11-21.jpg`; the HUD identifies the selected animal as thirteen-year-old
+female Ines. The base face and body remain the same stylised first-generation lofts.
 
 ### Red kangaroo joey (2026-11-20)
 
@@ -579,7 +599,7 @@ named the real activity. Dedicated clips are now made in the pipeline
 | `flamingo` | `preen` (10 s) | `preen` | on both legs, the long neck laid back over the body: the bill combs the left wing, the back, the right wing and the rump, the worked wing lifted a little |
 | `ostrich`, `ostrich_female`, `ostrich_juvenile` | `dust_bathe` (10 s) | `dust_bathe` | sitting (the `rest` posture), rocking onto one side, the neck laid along the ground sweeping sand to each side, the loosened wings lifted and shaken |
 | `elephant`, `elephant_female`, `elephant_juvenile` | `dust_bathe` (16 s) | `dust_bathe` | a fore foot scrapes the earth loose, the trunk gathers it at the ground and throws it up over the forehead, once to each side, the ears flapping |
-| `camel`, `camel_juvenile` | `ruminate` (10 s) | `ruminate` | standing with a slow asymmetric sideways jaw grind and a small head movement |
+| `camel`, `camel_female`, `camel_juvenile` | `ruminate` (10 s) | `ruminate` | standing with a slow asymmetric sideways jaw grind and a small head movement |
 | `flamingo` | `filter_feed` (7 s) | `filter_feed` | the fitted inverted-bill feeding posture, sweeping a broad irregular arc through the shallows |
 | `giraffe`, `giraffe_female`, `giraffe_juvenile` | `ruminate` (10 s) | `ruminate` | standing, with a deliberate lateral cud grind slower and broader than the incidental idle chew |
 | `brown_bear`, `brown_bear_juvenile`, `polar_bear`, `polar_bear_juvenile` | `bathe` (9 s) | `bathe` | lying in the shallows, rolling the shoulders and paddling with alternating forepaws |

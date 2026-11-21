@@ -19,6 +19,7 @@ from zoogen.wild_quadruped import make_wild_quadruped
 
 
 JUVENILE_SCALE = .60
+FEMALE_RELATIVE_HEIGHT = .92
 
 
 def _anatomy(spec):
@@ -249,7 +250,36 @@ def _juvenile_shape(spec):
                       "age_shape": "Calf: low humps, slim body, shorter face, larger eyes and pads"})
 
 
-def make_spec(juvenile=False):
+def _female_shape(spec):
+    """Give the adult cow a conservative lighter build; coat colour is not sex-specific."""
+    slender = {"torso": .92, "neck": .92, "neck_mane": .88,
+               "head": .94, "jaw": .94, "forelock": .90}
+    for part in spec.parts:
+        leg = part.name.startswith(("front_leg.", "hind_leg."))
+        factor = slender.get(part.name)
+        if factor is None and (part.name.startswith("hump.") or leg):
+            factor = .93
+        if factor is None:
+            continue
+        for index, ring in enumerate(part.rings):
+            # Keep the final ankle wide enough to overlap both broad pad halves after remeshing.
+            if leg and index == len(part.rings) - 1:
+                continue
+            ring.ry *= factor
+            ring.up *= factor
+            ring.dn *= factor
+
+    spec.name = "camel_female"
+    spec.target_tris = 18000
+    spec.meta.update({"common_name": "Bactrian camel cow", "sex": "female",
+                      "variant_of": "camel", "variant": "female",
+                      "relative_height": FEMALE_RELATIVE_HEIGHT,
+                      "age_shape": "Adult cow: shorter and lighter than the adult bull"})
+
+
+def make_spec(juvenile=False, female=False):
+    if juvenile and female:
+        raise ValueError("juvenile and female camel variants are mutually exclusive")
     scale = JUVENILE_SCALE if juvenile else 1.0
     spec = make_wild_quadruped({
         "name": "camel", "kind": "camel", "common_name": "Bactrian camel",
@@ -299,4 +329,6 @@ def make_spec(juvenile=False):
     spec.meta["activity_clips"] = {"ruminate": "ruminate"}
     if juvenile:
         _juvenile_shape(spec)
+    elif female:
+        _female_shape(spec)
     return spec
