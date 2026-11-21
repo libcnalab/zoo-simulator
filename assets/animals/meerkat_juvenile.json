@@ -129,6 +129,7 @@
       "sentinel": "sentry"
     },
     "age_shape": "Pup: shorter face, rounder skull, larger eyes, ears and paws",
+    "anatomy": "Third-pass lean mongoose outline: tapered face, low rounded ears, slender neck, trunk and limbs",
     "body_length_m": 0.238,
     "common_name": "Meerkat",
     "relative_height": 0.68,

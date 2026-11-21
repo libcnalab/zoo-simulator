@@ -59,7 +59,7 @@ loudspeaker stays muted and nobody has listened to any of it.
 | Adult grey-wolf sexual dimorphism | Wolf Wood's adult female and 1.3-year-old daughter now use a dedicated 95 %-height, modestly lighter-built female with a narrower torso, ruff, head, legs, paws and tail instead of the male model; the height ratio follows the National Park Service's 77 cm female / 81 cm male Yellowstone averages, while the grey coat is retained. All eight clips and exact contacts are preserved | `docs/ANIMALS.md`, `evidence/wolf-female-j68-2026-11-21.jpg` |
 | Bactrian-camel winter coat, bull, cow and calf | anisotropic normal relief replaces a flat painted coat; a fused rough neck mane and forelock, a tapered tail tuft and eight separate dark nails give the two-humped silhouette species-specific detail. The procedural face and underlying anatomy remain stylised | `docs/ANIMALS.md`, `evidence/camel-coat-j11-2026-11-20.jpg`, `evidence/camel-cow-j67-2026-11-21.jpg` |
 | Adult Bactrian-camel sexual dimorphism | Red Dune's two adult females now use a dedicated 92 %-height cow with a narrower torso, neck, winter mane, head, legs and humps instead of the bull model; the ratio is explicitly a conservative visual approximation because published sex-specific measurements are lacking. All nine adult clips and broad-pad contacts are retained | `docs/ANIMALS.md`, `evidence/camel-cow-j67-2026-11-21.jpg` |
-| Meerkat short coat and digging feet, adult and pup | a leaner torso and legs replace the barrel body; all four feet now carry four separate toes and non-retractile claws, with long front digging claws, while an anisotropic normal map gives the flat coat short guard-hair relief. Sentry and dig remain grounded | `docs/ANIMALS.md`, `evidence/meerkat-coat-j12-2026-11-20.jpg` |
+| Meerkat anatomy, short coat and digging feet, adult and pup | a species-specific tapered face, low rounded ears, lean neck, trunk and limbs replace the generic round-headed heavy small-quadruped silhouette; all four feet carry four separate toes and non-retractile claws, and an anisotropic normal map gives the coat short guard-hair relief. Sentry and dig remain grounded | `docs/ANIMALS.md`, `evidence/meerkat-anatomy-j73-2026-11-21.jpg` |
 | Ostrich layered plumage, cock, hen and chick | four overlapping feathers on each folded wing and five separated tail feathers replace fused plume blobs; a feather-only tangent-space normal map adds directional barb relief while keeping the bare skin smooth. The procedural egg body remains stylised | `docs/ANIMALS.md`, `evidence/ostrich-feathers-j13-2026-11-20.jpg`, `evidence/ostrich-hen-j66-2026-11-21.jpg` |
 | Red-kangaroo short fur, feet and hands, buck, doe and joey | a dense short-fur normal map replaces the flat painted coat; each hind foot has the dominant fourth digit, smaller fifth and tiny syndactylous inner pair, while five separate fingers replace each forepaw mitten. Hop and five-point crawl contacts are unchanged | `docs/ANIMALS.md`, `evidence/kangaroo-coat-j14-2026-11-20.jpg` |
 | Adult red-kangaroo sexual dimorphism | Kangaroo Grove's four adult females now use a dedicated 79 %-height, lightly built doe with a narrower torso, thighs and support tail, a typical smoke-blue coat and pale belly, lower limbs and tail tip instead of the red buck model; all nine adult clips and exact contacts are retained | `docs/ANIMALS.md`, `evidence/kangaroo-doe-j65-2026-11-21.jpg` |
@@ -115,9 +115,11 @@ manifest regression.
 
 ## Open (in the order they hurt)
 
-1. Animals: five of fifteen species (wolf, camel, meerkat, ostrich, kangaroo) still use the
-   stylised procedural first-generation anatomy. All five now have second-pass coats or plumage
-   and species-specific silhouette details, but remain recognisably lofted; the bears now have
+1. Animals: four of fifteen species (wolf, camel, ostrich, kangaroo) still use the
+   stylised procedural first-generation anatomy. All four now have second-pass coats or plumage
+   and species-specific silhouette details, but remain recognisably lofted. The meerkat remains
+   procedural rather than scan-derived, but its third pass now replaces the generic head, neck,
+   trunk and limb masses with a tailored mongoose outline. The bears now have
    closed resting mouths, softer shoulders and shorter outline fur but remain converted from an
    upright brown-bear sculpt (the polar anatomy and proportionally edited cub bodies are still crude)
    (`docs/ANIMALS.md`). The cats are believable now but not photographs: the tiger's formerly

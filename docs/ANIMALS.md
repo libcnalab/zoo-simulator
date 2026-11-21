@@ -136,6 +136,31 @@ The same-camera comparisons and a seed-1 Meerkat Lookout run after 3,000 simulat
 but the head and underlying lofted anatomy remain stylised and the coat has no individual hair
 cards.
 
+A third pass replaces the remaining generic small-quadruped masses in both ages. Five authored
+head sections now run from a broad rounded cranium through a tapered short muzzle; the former
+upright triangular ears are low rounded pinnae, the eye is horizontally stretched, and dedicated
+neck, trunk, leg and paw lofts remove the round head, heavy chest and swollen forelimbs that made
+the model read like a small primate. The skeleton and foot targets are unchanged, so the walk,
+grounded sentry tripod and alternating dig retain their original contacts. The pup applies its
+shorter, broader juvenile head transform on top of the new anatomy and moves its painted eye mask
+with the physical eye.
+
+This shape follows the published description of a slender 25–35 cm body, nearly body-length tail,
+pointed snout and strong foreclaws
+([Smithsonian's National Zoo](https://nationalzoo.si.edu/animals/meerkat)), and the more detailed
+description of a tapered short-muzzled face, broad rounded skull, small crescent ears and four
+long curved claws per foot
+([Animal Diversity Web](https://animaldiversity.org/accounts/Suricata_suricatta/)). Both models
+remain 11,648 triangles, 33 bones and ten clips; their 2.52 / 2.54 MB production GLBs match
+independent single-threaded exports byte for byte. The inspected adult/pup before-and-after,
+grounded sentry and real Meerkat Lookout frame are in
+`evidence/meerkat-anatomy-j73-2026-11-21.jpg`. This is still authored procedural anatomy rather
+than a scan, with no individual hair cards, but the principal head and body proportions are now
+species-specific. All 145 animal-pipeline tests and all 305 active CTest cases pass (21
+diagnostics disabled). A 3,000-tick AddressSanitizer Meerkat Lookout run imported both bodies,
+kept all five residents outside and selected three-year-old Nala; leak detection was disabled for
+the documented managed-session limitation.
+
 ### Ostrich chick (2026-11-20)
 
 `ostrich_juvenile` replaces the scaled black-and-white adult males previously used for the

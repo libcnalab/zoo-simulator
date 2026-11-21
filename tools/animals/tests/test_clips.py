@@ -440,6 +440,26 @@ class AnatomyTests(unittest.TestCase):
             self.assertEqual(spec.meta["surface_detail"],
                              "anisotropic short-coat normal map")
 
+    def test_meerkat_has_tapered_mongoose_head_and_lean_body(self):
+        for species in ("meerkat", "meerkat_juvenile"):
+            spec = importlib.import_module("species." + species).make_spec()
+            parts = {part.name: part for part in spec.parts}
+            skull = parts["skull"].rings
+            torso = parts["torso"].rings
+            broad_cranium = max(ring.ry for ring in skull)
+            self.assertLess(skull[-1].ry, .5 * broad_cranium)
+            face_ratio = (skull[-1].c[0] - skull[0].c[0]) / broad_cranium
+            self.assertGreater(face_ratio, 1.4)
+            if species == "meerkat":
+                self.assertGreater(face_ratio, 2.4)
+            self.assertLess(parts["neck"].rings[-1].ry,
+                            .6 * max(ring.ry for ring in torso))
+            self.assertLess(parts["front_leg.L"].rings[0].ry,
+                            .42 * max(ring.ry for ring in torso))
+            self.assertLess(max(ring.up + ring.dn for ring in torso),
+                            .32 * spec.meta["body_length_m"])
+            self.assertIn("lean mongoose outline", spec.meta["anatomy"])
+
     def test_meerkat_exports_carry_the_coat_normal_map_and_tangents(self):
         root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
         for species in ("meerkat", "meerkat_juvenile"):

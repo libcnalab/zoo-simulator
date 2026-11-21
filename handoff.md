@@ -136,6 +136,16 @@ whatever you take up (`docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `docs/V
   the same-camera viewers plus a real Meerkat Lookout run after 3,000 ticks are inspected in
   `docs/evidence/meerkat-coat-j12-2026-11-20.jpg` (J12, 2026-11-20). The head and base anatomy
   remain stylised.
+- Adult and juvenile meerkats now have a third anatomy pass. Five tapered head sections, low
+  rounded ears, a horizontally stretched eye, and dedicated lean neck, trunk, leg and paw lofts
+  replace the generic round head, heavy chest and swollen forelimbs without moving the skeleton
+  or any contact target. Both production models remain 11,648 triangles, 33 bones and ten clips;
+  their 2.52 / 2.54 MB GLBs match independent single-threaded exports byte for byte. All 145
+  animal-pipeline tests and all 305 active CTest cases pass (21 diagnostics disabled); a
+  3,000-tick ASan Meerkat Lookout run also completed cleanly with leak detection off. The adult/pup
+  comparisons, grounded sentry and a seed-1/tick-3000 Meerkat Lookout frame selecting three-year-old
+  Nala were opened in `docs/evidence/meerkat-anatomy-j73-2026-11-21.jpg` (J73, 2026-11-21).
+  The body remains authored procedural anatomy rather than a scan and has no individual hair cards.
 - Adult and juvenile ostriches now have second-pass layered plumage. Four detached feathers
   overlap each folded wing and five more separate the tail fan; a feather-only tangent-space
   normal map adds directional barb relief while leaving the bare skin smooth. The adult has

@@ -180,6 +180,85 @@ def _bend_legs(spec):
                 tag="claw", cap_start="flat", cap_end="point"))
 
 
+def _refine_anatomy(spec):
+    """Replace the generic small-quadruped masses with a meerkat's lean mongoose outline.
+
+    The skeleton and every contact target stay put: sentry, digging and locomotion therefore
+    keep their solved contacts.  Only the lofts change.  In particular, the head must taper
+    through a broad rounded cranium into the short pointed muzzle instead of reading as one
+    sphere, and the neck, trunk and limbs must not carry a primate-like amount of mass.
+    """
+    replace = {"torso", "neck", "skull", "jaw", "ear.L", "eye.L", "nose",
+               "front_leg.L", "hind_leg.L", "front_paw.L", "hind_paw.L"}
+    spec.parts = [part for part in spec.parts if part.name not in replace]
+
+    spec.parts.extend([
+        Part("torso", [
+            R((-.150, 0, .170), .021, .029, .033),
+            R((-.112, 0, .170), .039, .048, .052),
+            R((-.058, 0, .170), .041, .055, .052),
+            R(( .002, 0, .170), .038, .057, .049),
+            R(( .053, 0, .171), .033, .052, .043),
+            R(( .079, 0, .174), .022, .039, .031),
+        ], chain=chain(spec.bones, "hips", "spine1", "spine2", "chest"), segments=20,
+           cap_scale=.45),
+        Part("neck", [
+            R((.050, 0, .174), .031, .044, .039),
+            R((.078, 0, .193), .027, .038, .034),
+            R((.096, 0, .216), .022, .031, .027),
+            R((.103, 0, .225), .020, .027, .025),
+        ], chain=chain(spec.bones, "chest", "neck1", "neck2", "head"), segments=18,
+           cap_start="flat", cap_end="flat"),
+        Part("skull", [
+            R((.096, 0, .228), .020, .024, .025),
+            R((.113, 0, .229), .027, .027, .026, n=2.2),
+            R((.130, 0, .226), .026, .024, .023, n=2.3),
+            R((.148, 0, .220), .019, .018, .016, n=2.4),
+            R((.165, 0, .215), .012, .011, .010, n=2.5),
+        ], weights={"head": 1.0}, tag="head", segments=20, cap_scale=.35),
+        Part("jaw", [
+            R((.125, 0, .207), .018, .0080, .0080),
+            R((.148, 0, .205), .015, .0070, .0070),
+            R((.164, 0, .204), .011, .0055, .0055),
+        ], weights={"jaw": 1.0}, tag="jaw", segments=14, cap_scale=.3),
+        # Small rounded pinnae sit low on the sides of the skull; a meerkat does not have
+        # the generic generator's upright triangular ears.
+        Part("ear.L", [
+            R((.103, .019, .235), .0075, .0070),
+            R((.101, .026, .241), .0080, .0080),
+            R((.101, .030, .244), .0050, .0050),
+        ], weights={"ear.L": 1.0}, tag="ear", segments=12, mirror=True,
+           side_ref=(.2, 1, 0), cap_scale=.25),
+        # Two close rings stretch the visible eye horizontally, matching the species'
+        # elongated pupil and preventing the black eye patch from becoming a featureless dot.
+        Part("eye.L", [R((.124, .0255, .232), .0040, .0033),
+                        R((.131, .0255, .231), .0040, .0033)],
+             weights={"head": 1.0}, tag="eye", segments=12, subdiv=1,
+             fuse=False, mirror=True, cap_scale=.3),
+        Part("nose", [R((.164, 0, .216), .0105, .0070),
+                       R((.177, 0, .214), .0075, .0050)],
+             weights={"head": 1.0}, tag="nose", segments=12, subdiv=1,
+             fuse=False, cap_scale=.3),
+    ])
+
+    for front, x in ((True, .065), (False, -.10)):
+        y = .039
+        points = ([(x, y, .20), (x, y, .18), (x - .035, y, .10),
+                   (x + .005, y, .038), (x + .010, y, .018), (x + .04, y, .012)] if front else
+                  [(x, y, .17), (x + .05, y, .105), (x - .025, y, .045),
+                   (x + .005, y, .018), (x + .04, y, .012)])
+        limb_chain = leg_bones(spec.bones, front, points)
+        joint = points[2] if front else points[1]
+        label = "front" if front else "hind"
+        spec.parts.append(Part(label + "_leg.L", [
+            R(points[1] if front else points[0], .016, .020),
+            R(joint, .012, .015), R((x, y, .025), .0085, .010)],
+            chain=limb_chain, mirror=True, segments=12, tag="leg"))
+        spec.parts.append(Part(label + "_paw.L", [R((x, y, .015), .0115, .0095),
+            R((x + .035, y, .012), .0145, .0085)], chain=limb_chain[-2:],
+            mirror=True, segments=12, tag="paw", cap_scale=.3))
+
+
 
 def _paint(ctx, scale=1.0, juvenile=False):
     # Work in adult coordinates so the markings retain their width on the smaller variant.
@@ -193,7 +272,10 @@ def _paint(ctx, scale=1.0, juvenile=False):
     band *= nz.smoothstep(-.025, -.06, x) * nz.smoothstep(.1, .7, ctx.N[..., 2])
     coat = nz.mix(sandy, pale, nz.smoothstep(.20,-.75,ctx.N[...,2])*.65)
     coat = nz.mix(coat, dark, band * .68)
-    eye_distance = ((x - .121) / .009) ** 2 + ((z - .231) / .008) ** 2
+    # The juvenile head transform shortens the face around x=.098 after uniform scaling.
+    # Move the painted mask with the physical eye instead of leaving a dark adult-position scar.
+    eye_x = .119 if juvenile else .128
+    eye_distance = ((x - eye_x) / .012) ** 2 + ((z - .231) / .008) ** 2
     eye_patch = nz.smoothstep(1.4, .65, eye_distance) * nz.smoothstep(.015, .025, np.abs(ctx.y))
     coat = nz.mix(coat, dark * .85, eye_patch)
     coat = nz.mix(coat, np.array([.035, .025, .018]), ctx.tag("eye"))
@@ -311,10 +393,7 @@ def make_spec(juvenile=False):
     })
     _tail(spec)
     _bend_legs(spec)
-    for part in spec.parts:
-        if part.name == "eye.L":
-            part.rings = [R((.119, .026, .231), .0035, .0035),
-                          R((.123, .026, .231), .0035, .0035)]
+    _refine_anatomy(spec)
     spec.paint = _paint
     spec.surface_height = _surface_height
     spec.surface_strength = 1.05
@@ -323,6 +402,8 @@ def make_spec(juvenile=False):
     spec.smooth_iters = 4
     spec.meta["roughness"] = .91
     spec.meta["surface_detail"] = "anisotropic short-coat normal map"
+    spec.meta["anatomy"] = ("Third-pass lean mongoose outline: tapered face, low rounded ears, "
+                            "slender neck, trunk and limbs")
     def clips(solver):
         return quad.standard_clips(solver, quad.Params(
             gaits=[quad.Gait("walk", walk_period, walk_speed * walk_period * .64, .64, quad.WALK,
