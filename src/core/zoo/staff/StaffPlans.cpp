@@ -104,6 +104,9 @@ constexpr std::size_t kMostBins = 30;
 constexpr std::size_t kMatchLimit = 20;
 /// Two public feedings of one keeper are at least this far apart (calendar hours).
 constexpr float kFeedingGap = 0.75f;
+/// Very shy species are fed, watered and inspected from the public side of the barrier. Repeated
+/// routine entry displaces them from provisions even though they are not dangerous to staff.
+constexpr float kQuietHabitatShyness = 0.6f;
 
 std::int32_t Ticks(float seconds) {
     return static_cast<std::int32_t>(seconds * static_cast<float>(kTicksPerSecond));
@@ -506,6 +509,8 @@ Shift ShiftAt(float hour) {
     return hour < 16.0f ? Shift::Afternoon : Shift::Evening;
 }
 
+bool QuietHabitat(const Env& env, const Animals& animals, EnclosureId enclosure);
+
 /// A keeper's jobs at a habitat. `feeding`: this is a public feeding, feed is scattered and
 /// every feeder gets its fill.
 void PlanHabitat(const Env& env, const Animals& animals, StaffMember& member, EnclosureId id, bool feeding) {
@@ -524,8 +529,11 @@ void PlanHabitat(const Env& env, const Animals& animals, StaffMember& member, En
         lockout && env.enclosures.At(lockoutInside) == id && Standable(env, lockoutInside, id);
     const bool lockoutDue =
         animals.Dirt(id) >= kDangerousRakeFromDirt || (member.stopsDone + id.value) % 3u == 0u;
+    const bool quiet = QuietHabitat(env, animals, id);
     const bool enter = dangerous ? lockoutInsideValid && lockoutDue : KeepersMayEnter(env, animals, id);
-    const bool serveInside = enter && !dangerous;
+    // Feeding and watering stay outside a quiet habitat. Its keeper still makes one short cleaning
+    // pass per round; omitting that necessary work lets manure reach the welfare issue threshold.
+    const bool serveInside = enter && !dangerous && !quiet;
     std::vector<Stand> barrier;
     BarrierStands(env, enclosure, barrier);
     std::vector<TileCoord> open;
@@ -671,6 +679,8 @@ void PlanHabitat(const Env& env, const Animals& animals, StaffMember& member, En
         // drinking are not displaced by a long sequence or a walk across the habitat.
         tasks.push_back(Job(StaffActivity::Rake, StaffActivity::Push, lockoutInside,
                             WrapAngle(lockoutFacing + 1.2f), kDangerousRakeS, id));
+    } else if (enter && quiet) {
+        rake(0);
     } else if (enter) {
         switch (shift) {
             case Shift::Morning:
@@ -977,6 +987,19 @@ int SpeciesOf(const Env& env, const Animals& animals, EnclosureId enclosure) {
         }
     }
     return most;
+}
+
+bool QuietHabitat(const Env& env, const Animals& animals, EnclosureId enclosure) {
+    for (const Animal& animal : animals.All()) {
+        if (animal.home != enclosure || animal.species < 0 ||
+            static_cast<std::size_t>(animal.species) >= env.species.All().size()) {
+            continue;
+        }
+        if (env.species.All()[static_cast<std::size_t>(animal.species)].shyness >= kQuietHabitatShyness) {
+            return true;
+        }
+    }
+    return false;
 }
 
 struct PropStop {

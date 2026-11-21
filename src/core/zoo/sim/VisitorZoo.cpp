@@ -29,7 +29,7 @@ struct HabitatPlan {
     int rn;
 };
 
-constexpr std::array<HabitatPlan, 16> kHabitats{{
+constexpr std::array<HabitatPlan, 17> kHabitats{{
     {"Meerkat Lookout", "meerkat", 10, 18, 5, 4},
     {"Flamingo Lagoon", "flamingo", 28, 24, 9, 7},
     {"Acacia Plain", "giraffe", 48, 53, 18, 19},
@@ -50,6 +50,9 @@ constexpr std::array<HabitatPlan, 16> kHabitats{{
     // A cool, densely planted canopy on the extension's quieter western arc. Its broad public
     // front leaves the picnic glade open while the back trees screen the property boundary.
     {"Red Panda Canopy", "red_panda", -44, 160, 10, 8},
+    // The second northern stage ends in an open alpine bowl, beyond the woodland canopy but with
+    // two independent approaches from its old crown.
+    {"Snow Leopard Heights", "snow_leopard", 0, 196, 14, 10},
 }};
 
 std::vector<TileCoord> RegionTiles(const Script& script, const HabitatPlan& plan) {
@@ -126,6 +129,10 @@ void Walks(Zoo& zoo, Script& script) {
     // Join the west gallery of Red Panda Canopy to the woodland circuit. Its own continuous
     // perimeter walk meets this short spur at the eastern viewing front.
     script.PathAlong({{-24, 163}, {-32, 163}}, 3, PathKind::Gravel);
+    // Two arms carry the woodland crown into the second-stage land. The habitat's perimeter walk
+    // joins them into a loop, so a closed side never strands visitors at the far end.
+    script.PathAlong({{-18, 170}, {-17, 178}, {-14, 184}, {0, 196}}, 3, PathKind::Asphalt);
+    script.PathAlong({{22, 170}, {18, 178}, {14, 184}, {0, 196}}, 3, PathKind::Asphalt);
     script.PathAlong({{-18, 49}, {-6, 46}, {0, 38}, {16, 36}, {27, 39}}, 2, PathKind::Gravel);
     script.PathAlong({{-20, 70}, {-3, 69}, {11, 74}, {28, 77}}, 2, PathKind::Gravel);
     script.PathAlong({{-29, 105}, {-8, 103}, {11, 106}, {29, 103}}, 2, PathKind::Gravel);
@@ -283,8 +290,7 @@ HabitatStyle Style(std::string_view species) {
                 "juniper",
                 "granite_boulder",
                 {"climbing_frame", "scratching_post", "fallen_log", "log_pile"},
-                {"spruce", "spruce", "spruce", "pine", "birch", "birch", "juniper", "juniper",
-                 "juniper"}};
+                {"spruce", "spruce", "spruce", "pine", "birch", "birch", "juniper", "juniper", "juniper"}};
     }
     if (species == "red_panda") {
         return {Terrain::ForestFloor,
@@ -295,8 +301,19 @@ HabitatStyle Style(std::string_view species) {
                 "bamboo_clump",
                 "granite_boulder",
                 {"climbing_frame", "fallen_log", "log_pile", "tyre_swing"},
-                {"bamboo_clump", "bamboo_clump", "bamboo_clump", "bamboo_clump", "birch", "birch",
-                 "oak", "tropical_fern", "tropical_fern"}};
+                {"bamboo_clump", "bamboo_clump", "bamboo_clump", "bamboo_clump", "birch", "birch", "oak",
+                 "tropical_fern", "tropical_fern"}};
+    }
+    if (species == "snow_leopard") {
+        return {Terrain::Rock,
+                "heavy_mesh",
+                "high_glass_wall",
+                "medium_shelter",
+                "meat_platform",
+                "juniper",
+                "granite_boulder",
+                {"climbing_frame", "scratching_post", "fallen_log", "log_pile"},
+                {"juniper", "juniper", "juniper", "pine", "pine", "spruce"}};
     }
     if (species == "brown_bear") {
         return {Terrain::ForestFloor,
@@ -364,8 +381,8 @@ HabitatStyle Style(std::string_view species) {
                 "desert_scrub",
                 "sandstone_rock",
                 {"log_pile", "scratching_post", "fallen_log"},
-                {"desert_scrub", "desert_scrub", "desert_scrub", "desert_scrub", "tall_grass",
-                 "tall_grass", "palm", "palm"}};
+                {"desert_scrub", "desert_scrub", "desert_scrub", "desert_scrub", "tall_grass", "tall_grass",
+                 "palm", "palm"}};
     }
     return {Terrain::Grass,
             "paddock_rail",
@@ -459,6 +476,12 @@ std::span<const Resident> Family(std::string_view species) {
         // Red pandas are solitary except while breeding and rearing young: this is a mother with
         // two dependent cubs, not an adult social group.
         static constexpr Resident family[] = {Adult(f, 5.0f), Young(f, 0.2f, 0), Young(m, 0.2f, 0)};
+        return family;
+    }
+    if (species == "snow_leopard") {
+        // A solitary mother raises the cubs; their sire has a separate range and is not displayed
+        // as an invented permanent pair.
+        static constexpr Resident family[] = {Adult(f, 7.0f), Young(f, 0.45f, 0), Young(m, 0.45f, 0)};
         return family;
     }
     if (species == "brown_bear") {
@@ -1063,7 +1086,14 @@ void Furnish(Zoo& zoo, Script& script, const Site& site, const HabitatStyle& sty
     if (plan.species == "giraffe" || plan.species == "elephant") {
         table.push_back("pellet_fruit_trough");
     }
-    const int troughs = std::max(1, static_cast<int>(std::ceil(water * 0.75f / 180.0f)));
+    int minimumTroughs = 1;
+    if (const int index = zoo.SpeciesList().IndexOf(plan.species);
+        index >= 0 && zoo.SpeciesList().All()[static_cast<std::size_t>(index)].shyness >= 0.6f) {
+        // Quiet northern species should never have to pass a keeper or a dominant group-mate to
+        // reach their only drink. Two separated water points also keep one blocked route harmless.
+        minimumTroughs = 2;
+    }
+    const int troughs = std::max(minimumTroughs, static_cast<int>(std::ceil(water * 0.75f / 180.0f)));
     const int places = static_cast<int>(table.size()) + troughs;
     // Where water fills the front (the lagoon), the nearest dry place can lie behind the middle,
     // out of the benches' view: the front half is searched first.
@@ -1078,7 +1108,14 @@ void Furnish(Zoo& zoo, Script& script, const Site& site, const HabitatStyle& sty
         const Vec2 target = Share(site, std::cos(angle) * reach, std::sin(angle) * reach);
         const std::string_view kind = trough ? std::string_view("water_trough") : table[next];
         if (!Settle(zoo, script, front, kind, target, site.clear)) {
-            Need(zoo, script, site, kind, target, site.clear);
+            // A narrow overlap gives large provisions one more visible row in a water-heavy
+            // habitat without changing the usual seeded layout when the strict front has room.
+            Site visible = site;
+            const float overlap = 0.16f * static_cast<float>(site.plan->rn) * kTileSize;
+            std::erase_if(visible.tiles, [&site, overlap](TileCoord tile) {
+                return World::TileCenter(tile).z < site.middle.z - overlap;
+            });
+            Need(zoo, script, visible, kind, target, site.clear);
         }
         next += trough ? 0U : 1U;
     }
@@ -1457,8 +1494,7 @@ void GradeDryMoats(Zoo& zoo, Script& script) {
                     }
                 }
                 if (surrounded) {
-                    const Vec2 vertex{static_cast<float>(vx) * kTileSize,
-                                      static_cast<float>(vz) * kTileSize};
+                    const Vec2 vertex{static_cast<float>(vx) * kTileSize, static_cast<float>(vz) * kTileSize};
                     if (script.Terraform(Builder::Brush::Raise, vertex, 1.0f, -1.8f)) {
                         ++lowered;
                     }
@@ -1913,6 +1949,8 @@ void Facilities(Zoo& zoo, Script& script) {
     Service(zoo, script, serviceAprons, "restroom", -10, 164, Dir::South);
     Service(zoo, script, serviceAprons, "drinks_stall", 10, 164, Dir::South);
     Service(zoo, script, serviceAprons, "drinks_stall", -30, 167, Dir::South);
+    Service(zoo, script, serviceAprons, "restroom", -22, 188, Dir::South);
+    Service(zoo, script, serviceAprons, "drinks_stall", 22, 188, Dir::South);
     Service(zoo, script, serviceAprons, "drinks_stall", 66, 123, Dir::West);
     Service(zoo, script, serviceAprons, "drinks_stall", 66, 91, Dir::West);
     Service(zoo, script, serviceAprons, "ice_cream_stand", -67, 84, Dir::East);
@@ -1957,10 +1995,17 @@ void Facilities(Zoo& zoo, Script& script) {
     ViewingFurniture(zoo, script);
     int lamps = 0;
     const World& map = zoo.Map();
+    const TileCoord entrance = map.EntranceTile();
     for (int z = map.PropertyMin().z; z <= map.PropertyMax().z; ++z) {
         for (int x = map.PropertyMin().x; x <= map.PropertyMax().x; ++x) {
             const TileCoord tile{x, z};
             if (map.At(tile).path == PathKind::None || (x + 3 * z) % 13 != 0) {
+                continue;
+            }
+            // The player's opening run uses the centre of the entrance avenue. Explicit lamps
+            // already light this forecourt; random path-edge furniture must leave it unobstructed.
+            const int northOfGate = entrance.z - z;
+            if (std::abs(x - entrance.x) <= 2 && northOfGate >= 0 && northOfGate <= 10) {
                 continue;
             }
             for (const Dir side : {Dir::North, Dir::East, Dir::South, Dir::West}) {
@@ -1997,7 +2042,8 @@ void GroundDetail(Zoo& zoo, Script& script) {
             }
         }
         Terrain terrain = Terrain::Dirt;
-        if (plan.species == "polar_bear" || plan.species == "penguin" || plan.species == "brown_bear") {
+        if (plan.species == "polar_bear" || plan.species == "penguin" || plan.species == "brown_bear" ||
+            plan.species == "snow_leopard") {
             terrain = Terrain::Rock;
         } else if (plan.species == "tiger" || plan.species == "wolf") {
             terrain = Terrain::Grass;
@@ -2074,7 +2120,7 @@ ZooConfig VisitorZooConfig(std::uint64_t seed) {
     config.seed = seed;
     config.world.seed = seed;
     config.world.width = 160;
-    config.world.depth = 192;
+    config.world.depth = 224;
     config.world.relief = 0.12f;
     config.sandbox = true;
     config.autoCare = true;
@@ -2086,8 +2132,8 @@ ScenarioReport BuildVisitorZoo(Zoo& zoo, const VisitorZooOptions& options) {
     const World& map = zoo.Map();
     const TileCoord gate = map.EntranceTile();
     if (gate.x - map.PropertyMin().x < 70 || map.PropertyMax().x - gate.x < 70 ||
-        gate.z - map.PropertyMin().z < 179) {
-        script.Problem("the Visitor Zoo needs 70 tiles beside the entrance and 179 tiles north of it");
+        gate.z - map.PropertyMin().z < 211) {
+        script.Problem("the Visitor Zoo needs 70 tiles beside the entrance and 211 tiles north of it");
         return script.Finish();
     }
     Walks(zoo, script);

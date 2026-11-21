@@ -1,14 +1,17 @@
 # Greenhill Zoo — visitor plan
 
-A 160 × 192 tile (320 × 384 m) zoo, with free admission and automatic animal care. J78 extends
-the map 64 m northward: 122,880 m² in all, 20 % more than the former 160 × 160 map.
+A 160 × 224 tile (320 × 448 m) zoo, with free admission and automatic animal care. J78 and J81
+extend the map 128 m northward in two stages: 143,360 m² in all, 40 % more than the former
+160 × 160 map.
 North leads into the zoo from the south gate. Entrance coordinates `(east, north)` mean
 world tile `(entrance.x + east, entrance.z - north)`; one tile is 2 m. The entrance tile is
-`(79,185)`, centred at world `(159,371)` metres. Construct with `VisitorZooConfig(seed)`,
+`(79,217)`, centred at world `(159,435)` metres. Construct with `VisitorZooConfig(seed)`,
 then call `BuildVisitorZoo(zoo, options)`. `withoutSpecies` suppresses animals only.
 
 ```text
                               NORTH
+                              Snow Leopard Heights
+                                /             \
        Red Panda Canopy — northern woodland circuit + picnic glade — Lynx Ridge
                       /             |                 /
              Polar Sound     Bear Falls — Wolf Wood — Tiger Forest
@@ -31,9 +34,9 @@ combine elliptical lobes. Every habitat has a keeper gate, shelter, stocked feed
 enrichment, a public information board and benches. Planting concentrates behind the open
 viewing ground, with woods between habitats and around the perimeter.
 
-The seed-1 zoo contains **96 animals in 16 habitats, 47 buildings and 3,287 props** when
+The seed-1 zoo contains **99 animals in 17 habitats, 50 buildings and 3,631 props** when
 every species is included (74 animals and 2,817 props before the plan's rework of
-2026-11-14, below). The farthest public path tile is **84.8 m** walking distance
+2026-11-14, below). The farthest public path tile is **78.1 m** walking distance
 from a visitor facility. `VisitorZooTests.DISABLED_PrintPlan` prints these measurements. Families
 are written out in "The zoo's plan" below. **S** = south; **W/E** = west/east.
 The principal fronts face south and the zoo's centre. Habitat areas are unchanged: the public
@@ -45,7 +48,7 @@ the visitor, give the 9:00–19:00 opening hours and 16:30 last admission, count
 and habitats, and point to the map and the species boards. A board within eight metres of a lived-in
 habitat still shows that habitat's animals instead. The inspected entrance panel is in
 `evidence/entrance-welcome-board-j25-2026-11-20.jpg`. Both entrance boards and the first habitat
-board were opened in real off-screen runs; all 272 active functional CTest cases pass (21
+board were opened in real off-screen runs; all 313 active CTest cases pass (21
 diagnostics remain disabled).
 
 | Habitat | Animals (of them young) | Area, m² | m² per animal | Front | Back | Stand-off depth |
@@ -66,6 +69,7 @@ diagnostics remain disabled).
 | Kangaroo Grove | Kangaroo 7 (3) | 1,136 | 162 | Public rail, planting, timber paddock fence S/E | Timber paddock fence | 1 tile / 2 m |
 | Lynx Ridge | Eurasian lynx 3 (2) | 1,500 | 500 | Glass S/W | Tall mesh | 0 |
 | Red Panda Canopy | Red panda 3 (2) | 992 | 331 | Glass S/E | Tall mesh | 0 |
+| Snow Leopard Heights | Snow leopard 3 (2) | 1,724 | 575 | High glass S/W | Heavy welded mesh | 0 |
 
 The areas did not change with the families; the area per animal is our estimate of what reads
 as roomy for the species, **not checked against EAZA or AZA husbandry figures**. Every group
@@ -209,6 +213,34 @@ need, and the visitor-paced morning at 10 against 13. All 311 active CTest cases
 diagnostics remain disabled), as do all 155 animal-pipeline tests. A final 3,000-tick ASan/UBSan
 visit completed without a sanitizer finding with leak detection disabled, loading all 96 animals,
 47 buildings and 3,287 props and simulating 649 visitors.
+
+## Snow Leopard Heights and the second northern stage (J81, 2026-11-21)
+
+The map gains a second 32-row northern stage, another 20,480 m², for a total depth of 224 tiles.
+Two three-tile-wide asphalt arms leave the old woodland crown independently and meet the continuous
+public gallery around Snow Leopard Heights, so the new end is a loop rather than a dead end. A
+restroom and drinks stall at 376 m north keep the farthest seed-1 public walk at 78.1 m from a
+visitor facility, below the retained 85 m limit.
+
+Snow Leopard Heights is a 1,724 m² alpine bowl centred 392 m north of the gate. Its 70 reachable
+high-glass views face a granite, juniper, pine and spruce habitat with an 18-place shelter, raised
+meat platforms, climbing frame, scratching post, fallen log and two separated water troughs. The
+opening group is a seven-year-old mother and her female and male 0.45-year-old cubs. The smoky
+rosette coat, broad paws, small rounded ears, long thick balancing tail, solitary adult life and
+mother-with-cubs group follow the [Snow Leopard Trust fact sheet](https://snowleopard.org/wp-content/uploads/2025/06/Downloadable-Snow-Leopard-Fact-Sheet.pdf)
+and [San Diego Zoo species account](https://animals.sandiegozoo.org/animals/snow-leopard). The
+procedural adult and cub are deliberately documented as stylised rather than scan-derived.
+
+The zoo now has 99 animals, 17 habitats, 50 buildings and 3,631 props. Nine keepers cover the odd
+number of habitats; the last habitat has its own keeper. Red Panda Canopy, Lynx Ridge and Snow
+Leopard Heights each receive two water points. Feeding, watering and routine inspections stay
+outside very shy habitats; a keeper makes only one brief inside cleaning pass per round. Over a
+closed week the staffed zoo records 13 animal-hours in need against automatic care's 26; at visitor
+pace the comparison is 21 against 30. Both plan seeds
+retain the full habitat area, family, enrichment, water redundancy and reachable viewing loop.
+The adult turntable, cub model and inspected 3,000-tick public view are in
+`evidence/snow-leopard-heights-j81-2026-11-21.jpg`; that run loaded all 99 animals, kept all three
+snow leopards outdoors and simulated 658 visitors.
 
 Catalog limits: there is no low glass wall and no low rail that would hold a flamingo, so the
 small animals stand behind the same 3.5 m glass as the lions. The meerkats' service boundary is
@@ -431,18 +463,18 @@ Golden hashes of `tests/core/VisitStartTests.cpp`, recorded again for the plan:
 
 | Fill ticks | Seed | At fill | Later |
 |---:|---:|---:|---:|
-| 600 | 1 | 17379813876368075708 | 1298426449307882789 |
-| 600 | 2 | 10600911180101923765 | 8099999131585360788 |
-| 600 | 3 | 9339430514828864002 | 10524783387007761817 |
-| 6000 | 1 | 2806996443957579519 | 16979534985110762881 |
-| 6000 | 2 | 11368583421750564472 | 7145817024063048249 |
-| 6000 | 3 | 17926869522992866043 | 16824584070955396852 |
+| 600 | 1 | 594257938472033448 | 14337973029496189051 |
+| 600 | 2 | 15406606244450351165 | 1215235191448489462 |
+| 600 | 3 | 6169501891789178616 | 12609309977693402985 |
+| 6000 | 1 | 9176597010523512527 | 11178446725631306708 |
+| 6000 | 2 | 10900274889816509035 | 9192663283298467455 |
+| 6000 | 3 | 9886221438050585804 | 15338513518932663782 |
 
 ## The zoo as the game visits it
 
 The game builds this scenario without any species that has no model in `assets/animals/`
-(`withoutSpecies`); such a habitat would stand finished but empty. All seventeen current species
-have production models, so a seed-1 visit has all **96 animals in sixteen habitats**.
+(`withoutSpecies`); such a habitat would stand finished but empty. All eighteen current species
+have production models, so a seed-1 visit has all **99 animals in seventeen habitats**.
 
 The ice-cream kiosk formerly in the narrow Elephant Valley/Kangaroo gap is relocated
 near entrance coordinates `(-5,18)`, facing north, to keep refreshment access around the wider

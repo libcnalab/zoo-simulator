@@ -1,0 +1,139 @@
+{
+  "bones": 33,
+  "clips": [
+    {
+      "duration": 6.0,
+      "events": [],
+      "frames": 181,
+      "loop": true,
+      "name": "idle",
+      "speed": 0.0
+    },
+    {
+      "duration": 0.7,
+      "events": [
+        {
+          "name": "step",
+          "time": 0.0
+        },
+        {
+          "name": "step",
+          "time": 0.175
+        },
+        {
+          "name": "step",
+          "time": 0.35
+        },
+        {
+          "name": "step",
+          "time": 0.525
+        }
+      ],
+      "frames": 22,
+      "loop": true,
+      "name": "walk",
+      "speed": 0.68
+    },
+    {
+      "duration": 0.4667,
+      "events": [
+        {
+          "name": "step",
+          "time": 0.0
+        },
+        {
+          "name": "step",
+          "time": 0.0
+        },
+        {
+          "name": "step",
+          "time": 0.2333
+        },
+        {
+          "name": "step",
+          "time": 0.2333
+        }
+      ],
+      "frames": 15,
+      "loop": true,
+      "name": "trot",
+      "speed": 1.4
+    },
+    {
+      "duration": 3.0,
+      "events": [],
+      "frames": 91,
+      "loop": true,
+      "name": "eat",
+      "speed": 0.0
+    },
+    {
+      "duration": 2.4,
+      "events": [],
+      "frames": 73,
+      "loop": true,
+      "name": "drink",
+      "speed": 0.0
+    },
+    {
+      "duration": 8.0,
+      "events": [],
+      "frames": 241,
+      "loop": true,
+      "name": "rest",
+      "speed": 0.0
+    },
+    {
+      "duration": 8.0,
+      "events": [],
+      "frames": 241,
+      "loop": true,
+      "name": "sleep",
+      "speed": 0.0
+    },
+    {
+      "duration": 2.6,
+      "events": [
+        {
+          "name": "call",
+          "time": 0.572
+        }
+      ],
+      "frames": 79,
+      "loop": false,
+      "name": "vocalize",
+      "speed": 0.0
+    }
+  ],
+  "generator": "tools/animals (zoogen)",
+  "license": "MIT",
+  "meta": {
+    "age_shape": "Cub: shorter body, broader skull, larger eyes and paws",
+    "anatomy": "Species-specific snow leopard: low muscular trunk, small rounded ears, broad snow paws and body-length fur-thick balancing tail",
+    "body_length_m": 0.74,
+    "common_name": "Snow leopard",
+    "relative_height": 0.65,
+    "roughness": 0.9,
+    "scientific_name": "Panthera uncia",
+    "shoulder_height_m": 0.39,
+    "surface_detail": "anisotropic woolly winter-coat normal map",
+    "variant": "juvenile",
+    "variant_of": "snow_leopard"
+  },
+  "name": "snow_leopard_juvenile",
+  "skeleton_bounds_animal_space": {
+    "max": [
+      0.3626,
+      0.0468,
+      0.4017
+    ],
+    "min": [
+      -0.4958,
+      -0.0468,
+      0.0
+    ]
+  },
+  "texture": 1024,
+  "triangles": 18028,
+  "vertices": 9018
+}

@@ -185,11 +185,11 @@ void PrintPlan(const Zoo& zoo) {
 TEST(VisitorZooTests, CompleteZoo) {
     Zoo zoo(testdata::GameCatalog(), testdata::GameSpecies(), VisitorZooConfig());
     EXPECT_EQ(zoo.Map().Width(), 160);
-    EXPECT_EQ(zoo.Map().Depth(), 192);
+    EXPECT_EQ(zoo.Map().Depth(), 224);
     ExpectNoProblems(BuildVisitorZoo(zoo));
     ExpectConnected(zoo);
     ExpectPublicAccess(zoo);
-    EXPECT_EQ(zoo.Habitats().All().size(), 16U);
+    EXPECT_EQ(zoo.Habitats().All().size(), 17U);
     std::set<int> species;
     const Env env = zoo.MakeEnv();
     for (const Animal& animal : zoo.Fauna().All()) {
@@ -212,7 +212,7 @@ TEST(VisitorZooTests, CompleteZoo) {
         EXPECT_GE(Containment(def, enclosure->stats), 0.99f) << def.id;
         EXPECT_GE(enclosure->stats.shelterCapacity, group.allAnimals) << def.id;
     }
-    EXPECT_EQ(species.size(), 17U);
+    EXPECT_EQ(species.size(), 18U);
     PrintPlan(zoo);
     for (const Enclosure& enclosure : zoo.Habitats().All()) {
         EXPECT_GE(enclosure.stats.gates, 1) << enclosure.name;
@@ -237,7 +237,7 @@ TEST(VisitorZooTests, SpeciesCanBeOmittedWithoutRemovingTheirHabitat) {
     Zoo zoo(testdata::GameCatalog(), testdata::GameSpecies(), VisitorZooConfig());
     ExpectNoProblems(BuildVisitorZoo(zoo, {{"flamingo"}}));
     EXPECT_EQ(zoo.AnimalCount(zoo.SpeciesList().IndexOf("flamingo")), 0);
-    EXPECT_EQ(zoo.Habitats().All().size(), 16U);
+    EXPECT_EQ(zoo.Habitats().All().size(), 17U);
     bool lagoon = false;
     for (const Enclosure& enclosure : zoo.Habitats().All()) {
         if (enclosure.name == "Flamingo Lagoon") {

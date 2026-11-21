@@ -259,7 +259,7 @@ bool ThroughKeeperGate(const Env& env, EnclosureId enclosureId, Vec2 from, Vec2 
 
 /// May the walker be moved from `from` to `to`: ground staff walk on, no fence crossed,
 /// and no habitat a dangerous animal lives in.
-bool MayStep(const Env& env, const Animals& animals, Vec2 from, Vec2 to) {
+bool MayStep(const Env& env, const Animals& animals, EnclosureId lockout, Vec2 from, Vec2 to) {
     const TileCoord a = World::TileAt(from);
     const TileCoord b = World::TileAt(to);
     if (a == b) {
@@ -268,8 +268,8 @@ bool MayStep(const Env& env, const Animals& animals, Vec2 from, Vec2 to) {
     const EnclosureId fromEnclosure = env.enclosures.At(a);
     const EnclosureId toEnclosure = env.enclosures.At(b);
     const EnclosureId crossed = toEnclosure ? toEnclosure : fromEnclosure;
-    if (crossed && animals.StaffLockout(crossed) && DangerSecuredForStaff(env, animals, crossed) &&
-        ThroughKeeperGate(env, crossed, from, to)) {
+    if (crossed && crossed == lockout && animals.StaffLockout(crossed) &&
+        DangerSecuredForStaff(env, animals, crossed) && ThroughKeeperGate(env, crossed, from, to)) {
         return env.nav.Passable(b, kStaffProfile);
     }
     if (!env.nav.Passable(b, kStaffProfile) || !env.nav.Walkable(from, to, kStaffProfile)) {
@@ -277,7 +277,7 @@ bool MayStep(const Env& env, const Animals& animals, Vec2 from, Vec2 to) {
     }
     const EnclosureId entered = env.enclosures.At(b);
     return !entered || entered == env.enclosures.At(a) || !HoldsDanger(env, animals, entered) ||
-           DangerSecuredForStaff(env, animals, entered);
+           (entered == lockout && DangerSecuredForStaff(env, animals, entered));
 }
 
 }  // namespace
@@ -547,7 +547,7 @@ void Staff::Step(Env& env, Animals& animals, Visitors& visitors) {
             if (const float far = Distance(before, aside); far > reach) {
                 aside = before + (aside - before) * (reach / far);
             }
-            if (!(aside == after) && MayStep(env, animals, before, aside)) {
+            if (!(aside == after) && MayStep(env, animals, member.lockout, before, aside)) {
                 after = aside;
             }
             after = AroundBodies(env, animals, visitors, members_, memberIndex, before, after, goal,
@@ -556,7 +556,7 @@ void Staff::Step(Env& env, Animals& animals, Visitors& visitors) {
         if (arrived && Distance(after, task.place) > 0.05f) {
             arrived = false;
         }
-        if (!MayStep(env, animals, before, after)) {
+        if (!MayStep(env, animals, member.lockout, before, after)) {
             // The way is shut (the world changed under the route, a step aside left the
             // line, or a dangerous animal has moved in): another route from here, or none.
             member.speed = 0.0f;
@@ -566,7 +566,7 @@ void Staff::Step(Env& env, Animals& animals, Visitors& visitors) {
                 Vec2 probe = before;
                 std::size_t first = 0;
                 FollowPath(other, first, probe, speed * kTickSeconds);
-                open = MayStep(env, animals, before, probe);
+                open = MayStep(env, animals, member.lockout, before, probe);
             }
             if (open) {
                 member.route = std::move(other);

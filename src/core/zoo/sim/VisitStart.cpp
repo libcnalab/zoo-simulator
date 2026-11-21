@@ -13,7 +13,9 @@ VisitStartReport FillForVisit(Zoo& zoo, const VisitStartOptions& options,
     zoo.SetDayPace(0);
     const std::int64_t ticks = std::max<std::int64_t>(0, options.fillTicks);
     // Quotient and remainder avoid overflow for a large requested duration.
-    const std::int64_t before = (ticks / 5) * 3 + (ticks % 5) * 3 / 5;
+    // Let the gate admit enough distinct groups to represent every habitat in a large zoo, while
+    // retaining a final fifth of the fill for the staged visitors to resume their visit.
+    const std::int64_t before = (ticks / 5) * 4 + (ticks % 5) * 4 / 5;
     VisitorPace filling = options.pace;
     filling.arrivals = options.fillArrivals;
     zoo.Guests().SetPace(filling);

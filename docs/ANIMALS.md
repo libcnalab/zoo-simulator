@@ -19,6 +19,7 @@ Each species is defined by one JSON file in `data/species/`. Biological values u
 | African penguin | Spheniscus demersus | CR | 10–60 | 180 | 1.8 m / 2 | 0.5 / 1.2 | 1500 | 90 |
 | Polar bear | Ursus maritimus | VU | 1–3 | 1200 | 4.5 m / 4 | 1.0 / 4 | 12000 | 94 |
 | Red panda | Ailurus fulgens | EN | 1–3 | 180 | 2.5 m / 2 | 0.72 / 4 | 7200 | 91 |
+| Snow leopard | Panthera uncia | VU | 1–3 | 500 | 4.0 m / 4 | 1.0 / 5.5 | 10000 | 95 |
 | Southern white rhinoceros | Ceratotherium simum simum | NT | 2–8 | 1000 | 2.0 m / 5 | 1.2 / 4 | 12000 | 82 |
 | Bengal tiger | Panthera tigris tigris | EN | 1–2 | 800 | 4.0 m / 4 | 1.0 / 5 | 8500 | 90 |
 | Grey wolf | Canis lupus | LC | 4–10 | 600 | 2.5 m / 3 | 1.2 / 6 | 4500 | 76 |
@@ -49,7 +50,7 @@ while geometry, textures and animations remain identical.
 | `zoogen/scan.py` on a prepared third-party static sculpt, rigged by us (below) | zebra, zebra_female, zebra_juvenile |
 | `zoogen/giraffe2.py` on a prepared head-and-neck scan, body modelled by us (below) | giraffe, giraffe_female, giraffe_juvenile |
 | `zoogen/sculpt.py`, `bear.py` on a prepared third-party sculpt, rigged by us (below) | brown_bear, brown_bear_female, brown_bear_juvenile, polar_bear, polar_bear_female, polar_bear_juvenile |
-| `zoogen/quadruped.py`, `wild_quadruped.py`, `anatomy.py` | wolf, wolf_female, wolf_juvenile, camel, camel_female, camel_juvenile, meerkat, meerkat_juvenile, lynx, lynx_juvenile, red_panda, red_panda_juvenile |
+| `zoogen/quadruped.py`, `wild_quadruped.py`, `anatomy.py` | wolf, wolf_female, wolf_juvenile, camel, camel_female, camel_juvenile, meerkat, meerkat_juvenile, lynx, lynx_juvenile, red_panda, red_panda_juvenile, snow_leopard, snow_leopard_juvenile |
 | `zoogen/birdscan.py` on a prepared third-party scan or sculpt, rigged by us (below) | penguin, penguin_juvenile, flamingo, flamingo_juvenile |
 | `zoogen/biped.py` | ostrich, ostrich_female, ostrich_juvenile, kangaroo, kangaroo_female, kangaroo_juvenile |
 
@@ -60,6 +61,28 @@ Each has the same eight clips, which the game picks from what the animal is doin
 by the species file. The authored procedural models in the last two rows are stylised, not
 photorealistic, even after their species-specific anatomy passes; what each is weak at is listed in
 [`PIVOT_TO_ZOO_EXPLORATION.md`](PIVOT_TO_ZOO_EXPLORATION.md).
+
+### Snow leopard mother and cubs (2026-11-21)
+
+Snow Leopard Heights holds a seven-year-old mother and two 0.45-year-old cubs. The
+[Snow Leopard Trust fact sheet](https://snowleopard.org/wp-content/uploads/2025/06/Downloadable-Snow-Leopard-Fact-Sheet.pdf)
+supports the 33–46 kg adult range, roughly 100–121 cm body, broad furred paws, smoky rosette coat,
+body-length thick tail, solitary adult life and one-to-three-cub maternal group. The
+[San Diego Zoo species account](https://animals.sandiegozoo.org/animals/snow-leopard) supports the
+small rounded ears, alpine camouflage, crepuscular activity and use of the tail for balance and
+warmth. The scenario's exact enclosure area, speeds, ration, price and appeal remain gameplay
+estimates rather than source claims.
+
+The dedicated models use a low continuous cat torso, small rounded ears, broad snow paws and a
+thick 0.91-body-length tail. Open flank rosettes, smaller head and leg spots, a pale underside and
+broken tail rings are procedural 1,024 px textures over a winter-coat normal map. The cub has a
+shorter 0.39 m shoulder and 0.74 m body, proportionally broader skull, larger eyes and paws, and
+shorter-stride locomotion. Both have 33 bones and the standard eight clips. The adult is 20,028
+triangles and 3,124,016 bytes; the cub is 18,028 triangles and 2,781,324 bytes. These are visibly
+stylised procedural animals, not photogrammetry: the key silhouette reads from zoo distance, but
+close views retain lofted shoulder and hip forms. Adult turntable, cub viewer frame and the
+inspected in-game habitat view are collected in
+`evidence/snow-leopard-heights-j81-2026-11-21.jpg`.
 
 ### Red panda mother and cubs (2026-11-21)
 

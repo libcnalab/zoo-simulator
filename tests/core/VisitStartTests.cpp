@@ -25,7 +25,7 @@ TEST(VisitStart, MatchesGameSequence) {
     original.Guests().SetPace(options.pace);
     original.SetCalendar(options.day, options.hour);
     original.SetDayPace(0);
-    const std::int64_t before = options.fillTicks * 3 / 5;
+    const std::int64_t before = options.fillTicks * 4 / 5;
     VisitorPace filling = options.pace;
     filling.arrivals = options.fillArrivals;
     original.Guests().SetPace(filling);
@@ -85,16 +85,19 @@ TEST(VisitStart, MatchesGameSequence) {
 // twenty percent larger and its connected northern woodland circuit has its own rest facilities;
 // Lynx Ridge occupies that new land with a mother and two kittens; Red Panda Canopy adds a mother
 // and two dependent cubs, a western gallery and its drinks service; keeper rounds remain globally
-// shortest after the expansion rather than leaving the two far ends as one 204-metre pair).
+// shortest after the expansion rather than leaving the two far ends as one 204-metre pair;
+// a second 20,480-square-metre northern stage adds Snow Leopard Heights, two connected approaches,
+// a mother and two cubs, redundant water points for the three shy northern species, and the
+// visitor spread happens after four fifths of the fill so all seventeen fronts get a group).
 void CheckFillHashes(std::int64_t ticks) {
     constexpr std::array<std::array<std::uint64_t, 2>, 3> shortHashes{
-        {{9189558889285717062ULL, 5851662021286206431ULL},
-         {6187100894483772529ULL, 5468215856064001408ULL},
-         {5053765842369807655ULL, 296767987657518656ULL}}};
+        {{594257938472033448ULL, 14337973029496189051ULL},
+         {15406606244450351165ULL, 1215235191448489462ULL},
+         {6169501891789178616ULL, 12609309977693402985ULL}}};
     constexpr std::array<std::array<std::uint64_t, 2>, 3> fullHashes{
-        {{16658822985523581208ULL, 2683378792623248226ULL},
-         {7617932910519089239ULL, 1349239739326152201ULL},
-         {2501148456037985372ULL, 9105269680446185720ULL}}};
+        {{9176597010523512527ULL, 11178446725631306708ULL},
+         {10900274889816509035ULL, 9192663283298467455ULL},
+         {9886221438050585804ULL, 15338513518932663782ULL}}};
     for (const std::uint64_t seed : {1ULL, 2ULL, 3ULL}) {
         Zoo zoo(testdata::GameCatalog(), testdata::GameSpecies(), VisitorZooConfig(seed));
         BuildVisitorZoo(zoo);

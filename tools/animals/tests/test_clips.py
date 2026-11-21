@@ -23,6 +23,7 @@ CATS = ["lion", "lion_female", "lion_juvenile", "tiger", "tiger_female"]
 SPECIES = ["lion", "lion_female", "lion_juvenile", "tiger", "tiger_female",
            "wolf", "wolf_female",
            "wolf_juvenile", "lynx", "lynx_juvenile", "red_panda", "red_panda_juvenile",
+           "snow_leopard", "snow_leopard_juvenile",
            "meerkat_juvenile",
            "brown_bear", "brown_bear_female", "polar_bear", "polar_bear_female",
            "brown_bear_juvenile", "polar_bear_juvenile",

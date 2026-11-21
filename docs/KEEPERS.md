@@ -45,7 +45,10 @@ zoo happens half way through the job.
   `Staff::NextFeeding`).
 - **Routine by the hour.** Mucking out (raking, the wheelbarrow) in the morning, hosing at
   the water's edge, fence checks with a clipboard, a breather at midday, a walk round at
-  night. A habitat dirtier than 0.25 is raked whatever the hour.
+  night. A habitat dirtier than 0.25 is raked whatever the hour. Residents at or above 0.6
+  shyness are serviced from the public side instead of repeatedly being displaced from food and
+  water by routine entry; Greenhill gives each of its three such northern habitats two separated
+  troughs.
 - **Dangerous species.** Feeding, watering, fence checks and sweeping remain on the public
   side. When dirt reaches 0.18 (and periodically every third visit), the keeper operates a
   four-second secure control at the service gate. Every animal in the habitat must fit into an open,
@@ -227,8 +230,13 @@ the greedy fallback leave Lynx Ridge and Red Panda Canopy as its final pair: one
 204 m cross-zoo round. J80's bit-mask solver finds the global minimum without enumerating every
 pairing. No two-stop round is now 100 m or longer. The staffed week records 18 animal-hours in
 need against 20 under automatic care (worst hunger 0.702 against 0.745); at visitor pace the
-comparison is 10 against 13 (0.628 against 0.681). The crew size remains eight keepers, a
-gardener and a cleaner.
+comparison is 10 against 13 (0.628 against 0.681). J81's second northern stage raises the zoo to
+17 habitats and nine keepers; Snow Leopard Heights is the odd habitat with its own keeper. Two
+water points in each very shy northern habitat keep feeding and watering outside; inspections are
+also outside, with one brief inside rake per round so manure cannot accumulate. The new layout's
+staffed week records 13 animal-hours in need against automatic care's 26, and the visitor-paced
+morning 21 against 30. A lockout is owned by the keeper operating it: other staff cannot use its
+open gate as a shortcut. The full crew is now nine keepers, a gardener and a cleaner.
 The comparison still keeps its separate
 aggregate, duration and peak checks rather than allowing one good average to hide a stranded animal.
 
@@ -254,7 +262,7 @@ of its own for every job (a lean, a squat, the hands placed and the arms solved)
 and out so that a rake does not turn into a bucket in the hands. The tools are coloured
 triangles built every frame for those in view (bucket, wheelbarrow, rake, broom, hose with its
 jet, clipboard, sack, trowel, watering can) and drawn in two calls for the whole crew; they
-cast soft projected contact shadows, as does each member. All ten members of Greenhill's crew
+cast soft projected contact shadows, as does each member. All eleven members of Greenhill's crew
 fit the 12-nearest full-avatar budget; nobody beyond 150 m is drawn. The bounded headroom admits
 a somewhat larger built-in zoo without letting a damaged or imported save request hundreds of
 CNA avatars in one frame. A warning-clean game build, a real 626-visitor offscreen run at a
