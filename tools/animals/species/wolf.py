@@ -4,9 +4,36 @@ from zoogen import quadruped as quad
 from zoogen.wild_quadruped import make_wild_quadruped
 
 
-def make_spec(juvenile=False):
+FEMALE_RELATIVE_HEIGHT = .95
+
+
+def _female_shape(spec):
+    """Give the adult female Yellowstone's modestly smaller, lighter outline."""
+    factors = {"torso": .94, "neck": .94, "neck_ruff": .90,
+               "skull": .95, "jaw": .95,
+               "front_leg.L": .94, "hind_leg.L": .94,
+               "front_paw.L": .94, "hind_paw.L": .94,
+               "tail": .93, "tail_tuft": .92}
+    for part in spec.parts:
+        factor = factors.get(part.name)
+        if factor is None:
+            continue
+        for ring in part.rings:
+            ring.ry *= factor
+            ring.up *= factor
+            ring.dn *= factor
+    spec.name = "wolf_female"
+    spec.meta.update({"common_name": "Grey wolf female", "sex": "female",
+                      "variant_of": "wolf", "variant": "female",
+                      "relative_height": FEMALE_RELATIVE_HEIGHT,
+                      "age_shape": "Adult female: slightly shorter and lighter than the male"})
+
+
+def make_spec(juvenile=False, female=False):
+    if juvenile and female:
+        raise ValueError("juvenile and female wolf variants are mutually exclusive")
     height = .46 if juvenile else .8
-    return make_wild_quadruped({
+    spec = make_wild_quadruped({
         "name": "wolf_juvenile" if juvenile else "wolf",
         "kind": "wolf",
         "common_name": "Grey wolf",
@@ -41,3 +68,6 @@ def make_spec(juvenile=False):
                   "age_shape": "Older pup: shorter muzzle and body, broader skull and paws"}
                  if juvenile else {}),
     })
+    if female:
+        _female_shape(spec)
+    return spec

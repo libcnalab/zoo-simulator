@@ -20,7 +20,8 @@ from zoogen import geom, quadruped  # noqa: E402
 from zoogen.rig import Pose, Solver, quat_from_matrix, rot_x, rot_y, rot_z  # noqa: E402
 
 CATS = ["lion", "lion_female", "lion_juvenile", "tiger"]
-SPECIES = ["lion", "lion_female", "lion_juvenile", "tiger", "wolf", "wolf_juvenile",
+SPECIES = ["lion", "lion_female", "lion_juvenile", "tiger", "wolf", "wolf_female",
+           "wolf_juvenile",
            "meerkat_juvenile",
            "brown_bear", "polar_bear",
            "brown_bear_juvenile", "polar_bear_juvenile",
@@ -489,8 +490,22 @@ class AnatomyTests(unittest.TestCase):
         self.assertAlmostEqual(clips["walk"]["speed"], .72, delta=.02)
         self.assertAlmostEqual(clips["trot"]["speed"], 1.65, delta=.02)
 
+    def test_wolf_female_is_modestly_smaller_and_lighter(self):
+        male = importlib.import_module("species.wolf").make_spec()
+        female = importlib.import_module("species.wolf_female").make_spec()
+        male_parts = {part.name: part for part in male.parts}
+        female_parts = {part.name: part for part in female.parts}
+        for part, ring in (("torso", 2), ("neck_ruff", 1), ("skull", 1),
+                           ("front_leg.L", 1), ("front_paw.L", 1), ("tail_tuft", 1)):
+            self.assertLess(female_parts[part].rings[ring].ry,
+                            male_parts[part].rings[ring].ry, part)
+        self.assertEqual(female.meta["variant_of"], "wolf")
+        self.assertEqual(female.meta["variant"], "female")
+        self.assertEqual(female.meta["sex"], "female")
+        self.assertAlmostEqual(female.meta["relative_height"], .95)
+
     def test_wolves_have_a_double_coat_ruff_and_tapered_brush(self):
-        for species in ("wolf", "wolf_juvenile"):
+        for species in ("wolf", "wolf_female", "wolf_juvenile"):
             spec = importlib.import_module("species." + species).make_spec()
             parts = {part.name: part for part in spec.parts}
             self.assertIsNotNone(spec.surface_height)
@@ -506,7 +521,8 @@ class AnatomyTests(unittest.TestCase):
 
     def test_wolf_exports_carry_the_coat_normal_map_and_tangents(self):
         root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
-        for species, triangle_limit in (("wolf", 20000), ("wolf_juvenile", 17000)):
+        for species, triangle_limit in (("wolf", 20000), ("wolf_female", 20000),
+                                        ("wolf_juvenile", 17000)):
             glb = os.path.join(root, "assets", "animals", species + ".glb")
             with open(glb, "rb") as source:
                 self.assertEqual(source.read(4), b"glTF")

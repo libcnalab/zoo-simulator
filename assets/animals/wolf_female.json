@@ -1,0 +1,139 @@
+{
+  "bones": 33,
+  "clips": [
+    {
+      "duration": 6.0,
+      "events": [],
+      "frames": 181,
+      "loop": true,
+      "name": "idle",
+      "speed": 0.0
+    },
+    {
+      "duration": 1.1333,
+      "events": [
+        {
+          "name": "step",
+          "time": 0.0
+        },
+        {
+          "name": "step",
+          "time": 0.2833
+        },
+        {
+          "name": "step",
+          "time": 0.5667
+        },
+        {
+          "name": "step",
+          "time": 0.85
+        }
+      ],
+      "frames": 35,
+      "loop": true,
+      "name": "walk",
+      "speed": 1.2
+    },
+    {
+      "duration": 0.6333,
+      "events": [
+        {
+          "name": "step",
+          "time": 0.0
+        },
+        {
+          "name": "step",
+          "time": 0.0
+        },
+        {
+          "name": "step",
+          "time": 0.3167
+        },
+        {
+          "name": "step",
+          "time": 0.3167
+        }
+      ],
+      "frames": 20,
+      "loop": true,
+      "name": "trot",
+      "speed": 2.4
+    },
+    {
+      "duration": 3.0,
+      "events": [],
+      "frames": 91,
+      "loop": true,
+      "name": "eat",
+      "speed": 0.0
+    },
+    {
+      "duration": 2.4,
+      "events": [],
+      "frames": 73,
+      "loop": true,
+      "name": "drink",
+      "speed": 0.0
+    },
+    {
+      "duration": 8.0,
+      "events": [],
+      "frames": 241,
+      "loop": true,
+      "name": "rest",
+      "speed": 0.0
+    },
+    {
+      "duration": 8.0,
+      "events": [],
+      "frames": 241,
+      "loop": true,
+      "name": "sleep",
+      "speed": 0.0
+    },
+    {
+      "duration": 2.6,
+      "events": [
+        {
+          "name": "call",
+          "time": 0.572
+        }
+      ],
+      "frames": 79,
+      "loop": false,
+      "name": "vocalize",
+      "speed": 0.0
+    }
+  ],
+  "generator": "tools/animals (zoogen)",
+  "license": "MIT",
+  "meta": {
+    "age_shape": "Adult female: slightly shorter and lighter than the male",
+    "body_length_m": 1.5,
+    "common_name": "Grey wolf female",
+    "relative_height": 0.95,
+    "roughness": 0.9,
+    "scientific_name": "Canis lupus",
+    "sex": "female",
+    "shoulder_height_m": 0.8,
+    "surface_detail": "anisotropic double-coat normal map",
+    "variant": "female",
+    "variant_of": "wolf"
+  },
+  "name": "wolf_female",
+  "skeleton_bounds_animal_space": {
+    "max": [
+      0.735,
+      0.096,
+      0.824
+    ],
+    "min": [
+      -1.005,
+      -0.096,
+      0.0
+    ]
+  },
+  "texture": 1024,
+  "triangles": 18528,
+  "vertices": 9272
+}

@@ -47,7 +47,7 @@ while geometry, textures and animations remain identical.
 | `zoogen/scan.py` on a prepared third-party static sculpt, rigged by us (below) | zebra, zebra_female, zebra_juvenile |
 | `zoogen/giraffe2.py` on a prepared head-and-neck scan, body modelled by us (below) | giraffe, giraffe_female, giraffe_juvenile |
 | `zoogen/sculpt.py`, `bear.py` on a prepared third-party sculpt, rigged by us (below) | brown_bear, brown_bear_juvenile, polar_bear, polar_bear_juvenile |
-| `zoogen/quadruped.py`, `wild_quadruped.py`, `anatomy.py` | wolf, wolf_juvenile, camel, camel_female, camel_juvenile, meerkat, meerkat_juvenile |
+| `zoogen/quadruped.py`, `wild_quadruped.py`, `anatomy.py` | wolf, wolf_female, wolf_juvenile, camel, camel_female, camel_juvenile, meerkat, meerkat_juvenile |
 | `zoogen/birdscan.py` on a prepared third-party scan or sculpt, rigged by us (below) | penguin, penguin_juvenile, flamingo, flamingo_juvenile |
 | `zoogen/biped.py` | ostrich, ostrich_female, ostrich_juvenile, kangaroo, kangaroo_female, kangaroo_juvenile |
 
@@ -86,6 +86,26 @@ The inspected before/after viewers and a real seed-1 Wolf Wood run after 3,000 s
 are in `evidence/wolf-coat-j10-2026-11-20.jpg`. The relief, ruff and brush make the silhouette and
 lighting less toy-like, but the underlying lofted anatomy is still stylised rather than a scan;
 the deliberately large pup paws and rounded adult haunches remain visible limitations.
+
+### Adult grey-wolf female (2026-11-21)
+
+`wolf_female` gives Wolf Wood's adult female and her 1.3-year-old daughter their own body instead
+of the adult male model. The US National Park Service's Yellowstone account gives an average
+shoulder height of 77 cm for adult females and 81 cm for males, and an average mass of 41 kg
+against 50 kg ([National Park Service](https://www.nps.gov/yell/learn/nature/wolf.htm)). The
+game therefore uses a source-derived 95 %-height ratio. A modestly narrower torso, neck ruff,
+skull, legs, paws and tail makes the lighter build legible without turning a mature female into
+a juvenile. The grey coat is unchanged because the source describes grey and black pelage for
+the species rather than a sex-specific colour.
+
+The 18,528-triangle model has 33 manifest bones and the standard eight clips. Its 2.82 MB
+production GLB matches an independent single-threaded export byte for byte. The procedural tests
+check that the female is smaller without acquiring juvenile proportions, as well as anatomy,
+gait, clip contacts, texture maps and manifest. All 31 game-side tests pass, and a 3,000-tick
+AddressSanitizer Wolf Wood run imported the male, female and pup models and kept all six residents
+outside. The close `vocalize` viewer and habitat frame are in
+`evidence/wolf-female-j68-2026-11-21.jpg`. The slimmer silhouette is visible, while the rounded
+face and lofted joints remain limitations of the same stylised first-generation wolf anatomy.
 
 ### Meerkat pup (2026-11-20)
 
@@ -722,8 +742,8 @@ byte.
   animal younger than half its species' age of maturity with the juvenile one; a species without
   them uses the one model for everybody. A model is scaled by height:
   `species shoulder height x share of its sex x growth / meta.shoulder_height_m` of the model
-  drawn, so a variant states its own height. (Lion, elephant, zebra, rhinoceros, giraffe, wolf,
-  meerkat, ostrich, kangaroo, both bears and penguin have variants so far.)
+  drawn, so a variant states its own height. (Lion, elephant, zebra, rhinoceros, giraffe, camel,
+  wolf, meerkat, ostrich, kangaroo, both bears and penguin have variants so far.)
   Since J24 each alternate is imported only when a current animal needs it; a later birth or an
   animal growing into its adult female body loads that model on the following renderer update.
   Greenhill's adult-only brown- and polar-bear pairs therefore no longer retain their two unused
