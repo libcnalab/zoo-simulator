@@ -42,7 +42,7 @@ while geometry, textures and animations remain identical.
 
 | Generator | Species |
 |---|---|
-| `zoogen/sculpt.py`, `bigcat.py` on a prepared third-party sculpt (below) | lion, lion_female, lion_juvenile, tiger |
+| `zoogen/sculpt.py`, `bigcat.py` on a prepared third-party sculpt (below) | lion, lion_female, lion_juvenile, tiger, tiger_female |
 | `zoogen/rigged.py`, `pachyderm.py`, `pachyderm_motion.py` on a prepared third-party rigged model (below) | rhino, rhino_female, rhino_juvenile, elephant, elephant_female, elephant_juvenile |
 | `zoogen/scan.py` on a prepared third-party static sculpt, rigged by us (below) | zebra, zebra_female, zebra_juvenile |
 | `zoogen/giraffe2.py` on a prepared head-and-neck scan, body modelled by us (below) | giraffe, giraffe_female, giraffe_juvenile |
@@ -282,8 +282,8 @@ like the buck and joey retains the stylised first-generation face and lofted ana
 
 ### Big cats from a sculpt (2026-11-13)
 
-Procedural geometry did not reach a believable cat, so the lion, the lioness, the cub and
-the tiger are built on a professional sculpt under a licence that allows it: "Free strong
+Procedural geometry did not reach a believable cat, so the lion, lioness, cub, tiger and tigress
+are built on a professional sculpt under a licence that allows it: "Free strong
 lioness - 4k" by Pedro B. Goulart (Pebegou), CC BY 4.0 (`assets/ATTRIBUTION.md`). The licence was
 read on 2026-11-13 from Sketchfab's public record of the model
 (`api.sketchfab.com/v3/models/84d56e6cfcf247cb8fe468312f371677`: "CC Attribution",
@@ -301,6 +301,7 @@ eight clips are ours, as for every other species.
 | `lion_female` | 32,398 | 1.05 m | the game draws it for every female lion |
 | `lion_juvenile` | 23,122 | 0.45 m | drawn below half of the age of maturity |
 | `tiger` | 32,702 | 1.00 m | longer body, broad paws, striped coat, layered cheek ruff, `swim` |
+| `tiger_female` | 32,702 | 0.92 m | tigress: lighter build, the same striped coat, ruff and `swim` |
 
 (Triangles after S7, except the tiger after J16 and male lion after J17.)
 
@@ -309,7 +310,8 @@ Seen in Blender previews, in the game's viewer and in the lion habitat
 The male still has the lioness's head inside a dark collar (a real mane starts on the
 forehead and the cheeks and the skull is broader); the tiger's face markings and chest are
 visibly painted by rule and its body is a lioness's; the cub keeps adult shoulder muscles.
-No cub lives in the Visitor Zoo yet, so `lion_juvenile` is only seen in the viewer.
+Lion cubs now live with the pride in the Visitor Zoo; the original evidence retains the controlled
+viewer comparison.
 
 **Second pass (S7, 2026-11-14).** The sculpt's own material is used now: its 1024 px base
 colour, tangent-space normal map and packed occlusion map (`sources/bigcat/base.png`,
@@ -353,6 +355,26 @@ a tiger. The procedural face markings do not reach photograph quality, and the m
 cards at this point remained visible at arm's length. Screenshots of hair taken with `--screenshot` keep the
 cards' alpha in the PNG and can tint them grey even after flattening; the colour values above
 come from the embedded atlas (`docs/UPSTREAM.md`, ZOO-UP-002).
+
+**Adult Bengal tigress (J70, 2026-11-21).** `tiger_female` gives Tiger Forest's six-year-old
+female her own body instead of the adult male model. Smithsonian's National Zoo says females of
+all tiger subspecies tend to be smaller than males
+([Smithsonian](https://nationalzoo.si.edu/animals/tiger?tab=1)); it does not supply a Bengal
+shoulder-height ratio. The game's 92 %-height share is therefore a conservative visual
+approximation rather than a claimed biological constant. The tigress also has a modestly narrower
+head, chest, neck, forearms and paws. Her coat, irregular stripe pattern and 150-card cheek ruff
+remain the same because the source does not support sex-specific colour or markings.
+
+The 32,702-triangle, 33-bone model has the male's same ten clips, including the eight-second
+`bathe` wallow and 1.2-second `swim`; the latter scales to a 0.64 m waterline and 0.83 m/s. Its
+3.22 MB production GLB matches an independent single-threaded export byte for byte. Sixteen
+focused big-cat, material and wallow tests pass after a regression check lowered both front soles
+from 7.7 mm above the bind floor to effectively zero; full gait sliding and reach checks also
+pass. A 3,000-tick AddressSanitizer Tiger Forest run imported both adult models and kept the pair
+outside. The close wallow view and habitat frame are in
+`evidence/tiger-female-j70-2026-11-21.jpg`; the habitat HUD happens to identify seven-year-old
+male Dara while the female is visible near the shelter. Both models retain the known lioness-base
+body and rule-painted face limitations described above.
 
 **Lion mane (J17, 2026-11-20).** The opaque undercoat stays, but 1,879 mane cards are replaced
 by 2,199 locks (plus the unchanged 42-card tail tuft). Mane cards span 1.5–2.3 cm wide and at most
@@ -764,8 +786,8 @@ byte.
   animal younger than half its species' age of maturity with the juvenile one; a species without
   them uses the one model for everybody. A model is scaled by height:
   `species shoulder height x share of its sex x growth / meta.shoulder_height_m` of the model
-  drawn, so a variant states its own height. (Lion, elephant, zebra, rhinoceros, giraffe, camel,
-  wolf, meerkat, ostrich, kangaroo, both bears and penguin have variants so far.)
+  drawn, so a variant states its own height. (Lion, tiger, elephant, zebra, rhinoceros, giraffe,
+  camel, wolf, meerkat, ostrich, kangaroo, both bears and penguin have variants so far.)
   Since J24 each alternate is imported only when a current animal needs it; a later birth or an
   animal growing into its adult female body loads that model on the following renderer update.
   Greenhill's adult-only brown- and polar-bear pairs therefore no longer retain their two unused

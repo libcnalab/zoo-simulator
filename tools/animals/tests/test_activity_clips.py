@@ -52,6 +52,7 @@ EXPECTED = {
     "rhino": {"bathe": "bathe"},
     "rhino_juvenile": {"bathe": "bathe"},
     "tiger": {"bathe": "bathe"},
+    "tiger_female": {"bathe": "bathe"},
     "giraffe": {"browse": "browse", "ruminate": "ruminate"},
     "giraffe_female": {"browse": "browse", "ruminate": "ruminate"},
     "giraffe_juvenile": {"browse": "browse", "ruminate": "ruminate"},
@@ -268,7 +269,8 @@ class SocialTests(unittest.TestCase):
 class BatheTests(unittest.TestCase):
     def test_wallowing_species_lie_low_and_roll_their_bodies(self):
         species_names = ("brown_bear", "brown_bear_juvenile", "polar_bear",
-                         "polar_bear_juvenile", "rhino", "rhino_juvenile", "tiger")
+                         "polar_bear_juvenile", "rhino", "rhino_juvenile",
+                         "tiger", "tiger_female")
         for species in species_names:
             spec, solver, clips = clips_of(species)
             hips, chest_heights = [], []

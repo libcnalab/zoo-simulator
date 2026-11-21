@@ -1,0 +1,239 @@
+{
+  "bones": 33,
+  "clips": [
+    {
+      "duration": 6.0,
+      "events": [],
+      "frames": 181,
+      "loop": true,
+      "name": "idle",
+      "speed": 0.0
+    },
+    {
+      "duration": 0.8,
+      "events": [
+        {
+          "name": "step",
+          "time": 0.0
+        },
+        {
+          "name": "step",
+          "time": 0.2
+        },
+        {
+          "name": "step",
+          "time": 0.4
+        },
+        {
+          "name": "step",
+          "time": 0.6
+        }
+      ],
+      "frames": 25,
+      "loop": true,
+      "name": "walk",
+      "speed": 1.0
+    },
+    {
+      "duration": 0.5,
+      "events": [
+        {
+          "name": "step",
+          "time": 0.0
+        },
+        {
+          "name": "step",
+          "time": 0.0
+        },
+        {
+          "name": "step",
+          "time": 0.25
+        },
+        {
+          "name": "step",
+          "time": 0.25
+        }
+      ],
+      "frames": 16,
+      "loop": true,
+      "name": "trot",
+      "speed": 2.5
+    },
+    {
+      "duration": 3.0,
+      "events": [],
+      "frames": 91,
+      "loop": true,
+      "name": "eat",
+      "speed": 0.0
+    },
+    {
+      "duration": 2.4,
+      "events": [],
+      "frames": 73,
+      "loop": true,
+      "name": "drink",
+      "speed": 0.0
+    },
+    {
+      "duration": 8.0,
+      "events": [],
+      "frames": 241,
+      "loop": true,
+      "name": "rest",
+      "speed": 0.0
+    },
+    {
+      "duration": 8.0,
+      "events": [],
+      "frames": 241,
+      "loop": true,
+      "name": "sleep",
+      "speed": 0.0
+    },
+    {
+      "duration": 2.6,
+      "events": [
+        {
+          "name": "call",
+          "time": 0.572
+        }
+      ],
+      "frames": 79,
+      "loop": false,
+      "name": "vocalize",
+      "speed": 0.0
+    },
+    {
+      "duration": 8.0,
+      "events": [],
+      "frames": 241,
+      "loop": true,
+      "name": "bathe",
+      "speed": 0.0
+    },
+    {
+      "duration": 1.2,
+      "events": [],
+      "frames": 37,
+      "loop": true,
+      "name": "swim",
+      "speed": 0.828
+    }
+  ],
+  "generator": "tools/animals (zoogen)",
+  "license": "CC-BY-4.0",
+  "meta": {
+    "activity_clips": {
+      "bathe": "bathe"
+    },
+    "asset_license": "CC-BY-4.0",
+    "cheek_ruff_cards": 150,
+    "cheek_ruff_revision": "Layered warm cream locks with irregular roots",
+    "common_name": "Bengal tiger",
+    "material_source": "adapted authored base, normal and occlusion",
+    "preparation_version": 2,
+    "proportion_edits": {
+      "chest": {
+        "scale": [
+          1,
+          1.03,
+          1.02
+        ]
+      },
+      "ear": {
+        "scale": [
+          0.7,
+          0.7,
+          0.48
+        ]
+      },
+      "fingers": {
+        "scale": [
+          1.14,
+          1.18,
+          1
+        ]
+      },
+      "forearm": {
+        "scale": [
+          1.03,
+          1.08,
+          1
+        ]
+      },
+      "head": {
+        "scale": [
+          0.93,
+          1.22,
+          1.18
+        ]
+      },
+      "hips": {
+        "scale": [
+          1.23,
+          1.04,
+          1
+        ]
+      },
+      "neck1": {
+        "offset": [
+          0,
+          0,
+          -0.035
+        ],
+        "scale": [
+          0.78,
+          1.12,
+          1
+        ]
+      },
+      "scapula": {
+        "scale": [
+          1,
+          1,
+          0.98
+        ]
+      },
+      "spine1": {
+        "offset": [
+          0.1,
+          0,
+          0
+        ]
+      }
+    },
+    "relative_height": 0.92,
+    "roughness": 0.84,
+    "scientific_name": "Panthera tigris tigris",
+    "sex": "female",
+    "shoulder_height_m": 0.92,
+    "source_author": "Pedro B. Goulart (Pebegou)",
+    "source_title": "Free strong lioness - 4k",
+    "source_url": "https://sketchfab.com/3d-models/free-strong-lioness-4k-84d56e6cfcf247cb8fe468312f371677",
+    "swim": {
+      "clip": "swim",
+      "depth_m": 0.644,
+      "speed_mps": 0.8280000000000001
+    },
+    "variant": "female",
+    "variant_of": "tiger",
+    "water_origin_convention": "Place the asset origin at water surface - depth_m"
+  },
+  "name": "tiger_female",
+  "skeleton_bounds_animal_space": {
+    "max": [
+      1.3234,
+      0.161,
+      0.9831
+    ],
+    "min": [
+      -1.1222,
+      -0.161,
+      0.0
+    ]
+  },
+  "texture": 1024,
+  "triangles": 32702,
+  "vertices": 17183
+}

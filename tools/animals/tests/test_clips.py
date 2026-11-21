@@ -19,8 +19,9 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from zoogen import geom, quadruped  # noqa: E402
 from zoogen.rig import Pose, Solver, quat_from_matrix, rot_x, rot_y, rot_z  # noqa: E402
 
-CATS = ["lion", "lion_female", "lion_juvenile", "tiger"]
-SPECIES = ["lion", "lion_female", "lion_juvenile", "tiger", "wolf", "wolf_female",
+CATS = ["lion", "lion_female", "lion_juvenile", "tiger", "tiger_female"]
+SPECIES = ["lion", "lion_female", "lion_juvenile", "tiger", "tiger_female",
+           "wolf", "wolf_female",
            "wolf_juvenile",
            "meerkat_juvenile",
            "brown_bear", "polar_bear",
@@ -1030,19 +1031,37 @@ class SculptCatTests(unittest.TestCase):
             self.assertEqual(contacts, ["HL", "FL", "HR", "FR"], species)
 
     def test_tiger_swim_has_alternating_airborne_paw_strokes(self):
-        spec, solver = make_solver("tiger")
-        swim = next(clip for clip in spec.clips(solver) if clip.name == "swim")
-        self.assertEqual(swim.contact_keys, [])
-        self.assertAlmostEqual(swim.speed, .9)
-        front_x = {key: [] for key in ("FL", "FR")}
-        for phase in np.linspace(0, 1, 17, endpoint=False):
-            world = solver.solve(swim.pose(float(phase)))
-            for key, leg in solver.rig.legs.items():
-                self.assertGreater(world[leg.toes][2, 3], solver.toe_base(key)[2] + .08)
-                if key in front_x:
-                    front_x[key].append(world[leg.toes][0, 3])
-        for positions in front_x.values():
-            self.assertGreater(max(positions) - min(positions), .30)
+        for species in ("tiger", "tiger_female"):
+            spec, solver = make_solver(species)
+            height = spec.meta["shoulder_height_m"]
+            swim = next(clip for clip in spec.clips(solver) if clip.name == "swim")
+            self.assertEqual(swim.contact_keys, [])
+            self.assertAlmostEqual(swim.speed, .9 * height)
+            front_x = {key: [] for key in ("FL", "FR")}
+            for phase in np.linspace(0, 1, 17, endpoint=False):
+                world = solver.solve(swim.pose(float(phase)))
+                for key, leg in solver.rig.legs.items():
+                    self.assertGreater(world[leg.toes][2, 3],
+                                       solver.toe_base(key)[2] + .08 * height)
+                    if key in front_x:
+                        front_x[key].append(world[leg.toes][0, 3])
+            for positions in front_x.values():
+                self.assertGreater(max(positions) - min(positions), .30 * height)
+
+    def test_tigress_is_smaller_and_more_lightly_built(self):
+        male, _ = make_solver("tiger")
+        female, _ = make_solver("tiger_female")
+        self.assertAlmostEqual(female.meta["relative_height"], .92)
+        self.assertLess(female.meta["shoulder_height_m"], male.meta["shoulder_height_m"])
+
+        def width(spec, names):
+            data = spec.sculpt
+            indices = [data["bone_names"].tolist().index(name) for name in names]
+            selected = data["weights"][:, indices].sum(axis=1) > .7
+            return np.ptp(data["vertices"][selected, 1]) / spec.meta["shoulder_height_m"]
+
+        self.assertLess(width(female, ("head", "jaw")), width(male, ("head", "jaw")))
+        self.assertLess(width(female, ("chest",)), width(male, ("chest",)))
 
     def test_cat_manifests_and_export_budgets(self):
         root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
@@ -1055,25 +1074,30 @@ class SculptCatTests(unittest.TestCase):
             self.assertEqual(manifest["license"], "CC-BY-4.0")
             clips = {clip["name"]: clip for clip in manifest["clips"]}
             expected = {"idle", "walk", "trot", "eat", "drink", "rest", "sleep", "vocalize"}
-            if species == "tiger":
+            if species.startswith("tiger"):
                 expected.update(("bathe", "swim"))
             else:
                 expected.add("nuzzle")
             self.assertEqual(set(clips), expected)
-            expected_height = dict(lion=1.15, lion_female=1.05, lion_juvenile=.45, tiger=1.0)[species]
+            expected_height = dict(lion=1.15, lion_female=1.05, lion_juvenile=.45,
+                                   tiger=1.0, tiger_female=.92)[species]
             self.assertAlmostEqual(manifest["meta"]["shoulder_height_m"], expected_height)
             if species.startswith("lion_"):
                 self.assertEqual(manifest["meta"]["variant_of"], "lion")
                 self.assertEqual(manifest["meta"]["variant"], species[5:])
             if species == "lion_female":
                 self.assertAlmostEqual(manifest["meta"]["relative_height"], .91)
+            if species == "tiger_female":
+                self.assertEqual(manifest["meta"]["variant_of"], "tiger")
+                self.assertEqual(manifest["meta"]["variant"], "female")
+                self.assertAlmostEqual(manifest["meta"]["relative_height"], .92)
             if species == "lion_juvenile":
                 self.assertAlmostEqual(clips["walk"]["speed"], .6, delta=.02)
                 self.assertAlmostEqual(clips["trot"]["speed"], 1.5, delta=.02)
-            if species == "tiger":
+            if species.startswith("tiger"):
                 self.assertEqual(manifest["meta"]["swim"]["clip"], "swim")
-                self.assertAlmostEqual(manifest["meta"]["swim"]["depth_m"], .70)
-                self.assertAlmostEqual(manifest["meta"]["swim"]["speed_mps"], .90)
+                self.assertAlmostEqual(manifest["meta"]["swim"]["depth_m"], .70 * expected_height)
+                self.assertAlmostEqual(manifest["meta"]["swim"]["speed_mps"], .90 * expected_height)
             with open(os.path.join(root, "assets", "animals", species + ".glb"), "rb") as source:
                 header = source.read(12)
                 self.assertEqual(header[:4], b"glTF")
