@@ -600,3 +600,18 @@ Two 70-frame software-GL visits measured 0.05 ms per frame for animal identifica
 while looking at the kiosk that hid Ines and 0.06 ms looking past the restroom towards
 Sara. Each timing covers the last 29 frame intervals and includes the existing checks
 against animated bodies and trees.
+
+## Fences in the sightline (2026-11-21)
+
+In seed 1 the fence batch draws 261,618 triangles. During construction, each row of
+up to eight tiles records the bounds of the opaque vertices it actually wrote. This
+includes sloping rails, posts, gates and the ticket lodge attached to the entrance arch.
+A visit groups those bounds in squares of 32 tiles. Only rows intersected by the
+sightline rebuild their triangles for testing. The cache keeps the last 32 rows and
+discards them when a fence batch is rebuilt.
+
+From the public path at the camel paddock, animal identification took 0.11 ms per
+frame with the crosshair on the board and 0.11 ms with it on Ines's head. Checking
+every row's bounds individually in the first implementation took 0.32 and 0.30 ms
+from those spots. All four measurements cover the last 29 intervals of a 70-frame
+software-GL visit with 800 visitors, 107 animals and 7× binoculars.

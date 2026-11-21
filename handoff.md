@@ -41,9 +41,12 @@ whatever you take up (`docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `docs/V
   both views. Solid building surfaces now hide cards too. The west restroom hides Sara
   and a kiosk hides Ines. Moving along the public path reveals them again.
   See `docs/evidence/buildings-and-animal-cards-2026-11-21.jpg`. Individual leaf
-  textures and visitors remain outside the visibility check.
-  All 331 active native tests passed, including the pavilion's open bays and solid
-  walls. The unchanged animation suite passed all 162 Python cases.
+  textures and visitors remain outside the visibility check. Opaque parts of fences
+  also hide the name. From `173,265` the paddock rail obscures Ines at yaw/pitch
+  `83.88,-1.77`. Turning to `86.85,-3.50` reveals her head from the same spot.
+  See `docs/evidence/camel-paddock-binoculars-2026-11-21.jpg`.
+  All 333 active native tests passed, including open pavilion bays, sloping rails,
+  fence posts, viewing glass and wire mesh. The unchanged animation suite passed all 162 Python cases.
 - A Linux desktop visit now shares identical animal textures across models. Seed 1 at
   13:00 avoids 14 duplicate uploads totalling 64.0 MiB for its 107 animals. Matched
   Lion Rock screenshots with visitor drawing disabled agree at every RGB pixel.

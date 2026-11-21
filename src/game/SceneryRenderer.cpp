@@ -13,6 +13,7 @@
 #include "BuildingModels.hpp"
 #include "FenceModels.hpp"
 #include "GroundPaint.hpp"
+#include "ModelSight.hpp"
 #include "PlantModels.hpp"
 #include "PropModels.hpp"
 #include "zoo/sim/Zoo.hpp"
@@ -76,6 +77,129 @@ int AnimalSide(const zoo::World& world, const zoo::EdgeRef& edge) {
     return publicBehind ? 1 : -1;
 }
 
+// The batch keeps its original panel and post order, including across material changes.
+// Each short row records only its opaque bounds. Its triangles are rebuilt on first sight.
+struct FenceRow {
+    int first, end, z;
+    bool posts;
+    Microsoft::Xna::Framework::BoundingBox bounds;
+};
+
+struct FenceGroup {
+    Microsoft::Xna::Framework::BoundingBox bounds;
+    std::vector<FenceRow> rows;
+
+    void Add(const FenceRow& row) {
+        bounds = rows.empty() ? row.bounds : Microsoft::Xna::Framework::BoundingBox::CreateMerged(bounds, row.bounds);
+        rows.push_back(row);
+    }
+};
+
+void WritePanel(ModelBuilder& model, const zoo::World& world, const zoo::Catalog& catalog, int x, int z) {
+    for (const bool horizontal : {true, false}) {
+        const zoo::EdgeRef edge{x, z, horizontal};
+        if (!world.EdgeInBounds(edge)) {
+            continue;
+        }
+        const zoo::Fence fence = world.FenceAt(edge);
+        FenceLook look;
+        if (!LookOf(catalog, fence, look)) {
+            continue;
+        }
+        if (IsEntrance(fence)) {
+            // The entrance stands open under its arch, built once per gateway.
+            if (horizontal && !IsEntrance(world.FenceAt({x - 1, z, true}))) {
+                int run = 1;
+                while (world.EdgeInBounds({x + run, z, true}) &&
+                       IsEntrance(world.FenceAt({x + run, z, true}))) {
+                    ++run;
+                }
+                float ground = world.VertexHeight(x, z);
+                for (int i = 1; i <= run; ++i) {
+                    ground = std::min(ground, world.VertexHeight(x + i, z));
+                }
+                const float width = static_cast<float>(run) * kTile;
+                model.SetTransform(
+                    Matrix::CreateTranslation(static_cast<float>(x) * kTile + width * 0.5f, ground,
+                                              static_cast<float>(z) * kTile));
+                BuildEntranceArch(model, width);
+                model.ClearTransform();
+            }
+            continue;
+        }
+        const Vector3 a = VertexAt(world, x, z);
+        const Vector3 b = horizontal ? VertexAt(world, x + 1, z) : VertexAt(world, x, z + 1);
+        if (look.heavy || look.style == zoo::FenceStyle::Moat) {
+            look.inward = AnimalSide(world, edge);
+        }
+        BuildFencePanel(model, look, a, b, fence.gate,
+                        Scramble(static_cast<std::uint32_t>(x), static_cast<std::uint32_t>(z),
+                                 horizontal ? 1u : 2u));
+    }
+}
+
+void WritePost(ModelBuilder& model, const zoo::World& world, const zoo::Catalog& catalog, int vx, int vz) {
+    const zoo::EdgeRef around[4] = {
+        {vx - 1, vz, true}, {vx, vz, true}, {vx, vz - 1, false}, {vx, vz, false}};
+    FenceLook best;
+    bool any = false;
+    bool gatePost = false;
+    bool entrance = false;
+    for (const zoo::EdgeRef& edge : around) {
+        if (!world.EdgeInBounds(edge)) {
+            continue;
+        }
+        const zoo::Fence fence = world.FenceAt(edge);
+        FenceLook look;
+        if (!LookOf(catalog, fence, look) || look.style == zoo::FenceStyle::Hedge) {
+            continue;
+        }
+        entrance = entrance || IsEntrance(fence);
+        gatePost = gatePost || fence.gate;
+        if (!any || look.height > best.height) {
+            best = look;
+        }
+        any = true;
+    }
+    // The arch has pillars of its own, and no posts stand in the gateway.
+    if (any && !entrance) {
+        BuildFencePost(model, best, VertexAt(world, vx, vz), gatePost);
+    }
+}
+
+// ModelBuilder appends vertices to persistent material streams. Advance one cursor per
+// material so even an arch extending beyond its row gets the bounds of its actual mesh.
+std::optional<Microsoft::Xna::Framework::BoundingBox> OpaqueBoundsSince(
+    const ModelBuilder& model, std::vector<std::size_t>& cursors) {
+    using Microsoft::Xna::Framework::BoundingBox;
+    std::optional<BoundingBox> bounds;
+    cursors.resize(model.Parts().size());
+    for (std::size_t i = 0; i < cursors.size(); ++i) {
+        const auto& part = model.Parts()[i];
+        const auto& positions = part.writer.mesh.positions;
+        const auto first = cursors[i];
+        cursors[i] = positions.size();
+        if (first == positions.size() || !BlocksAnimalSight(part.finish.pattern))
+            continue;
+        if (!bounds)
+            bounds.emplace(positions[first], positions[first]);
+        for (std::size_t j = first; j < positions.size(); ++j) {
+            bounds->Min = Vector3::Min(bounds->Min, positions[j]);
+            bounds->Max = Vector3::Max(bounds->Max, positions[j]);
+        }
+    }
+    return bounds;
+}
+
+void WriteRow(ModelBuilder& model, const zoo::World& world, const zoo::Catalog& catalog, const FenceRow& row) {
+    for (int x = row.first; x < row.end; ++x) {
+        if (row.posts)
+            WritePost(model, world, catalog, x, row.z);
+        else
+            WritePanel(model, world, catalog, x, row.z);
+    }
+}
+
 }  // namespace
 
 struct SceneryRenderer::Cell {
@@ -84,6 +208,7 @@ struct SceneryRenderer::Cell {
     int x0 = 0, z0 = 0, x1 = 0, z1 = 0;
     bool lastX = false, lastZ = false;
     StaticBatch fences;
+    std::vector<FenceGroup> fenceGroups;
     StaticBatch objects;
     struct Building {
         const BuildingSight* sight;
@@ -127,6 +252,11 @@ struct SceneryRenderer::Grove {
     }
 };
 
+struct SceneryRenderer::FenceGeometry {
+    const FenceRow* row = nullptr;
+    CnaEngine::Collision::StaticWorld solids{1.0f};
+};
+
 struct SceneryRenderer::TreeGeometry {
     zoo::PropId id;
     PlantDetail detail;
@@ -160,6 +290,7 @@ SceneryRenderer::SceneryRenderer(Microsoft::Xna::Framework::Graphics::GraphicsDe
 SceneryRenderer::~SceneryRenderer() = default;
 
 void SceneryRenderer::Layout(const zoo::World& world) {
+    fenceGeometry_.clear();
     cells_.clear();
     treeGeometry_.clear();
     holdingGates_.clear();
@@ -346,83 +477,26 @@ std::uint64_t SceneryRenderer::ObjectHash(const zoo::World& world, const zoo::Zo
 
 void SceneryRenderer::BuildFences(const zoo::World& world, Cell& cell) {
     ModelBuilder model;
+    fenceGeometry_.clear();
+    cell.fenceGroups.clear();
     const int xEnd = cell.lastX ? cell.x1 + 1 : cell.x1;
     const int zEnd = cell.lastZ ? cell.z1 + 1 : cell.z1;
-
-    // Panels.
-    for (int z = cell.z0; z < zEnd; ++z) {
-        for (int x = cell.x0; x < xEnd; ++x) {
-            for (const bool horizontal : {true, false}) {
-                const zoo::EdgeRef edge{x, z, horizontal};
-                if (!world.EdgeInBounds(edge)) {
-                    continue;
+    std::vector<std::size_t> cursors;
+    constexpr int rowTiles = 8;
+    constexpr int groupTiles = 32;
+    const int columns = (xEnd - cell.x0 + groupTiles - 1) / groupTiles;
+    const int lines = (zEnd - cell.z0 + groupTiles - 1) / groupTiles;
+    cell.fenceGroups.resize(static_cast<std::size_t>(columns * lines));
+    for (const bool posts : {false, true}) {
+        for (int z = cell.z0; z < zEnd; ++z) {
+            for (int x = cell.x0; x < xEnd; x += rowTiles) {
+                FenceRow row{x, std::min(x + rowTiles, xEnd), z, posts, {}};
+                WriteRow(model, world, catalog_, row);
+                if (const auto bounds = OpaqueBoundsSince(model, cursors)) {
+                    row.bounds = *bounds;
+                    const int group = (z - cell.z0) / groupTiles * columns + (x - cell.x0) / groupTiles;
+                    cell.fenceGroups[static_cast<std::size_t>(group)].Add(row);
                 }
-                const zoo::Fence fence = world.FenceAt(edge);
-                FenceLook look;
-                if (!LookOf(catalog_, fence, look)) {
-                    continue;
-                }
-                if (IsEntrance(fence)) {
-                    // The entrance stands open under its arch, built once per gateway.
-                    if (horizontal && !IsEntrance(world.FenceAt({x - 1, z, true}))) {
-                        int run = 1;
-                        while (world.EdgeInBounds({x + run, z, true}) &&
-                               IsEntrance(world.FenceAt({x + run, z, true}))) {
-                            ++run;
-                        }
-                        float ground = world.VertexHeight(x, z);
-                        for (int i = 1; i <= run; ++i) {
-                            ground = std::min(ground, world.VertexHeight(x + i, z));
-                        }
-                        const float width = static_cast<float>(run) * kTile;
-                        model.SetTransform(
-                            Matrix::CreateTranslation(static_cast<float>(x) * kTile + width * 0.5f, ground,
-                                                      static_cast<float>(z) * kTile));
-                        BuildEntranceArch(model, width);
-                        model.ClearTransform();
-                    }
-                    continue;
-                }
-                const Vector3 a = VertexAt(world, x, z);
-                const Vector3 b = horizontal ? VertexAt(world, x + 1, z) : VertexAt(world, x, z + 1);
-                if (look.heavy || look.style == zoo::FenceStyle::Moat) {
-                    look.inward = AnimalSide(world, edge);
-                }
-                BuildFencePanel(model, look, a, b, fence.gate,
-                                Scramble(static_cast<std::uint32_t>(x), static_cast<std::uint32_t>(z),
-                                         horizontal ? 1u : 2u));
-            }
-        }
-    }
-
-    // Posts, where fences meet a grid vertex.
-    for (int vz = cell.z0; vz < zEnd; ++vz) {
-        for (int vx = cell.x0; vx < xEnd; ++vx) {
-            const zoo::EdgeRef around[4] = {
-                {vx - 1, vz, true}, {vx, vz, true}, {vx, vz - 1, false}, {vx, vz, false}};
-            FenceLook best;
-            bool any = false;
-            bool gatePost = false;
-            bool entrance = false;
-            for (const zoo::EdgeRef& edge : around) {
-                if (!world.EdgeInBounds(edge)) {
-                    continue;
-                }
-                const zoo::Fence fence = world.FenceAt(edge);
-                FenceLook look;
-                if (!LookOf(catalog_, fence, look) || look.style == zoo::FenceStyle::Hedge) {
-                    continue;
-                }
-                entrance = entrance || IsEntrance(fence);
-                gatePost = gatePost || fence.gate;
-                if (!any || look.height > best.height) {
-                    best = look;
-                }
-                any = true;
-            }
-            // The arch has pillars of its own, and no posts stand in the gateway.
-            if (any && !entrance) {
-                BuildFencePost(model, best, VertexAt(world, vx, vz), gatePost);
             }
         }
     }
@@ -644,7 +718,8 @@ void SceneryRenderer::DiscardEditCache(bool discardCpuTextureCopies) {
     editCacheDiscarded_ = true;
 }
 
-std::optional<float> SceneryRenderer::ObstructionInSight(const Vector3& eye, const Vector3& direction, float reach) {
+std::optional<float> SceneryRenderer::ObstructionInSight(const zoo::World& world, const Vector3& eye,
+                                                       const Vector3& direction, float reach) {
     const Microsoft::Xna::Framework::Ray ray(eye, direction);
     std::optional<float> nearest;
     for (const auto& cell : cells_) {
@@ -656,6 +731,34 @@ std::optional<float> SceneryRenderer::ObstructionInSight(const Vector3& eye, con
             if (const auto distance = building.sight->Distance(local, reach)) {
                 reach = *distance;
                 nearest = reach;
+            }
+        }
+        for (const FenceGroup& group : cell->fenceGroups) {
+            if (group.rows.empty())
+                continue;
+            const auto groupEntry = ray.Intersects(group.bounds);
+            if (!groupEntry || *groupEntry > reach)
+                continue;
+            for (const FenceRow& row : group.rows) {
+                const auto entry = ray.Intersects(row.bounds);
+                if (!entry || *entry > reach)
+                    continue;
+                auto cached = std::ranges::find(fenceGeometry_, &row, &FenceGeometry::row);
+                if (cached == fenceGeometry_.end()) {
+                    if (fenceGeometry_.size() >= 32)
+                        fenceGeometry_.pop_back();
+                    FenceGeometry& added = fenceGeometry_.emplace_front();
+                    added.row = &row;
+                    ModelBuilder model;
+                    WriteRow(model, world, catalog_, row);
+                    AddSightSurfaces(added.solids, model);
+                } else {
+                    fenceGeometry_.splice(fenceGeometry_.begin(), fenceGeometry_, cached);
+                }
+                if (const auto hit = fenceGeometry_.front().solids.Raycast(ray, reach)) {
+                    reach = hit->distance;
+                    nearest = reach;
+                }
             }
         }
     }

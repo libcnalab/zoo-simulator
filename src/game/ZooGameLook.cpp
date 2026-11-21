@@ -172,7 +172,7 @@ void ZooGame::LookAtAnimals(float seconds) {
             continue;
         if (!obstruction && hit->depth > checkedDistance) {
             checkedDistance = hit->depth;
-            obstruction = scenery_->ObstructionInSight(ToXna(eye), ToXna(gaze), checkedDistance);
+            obstruction = scenery_->ObstructionInSight(zoo_->Map(), ToXna(eye), ToXna(gaze), checkedDistance);
         }
         if (obstruction && *obstruction < hit->depth)
             continue;

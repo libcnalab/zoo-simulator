@@ -49,6 +49,12 @@ card again. Open spans in the education pavilion remain clear above the half-hei
 walls and between the timber posts.
 [Views at Capybara Marsh and Red Dune](evidence/buildings-and-animal-cards-2026-11-21.jpg)
 
+At the camel paddock, point the binoculars at the horizontal board and the name card
+stays hidden. Raise them to Ines's head and her card appears. These two views share
+the same position at `173,265` and the same 13:00 visit. Clear viewing panes and the
+openings in wire fences also allow identification.
+[Ines at the paddock rail](evidence/camel-paddock-binoculars-2026-11-21.jpg)
+
 On the expanded plan, the footer names the stop under the pointer. Two northern restrooms
 are distinguished by the nearest habitat centre, Red Panda Canopy or Snow Leopard Heights.
 The names stay the same when crowds shift to another viewing place. Habitat labels take

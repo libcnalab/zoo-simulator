@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 #include "BuildingModels.hpp"
+#include "ModelSight.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -691,14 +692,10 @@ BuildingSight::BuildingSight(const zoo::BuildingDef& def) {
     ModelBuilder model;
     BuildBuilding(model, def);
     for (const ModelPart& part : model.Parts()) {
-        const auto pattern = part.finish.pattern;
-        if (part.writer.Empty() || pattern == Pattern::Glass || pattern == Pattern::Pane ||
-            pattern == Pattern::WireMesh || pattern == Pattern::WeldMesh)
-            continue;
-        const auto& mesh = part.writer.mesh;
-        bounds_ = BoundingBox::CreateMerged(bounds_, mesh.Bounds());
-        solids_.AddTriangles(mesh.positions, mesh.indices, Matrix::getIdentityProperty());
+        if (!part.writer.Empty() && BlocksAnimalSight(part.finish.pattern))
+            bounds_ = BoundingBox::CreateMerged(bounds_, part.writer.mesh.Bounds());
     }
+    AddSightSurfaces(solids_, model);
 }
 
 std::optional<float> BuildingSight::Distance(const Microsoft::Xna::Framework::Ray& localRay, float reach) const {
