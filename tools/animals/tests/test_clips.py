@@ -293,6 +293,36 @@ class AnatomyTests(unittest.TestCase):
                 self.assertAlmostEqual(parts["neck_mane"].rough[0],
                                        adult_mane_roughness * .60)
 
+    def test_camels_have_a_tapered_head_tucked_trunk_and_continuous_pads(self):
+        for species in ("camel", "camel_female", "camel_juvenile"):
+            spec = importlib.import_module("species." + species).make_spec()
+            parts = {part.name: part for part in spec.parts}
+            height = spec.meta["shoulder_height_m"]
+            head = parts["head"].rings
+            self.assertTrue(all(a.c[0] < b.c[0] for a, b in zip(head, head[1:])))
+            self.assertGreater(head[1].ry, 1.3 * head[-1].ry)
+            self.assertGreater(parts["eye.L"].rings[0].ry,
+                               1.8 * parts["eye.L"].rings[0].up)
+            self.assertIn("nostril.L", parts)
+            self.assertGreater(parts["eye.L"].rings[0].c[1], .9 * head[2].ry)
+            self.assertGreater(parts["nostril.L"].rings[0].c[1], .85 * head[-2].ry)
+            self.assertLess(parts["nostril.L"].rings[-1].c[0],
+                            head[-1].c[0] + .025 * spec.meta["body_length_m"])
+            torso = parts["torso"].rings
+            abdomen_bottom = torso[3].c[2] - torso[3].dn
+            chest_bottom = torso[5].c[2] - torso[5].dn
+            self.assertGreater(abdomen_bottom, chest_bottom + .035 * height)
+            rear = parts["hump.rear"].rings
+            front = parts["hump.front"].rings
+            self.assertLess(rear[-1].c[0], rear[0].c[0])
+            self.assertLess(front[-1].c[0], front[0].c[0])
+            for label in ("front", "hind"):
+                sole = parts[label + "_sole.L"]
+                self.assertTrue(sole.mirror and not sole.fuse)
+                self.assertGreater(sole.rings[-1].ry,
+                                   2 * parts[label + "_pad.1.L"].rings[-1].ry)
+            self.assertIn("Third-pass Bactrian outline", spec.meta["anatomy"])
+
     def test_camel_exports_carry_the_coat_normal_map_and_tangents(self):
         root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
         for species in ("camel", "camel_female", "camel_juvenile"):

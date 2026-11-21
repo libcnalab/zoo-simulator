@@ -37,32 +37,41 @@ def _anatomy(spec):
     spec.rig.neck = [f"neck{i}" for i in range(1, 6)]
     spec.rig.extra["muzzle"] = ("head", (1.96, 0, 2.66))
     spec.parts = [Part("torso", [
-        R((-1.00, 0, 1.68), .12, .17, .22), R((-.85, 0, 1.68), .34, .37, .30),
-        R((-.52, 0, 1.68), .43, .39, .34), R((-.12, 0, 1.68), .47, .41, .43),
-        R((.29, 0, 1.68), .44, .42, .51), R((.57, 0, 1.68), .33, .39, .49),
-        R((.74, 0, 1.68), .20, .28, .32)],
+        R((-1.00, 0, 1.66), .10, .18, .16), R((-.84, 0, 1.68), .30, .32, .28),
+        R((-.55, 0, 1.69), .38, .34, .30), R((-.18, 0, 1.72), .40, .36, .33),
+        R((.18, 0, 1.75), .39, .38, .40), R((.48, 0, 1.76), .32, .37, .46),
+        R((.69, 0, 1.76), .18, .25, .30)],
         chain=chain(spec.bones, "hips", "spine1", "spine2", "chest"), segments=28, cap_scale=.35),
-        Part("neck", [R(points[0], .24, .28), R(points[1], .20, .24),
-                      R(points[2], .17, .21), R(points[3], .16, .20),
-                      R(points[4], .14, .18), R(points[5], .13, .16)],
+        Part("neck", [R(points[0], .21, .25), R(points[1], .19, .22),
+                      R(points[2], .16, .19), R(points[3], .15, .18),
+                      R(points[4], .13, .16), R(points[5], .12, .145)],
              chain=chain(spec.bones, *spec.rig.neck), segments=24, cap_start="flat", cap_end="flat"),
-        Part("head", [R((1.29, 0, 2.79), .12, .16, .13),
-                      R((1.47, 0, 2.80), .16, .18, .16),
-                      R((1.67, 0, 2.72), .125, .11, .12),
-                      R((1.89, 0, 2.67), .095, .08, .09, n=2.7)],
+        Part("head", [R((1.28, 0, 2.79), .105, .14, .12),
+                      R((1.40, 0, 2.81), .145, .16, .14),
+                      R((1.53, 0, 2.79), .15, .15, .13),
+                      R((1.65, 0, 2.73), .12, .105, .11),
+                      R((1.79, 0, 2.69), .10, .08, .09, n=2.5),
+                      R((1.91, 0, 2.66), .105, .075, .085, n=2.7)],
              weights={"head": 1.0}, segments=22, cap_scale=.30, tag="head"),
-        Part("jaw", [R((1.48, 0, 2.62), .12, .045, .065),
-                     R((1.87, 0, 2.57), .085, .04, .045)],
+        Part("jaw", [R((1.46, 0, 2.64), .115, .040, .060),
+                     R((1.68, 0, 2.61), .095, .038, .050),
+                     R((1.88, 0, 2.57), .09, .042, .055)],
              weights={"jaw": 1.0}, segments=16, tag="jaw"),
-        Part("ear.L", [R((1.37, .12, 2.84), .055, .05), R((1.31, .19, 2.92), .04, .055)],
+        Part("ear.L", [R((1.37, .115, 2.84), .048, .045),
+                       R((1.31, .18, 2.92), .032, .048)],
              weights={"ear.L": 1.0}, mirror=True, segments=14, tag="ear"),
-        Part("eye.L", [R((1.55, .141, 2.81), .023, .023), R((1.57, .143, 2.81), .022, .022)],
+        Part("eye.L", [R((1.49, .144, 2.815), .026, .012),
+                        R((1.56, .147, 2.805), .025, .011)],
              weights={"head": 1.0}, mirror=True, fuse=False, segments=12, tag="eye"),
+        Part("nostril.L", [R((1.78, .094, 2.710), .018, .010),
+                            R((1.84, .098, 2.695), .016, .009)],
+             weights={"head": 1.0}, mirror=True, fuse=False, segments=8, tag="nostril",
+             cap_scale=.25),
         # Bactrian camels carry a long winter mane over the crown and both sides of the neck.
         # This second fused loft changes the outline; the normal map supplies the shorter fibres.
-        Part("neck_mane", [R(points[0], .29, .34), R(points[1], .25, .31),
-                           R(points[2], .22, .28), R(points[3], .21, .27),
-                           R(points[4], .18, .23), R(points[5], .15, .19)],
+        Part("neck_mane", [R(points[0], .26, .29), R(points[1], .23, .27),
+                           R(points[2], .20, .24), R(points[3], .19, .23),
+                           R(points[4], .16, .20), R(points[5], .14, .17)],
              chain=chain(spec.bones, *spec.rig.neck), segments=24, tag="mane",
              rough=(.025, 20.0), cap_start="flat", cap_end="flat"),
         Part("forelock", [R((1.30, 0, 2.83), .10, .11),
@@ -71,12 +80,21 @@ def _anatomy(spec):
              weights={"head": 1.0}, segments=18, tag="mane", rough=(.018, 24.0),
              cap_start="flat", cap_end="point"),
     ]
-    # Upright closed lofts keep each hump rounded without bridging their saddle.
-    for label, x, bone in (("rear", -.62, "spine1"), ("front", .20, "chest")):
+    # Fed Bactrian humps rise from broad bases and lean slightly apart rather than reading as
+    # two identical vertical pills. Their separate lofts preserve the deep saddle between them.
+    humps = {
+        "rear": ([(-.60, 1.91, .27, .28), (-.64, 2.10, .32, .32),
+                  (-.68, 2.30, .30, .28), (-.70, 2.48, .22, .19),
+                  (-.69, 2.64, .10, .085)], "spine1"),
+        "front": ([(.22, 1.94, .28, .29), (.25, 2.14, .33, .32),
+                   (.24, 2.36, .30, .27), (.20, 2.54, .21, .18),
+                   (.17, 2.68, .10, .085)], "chest"),
+    }
+    for label, (rings, bone) in humps.items():
         spec.parts.append(Part("hump." + label, [
-            R((x, 0, 1.93), .31, .35), R((x, 0, 2.17), .32, .34),
-            R((x, 0, 2.44), .28, .29), R((x, 0, 2.63), .16, .17)],
-            weights={bone: 1.0}, segments=28, cap_scale=.65, tag="hump"))
+            R((x, 0, z), width, depth) for x, z, width, depth in rings],
+            weights={bone: 1.0}, segments=28, cap_scale=.45, tag="hump",
+            cap_start="flat", cap_end="round"))
     for front, x, y, top in ((True, .46, .28, 1.90), (False, -.75, .28, 1.83)):
         points = ([(x, y, top + .10), (x, y, top), (x - .16, y, .94),
                    (x + .04, y, .30), (x + .06, y, .09), (x + .20, y, .05)] if front else
@@ -85,15 +103,24 @@ def _anatomy(spec):
         limb_chain = leg_bones(spec.bones, front, points)
         label = "front" if front else "hind"
         knee = (x - .16, .94) if front else (x + .27, 1.03)
+        upper = (.10, .115, .10, .082, .052, .085) if front else \
+                (.10, .11, .098, .084, .056, .085)
         spec.parts.append(Part(label + "_leg.L", [
-            R((x, .14, top), .11, .15), R((x, .25, 1.60), .13, .16),
-            R((x, y, 1.45), .12, .15),
-            R((knee[0], y, knee[1]), .11, .125),
-            R((x - .05, y, .53), .066, .08), R((x + .06, y, .045), .085, .085)],
+            R((x, .14, top), upper[0], .14), R((x, .25, 1.60), upper[1], .145),
+            R((x, y, 1.45), upper[2], .13),
+            R((knee[0], y, knee[1]), upper[3], .105),
+            R((x - .05, y, .53), upper[4], .072),
+            R((x + .06, y, .045), upper[5], .072)],
             chain=limb_chain, mirror=True, segments=18, tag="leg", cap_start="flat", cap_end="flat"))
         spec.parts.extend(split_foot(label + "_pad", x + .09, y, .16, .32, .10,
                                     "fingers.L" if front else "toes.L", tag="pad", exponent=2.3))
         foot_bone = "fingers.L" if front else "toes.L"
+        # The two toes spread, but the weight-bearing sole below them is a single broad pad.
+        spec.parts.append(Part(label + "_sole.L", [
+            R((x - .02, y, .040), .155, .032, n=2.8),
+            R((x + .20, y, .036), .17, .030, n=2.8)],
+            weights={foot_bone: 1.0}, mirror=True, fuse=False, segments=10, tag="pad",
+            cap_scale=.18))
         for digit, offset in (("inner", -.083), ("outer", .083)):
             spec.parts.append(Part(label + "_nail." + digit + ".L", [
                 R((x + .185, y + offset, .066), .031, .025, .020, n=2.4),
@@ -122,6 +149,7 @@ def _paint(ctx, juvenile=False, scale=1.0):
     under = nz.smoothstep(.15, -.70, ctx.N[..., 2])
     coat = nz.mix(sand, pale, under * .40) * (.90 + .16 * grain)[..., None]
     coat = nz.mix(coat, np.array([.16, .10, .055]), ctx.tag("eye"))
+    coat = nz.mix(coat, np.array([.13, .075, .035]), ctx.tag("nostril"))
     coat = nz.mix(coat, np.array([.32, .22, .13]), ctx.tag("pad") * .7)
     coat = nz.mix(coat, np.array([.20, .13, .075]), ctx.tag("nail"))
     # A fine vertical philtrum suggests the divided mobile upper lip.
@@ -137,7 +165,7 @@ def _surface_height(ctx, juvenile=False, scale=1.0):
     directional = nz.fbm(P * np.array([.36, .82, 1.55]), 58.0, 4, seed=31)
     clumps = nz.fbm(P, 19.0, 3, seed=32)
     coat = .84 * directional + .16 * clumps
-    smooth = np.clip(ctx.tag("eye") * 4.0 + ctx.tag("pad") * 2.0
+    smooth = np.clip(ctx.tag("eye") * 4.0 + ctx.tag("nostril") * 4.0 + ctx.tag("pad") * 2.0
                      + ctx.tag("nail") * 2.0, 0.0, 1.0)
     return .5 + (coat - .5) * (1.0 - smooth)
 
@@ -169,7 +197,7 @@ def _juvenile_shape(spec):
             shorten_neck(bone.head)
             shorten_neck(bone.tail)
     for part in spec.parts:
-        if part.name in {"neck", "head", "jaw", "ear.L", "eye.L"}:
+        if part.name in {"neck", "head", "jaw", "ear.L", "eye.L", "nostril.L"}:
             for ring in part.rings:
                 shorten_neck(ring.c)
 
@@ -191,7 +219,7 @@ def _juvenile_shape(spec):
             bone.head[2] -= .03
             bone.tail[2] -= .03
     for part in spec.parts:
-        if part.name in {"head", "jaw", "ear.L", "eye.L"}:
+        if part.name in {"head", "jaw", "ear.L", "eye.L", "nostril.L"}:
             for ring in part.rings:
                 shorten_face(ring.c)
         if part.name == "head":
@@ -201,9 +229,13 @@ def _juvenile_shape(spec):
                 ring.dn *= 1.18
         elif part.name == "eye.L":
             for ring in part.rings:
+                ring.c[1] *= 1.38
                 ring.ry *= 1.38
                 ring.up *= 1.38
                 ring.dn *= 1.38
+        elif part.name == "nostril.L":
+            for ring in part.rings:
+                ring.c[1] *= 1.45
         elif part.name == "ear.L":
             for ring in part.rings:
                 ring.c[2] -= .03
@@ -222,7 +254,7 @@ def _juvenile_shape(spec):
                 ring.ry *= .74
                 ring.up *= .58
                 ring.dn *= .58
-        elif "_pad." in part.name and part.name.endswith(".L"):
+        elif (("_pad." in part.name or "_sole." in part.name) and part.name.endswith(".L")):
             for ring in part.rings:
                 ring.ry *= 1.18
                 ring.up *= 1.10
@@ -243,7 +275,7 @@ def _juvenile_shape(spec):
     spec.paint = partial(_paint, juvenile=True, scale=scale)
     spec.surface_height = partial(_surface_height, juvenile=True, scale=scale)
     spec.voxel = .008
-    spec.target_tris = 18000
+    spec.target_tris = 17000
     spec.meta.update({"shoulder_height_m": 1.26, "body_length_m": 1.65,
                       "variant_of": "camel", "variant": "juvenile",
                       "relative_height": scale,
@@ -270,7 +302,7 @@ def _female_shape(spec):
             ring.dn *= factor
 
     spec.name = "camel_female"
-    spec.target_tris = 18000
+    spec.target_tris = 17000
     spec.meta.update({"common_name": "Bactrian camel cow", "sex": "female",
                       "variant_of": "camel", "variant": "female",
                       "relative_height": FEMALE_RELATIVE_HEIGHT,
@@ -301,6 +333,7 @@ def make_spec(juvenile=False, female=False):
         "idle_shift": .012 * scale, "idle_bob": .004 * scale,
     })
     _anatomy(spec)
+    spec.target_tris = 17000
     spec.paint = _paint
     spec.surface_height = _surface_height
     spec.surface_strength = 1.15
@@ -308,6 +341,8 @@ def make_spec(juvenile=False, female=False):
     spec.smooth_iters = 5
     spec.meta["roughness"] = .94
     spec.meta["surface_detail"] = "anisotropic shaggy-coat normal map"
+    spec.meta["anatomy"] = ("Third-pass Bactrian outline: tapered head and neck, asymmetric "
+                            "humps, tucked trunk, lean limbs and continuous sole pads")
     standard = spec.clips
 
     def clips(solver):

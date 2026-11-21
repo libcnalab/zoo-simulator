@@ -120,6 +120,7 @@
       "ruminate": "ruminate"
     },
     "age_shape": "Adult cow: shorter and lighter than the adult bull",
+    "anatomy": "Third-pass Bactrian outline: tapered head and neck, asymmetric humps, tucked trunk, lean limbs and continuous sole pads",
     "body_length_m": 3.0,
     "common_name": "Bactrian camel cow",
     "relative_height": 0.92,
@@ -145,6 +146,6 @@
     ]
   },
   "texture": 1024,
-  "triangles": 21760,
-  "vertices": 10918
+  "triangles": 21992,
+  "vertices": 11046
 }

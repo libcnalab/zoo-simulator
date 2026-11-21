@@ -157,6 +157,18 @@ whatever you take up (`docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `docs/V
   outside. The before/after walks, profiles, pup and habitat integration frame were opened in
   `docs/evidence/wolf-anatomy-j74-2026-11-21.jpg` (J74, 2026-11-21). This remains authored
   procedural anatomy rather than a scan.
+- The Bactrian-camel bull, cow and calf now have a third anatomy pass. A tapered neck, six-section
+  long head, separate horizontal eyes and nostrils, deep chest with abdominal tuck, leaner limbs,
+  spreading toes over a continuous sole and wide-based slightly leaning humps replace the column
+  neck, rectangular face, slab belly, split-hoof reading and vertical pill humps. The juvenile
+  transform explicitly reseats its eye and nostril after shortening and enlarging the calf head.
+  All three models have 21,992 triangles, 11,046 vertices, 36 manifest bones and nine clips; their
+  3,400,504 / 3,345,160 / 3,380,168-byte GLBs match independent single-threaded exports byte for
+  byte. All 147 animal-pipeline tests and all 305 active CTest cases pass (21 diagnostics disabled);
+  a 3,000-tick ASan Red Dune run completed cleanly with leak detection off and all five residents
+  outside. The before/after profiles, face, cow, calf and habitat frame were opened in
+  `docs/evidence/camel-anatomy-j75-2026-11-21.jpg` (J75, 2026-11-21). This remains authored
+  procedural anatomy rather than a scan.
 - Adult and juvenile ostriches now have second-pass layered plumage. Four detached feathers
   overlap each folded wing and five more separate the tail fan; a feather-only tangent-space
   normal map adds directional barb relief while leaving the bare skin smooth. The adult has

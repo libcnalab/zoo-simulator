@@ -282,6 +282,31 @@ five residents outside. The close viewer and habitat frame are in
 `evidence/camel-cow-j67-2026-11-21.jpg`; the HUD identifies the selected animal as thirteen-year-old
 female Ines. The base face and body remain the same stylised first-generation lofts.
 
+### Bactrian-camel anatomy, third pass (2026-11-21)
+
+The bull, cow and calf now share a camel-specific outline pass. Six advancing head sections
+replace the four-section rectangular muzzle; separate horizontal eyes and nostrils make the long
+face legible. The neck tapers towards the head, the deep chest gives way to a visible abdominal
+tuck, and slimmer long limbs retain an 8.5 cm ankle overlap across both spreading toes. Each foot
+now also has one continuous broad sole below those toes rather than reading as two separate
+cloven hooves. The paired humps rise from wide bases, lean slightly apart and taper into rounded
+tops instead of two identical vertical pills. The calf retains its shorter face, larger eyes and
+low developing humps, and the cow retains her lighter build.
+
+The undivided sole, divided upper lip and heavier hair on the head, neck, humps, forelegs and tail
+follow [Animal Diversity Web](https://animaldiversity.org/accounts/Camelus_bactrianus/). The broad
+feet, independently moving split lip and a calf's small hair-topped hump peaks are also described
+by the [San Diego Zoo Wildlife Alliance](https://animals.sandiegozoo.org/animals/camel). This is
+still authored procedural anatomy rather than a scan; the face, joints and coat remain simplified.
+
+All three models have 21,992 triangles, 11,046 vertices, 36 manifest bones and nine clips. Their
+production GLBs are respectively 3,400,504, 3,345,160 and 3,380,168 bytes and match independent
+single-threaded exports byte for byte. All 147 animal-pipeline tests and all 305 active CTest cases
+pass (21 measurement diagnostics remain disabled). A separate 3,000-tick AddressSanitizer Red
+Dune run completed cleanly with leak detection off and all five residents outdoors. The inspected
+before/after profiles, face detail, cow, calf and habitat integration are in
+`evidence/camel-anatomy-j75-2026-11-21.jpg`.
+
 ### Red kangaroo joey (2026-11-20)
 
 `kangaroo_juvenile` replaces the uniformly scaled adults used for the 0.65- and 0.7-year-old

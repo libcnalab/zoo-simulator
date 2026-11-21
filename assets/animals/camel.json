@@ -119,6 +119,7 @@
     "activity_clips": {
       "ruminate": "ruminate"
     },
+    "anatomy": "Third-pass Bactrian outline: tapered head and neck, asymmetric humps, tucked trunk, lean limbs and continuous sole pads",
     "body_length_m": 3.0,
     "common_name": "Bactrian camel",
     "roughness": 0.94,
@@ -140,6 +141,6 @@
     ]
   },
   "texture": 1024,
-  "triangles": 21760,
-  "vertices": 10918
+  "triangles": 21992,
+  "vertices": 11046
 }

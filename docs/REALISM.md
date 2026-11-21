@@ -57,7 +57,7 @@ loudspeaker stays muted and nobody has listened to any of it.
 | Wolf pup with juvenile proportions | the one-year-old animal at Wolf Ridge now uses a dedicated 0.46 m pup: shorter body and muzzle, broader skull, larger eyes, ears and paws, lighter coat and shorter-stride locomotion instead of a uniformly scaled adult | `docs/ANIMALS.md`, `evidence/wolf-juvenile-j1-2026-11-20.jpg` |
 | Grey-wolf double coat and third-pass anatomy, male, female and pup | an anisotropic tangent-space normal map gives the smooth painted coat guard-hair relief; a fused neck ruff, six-section broad tapered muzzle, narrow deep chest, abdominal tuck, lean digitigrade limbs, large paws and a fully tapered brush replace the round head, cylindrical chest, ball joints and club-ended tail without increasing triangle count. The anatomy is tailored but remains procedural rather than scan-derived | `docs/ANIMALS.md`, `evidence/wolf-coat-j10-2026-11-20.jpg`, `evidence/wolf-female-j68-2026-11-21.jpg`, `evidence/wolf-anatomy-j74-2026-11-21.jpg` |
 | Adult grey-wolf sexual dimorphism | Wolf Wood's adult female and 1.3-year-old daughter now use a dedicated 95 %-height, modestly lighter-built female with a narrower torso, ruff, head, legs, paws and tail instead of the male model; the height ratio follows the National Park Service's 77 cm female / 81 cm male Yellowstone averages, while the grey coat is retained. All eight clips and exact contacts are preserved | `docs/ANIMALS.md`, `evidence/wolf-female-j68-2026-11-21.jpg` |
-| Bactrian-camel winter coat, bull, cow and calf | anisotropic normal relief replaces a flat painted coat; a fused rough neck mane and forelock, a tapered tail tuft and eight separate dark nails give the two-humped silhouette species-specific detail. The procedural face and underlying anatomy remain stylised | `docs/ANIMALS.md`, `evidence/camel-coat-j11-2026-11-20.jpg`, `evidence/camel-cow-j67-2026-11-21.jpg` |
+| Bactrian-camel winter coat and third-pass anatomy, bull, cow and calf | anisotropic normal relief replaces a flat painted coat; a tapered neck, six-section long head, horizontal eyes, nostrils, tucked trunk, slimmer limbs, spreading toes over continuous broad soles and wide-based asymmetrical humps replace the rectangular face, slab belly, split-hoof reading and pill humps. The anatomy is tailored but remains procedural rather than scan-derived | `docs/ANIMALS.md`, `evidence/camel-coat-j11-2026-11-20.jpg`, `evidence/camel-cow-j67-2026-11-21.jpg`, `evidence/camel-anatomy-j75-2026-11-21.jpg` |
 | Adult Bactrian-camel sexual dimorphism | Red Dune's two adult females now use a dedicated 92 %-height cow with a narrower torso, neck, winter mane, head, legs and humps instead of the bull model; the ratio is explicitly a conservative visual approximation because published sex-specific measurements are lacking. All nine adult clips and broad-pad contacts are retained | `docs/ANIMALS.md`, `evidence/camel-cow-j67-2026-11-21.jpg` |
 | Meerkat anatomy, short coat and digging feet, adult and pup | a species-specific tapered face, low rounded ears, lean neck, trunk and limbs replace the generic round-headed heavy small-quadruped silhouette; all four feet carry four separate toes and non-retractile claws, and an anisotropic normal map gives the coat short guard-hair relief. Sentry and dig remain grounded | `docs/ANIMALS.md`, `evidence/meerkat-anatomy-j73-2026-11-21.jpg` |
 | Ostrich layered plumage, cock, hen and chick | four overlapping feathers on each folded wing and five separated tail feathers replace fused plume blobs; a feather-only tangent-space normal map adds directional barb relief while keeping the bare skin smooth. The procedural egg body remains stylised | `docs/ANIMALS.md`, `evidence/ostrich-feathers-j13-2026-11-20.jpg`, `evidence/ostrich-hen-j66-2026-11-21.jpg` |
@@ -115,11 +115,11 @@ manifest regression.
 
 ## Open (in the order they hurt)
 
-1. Animals: three of fifteen species (camel, ostrich, kangaroo) still use the stylised procedural
-   first-generation anatomy. All three now have second-pass coats or plumage and species-specific
-   silhouette details, but remain recognisably lofted. The wolf and meerkat remain procedural
-   rather than scan-derived, but their third passes now replace the generic head, neck, trunk and
-   limb masses with tailored canid and mongoose outlines. The bears now have
+1. Animals: two of fifteen species (ostrich, kangaroo) still use the stylised procedural
+   first-generation anatomy. Both now have second-pass coats or plumage and species-specific
+   silhouette details, but remain recognisably lofted. The camel, wolf and meerkat remain
+   procedural rather than scan-derived, but their third passes now replace generic head, neck,
+   trunk, limb and foot masses with tailored camelid, canid and mongoose outlines. The bears now have
    closed resting mouths, softer shoulders and shorter outline fur but remain converted from an
    upright brown-bear sculpt (the polar anatomy and proportionally edited cub bodies are still crude)
    (`docs/ANIMALS.md`). The cats are believable now but not photographs: the tiger's formerly
