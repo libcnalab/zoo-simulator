@@ -1,0 +1,139 @@
+{
+  "bones": 33,
+  "clips": [
+    {
+      "duration": 6.0,
+      "events": [],
+      "frames": 181,
+      "loop": true,
+      "name": "idle",
+      "speed": 0.0
+    },
+    {
+      "duration": 0.7333,
+      "events": [
+        {
+          "name": "step",
+          "time": 0.0
+        },
+        {
+          "name": "step",
+          "time": 0.1833
+        },
+        {
+          "name": "step",
+          "time": 0.3667
+        },
+        {
+          "name": "step",
+          "time": 0.55
+        }
+      ],
+      "frames": 23,
+      "loop": true,
+      "name": "walk",
+      "speed": 0.75
+    },
+    {
+      "duration": 0.4667,
+      "events": [
+        {
+          "name": "step",
+          "time": 0.0
+        },
+        {
+          "name": "step",
+          "time": 0.0
+        },
+        {
+          "name": "step",
+          "time": 0.2333
+        },
+        {
+          "name": "step",
+          "time": 0.2333
+        }
+      ],
+      "frames": 15,
+      "loop": true,
+      "name": "trot",
+      "speed": 1.5
+    },
+    {
+      "duration": 3.0,
+      "events": [],
+      "frames": 91,
+      "loop": true,
+      "name": "eat",
+      "speed": 0.0
+    },
+    {
+      "duration": 2.4,
+      "events": [],
+      "frames": 73,
+      "loop": true,
+      "name": "drink",
+      "speed": 0.0
+    },
+    {
+      "duration": 8.0,
+      "events": [],
+      "frames": 241,
+      "loop": true,
+      "name": "rest",
+      "speed": 0.0
+    },
+    {
+      "duration": 8.0,
+      "events": [],
+      "frames": 241,
+      "loop": true,
+      "name": "sleep",
+      "speed": 0.0
+    },
+    {
+      "duration": 2.6,
+      "events": [
+        {
+          "name": "call",
+          "time": 0.572
+        }
+      ],
+      "frames": 79,
+      "loop": false,
+      "name": "vocalize",
+      "speed": 0.0
+    }
+  ],
+  "generator": "tools/animals (zoogen)",
+  "license": "MIT",
+  "meta": {
+    "age_shape": "Kitten: shorter body, broader skull, larger eyes and paws",
+    "anatomy": "Species-specific lynx: square long-legged trunk, rounded short muzzle, wide snow paws, facial ruff, ear pencils and black-tipped bobtail",
+    "body_length_m": 0.75,
+    "common_name": "Eurasian lynx",
+    "relative_height": 0.6153846153846154,
+    "roughness": 0.9,
+    "scientific_name": "Lynx lynx",
+    "shoulder_height_m": 0.4,
+    "surface_detail": "anisotropic dense winter-coat normal map",
+    "variant": "juvenile",
+    "variant_of": "lynx"
+  },
+  "name": "lynx_juvenile",
+  "skeleton_bounds_animal_space": {
+    "max": [
+      0.3675,
+      0.048,
+      0.412
+    ],
+    "min": [
+      -0.5025,
+      -0.048,
+      0.0
+    ]
+  },
+  "texture": 1024,
+  "triangles": 17360,
+  "vertices": 8692
+}

@@ -29,7 +29,7 @@ struct HabitatPlan {
     int rn;
 };
 
-constexpr std::array<HabitatPlan, 14> kHabitats{{
+constexpr std::array<HabitatPlan, 15> kHabitats{{
     {"Meerkat Lookout", "meerkat", 10, 18, 5, 4},
     {"Flamingo Lagoon", "flamingo", 28, 24, 9, 7},
     {"Acacia Plain", "giraffe", 48, 53, 18, 19},
@@ -44,6 +44,9 @@ constexpr std::array<HabitatPlan, 14> kHabitats{{
     {"Rhino Hollow", "rhino", -49, 16, 15, 9},
     {"Red Dune", "camel", -13, 83, 11, 12},
     {"Kangaroo Grove", "kangaroo", -11, 32, 10, 9},
+    // The northern extension's first new habitat: outside the woodland loop, with a long inward
+    // gallery and a quiet planted margin against the property wall.
+    {"Lynx Ridge", "lynx", 58, 160, 12, 10},
 }};
 
 std::vector<TileCoord> RegionTiles(const Script& script, const HabitatPlan& plan) {
@@ -265,6 +268,18 @@ HabitatStyle Style(std::string_view species) {
                 {"log_pile", "fallen_log", "ball"},
                 {"spruce", "spruce", "spruce", "birch", "birch", "pine", "juniper", "juniper", "juniper"}};
     }
+    if (species == "lynx") {
+        return {Terrain::ForestFloor,
+                "tall_mesh",
+                "glass_wall",
+                "medium_shelter",
+                "meat_platform",
+                "juniper",
+                "granite_boulder",
+                {"climbing_frame", "scratching_post", "fallen_log", "log_pile"},
+                {"spruce", "spruce", "spruce", "pine", "birch", "birch", "juniper", "juniper",
+                 "juniper"}};
+    }
     if (species == "brown_bear") {
         return {Terrain::ForestFloor,
                 "heavy_mesh",
@@ -414,6 +429,12 @@ std::span<const Resident> Family(std::string_view species) {
     if (species == "wolf") {
         static constexpr Resident family[] = {Adult(m, 6.0f),     Adult(f, 5.0f),     Young(f, 1.3f, 1),
                                               Young(m, 0.25f, 1), Young(f, 0.25f, 1), Young(m, 0.25f, 1)};
+        return family;
+    }
+    if (species == "lynx") {
+        // Eurasian lynx are solitary outside the breeding season: the public group is a mother
+        // with two still-dependent kittens, not an invented adult pair or pack.
+        static constexpr Resident family[] = {Adult(f, 6.0f), Young(f, 0.45f, 0), Young(m, 0.45f, 0)};
         return family;
     }
     if (species == "brown_bear") {
@@ -1493,6 +1514,11 @@ void Service(Zoo& zoo, Script& script, std::vector<ServiceApron>& wideAprons, st
             continue;
         }
         const TileCoord front = FrontTile(def, origin, facing);
+        if (!zoo.Map().InBounds(front) || zoo.Habitats().RegionAt(front) != Region::Public ||
+            (zoo.Map().At(front).path == PathKind::None &&
+             builder.CheckPath(front, PathKind::Cobblestone) != BuildError::None)) {
+            continue;
+        }
         const auto path = zoo.Routes().NearestPassable(front, NavProfile::Visitor(), 8);
         if (!path) {
             continue;
@@ -1533,8 +1559,10 @@ void Service(Zoo& zoo, Script& script, std::vector<ServiceApron>& wideAprons, st
         if (!script.Building(kind, origin.x - gate.x, gate.z - far.z, facing)) {
             return;
         }
+        const TileCoord apronLow{std::min(front.x, path->x), std::min(front.z, path->z)};
+        const TileCoord apronHigh{std::max(front.x, path->x), std::max(front.z, path->z)};
         std::vector<TileCoord> apron;
-        for (const TileCoord tile : TilesInRect(front, *path)) {
+        for (const TileCoord tile : TilesInRect(apronLow, apronHigh)) {
             if (zoo.Habitats().RegionAt(tile) == Region::Public &&
                 builder.CheckPath(tile, PathKind::Cobblestone) == BuildError::None) {
                 apron.push_back(tile);
@@ -1542,9 +1570,6 @@ void Service(Zoo& zoo, Script& script, std::vector<ServiceApron>& wideAprons, st
         }
         script.PathTiles(apron, PathKind::Cobblestone);
         wideAprons.push_back({low, high});
-        if (!zoo.Routes().Reachable(gate, front, NavProfile::Visitor())) {
-            script.Problem(std::string(kind) + ": door is unreachable");
-        }
         return;
     }
     script.Problem("no public site for " + std::string(kind) + " at " + std::to_string(east) + "," +
@@ -1854,6 +1879,7 @@ void Facilities(Zoo& zoo, Script& script) {
     Service(zoo, script, serviceAprons, "ice_cream_stand", -5, 18, Dir::North);
     Service(zoo, script, serviceAprons, "drinks_stall", 31, 94, Dir::East);
     Service(zoo, script, serviceAprons, "ice_cream_stand", 32, 139, Dir::South);
+    Service(zoo, script, serviceAprons, "drinks_stall", 71, 166, Dir::West);
     Service(zoo, script, serviceAprons, "drinks_stall", -4, 56, Dir::South);
     Service(zoo, script, serviceAprons, "drinks_stall", -72, 52, Dir::East);
     Service(zoo, script, serviceAprons, "drinks_stall", 70, 52, Dir::West);
@@ -2052,6 +2078,19 @@ ScenarioReport BuildVisitorZoo(Zoo& zoo, const VisitorZooOptions& options) {
     GroundDetail(zoo, script);
     Parkland(zoo, script);
     script.Release();
+    // Validate access only after every construction phase has finished. Later path and terrain
+    // work can join a newly paved district and invalidate the route cache used during Facilities.
+    for (const Building& building : zoo.Objects().Buildings()) {
+        const BuildingDef& def = zoo.Definitions().buildings[static_cast<std::size_t>(building.def)];
+        if (def.placement != Placement::Public) {
+            continue;
+        }
+        const TileCoord front = FrontTile(def, building.origin, building.facing);
+        if (!zoo.Routes().Reachable(gate, front, NavProfile::Visitor())) {
+            script.Problem(def.id + ": door is unreachable at " + std::to_string(front.x - gate.x) + "," +
+                           std::to_string(gate.z - front.z));
+        }
+    }
     zoo.Guests().SetTicketPrice(0);
     script.Provision();
     // The crew a visitor sees at work (docs/KEEPERS.md). Every keeper gate opens onto a dry

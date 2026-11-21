@@ -86,7 +86,7 @@ is done as the zoo's automatic care would have done it, and the member goes on.
 
 Since J19 walkers also keep their bodies apart. A moving member slides tangentially around
 visitors, visible animals and other staff in the same public region or habitat; if two bodies
-already overlap, only a separating step is accepted. Visitors in turn receive the nine current
+already overlap, only a separating step is accepted. Visitors in turn receive all current
 staff positions as stationary steering obstacles for that tick. Positions on opposite sides of a
 habitat fence do not interact. These obstacles are derived each step, not saved and not hashed;
 the paths taken because of them remain ordinary simulation state.
@@ -247,7 +247,7 @@ of its own for every job (a lean, a squat, the hands placed and the arms solved)
 and out so that a rake does not turn into a bucket in the hands. The tools are coloured
 triangles built every frame for those in view (bucket, wheelbarrow, rake, broom, hose with its
 jet, clipboard, sack, trowel, watering can) and drawn in two calls for the whole crew; they
-cast soft projected contact shadows, as does each member. All nine members of Greenhill's crew
+cast soft projected contact shadows, as does each member. All ten members of Greenhill's crew
 fit the 12-nearest full-avatar budget; nobody beyond 150 m is drawn. The bounded headroom admits
 a somewhat larger built-in zoo without letting a damaged or imported save request hundreds of
 CNA avatars in one frame. A warning-clean game build, a real 626-visitor offscreen run at a

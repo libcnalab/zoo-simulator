@@ -1,0 +1,135 @@
+{
+  "bones": 33,
+  "clips": [
+    {
+      "duration": 6.0,
+      "events": [],
+      "frames": 181,
+      "loop": true,
+      "name": "idle",
+      "speed": 0.0
+    },
+    {
+      "duration": 0.9333,
+      "events": [
+        {
+          "name": "step",
+          "time": 0.0
+        },
+        {
+          "name": "step",
+          "time": 0.2333
+        },
+        {
+          "name": "step",
+          "time": 0.4667
+        },
+        {
+          "name": "step",
+          "time": 0.7
+        }
+      ],
+      "frames": 29,
+      "loop": true,
+      "name": "walk",
+      "speed": 1.1
+    },
+    {
+      "duration": 0.5667,
+      "events": [
+        {
+          "name": "step",
+          "time": 0.0
+        },
+        {
+          "name": "step",
+          "time": 0.0
+        },
+        {
+          "name": "step",
+          "time": 0.2833
+        },
+        {
+          "name": "step",
+          "time": 0.2833
+        }
+      ],
+      "frames": 18,
+      "loop": true,
+      "name": "trot",
+      "speed": 2.2
+    },
+    {
+      "duration": 3.0,
+      "events": [],
+      "frames": 91,
+      "loop": true,
+      "name": "eat",
+      "speed": 0.0
+    },
+    {
+      "duration": 2.4,
+      "events": [],
+      "frames": 73,
+      "loop": true,
+      "name": "drink",
+      "speed": 0.0
+    },
+    {
+      "duration": 8.0,
+      "events": [],
+      "frames": 241,
+      "loop": true,
+      "name": "rest",
+      "speed": 0.0
+    },
+    {
+      "duration": 8.0,
+      "events": [],
+      "frames": 241,
+      "loop": true,
+      "name": "sleep",
+      "speed": 0.0
+    },
+    {
+      "duration": 2.6,
+      "events": [
+        {
+          "name": "call",
+          "time": 0.572
+        }
+      ],
+      "frames": 79,
+      "loop": false,
+      "name": "vocalize",
+      "speed": 0.0
+    }
+  ],
+  "generator": "tools/animals (zoogen)",
+  "license": "MIT",
+  "meta": {
+    "anatomy": "Species-specific lynx: square long-legged trunk, rounded short muzzle, wide snow paws, facial ruff, ear pencils and black-tipped bobtail",
+    "body_length_m": 1.1,
+    "common_name": "Eurasian lynx",
+    "roughness": 0.9,
+    "scientific_name": "Lynx lynx",
+    "shoulder_height_m": 0.65,
+    "surface_detail": "anisotropic dense winter-coat normal map"
+  },
+  "name": "lynx",
+  "skeleton_bounds_animal_space": {
+    "max": [
+      0.539,
+      0.078,
+      0.6695
+    ],
+    "min": [
+      -0.737,
+      -0.078,
+      0.0
+    ]
+  },
+  "texture": 1024,
+  "triangles": 19360,
+  "vertices": 9692
+}

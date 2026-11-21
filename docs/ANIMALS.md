@@ -13,6 +13,7 @@ Each species is defined by one JSON file in `data/species/`. Biological values u
 | Reticulated giraffe | Giraffa reticulata | EN | 2–12 | 700 | 5.0 m / 4 | 1.2 / 5 | 7000 | 87 |
 | Red kangaroo | Osphranter rufus | LC | 2–20 | 400 | 2.2 m / 3 | 1.0 / 7 | 4000 | 79 |
 | African lion | Panthera leo | VU | 2–12 | 900 | 3.2 m / 4 | 1.1 / 4 | 9000 | 92 |
+| Eurasian lynx | Lynx lynx | LC | 1–3 | 450 | 3.0 m / 3 | 1.1 / 5.5 | 6500 | 82 |
 | Meerkat | Suricata suricatta | LC | 4–20 | 100 | 1.5 m / 1 | 0.6 / 2.5 | 800 | 88 |
 | Common ostrich | Struthio camelus | LC | 2–20 | 500 | 2.4 m / 3 | 1.2 / 8 | 3500 | 70 |
 | African penguin | Spheniscus demersus | CR | 10–60 | 180 | 1.8 m / 2 | 0.5 / 1.2 | 1500 | 90 |
@@ -47,7 +48,7 @@ while geometry, textures and animations remain identical.
 | `zoogen/scan.py` on a prepared third-party static sculpt, rigged by us (below) | zebra, zebra_female, zebra_juvenile |
 | `zoogen/giraffe2.py` on a prepared head-and-neck scan, body modelled by us (below) | giraffe, giraffe_female, giraffe_juvenile |
 | `zoogen/sculpt.py`, `bear.py` on a prepared third-party sculpt, rigged by us (below) | brown_bear, brown_bear_female, brown_bear_juvenile, polar_bear, polar_bear_female, polar_bear_juvenile |
-| `zoogen/quadruped.py`, `wild_quadruped.py`, `anatomy.py` | wolf, wolf_female, wolf_juvenile, camel, camel_female, camel_juvenile, meerkat, meerkat_juvenile |
+| `zoogen/quadruped.py`, `wild_quadruped.py`, `anatomy.py` | wolf, wolf_female, wolf_juvenile, camel, camel_female, camel_juvenile, meerkat, meerkat_juvenile, lynx, lynx_juvenile |
 | `zoogen/birdscan.py` on a prepared third-party scan or sculpt, rigged by us (below) | penguin, penguin_juvenile, flamingo, flamingo_juvenile |
 | `zoogen/biped.py` | ostrich, ostrich_female, ostrich_juvenile, kangaroo, kangaroo_female, kangaroo_juvenile |
 
@@ -58,6 +59,26 @@ Each has the same eight clips, which the game picks from what the animal is doin
 by the species file. The authored procedural models in the last two rows are stylised, not
 photorealistic, even after their species-specific anatomy passes; what each is weak at is listed in
 [`PIVOT_TO_ZOO_EXPLORATION.md`](PIVOT_TO_ZOO_EXPLORATION.md).
+
+### Eurasian lynx and kittens (2026-11-21)
+
+The Visitor Zoo's first post-expansion species is a Eurasian lynx mother with two kittens.
+[Animal Diversity Web](https://animaldiversity.org/accounts/Lynx_lynx/) supports the compact
+body, long legs, broad paws, short black-tipped tail, spotted coat, facial ruff and black ear
+pencils, as well as the solitary adult and mother-with-dependent-young grouping used by the
+scenario. The adult is 0.65 m at the shoulder; the dedicated kitten has a shorter body and
+limbs, broader head, larger eyes, ears and paws, and a softer high-contrast spotted coat.
+
+Both models have 33 bones and the standard eight clips. The adult has 19,360 triangles and a
+3,203,744-byte GLB; the kitten has 17,360 triangles and a 2,992,844-byte GLB. Their 1,024 px
+coats include tangent-space fur relief. Independent single-threaded exports match the production
+files byte for byte. They are deliberately species-specific procedural models rather than scans:
+the characteristic silhouette and markings read clearly, but the lofted muscles and card-free
+fur remain visibly stylised at close range.
+The two turntables, full zoo plan and the real Lynx Ridge view after 3,000 simulation ticks are
+inspected together in `evidence/lynx-ridge-j79-2026-11-21.jpg`. All 152 animal-pipeline tests
+pass, including grounded feet and feeding contacts, low-enough drinking muzzles, exact manifest
+counts and byte-reproducible exports.
 
 ### Grey wolf pup and double coat (2026-11-20)
 

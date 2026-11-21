@@ -195,6 +195,17 @@ whatever you take up (`docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `docs/V
   `docs/evidence/kangaroo-anatomy-j77-2026-11-21.jpg` (J77, 2026-11-21). No species now retains
   first-generation anatomy, although kangaroo, ostrich, camel, wolf and meerkat remain authored
   procedural models rather than scans.
+- Lynx Ridge now uses the eastern land opened by the northern expansion. Its 1,500 m² conifer
+  habitat has 66 reachable glass-front viewing tiles, 3.5 m tall-mesh service sides, 4.5 % water,
+  36.0 % planted cover, shelter, climbing and scratching enrichment, and a mother with female and
+  male 0.45-year-old kittens. This raises seed 1 to 93 animals in 15 habitats, 45 buildings and
+  3,234 props while retaining the 84.8 m facility-distance ceiling. New adult and juvenile
+  Eurasian-lynx models have 19,360 / 17,360 triangles, 33 bones, eight clips, 1K tangent-space
+  coat normals and distinct bobtails, broad paws, facial ruffs and ear pencils. Their 3,203,744 /
+  2,992,844-byte GLBs match independent single-threaded exports. A 3,000-tick normal and
+  ASan/UBSan visit both complete cleanly with all three residents outdoors; the models, plan and
+  real public view are in `docs/evidence/lynx-ridge-j79-2026-11-21.jpg`. All 152 animal-pipeline
+  tests and all 309 active CTest cases pass (21 diagnostics disabled) (J79, 2026-11-21).
 - The Visitor Zoo now extends north from 160 × 160 to 160 × 192 tiles: +20 % / 20,480 m². A
   three-tile asphalt woodland circuit joins both ends of the old predator walk, reaches 348 m from
   the gate, and has a two-tile gravel spine to a cobbled picnic glade. The glade has six valid

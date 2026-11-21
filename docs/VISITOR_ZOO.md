@@ -9,8 +9,8 @@ then call `BuildVisitorZoo(zoo, options)`. `withoutSpecies` suppresses animals o
 
 ```text
                               NORTH
-                   northern woodland circuit + picnic glade
-                      /             |                 \
+              northern woodland circuit + picnic glade — Lynx Ridge
+                      /             |                 /
              Polar Sound     Bear Falls — Wolf Wood — Tiger Forest
                   |              \    northern court    /       |
              Penguin Cove ======= woodland shortcut ======= Lion Rock
@@ -31,7 +31,7 @@ combine elliptical lobes. Every habitat has a keeper gate, shelter, stocked feed
 enrichment, a public information board and benches. Planting concentrates behind the open
 viewing ground, with woods between habitats and around the perimeter.
 
-The seed-1 zoo contains **90 animals in 14 habitats, 43 buildings and 3,205 props** when
+The seed-1 zoo contains **93 animals in 15 habitats, 45 buildings and 3,234 props** when
 every species is included (74 animals and 2,817 props before the plan's rework of
 2026-11-14, below). The farthest public path tile is **84.8 m** walking distance
 from a visitor facility. `VisitorZooTests.DISABLED_PrintPlan` prints these measurements. Families
@@ -64,6 +64,7 @@ diagnostics remain disabled).
 | Rhino Hollow | Rhino 4 (1) | 1,692 | 423 | Public rail, scrubbed dry moat S/E | Cable service side | 2 tiles / 4 m |
 | Red Dune | Camel 5 (2) | 1,616 | 323 | Public rail, planting, timber paddock fence S/E | Timber paddock fence | 1 tile / 2 m |
 | Kangaroo Grove | Kangaroo 7 (3) | 1,136 | 162 | Public rail, planting, timber paddock fence S/E | Timber paddock fence | 1 tile / 2 m |
+| Lynx Ridge | Eurasian lynx 3 (2) | 1,500 | 500 | Glass S/W | Tall mesh | 0 |
 
 The areas did not change with the families; the area per animal is our estimate of what reads
 as roomy for the species, **not checked against EAZA or AZA husbandry figures**. Every group
@@ -127,7 +128,9 @@ original cable barrier remains behind the elephant/rhino planting.
 The entrance has the gift shop, education centre, refreshments, restroom, fountain and statue.
 The central food court groups burger, drinks and ice-cream stalls around picnic tables and
 acacia islands; another court sits below the northern predators. Restrooms serve the entrance,
-central court, northern court and the new woodland glade. Additional kiosks serve the outer circuits. There are two
+central court, northern court and the new woodland glade. A drinks kiosk on the outer ridge keeps
+the longer northern circuit within the same service-distance limit. Additional kiosks serve the
+outer circuits. There are two
 fountains, two statues, lamps, bins, flower beds and groves along the walks. Feed reserves cover
 at least eighteen hours for the principal species, spanning the 15:00–07:00 care interval.
 
@@ -145,9 +148,9 @@ the path is not cut into narrow teeth around the furniture. In both plan seeds e
 is reachable from the entrance, at least 180 paved tiles lie in the new northern band, ordinary
 walks remain at least 4 m wide and the steepest paved tile is 3.32 %. Seed 1's farthest public path
 is 84.8 m from a visitor facility, below the retained 85 m limit. The larger public parkland raises
-the seed-1 prop count from 2,806 to 3,205 and buildings from 41 to 43. It deliberately adds no
-second copy of an existing species: the open land beside the circuit is reserved for a genuinely
-new habitat in a following pass.
+the seed-1 prop count from 2,806 to 3,205 and buildings from 41 to 43. It deliberately added no
+second copy of an existing species: J79 now uses the reserved eastern land for a genuinely new
+habitat.
 
 The cost is recorded rather than hidden. In the matched normal off-screen game, scenery rises
 from 2,357,290 to 2,844,153 triangles and from 465 to 511 draw calls. The game built the seed-1
@@ -156,6 +159,28 @@ plans are in `evidence/northern-expansion-j78-2026-11-21.jpg`. The visit-cache r
 an older 160 × 160 cached visit cannot mask the new map. All 307 active CTest cases pass, with 21
 long-running diagnostics disabled as intended. A 3,000-tick ASan/UBSan glade visit also completed
 cleanly with leak detection disabled, loading all 90 animals and simulating 627 visitors.
+
+## Lynx Ridge (J79, 2026-11-21)
+
+Lynx Ridge occupies 1,500 m² wholly inside the northern extension, centred 320 m north and
+116 m east of the gate. Its south and west glass gallery supplies 66 public viewing tiles; the
+remaining 3.5 m tall-mesh boundary encloses spruce, pine, birch and juniper cover, granite,
+a fallen log, climbing frame and scratching post. Water covers 4.5 % of the habitat, planted
+cover 36.0 %, and an 18-tile shelter and raised meat platform support the opening family.
+
+The residents are a six-year-old mother and her female and male 0.45-year-old kittens. The
+short black-tipped tail, broad paws, spotted coat, facial ruff and ear pencils in both dedicated
+models follow the Eurasian-lynx description in
+[Animal Diversity Web](https://animaldiversity.org/accounts/Lynx_lynx/); enclosure and safety
+choices use the medium-cat guidance in the
+[EAZA felid best-practice guidelines](https://media.eaza.net/uploads/EAZA_Best_Practice_Guidelines_FINAL_SM_f4188181cd.pdf).
+The habitat raises seed 1 to 93 animals, 15 habitats, 45 buildings and 3,234 props. Both plan
+seeds keep every Lynx Ridge tile in the new northern band, all viewing positions reachable, and
+the farthest public tile 84.8 m from a visitor facility. Adult and kitten turntables, the full
+plan and the inspected in-game public view are in
+`evidence/lynx-ridge-j79-2026-11-21.jpg`. All 309 active CTest cases pass (21 diagnostics are
+disabled as intended), and a 3,000-tick ASan/UBSan visit completed cleanly with all three lynxes
+outdoors and 637 visitors simulated.
 
 Catalog limits: there is no low glass wall and no low rail that would hold a flamingo, so the
 small animals stand behind the same 3.5 m glass as the lions. The meerkats' service boundary is
