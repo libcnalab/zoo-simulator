@@ -43,6 +43,7 @@ EXPECTED = {
     "flamingo_juvenile": {"huddle": "huddle", "preen": "preen",
                             "filter_feed": "filter_feed"},
     "ostrich": {"dust_bathe": "dust_bathe"},
+    "ostrich_female": {"dust_bathe": "dust_bathe"},
     "ostrich_juvenile": {"dust_bathe": "dust_bathe"},
     "elephant": {"dust_bathe": "dust_bathe", "bathe": "dust_bathe"},
     "elephant_female": {"dust_bathe": "dust_bathe", "bathe": "dust_bathe"},
@@ -339,7 +340,7 @@ class BrowsingTests(unittest.TestCase):
 
 class DustBatheTests(unittest.TestCase):
     def test_ostrich_sits_and_sweeps_the_ground_on_both_sides(self):
-        for species in ("ostrich", "ostrich_juvenile"):
+        for species in ("ostrich", "ostrich_female", "ostrich_juvenile"):
             spec, solver, clips = clips_of(species)
             rest = solver.solve(clips["rest"].pose(0))
             sides = []

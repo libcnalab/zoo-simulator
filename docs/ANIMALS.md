@@ -49,7 +49,7 @@ while geometry, textures and animations remain identical.
 | `zoogen/sculpt.py`, `bear.py` on a prepared third-party sculpt, rigged by us (below) | brown_bear, brown_bear_juvenile, polar_bear, polar_bear_juvenile |
 | `zoogen/quadruped.py`, `wild_quadruped.py`, `anatomy.py` | wolf, wolf_juvenile, camel, camel_juvenile, meerkat, meerkat_juvenile |
 | `zoogen/birdscan.py` on a prepared third-party scan or sculpt, rigged by us (below) | penguin, penguin_juvenile, flamingo, flamingo_juvenile |
-| `zoogen/biped.py` | ostrich, ostrich_juvenile, kangaroo, kangaroo_female, kangaroo_juvenile |
+| `zoogen/biped.py` | ostrich, ostrich_female, ostrich_juvenile, kangaroo, kangaroo_female, kangaroo_juvenile |
 
 Each has the same eight clips, which the game picks from what the animal is doing: `idle`,
 `walk`, `trot` (the fast gait, a hop for the kangaroo), `eat`, `drink`, `rest`, `sleep`,
@@ -142,6 +142,23 @@ The same-camera comparisons and a seed-1 Ostrich Rise run after 3,000 simulation
 `evidence/ostrich-feathers-j13-2026-11-20.jpg`. The wings and tail now read as layered plumage,
 but the underlying egg body remains stylised and the body surface has no individual feather
 cards or sculpted feather tracts.
+
+### Adult ostrich hen (2026-11-21)
+
+`ostrich_female` gives the three adult females at Ostrich Rise their own model instead of the
+adult cock's black body and white wing and tail plumes. The hen is 90 % of the cock's height,
+with a slightly narrower body, folded wings and tail fan, mottled brown plumage and quiet
+grey-brown bare skin. This follows the Smithsonian's account of the common ostrich's sexual
+dimorphism: males are black with white tail feathers, while females are mostly brown and are
+shorter ([Smithsonian's National Zoo](https://www.nationalzoo.si.edu/animals/ostrich)).
+
+The model has 19,992 triangles, 19 bones and all nine adult clips, including the same grounded
+`dust_bathe` sequence. Its 2.88 MB production GLB is byte-for-byte identical to an independent
+fresh export. The procedural pipeline passes 138 tests; the game imports the variant, preserves
+the sex/age selection rules and completed a 3,000-tick Ostrich Rise run under AddressSanitizer
+with all seven residents outside. A close dust-bathing view and that real habitat run are in
+`evidence/ostrich-hen-j66-2026-11-21.jpg`; the habitat HUD happens to identify the selected
+four-month-old chick, while the brown adult hens and black cock are visible together behind it.
 
 ### Bactrian camel calf (2026-11-20)
 
@@ -560,7 +577,7 @@ named the real activity. Dedicated clips are now made in the pipeline
 | `meerkat` | `dig` (3 s) | `dig` | crouched, rump up, the fore paws scratching in turn (7 strokes each), nose low; once a loop the paws rest and the nose goes into the hole |
 | `penguin`, `penguin_juvenile` | `preen` (8 s) | `preen` | the head turned right round, the bill working the back feathers behind a lifted flipper, then the breast, then the other side |
 | `flamingo` | `preen` (10 s) | `preen` | on both legs, the long neck laid back over the body: the bill combs the left wing, the back, the right wing and the rump, the worked wing lifted a little |
-| `ostrich` | `dust_bathe` (10 s) | `dust_bathe` | sitting (the `rest` posture), rocking onto one side, the neck laid along the ground sweeping sand to each side, the loosened wings lifted and shaken |
+| `ostrich`, `ostrich_female`, `ostrich_juvenile` | `dust_bathe` (10 s) | `dust_bathe` | sitting (the `rest` posture), rocking onto one side, the neck laid along the ground sweeping sand to each side, the loosened wings lifted and shaken |
 | `elephant`, `elephant_female`, `elephant_juvenile` | `dust_bathe` (16 s) | `dust_bathe` | a fore foot scrapes the earth loose, the trunk gathers it at the ground and throws it up over the forehead, once to each side, the ears flapping |
 | `camel`, `camel_juvenile` | `ruminate` (10 s) | `ruminate` | standing with a slow asymmetric sideways jaw grind and a small head movement |
 | `flamingo` | `filter_feed` (7 s) | `filter_feed` | the fitted inverted-bill feeding posture, sweeping a broad irregular arc through the shallows |

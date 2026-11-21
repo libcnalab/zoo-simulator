@@ -27,7 +27,7 @@ SPECIES = ["lion", "lion_female", "lion_juvenile", "tiger", "wolf", "wolf_juveni
            "zebra", "zebra_female", "zebra_juvenile", "rhino", "camel", "camel_juvenile",
            "elephant", "giraffe",
            "giraffe_female", "giraffe_juvenile", "meerkat",
-           "penguin", "penguin_juvenile", "ostrich", "ostrich_juvenile", "flamingo",
+           "penguin", "penguin_juvenile", "ostrich", "ostrich_female", "ostrich_juvenile", "flamingo",
            "flamingo_juvenile", "kangaroo", "kangaroo_female", "kangaroo_juvenile"]
 
 
@@ -324,8 +324,23 @@ class AnatomyTests(unittest.TestCase):
         self.assertAlmostEqual(clips["walk"]["speed"], .75, delta=.02)
         self.assertAlmostEqual(clips["trot"]["speed"], 2.0, delta=.02)
 
+    def test_ostrich_hen_is_smaller_lighter_and_brown(self):
+        adult = importlib.import_module("species.ostrich").make_spec()
+        hen = importlib.import_module("species.ostrich_female").make_spec()
+        adult_parts = {part.name: part for part in adult.parts}
+        hen_parts = {part.name: part for part in hen.parts}
+        self.assertLess(hen_parts["egg_body"].rings[2].ry,
+                        adult_parts["egg_body"].rings[2].ry)
+        self.assertLess(hen_parts["tail_plume"].rings[1].up,
+                        adult_parts["tail_plume"].rings[1].up)
+        self.assertEqual(hen.meta["variant_of"], "ostrich")
+        self.assertEqual(hen.meta["variant"], "female")
+        self.assertEqual(hen.meta["sex"], "female")
+        self.assertAlmostEqual(hen.meta["relative_height"], .90)
+        self.assertIn("brown", hen.meta["coat"].lower())
+
     def test_ostriches_have_layered_wing_and_tail_feathers(self):
-        for species in ("ostrich", "ostrich_juvenile"):
+        for species in ("ostrich", "ostrich_female", "ostrich_juvenile"):
             spec = importlib.import_module("species." + species).make_spec()
             wings = [part for part in spec.parts if part.name.startswith("wing_feather.")]
             tail = [part for part in spec.parts if part.name.startswith("tail_feather.")]
@@ -338,7 +353,8 @@ class AnatomyTests(unittest.TestCase):
 
     def test_ostrich_exports_carry_the_feather_normal_map_and_tangents(self):
         root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
-        for species, triangle_limit in (("ostrich", 22000), ("ostrich_juvenile", 20000)):
+        for species, triangle_limit in (("ostrich", 22000), ("ostrich_female", 22000),
+                                        ("ostrich_juvenile", 20000)):
             glb = os.path.join(root, "assets", "animals", species + ".glb")
             with open(glb, "rb") as source:
                 self.assertEqual(source.read(4), b"glTF")
@@ -549,7 +565,7 @@ class AnatomyTests(unittest.TestCase):
 
 
 BIPEDS = [species for species in SPECIES
-          if species in ("penguin", "ostrich", "ostrich_juvenile", "flamingo",
+          if species in ("penguin", "ostrich", "ostrich_female", "ostrich_juvenile", "flamingo",
                          "flamingo_juvenile", "kangaroo", "kangaroo_female",
                          "kangaroo_juvenile")]
 
@@ -576,7 +592,7 @@ class BipedTests(unittest.TestCase):
     def test_manifest_budgets_and_ground_speeds(self):
         root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
         budgets = {"penguin": (6000, 12000), "ostrich": (12000, 24000),
-                   "ostrich_juvenile": (9000, 20000),
+                   "ostrich_female": (10000, 22000), "ostrich_juvenile": (9000, 20000),
                    "flamingo": (8000, 16000), "flamingo_juvenile": (8000, 16000),
                    "kangaroo": (12000, 24000), "kangaroo_female": (10000, 22000),
                    "kangaroo_juvenile": (10000, 20000)}
@@ -594,7 +610,8 @@ class BipedTests(unittest.TestCase):
             activity = {"penguin": {"preen", "huddle"},
                         "flamingo": {"preen", "filter_feed", "huddle"},
                         "flamingo_juvenile": {"preen", "filter_feed", "huddle"},
-                        "ostrich": {"dust_bathe"}, "ostrich_juvenile": {"dust_bathe"},
+                        "ostrich": {"dust_bathe"}, "ostrich_female": {"dust_bathe"},
+                        "ostrich_juvenile": {"dust_bathe"},
                         "kangaroo": {"groom"}, "kangaroo_female": {"groom"},
                         "kangaroo_juvenile": {"groom"}}
             water = {"penguin": {"swim", "float"},

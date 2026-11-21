@@ -1,0 +1,130 @@
+{
+  "bones": 19,
+  "clips": [
+    {
+      "duration": 0.8,
+      "events": [
+        {
+          "name": "step",
+          "time": 0.0
+        },
+        {
+          "name": "step",
+          "time": 0.4
+        }
+      ],
+      "frames": 25,
+      "loop": true,
+      "name": "walk",
+      "speed": 1.2
+    },
+    {
+      "duration": 0.5,
+      "events": [
+        {
+          "name": "step",
+          "time": 0.0
+        },
+        {
+          "name": "step",
+          "time": 0.25
+        }
+      ],
+      "frames": 16,
+      "loop": true,
+      "name": "trot",
+      "speed": 3.2
+    },
+    {
+      "duration": 4.0,
+      "events": [],
+      "frames": 121,
+      "loop": true,
+      "name": "idle",
+      "speed": 0.0
+    },
+    {
+      "duration": 4.0,
+      "events": [],
+      "frames": 121,
+      "loop": true,
+      "name": "eat",
+      "speed": 0.0
+    },
+    {
+      "duration": 4.0,
+      "events": [],
+      "frames": 121,
+      "loop": true,
+      "name": "drink",
+      "speed": 0.0
+    },
+    {
+      "duration": 4.0,
+      "events": [],
+      "frames": 121,
+      "loop": true,
+      "name": "rest",
+      "speed": 0.0
+    },
+    {
+      "duration": 4.0,
+      "events": [],
+      "frames": 121,
+      "loop": true,
+      "name": "sleep",
+      "speed": 0.0
+    },
+    {
+      "duration": 4.0,
+      "events": [],
+      "frames": 121,
+      "loop": true,
+      "name": "vocalize",
+      "speed": 0.0
+    },
+    {
+      "duration": 10.0,
+      "events": [],
+      "frames": 301,
+      "loop": true,
+      "name": "dust_bathe",
+      "speed": 0.0
+    }
+  ],
+  "generator": "tools/animals (zoogen)",
+  "license": "MIT",
+  "meta": {
+    "activity_clips": {
+      "dust_bathe": "dust_bathe"
+    },
+    "age_shape": "Slightly shorter and lighter adult hen",
+    "body_length_m": 2.1,
+    "coat": "Mottled brown adult plumage without the cock's white plumes",
+    "common_name": "Common ostrich hen",
+    "relative_height": 0.9,
+    "roughness": 0.93,
+    "scientific_name": "Struthio camelus",
+    "sex": "female",
+    "shoulder_height_m": 2.4,
+    "surface_detail": "layered feather normal map",
+    "variant": "female",
+    "variant_of": "ostrich"
+  },
+  "name": "ostrich_female",
+  "skeleton_bounds_animal_space": {
+    "max": [
+      0.92,
+      0.37,
+      2.31
+    ],
+    "min": [
+      -1.21,
+      -0.37,
+      0.0
+    ]
+  },
+  "texture": 1024,
+  "triangles": 19992,
+  "vertices": 10032
+}

@@ -18,6 +18,7 @@ from zoogen.rig import Clip, Rig
 NECK = [(.40, 0, 1.43), (.53, 0, 1.65), (.49, 0, 1.87),
         (.53, 0, 2.09), (.65, 0, 2.30)]
 JUVENILE_SCALE = .52
+FEMALE_RELATIVE_HEIGHT = .90
 
 
 def _skeleton():
@@ -93,7 +94,7 @@ def _parts(bones):
     return parts
 
 
-def paint(ctx, juvenile=False, scale=1.0):
+def paint(ctx, juvenile=False, female=False, scale=1.0):
     if juvenile:
         # Chicks are cryptic tan rather than miniature black-and-white adult males. Work in
         # adult coordinates so the down's stripes keep their visual width after scaling.
@@ -115,6 +116,27 @@ def paint(ctx, juvenile=False, scale=1.0):
         claw = ctx.tag("digit") * nz.smoothstep(.21, .25, P[..., 0])
         color = nz.mix(color, np.array([.15, .11, .08]), claw)
         color = nz.mix(color, np.array([.47, .39, .28]), ctx.tag("beak"))
+        color = nz.mix(color, np.array([.045, .025, .012]), ctx.tag("eye"))
+        return color
+    if female:
+        # Adult hens are brown rather than black-and-white. Fine mottling keeps the layered
+        # feather masses readable while the bare neck and legs remain a quiet grey-brown.
+        P = ctx.P / scale
+        grain = nz.fbm(P * [1, 1, 4], 40, 3, seed=68)
+        brown = np.array([.34, .27, .20])
+        pale_brown = np.array([.53, .44, .33])
+        dark_brown = np.array([.22, .17, .13])
+        feather = np.maximum(ctx.tag("body"), np.maximum(ctx.tag("wing"), ctx.tag("plume")))
+        color = brown * (.82 + .38 * grain)[..., None]
+        mottling = nz.fbm(P, 8.0, 3, seed=69)
+        color = nz.mix(color, pale_brown * (.90 + .16 * grain)[..., None],
+                       feather * nz.smoothstep(.58, .86, mottling) * .54)
+        color = nz.mix(color, dark_brown, ctx.tag("wing") * .16 + ctx.tag("plume") * .12)
+        bare = np.array([.45, .40, .34]) * (.92 + .12 * grain)[..., None]
+        color = nz.mix(color, bare, np.maximum(ctx.tag("bare"), ctx.tag("digit")))
+        claw = ctx.tag("digit") * nz.smoothstep(.21, .25, P[..., 0])
+        color = nz.mix(color, np.array([.13, .10, .075]), claw)
+        color = nz.mix(color, np.array([.49, .43, .35]), ctx.tag("beak"))
         color = nz.mix(color, np.array([.045, .025, .012]), ctx.tag("eye"))
         return color
     black = np.array([.027, .025, .026])
@@ -345,7 +367,34 @@ def _juvenile_shape(spec):
                       "sex": "juvenile"})
 
 
-def make_spec(juvenile=False):
+def _female_shape(spec):
+    """Give the hen a lighter adult build without disturbing the shared adult rig."""
+    for part in spec.parts:
+        if part.name == "egg_body":
+            for ring in part.rings:
+                ring.ry *= .94
+                ring.up *= .96
+                ring.dn *= .96
+        elif part.name in {"folded_wing.L", "tail_plume"} \
+                or part.name.startswith(("wing_feather.", "tail_feather.")):
+            for ring in part.rings:
+                ring.ry *= .92
+                ring.up *= .92
+                ring.dn *= .92
+
+    spec.name = "ostrich_female"
+    spec.paint = partial(paint, female=True)
+    spec.target_tris = 14000
+    spec.meta.update({"common_name": "Common ostrich hen", "sex": "female",
+                      "variant_of": "ostrich", "variant": "female",
+                      "relative_height": FEMALE_RELATIVE_HEIGHT,
+                      "coat": "Mottled brown adult plumage without the cock's white plumes",
+                      "age_shape": "Slightly shorter and lighter adult hen"})
+
+
+def make_spec(juvenile=False, female=False):
+    if juvenile and female:
+        raise ValueError("juvenile and female ostrich variants are mutually exclusive")
     bones, rig = _skeleton()
     spec = Spec("ostrich", bones, _parts(bones), paint=paint,
                 surface_height=surface_height, surface_strength=1.15, voxel=.009,
@@ -359,4 +408,6 @@ def make_spec(juvenile=False):
                       "activity_clips": {"dust_bathe": "dust_bathe"}})
     if juvenile:
         _juvenile_shape(spec)
+    elif female:
+        _female_shape(spec)
     return spec
