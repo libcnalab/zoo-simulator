@@ -43,8 +43,16 @@ maned wolf, guanaco, anteater and puma exhibits. Three boardwalk, cobblestone an
 make shorter loops; five inherited sheet connections remain. Six services sit on real vertices or
 on the remote Capybara and Peccary galleries, keeping every public tile within the 360 m service
 walk limit. The inspected in-game sheet is `build-probe/shots/map-nine-w.png`. These are
-intentionally successive improvements rather than a claim that the estate is finished: four
-continental sheets still use the first-pass circuit template.
+intentionally successive improvements rather than a claim that the estate is finished.
+
+The mid-east Asian district is the fourth second-pass sheet. A cobblestone mountain switchback
+serves kiang, Przewalski horse, red panda, tiger and snow leopard; a separate monsoon boardwalk
+serves macaque, elephant, rhino, tiger and red panda. A gravel temple gateway and three mixed
+cross-links create smaller loops while preserving four sheet seams and the established central
+connection. Eight services include the gateway and the remote Macaque, Rhino and Red Panda Bamboo
+galleries, so all public paths stay inside the 360 m walk limit. The inspected in-game sheet is
+`build-probe/shots/map-nine-e.png`. Three continental sheets still use the first-pass circuit
+template.
 
 Two-seed route regressions check six named surface and cross-link vertices in each redesigned
 district and their reachability from the entrance. Both seeds pass, as do the complete 118-habitat

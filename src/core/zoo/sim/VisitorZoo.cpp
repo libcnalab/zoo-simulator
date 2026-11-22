@@ -126,17 +126,18 @@ constexpr std::array<HabitatPlan, 118> kHabitats{{
     {"Guanaco Foothills", "guanaco", -419, 390, 18, 13},
     {"Anteater Palm Savanna", "giant_anteater", -349, 365, 15, 12},
     {"Puma Forest Pass", "puma", -279, 386, 15, 12},
-    // Mid-east: Asian steppe and mountain forests, with the route folding around the slopes.
-    {"Kiang High Steppe", "kiang", 289, 266, 18, 13},
-    {"Przewalski Valley", "przewalski_horse", 359, 251, 19, 14},
-    {"Red Panda Bamboo Wood", "red_panda", 429, 264, 14, 11},
-    {"Tiger River Forest", "tiger", 509, 249, 17, 14},
-    {"Snow Leopard Pass", "snow_leopard", 584, 269, 15, 12},
-    {"Macaque Temple Wood", "barbary_macaque", 279, 360, 16, 13},
-    {"Asian Elephant Forest", "elephant", 349, 381, 20, 15},
-    {"Rhino Monsoon Plain", "rhino", 424, 365, 18, 14},
-    {"Tiger Bamboo Ravine", "tiger", 504, 382, 16, 13},
-    {"Red Panda Cedar Hill", "red_panda", 574, 357, 14, 11},
+    // Mid-east: an Asian mountain switchback and monsoon boardwalk. Alternating centres follow
+    // the slopes and river bends instead of two parallel exhibit rows.
+    {"Kiang High Steppe", "kiang", 289, 250, 18, 13},
+    {"Przewalski Valley", "przewalski_horse", 359, 270, 19, 14},
+    {"Red Panda Bamboo Wood", "red_panda", 429, 244, 14, 11},
+    {"Tiger River Forest", "tiger", 509, 270, 17, 14},
+    {"Snow Leopard Pass", "snow_leopard", 584, 250, 15, 12},
+    {"Macaque Temple Wood", "barbary_macaque", 279, 382, 16, 13},
+    {"Asian Elephant Forest", "elephant", 349, 365, 20, 15},
+    {"Rhino Monsoon Plain", "rhino", 424, 392, 18, 14},
+    {"Tiger Bamboo Ravine", "tiger", 504, 365, 16, 13},
+    {"Red Panda Cedar Hill", "red_panda", 574, 390, 14, 11},
     // North-west: a boreal-to-Arctic journey rather than one oversized tundra paddock.
     {"Reindeer Migration Wood", "reindeer", -584, 475, 18, 13},
     {"Musk Ox Ridge", "musk_ox", -519, 465, 18, 14},
@@ -510,6 +511,37 @@ void Walks(Zoo& zoo, Script& script, std::span<const HabitatPlan> habitats, bool
         script.PathAlong({{-289, 282}, {-279, 272}}, 3, PathKind::Gravel);
         script.PathAlong({{-279, 339}, {-273, 363}}, 3, PathKind::Boardwalk);
 
+        // The mid-east Asian sheet pairs a stone mountain switchback with a monsoon boardwalk.
+        // Three cross-links form shorter temple, bamboo and predator loops between them.
+        script.PathAlong({{254, 273},
+                          {289, 288},
+                          {330, 274},
+                          {359, 296},
+                          {395, 278},
+                          {429, 302},
+                          {465, 281},
+                          {509, 298},
+                          {548, 279},
+                          {584, 292},
+                          {594, 273}},
+                         3, PathKind::Cobblestone);
+        script.PathAlong({{254, 363},
+                          {279, 345},
+                          {320, 362},
+                          {349, 340},
+                          {390, 357},
+                          {424, 338},
+                          {465, 360},
+                          {504, 342},
+                          {545, 359},
+                          {574, 340},
+                          {594, 363}},
+                         3, PathKind::Boardwalk);
+        script.PathAlong({{229, 318}, {245, 326}, {279, 345}}, 3, PathKind::Gravel);
+        script.PathAlong({{359, 296}, {370, 320}, {349, 340}}, 2, PathKind::Cobblestone);
+        script.PathAlong({{429, 302}, {424, 338}}, 2, PathKind::Gravel);
+        script.PathAlong({{509, 298}, {490, 322}, {504, 342}}, 2, PathKind::Boardwalk);
+
         // The remaining new sheets are landscape districts with an asymmetric, gently winding
         // circuit. Neighbouring circuits meet at short greenways on the sheet seams.
         const auto districtLoop = [&](int east, int north, PathKind kind) {
@@ -531,8 +563,7 @@ void Walks(Zoo& zoo, Script& script, std::span<const HabitatPlan> habitats, bool
                              2, PathKind::Gravel);
         };
         for (const auto& [east, north, kind] :
-             std::array<std::tuple<int, int, PathKind>, 4>{{{424, 318, PathKind::Asphalt},
-                                                            {-424, 530, PathKind::Gravel},
+             std::array<std::tuple<int, int, PathKind>, 3>{{{-424, 530, PathKind::Gravel},
                                                             {0, 530, PathKind::Asphalt},
                                                             {424, 530, PathKind::Boardwalk}}}) {
             districtLoop(east, north, kind);
@@ -643,6 +674,30 @@ void Walks(Zoo& zoo, Script& script, std::span<const HabitatPlan> habitats, bool
                              2, PathKind::Gravel);
         }
 
+        constexpr std::array<TileCoord, 10> kAsianJoins{{
+            {289, 288},
+            {359, 296},
+            {429, 302},
+            {509, 298},
+            {584, 292},
+            {279, 345},
+            {349, 340},
+            {424, 338},
+            {504, 342},
+            {574, 340},
+        }};
+        for (std::size_t i = 0; i < kAsianJoins.size(); ++i) {
+            const HabitatPlan& plan = habitats[78 + i];
+            const TileCoord join = kAsianJoins[i];
+            const int clearance = plan.rn + StandOffDepth(plan.species) + 2;
+            const int frontNorth = join.z < plan.north ? plan.north - clearance : plan.north + clearance;
+            const int bend = i % 2 == 0 ? 3 : -3;
+            script.PathAlong({{plan.east, frontNorth},
+                              {(plan.east + join.x) / 2 + bend, (frontNorth + join.z) / 2},
+                              {join.x, join.z}},
+                             2, PathKind::Gravel);
+        }
+
         // Every other exhibit gets a short, slightly bent branch from its near side to the
         // district's middle promenade. These make both lobes reachable where the loop swings away.
         for (const HabitatPlan& plan : habitats.subspan(48)) {
@@ -654,6 +709,9 @@ void Walks(Zoo& zoo, Script& script, std::span<const HabitatPlan> habitats, bool
             }
             if (plan.east < -212 && plan.north >= 212 && plan.north < 424) {
                 continue;  // the American sheet was joined to its own trails above
+            }
+            if (plan.east > 212 && plan.north >= 212 && plan.north < 424) {
+                continue;  // the Asian sheet was joined to its own trails above
             }
             const int districtNorth = plan.north < 212 ? 106 : plan.north < 424 ? 318 : 530;
             const int clearance = plan.rn + StandOffDepth(plan.species) + 2;
@@ -3003,11 +3061,21 @@ void Facilities(Zoo& zoo, Script& script, bool sideGardens, bool steppeGardens, 
         // Long perimeter galleries on opposite sides of the two meanders need their own small stops.
         Service(zoo, script, serviceAprons, "drinks_stall", -369, 239, Dir::North);
         Service(zoo, script, serviceAprons, "restroom", -569, 400, Dir::South);
+        // Asian stops follow mountain, temple-crossing and monsoon vertices.
+        Service(zoo, script, serviceAprons, "restroom", 254, 273, Dir::South);
+        Service(zoo, script, serviceAprons, "drinks_stall", 370, 320, Dir::North);
+        Service(zoo, script, serviceAprons, "ice_cream_stand", 490, 322, Dir::South);
+        Service(zoo, script, serviceAprons, "burger_stall", 574, 340, Dir::North);
+        Service(zoo, script, serviceAprons, "drinks_stall", 229, 318, Dir::East);
+        // Remote sides of three large rings otherwise exceed the 360 m service-walk limit.
+        Service(zoo, script, serviceAprons, "drinks_stall", 429, 229, Dir::North);
+        Service(zoo, script, serviceAprons, "restroom", 424, 410, Dir::South);
+        Service(zoo, script, serviceAprons, "ice_cream_stand", 279, 400, Dir::South);
         // Four stops per other sheet follow different bends of each circuit. They are deliberately
         // offset rather than stamped at page centres, and Service snaps each door to a connected
         // walk before accepting the site.
         for (const auto& [east, north] :
-             std::array<std::pair<int, int>, 4>{{{424, 318}, {-424, 530}, {0, 530}, {424, 530}}}) {
+             std::array<std::pair<int, int>, 3>{{{-424, 530}, {0, 530}, {424, 530}}}) {
             Service(zoo, script, serviceAprons, "restroom", east - 150, north + 2, Dir::South);
             Service(zoo, script, serviceAprons, "drinks_stall", east - 55, north - 3, Dir::North);
             Service(zoo, script, serviceAprons, "ice_cream_stand", east + 55, north + 3, Dir::South);
