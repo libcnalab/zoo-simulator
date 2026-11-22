@@ -56,6 +56,33 @@ ordinary press of E, because short E remains **Read the board**.
 A visual prototype is roughly 8–12 agent hours. A safe reversible implementation with simulation,
 tests and save policy is estimated at 25–40 hours; a polished danger-aware version at 50–90 hours.
 
+### Experimental `Many` visitor crowd
+
+Add a sixth visitor-count setting named **Many (experimental)** above the current `More` level.
+It is intentionally allowed to be slow: the purpose is to let the owner see the estate genuinely
+crowded, not to claim that every machine can run it at the normal frame rate.
+
+- Start at **3,000 simultaneous visitors** (2.5 times `More` and 3.75 times `Normal`) and inspect a
+  filled nine-sheet zoo. If that still does not read as exceptionally crowded and remains stable,
+  try 4,000 and 5,000 before choosing the final experimental cap. Do not change the 800-person
+  default or the existing five settings.
+- Use the stable preference/CLI key `many`, show `Many (experimental)` in settings and a concise
+  performance warning. `--crowd many` must exercise exactly the same setting in automated runs.
+- Scale arrivals with the cap through the existing `CrowdPace`; changing to Many during a visit
+  should fill progressively rather than teleporting thousands of people into view. Changing down
+  must continue to send home whole groups through the existing deterministic policy.
+- All requested visitors remain real simulated groups with destinations and path constraints.
+  Rendering may retain its bounded avatar/flat-person LOD and frustum budgets, but must not report
+  a fake crowd count or silently replace people with scenery.
+- Correctness is still mandatory even though speed is experimental: no crash or allocation
+  failure, nobody outside the estate or walking through habitats, no broken queues/group links,
+  stable save/preferences behaviour, and bounded overnight departure. Add focused crowd-setting
+  tests for the new cap and settings round-trip.
+- Record a matched Normal / More / Many benchmark after the zoo has filled: actual visitor count,
+  fill time, simulation-step time, FPS/frame percentiles, memory, people in range/view/drawn and
+  the number of flat versus full avatars. Capture and inspect at least the entrance, a busy hub and
+  a remote district. Keep the mode even if it is slow, but document the measured cost honestly.
+
 ## 0. Start here
 
 - The default map is now 224 × 224 tiles, 448 × 448 m including the border. The new east and
