@@ -15,8 +15,9 @@ their entrance-relative positions. Six continental districts fill the new south-
 south-east, mid-west, mid-east, north-west and north-east sheets; a compact European landscape
 occupies the northern centre. Their 96 additional exhibits reuse the established 49-species
 catalogue in separate, plausible conservation groups. The first design pass is deliberately a
-work in progress: later passes must keep replacing mechanical-looking geometry and unjustifiably
-large paddocks with more varied, real-zoo-inspired exhibits rather than merely filling area.
+baseline rather than a finished zoo: this second pass gives all seven new landscape sheets their
+own routes, but later passes should keep replacing any remaining mechanical geometry and
+unjustifiably large paddocks with more varied, real-zoo-inspired exhibits and facilities.
 
 The south-west Australian district is the first second-pass sheet. Its copied outer circuit and
 straight middle promenade are gone. A low gravel trail now bends past Outback Emu Range, Wombat
@@ -32,9 +33,9 @@ The south-east African district is the second second-pass sheet. Its ten stagger
 follow a broad gravel savanna trail and a separate river boardwalk; two narrow cobblestone links
 make shorter predator loops. The pool of Hippo River Bend sits directly on the river arm,
 and four main services plus a northern Lion Savanna drinks stop follow real path vertices. A short
-boardwalk arm preserves the inherited seam connection without a 435 m detour. The remaining
-north-west generic district also receives a three-tile-wide centre crossing where its old shallow
-bend had left one isolated 2 m path tip. The inspected in-game sheet is
+boardwalk arm preserves the inherited seam connection without a 435 m detour. The north-west
+gateway also receives a three-tile-wide crossing where its old shallow bend had left one isolated
+2 m path tip. The inspected in-game sheet is
 `build-probe/shots/map-nine-se.png`.
 
 The mid-west American district is the third second-pass sheet. A dry gravel prairie trail follows
@@ -66,8 +67,15 @@ cuts across its northern half, while both neighbouring-sheet seams and both esta
 gateways remain connected. Five main services follow literal leaf and boardwalk vertices; a sixth
 small drinks stop in the long southern lobe keeps its Lynx Limestone and Wolf Carpathian galleries
 inside the 360 m service-walk limit. The inspected in-game sheet is
-`build-probe/shots/map-nine-n.png`. Only the north-east tropical district still uses the
-first-pass circuit template.
+`build-probe/shots/map-nine-n.png`.
+
+The north-east tropical district is the seventh and final second-pass sheet. A dry gravel temple
+trail and separate river-and-mangrove boardwalk braid around ten staggered habitats. Three mixed
+crossings split the trails into shorter loops, while literal western and southern endpoints retain
+both neighbouring-sheet connections. Seven services occupy trail, crossing and branch vertices;
+Aldabra Island has a compact branch stop for its remote southern gallery. The inspected in-game
+sheet is `build-probe/shots/map-nine-ne.png`. No new landscape sheet now uses the copied
+first-pass circuit and straight middle promenade.
 
 Two-seed route regressions check six named surface and cross-link vertices in each redesigned
 district and their reachability from the entrance. Both seeds pass, as do the complete 118-habitat

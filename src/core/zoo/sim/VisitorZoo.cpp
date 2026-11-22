@@ -162,17 +162,18 @@ constexpr std::array<HabitatPlan, 118> kHabitats{{
     {"European Bison Meadow", "european_bison", 5, 595, 18, 13},
     {"Red Deer Riverside", "red_deer", 75, 590, 17, 13},
     {"Lynx Quiet Forest", "lynx", 145, 592, 14, 11},
-    // North-east: islands and tropical forest, alternating intimate primate gardens and birds.
-    {"Ring-tailed Lemur Island", "ring_tailed_lemur", 289, 478, 15, 12},
-    {"Macaque Forest Temple", "barbary_macaque", 359, 463, 16, 13},
-    {"Cassowary Palm Forest", "southern_cassowary", 429, 476, 15, 12},
-    {"Aldabra Island", "aldabra_tortoise", 509, 461, 15, 11},
-    {"Flamingo Mangrove", "flamingo", 584, 481, 17, 13},
-    {"Lemur Canopy Walk", "ring_tailed_lemur", 279, 572, 15, 12},
-    {"Tapir Tropical River", "south_american_tapir", 349, 593, 16, 13},
-    {"Okapi Rainforest", "okapi", 424, 577, 16, 13},
-    {"Cassowary Fern Gully", "southern_cassowary", 504, 594, 15, 12},
-    {"Tropical Penguin Coast", "penguin", 574, 569, 16, 12},
+    // North-east: two braided rainforest and wetland trails. Alternating intimate primate gardens,
+    // forest ungulates and birds follow the trail bends rather than two exhibit rows.
+    {"Ring-tailed Lemur Island", "ring_tailed_lemur", 289, 472, 15, 12},
+    {"Macaque Forest Temple", "barbary_macaque", 359, 455, 16, 13},
+    {"Cassowary Palm Forest", "southern_cassowary", 429, 486, 15, 12},
+    {"Aldabra Island", "aldabra_tortoise", 509, 462, 15, 11},
+    {"Flamingo Mangrove", "flamingo", 584, 492, 17, 13},
+    {"Lemur Canopy Walk", "ring_tailed_lemur", 279, 578, 15, 12},
+    {"Tapir Tropical River", "south_american_tapir", 349, 600, 16, 13},
+    {"Okapi Rainforest", "okapi", 424, 568, 16, 13},
+    {"Cassowary Fern Gully", "southern_cassowary", 504, 590, 15, 12},
+    {"Tropical Penguin Coast", "penguin", 574, 560, 16, 12},
 }};
 
 bool SteppeEquid(std::string_view species) {
@@ -589,30 +590,40 @@ void Walks(Zoo& zoo, Script& script, std::span<const HabitatPlan> habitats, bool
         script.PathAlong({{-145, 575}, {-115, 540}, {-75, 522}, {-35, 540}, {5, 520}, {45, 540}, {75, 575}},
                          3, PathKind::Boardwalk);
 
-        // The remaining new sheets are landscape districts with an asymmetric, gently winding
-        // circuit. Neighbouring circuits meet at short greenways on the sheet seams.
-        const auto districtLoop = [&](int east, int north, PathKind kind) {
-            script.PathAlong({{east - 195, north - 26}, {east - 170, north - 42}, {east - 122, north - 34},
-                              {east - 72, north - 45},  {east - 18, north - 33},  {east + 34, north - 44},
-                              {east + 91, north - 32},  {east + 145, north - 46}, {east + 191, north - 25},
-                              {east + 180, north + 3},  {east + 196, north + 31}, {east + 151, north + 45},
-                              {east + 96, north + 34},  {east + 43, north + 47},  {east - 9, north + 35},
-                              {east - 62, north + 45},  {east - 119, north + 33}, {east - 168, north + 46},
-                              {east - 196, north + 21}, {east - 195, north - 26}},
-                             3, kind);
-            script.PathAlong({{east - 168, north + 2},
-                              {east - 115, north - 5},
-                              {east - 58, north + 7},
-                              {east, north - 4},
-                              {east + 55, north + 8},
-                              {east + 112, north - 6},
-                              {east + 180, north + 3}},
-                             2, PathKind::Gravel);
-        };
-        for (const auto& [east, north, kind] :
-             std::array<std::tuple<int, int, PathKind>, 1>{{{424, 530, PathKind::Boardwalk}}}) {
-            districtLoop(east, north, kind);
-        }
+        // The tropical north-east sheet braids a dry temple trail with a river-and-mangrove
+        // boardwalk. Three mixed crossings make compact loops without restoring a straight
+        // middle promenade. Literal ends retain its west and south sheet connections.
+        script.PathAlong({{229, 530},
+                          {245, 510},
+                          {289, 498},
+                          {325, 515},
+                          {359, 505},
+                          {395, 520},
+                          {429, 500},
+                          {465, 515},
+                          {509, 498},
+                          {545, 515},
+                          {584, 505},
+                          {615, 530}},
+                         3, PathKind::Gravel);
+        script.PathAlong({{229, 530},
+                          {245, 550},
+                          {279, 558},
+                          {315, 545},
+                          {349, 570},
+                          {390, 552},
+                          {424, 570},
+                          {465, 550},
+                          {504, 572},
+                          {545, 552},
+                          {574, 568},
+                          {600, 552},
+                          {615, 530}},
+                         3, PathKind::Boardwalk);
+        script.PathAlong({{359, 505}, {365, 535}, {349, 570}}, 2, PathKind::Cobblestone);
+        script.PathAlong({{429, 500}, {440, 535}, {424, 570}}, 2, PathKind::Boardwalk);
+        script.PathAlong({{509, 498}, {500, 535}, {504, 572}}, 2, PathKind::Cobblestone);
+        script.PathAlong({{594, 485}, {590, 495}, {584, 505}}, 3, PathKind::Gravel);
         // Only the northern row has three new neighbouring districts. In the two established
         // centre sheets the short nominal seam had no centre circuit to meet; the curved gateways
         // below are their real connections.
@@ -788,6 +799,30 @@ void Walks(Zoo& zoo, Script& script, std::span<const HabitatPlan> habitats, bool
                              2, PathKind::Gravel);
         }
 
+        constexpr std::array<TileCoord, 10> kTropicalJoins{{
+            {289, 498},
+            {359, 505},
+            {429, 500},
+            {509, 498},
+            {584, 505},
+            {279, 558},
+            {349, 570},
+            {424, 570},
+            {504, 572},
+            {574, 568},
+        }};
+        for (std::size_t i = 0; i < kTropicalJoins.size(); ++i) {
+            const HabitatPlan& plan = habitats[108 + i];
+            const TileCoord join = kTropicalJoins[i];
+            const int clearance = plan.rn + StandOffDepth(plan.species) + 2;
+            const int frontNorth = join.z < plan.north ? plan.north - clearance : plan.north + clearance;
+            const int bend = i % 2 == 0 ? -3 : 3;
+            script.PathAlong({{plan.east, frontNorth},
+                              {(plan.east + join.x) / 2 + bend, (frontNorth + join.z) / 2},
+                              {join.x, join.z}},
+                             2, PathKind::Gravel);
+        }
+
         // Every other exhibit gets a short, slightly bent branch from its near side to the
         // district's middle promenade. These make both lobes reachable where the loop swings away.
         for (const HabitatPlan& plan : habitats.subspan(48)) {
@@ -808,6 +843,9 @@ void Walks(Zoo& zoo, Script& script, std::span<const HabitatPlan> habitats, bool
             }
             if (plan.east >= -212 && plan.east <= 212 && plan.north >= 424) {
                 continue;  // the European sheet was joined to its own leaf loop above
+            }
+            if (plan.east > 212 && plan.north >= 424) {
+                continue;  // the tropical sheet was joined to its braided trails above
             }
             const int districtNorth = plan.north < 212 ? 106 : plan.north < 424 ? 318 : 530;
             const int clearance = plan.rn + StandOffDepth(plan.species) + 2;
@@ -3180,15 +3218,14 @@ void Facilities(Zoo& zoo, Script& script, bool sideGardens, bool steppeGardens, 
         // The leaf's long southern lobe does not meet the wetland shortcut. A small stop at its
         // centre keeps the two middle viewing galleries within the 360 m service-walk limit.
         Service(zoo, script, serviceAprons, "drinks_stall", 20, 500, Dir::North);
-        // Four stops per other sheet follow different bends of each circuit. They are deliberately
-        // offset rather than stamped at page centres, and Service snaps each door to a connected
-        // walk before accepting the site.
-        for (const auto& [east, north] : std::array<std::pair<int, int>, 1>{{{424, 530}}}) {
-            Service(zoo, script, serviceAprons, "restroom", east - 150, north + 2, Dir::South);
-            Service(zoo, script, serviceAprons, "drinks_stall", east - 55, north - 3, Dir::North);
-            Service(zoo, script, serviceAprons, "ice_cream_stand", east + 55, north + 3, Dir::South);
-            Service(zoo, script, serviceAprons, "burger_stall", east + 150, north - 2, Dir::North);
-        }
+        // Tropical stops sit on the temple trail, its crossings and the mangrove boardwalk.
+        Service(zoo, script, serviceAprons, "restroom", 245, 510, Dir::South);
+        Service(zoo, script, serviceAprons, "drinks_stall", 365, 535, Dir::North);
+        Service(zoo, script, serviceAprons, "ice_cream_stand", 440, 535, Dir::South);
+        Service(zoo, script, serviceAprons, "burger_stall", 600, 552, Dir::North);
+        // Aldabra Island's southern gallery sits beyond the three crossings, so its own branch
+        // needs a compact stop to remain inside the 360 m service-walk limit.
+        Service(zoo, script, serviceAprons, "drinks_stall", 509, 480, Dir::South);
         // Large exhibit rings can put the opposite viewing side hundreds of metres along the
         // path from a central kiosk. These compact stops sit on the actual habitat branches.
         Service(zoo, script, serviceAprons, "drinks_stall", 359, 56, Dir::South);
@@ -3197,7 +3234,7 @@ void Facilities(Zoo& zoo, Script& script, bool sideGardens, bool steppeGardens, 
         Service(zoo, script, serviceAprons, "drinks_stall", 594, 363, Dir::West);
         Service(zoo, script, serviceAprons, "ice_cream_stand", -349, 579, Dir::North);
         Service(zoo, script, serviceAprons, "drinks_stall", 75, 580, Dir::North);
-        Service(zoo, script, serviceAprons, "drinks_stall", 424, 530, Dir::South);
+        Service(zoo, script, serviceAprons, "drinks_stall", 424, 570, Dir::South);
         Service(zoo, script, serviceAprons, "restroom", 359, 478, Dir::South);
     }
     if (northernExpansion) {

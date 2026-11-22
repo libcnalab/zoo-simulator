@@ -24,8 +24,11 @@ whatever you take up (`docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `docs/V
   migration trail, fjord boardwalk, three ridge links and every inherited gateway. The
   north-centre European sheet is the sixth redesign: ten staggered habitats surround an irregular
   asphalt conservation leaf with a wetland-boardwalk shortcut, retained seams and a southern-lobe
-  drinks stop. Only the north-east tropical sheet still uses the first-pass circuit template.
-  Cinema mode from
+  drinks stop. The north-east tropical sheet is the seventh and final redesign: a gravel temple
+  trail and river-and-mangrove boardwalk braid around ten staggered habitats with three crossings,
+  both inherited seams and an Aldabra branch stop. No new landscape sheet still uses the copied
+  first-pass circuit or straight middle promenade. Continue later zoo-design passes where they add
+  species-justified detail rather than stamping another common template. Cinema mode from
   `6e2f119`
   is complete: it shows one representative of each resident species for about three seconds,
   supports Left/Right and returns with C. `9c5edb4` prevents every Cinema cut from rebuilding the
