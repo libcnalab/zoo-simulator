@@ -96,6 +96,7 @@ public:
     void Paint(int east0, int north0, int east1, int north1, Terrain terrain) {
         build_.PaintTerrain(TilesInRect(Tile(east0, north0), Tile(east1, north1)), terrain);
     }
+    void PaintTiles(std::span<const TileCoord> tiles, Terrain terrain) { build_.PaintTerrain(tiles, terrain); }
 
     /// Scatters round patches of another ground cover over a rectangle.
     void Patches(int east0, int north0, int east1, int north1, Terrain terrain, int count, int radius) {

@@ -465,16 +465,29 @@ std::optional<Box> MapLabelBox(Box anchor, const Box& plan, bool habitat, const 
 
 void VisitorHud::Map(ui::Ui& ui, Visit& visit) {
     using Kind = VisitMap::Kind;
-    const VisitMap& map = visit.map;
+    VisitMap& map = visit.map;
     const Vector2 screen = ui.Screen();
-    const float spanX = std::max(1.0f, map.maxX - map.minX);
-    const float spanZ = std::max(1.0f, map.maxZ - map.minZ);
-    const float scale = std::min((screen.X - 120.0f) / spanX, (screen.Y - 150.0f) / spanZ);
+    const int columns = std::max(1, map.pageColumns);
+    const int rows = std::max(1, map.pageRows);
+    map.page = std::clamp(map.page, 0, columns * rows - 1);
+    const int column = map.page % columns;
+    const int row = map.page / columns;
+    const float sheetWidth = (map.maxX - map.minX) / static_cast<float>(columns);
+    const float sheetDepth = (map.maxZ - map.minZ) / static_cast<float>(rows);
+    const float minX = map.minX + static_cast<float>(column) * sheetWidth;
+    const float maxX = minX + sheetWidth;
+    const float minZ = map.minZ + static_cast<float>(row) * sheetDepth;
+    const float maxZ = minZ + sheetDepth;
+    const float spanX = std::max(1.0f, maxX - minX);
+    const float spanZ = std::max(1.0f, maxZ - minZ);
+    const float header = rows == 3 && columns == 3 ? 82.0f : 46.0f;
+    const float scale = std::min((screen.X - 120.0f) / spanX, (screen.Y - header - 104.0f) / spanZ);
     const Box plan{std::round(0.5f * (screen.X - spanX * scale)),
-                   std::round(0.5f * (screen.Y - spanZ * scale)) + 8.0f, std::round(spanX * scale),
+                   std::round(0.5f * (screen.Y - spanZ * scale)) + 0.5f * (header - 30.0f),
+                   std::round(spanX * scale),
                    std::round(spanZ * scale)};
     const float panelWidth = std::min(screen.X - 12.0f, std::max(plan.w + 32.0f, 340.0f));
-    const Box panel{plan.MidX() - panelWidth * 0.5f, plan.y - 46.0f, panelWidth, plan.h + 94.0f};
+    const Box panel{plan.MidX() - panelWidth * 0.5f, plan.y - header, panelWidth, plan.h + header + 48.0f};
     ui.Paint().Fill({0.0f, 0.0f, screen.X, screen.Y}, ui::Rgb(0, 0, 0, 90));
     ui.Paint().Shadow(panel, 18.0f, 0.5f);
     ui.Paint().Frame(panel, 8.0f, ui::Rgb(238, 232, 214, 250), ui::Rgb(94, 72, 44, 255), 3.0f);
@@ -482,6 +495,30 @@ void VisitorHud::Map(ui::Ui& ui, Visit& visit) {
                ui::Rgb(38, 34, 28, 255), Align::Left, true);
     ui.LabelIn({panel.Right() - 318.0f, panel.y + 10.0f, 300.0f, 26.0f}, "North is up   -   M closes",
                theme::kSmall, ui::Rgb(104, 92, 74, 255), Align::Right);
+    if (rows == 3 && columns == 3) {
+        static constexpr std::array labels{"NW", "N", "NE", "W", "Centre", "E", "SW", "S", "SE"};
+        constexpr float buttonWidth = 56.0f;
+        constexpr float buttonHeight = 22.0f;
+        const float left = panel.MidX() - 1.5f * buttonWidth;
+        for (int index = 0; index < 9; ++index) {
+            const Box button{left + static_cast<float>(index % 3) * buttonWidth,
+                             panel.y + 6.0f + static_cast<float>(index / 3) * buttonHeight,
+                             buttonWidth - 3.0f, buttonHeight - 2.0f};
+            if (ui.Button(button, labels[static_cast<std::size_t>(index)],
+                          {.selected = map.page == index, .bold = map.page == index,
+                           .size = theme::kSmall - 1.0f}))
+                map.page = index;
+        }
+    } else if (rows == 2 && columns == 1) {
+        const Box upper{panel.MidX() - 112.0f, panel.y + 6.0f, 108.0f, 30.0f};
+        const Box lower{panel.MidX() + 4.0f, panel.y + 6.0f, 108.0f, 30.0f};
+        if (ui.Button(upper, "Upper half", {.selected = map.page == 0, .bold = map.page == 0,
+                                             .size = theme::kSmall}))
+            map.page = 0;
+        if (ui.Button(lower, "Lower half", {.selected = map.page == 1, .bold = map.page == 1,
+                                             .size = theme::kSmall}))
+            map.page = 1;
+    }
 
     // North (-z) is up: the plan reads like the ground one walks, the entrance at the foot.
     ui.Paint().PushClip(plan);
@@ -506,15 +543,16 @@ void VisitorHud::Map(ui::Ui& ui, Visit& visit) {
                 color = ui::Rgb(198, 62, 50, 255);
                 break;
         }
-        const float x0 = std::floor(plan.x + (shape.x - map.minX) * scale);
-        const float y0 = std::floor(plan.y + (shape.z - map.minZ) * scale);
-        const float x1 = std::ceil(plan.x + (shape.x + shape.w - map.minX) * scale);
-        const float y1 = std::ceil(plan.y + (shape.z + shape.d - map.minZ) * scale);
+        const float x0 = std::floor(plan.x + (shape.x - minX) * scale);
+        const float y0 = std::floor(plan.y + (shape.z - minZ) * scale);
+        const float x1 = std::ceil(plan.x + (shape.x + shape.w - minX) * scale);
+        const float y1 = std::ceil(plan.y + (shape.z + shape.d - minZ) * scale);
         ui.Paint().Fill({x0, y0, x1 - x0, y1 - y0}, color);
     }
     const auto onPlan = [&](const VisitMap::Place& place) {
-        return Vector2(plan.x + (place.x - map.minX) * scale, plan.y + (place.z - map.minZ) * scale);
+        return Vector2(plan.x + (place.x - minX) * scale, plan.y + (place.z - minZ) * scale);
     };
+    const auto onPage = [&](float x, float z) { return x >= minX && x <= maxX && z >= minZ && z <= maxZ; };
     // Keep lettering clear of the clickable discs. Habitat names have first claim on the space.
     std::vector<Box> placed;
     placed.reserve(map.places.size() + map.labels.size());
@@ -526,16 +564,20 @@ void VisitorHud::Map(ui::Ui& ui, Visit& visit) {
     std::vector<PrintedName> names;
     names.reserve(map.labels.size());
     for (const auto& place : map.places) {
+        if (!onPage(place.x, place.z))
+            continue;
         const auto at = onPlan(place);
         placed.push_back({at.X - 8.0f, at.Y - 8.0f, 16.0f, 16.0f});
     }
     for (const VisitMap::Label& label : map.labels) {
+        if (!onPage(label.x, label.z))
+            continue;
         const float size = label.habitat ? theme::kSmall + 1.0f : theme::kSmall - 1.0f;
         const float width = ui.Paint().TextWidth(label.text, size, label.habitat);
         // A name near the plan's edge moves in rather than being cut.
-        const float x = std::clamp(std::round(plan.x + (label.x - map.minX) * scale - 0.5f * width),
+        const float x = std::clamp(std::round(plan.x + (label.x - minX) * scale - 0.5f * width),
                                    plan.x + 7.0f, std::max(plan.x + 7.0f, plan.Right() - width - 7.0f));
-        const float y = std::round(plan.y + (label.z - map.minZ) * scale - 8.0f);
+        const float y = std::round(plan.y + (label.z - minZ) * scale - 8.0f);
         const auto best =
             MapLabelBox({x - 5.0f, y - 2.0f, width + 10.0f, 19.0f}, plan, label.habitat, placed);
         if (!best)
@@ -544,8 +586,8 @@ void VisitorHud::Map(ui::Ui& ui, Visit& visit) {
         names.push_back({label, *best, size});
         // A displaced name has a leader back to its habitat. Draw these below all the lettering.
         if (label.habitat) {
-            const float cx = plan.x + (label.x - map.minX) * scale;
-            const float cy = plan.y + (label.z - map.minZ) * scale;
+            const float cx = plan.x + (label.x - minX) * scale;
+            const float cy = plan.y + (label.z - minZ) * scale;
             const float edgeX = std::clamp(cx, best->x, best->Right());
             const float edgeY = std::clamp(cy, best->y, best->Bottom());
             if (std::hypot(cx - edgeX, cy - edgeY) > 5.0f) {
@@ -569,6 +611,8 @@ void VisitorHud::Map(ui::Ui& ui, Visit& visit) {
     float nearest = 13.0f * 13.0f;
     if (ui.Hovered(plan)) {
         for (std::size_t i = 0; i < map.places.size(); ++i) {
+            if (!onPage(map.places[i].x, map.places[i].z))
+                continue;
             const Vector2 at = onPlan(map.places[i]);
             const float dx = at.X - ui.Mouse().X;
             const float dy = at.Y - ui.Mouse().Y;
@@ -580,23 +624,33 @@ void VisitorHud::Map(ui::Ui& ui, Visit& visit) {
     }
     for (std::size_t i = 0; i < map.places.size(); ++i) {
         const VisitMap::Place& place = map.places[i];
+        if (!onPage(place.x, place.z))
+            continue;
         const bool lit = static_cast<int>(i) == hovered;
         const Vector2 at = onPlan(place);
         const float radius = (place.habitat ? 6.5f : 5.5f) + (lit ? 3.0f : 0.0f);
         ui.Paint().Disc(at, radius + 2.0f, ui::Rgb(255, 255, 255, 235));
         ui.Paint().Disc(at, radius, place.habitat ? ui::Rgb(34, 110, 62, 255) : ui::Rgb(38, 84, 160, 255));
     }
+    for (const auto& name : names) {
+        if (name.label.destination >= 0 && ui.Hovered(name.box)) {
+            hovered = name.label.destination;
+            break;
+        }
+    }
     if (hovered >= 0 && ui.Clicked(plan))
         visit.travelTo = hovered;
 
     // You are here: a dot and, ahead of it, where you look.
-    const Vector2 you(plan.x + (map.you.X - map.minX) * scale, plan.y + (map.you.Y - map.minZ) * scale);
-    const Vector2 ahead(std::sin(map.yaw), std::cos(map.yaw));
-    for (int step = 3; step >= 1; --step)
-        ui.Paint().Disc(you + ahead * (5.0f * static_cast<float>(step)), 4.2f - static_cast<float>(step),
-                        ui::Rgb(200, 40, 40, 255));
-    ui.Paint().Disc(you, 7.0f, ui::Rgb(255, 255, 255, 255));
-    ui.Paint().Disc(you, 5.0f, ui::Rgb(214, 40, 40, 255));
+    if (onPage(map.you.X, map.you.Y)) {
+        const Vector2 you(plan.x + (map.you.X - minX) * scale, plan.y + (map.you.Y - minZ) * scale);
+        const Vector2 ahead(std::sin(map.yaw), std::cos(map.yaw));
+        for (int step = 3; step >= 1; --step)
+            ui.Paint().Disc(you + ahead * (5.0f * static_cast<float>(step)), 4.2f - static_cast<float>(step),
+                            ui::Rgb(200, 40, 40, 255));
+        ui.Paint().Disc(you, 7.0f, ui::Rgb(255, 255, 255, 255));
+        ui.Paint().Disc(you, 5.0f, ui::Rgb(214, 40, 40, 255));
+    }
     ui.Paint().PopClip();
     float legendX = panel.x + 24.0f;
     const float legendY = plan.Bottom() + 12.0f;
@@ -630,7 +684,8 @@ void VisitorHud::Diagnostics(ui::Ui& ui, const Visit& visit) {
               f.castFailed > 0 ? theme::kAlarm : theme::kText);
     body.CutTop(4.0f);
     hud::Heading(ui, body, "WORLD");
-    hud::Fact(ui, body, "Animals (drawn)", Format("%d (%d)", f.animals, f.animalsDrawn));
+    hud::Fact(ui, body, "Animals (drawn / distant LOD)",
+              Format("%d (%d / %d)", f.animals, f.animalsDrawn, f.animalsProxied));
     hud::Fact(ui, body, "Here",
               Format("%.1f, %.1f  heading %.0f°", static_cast<double>(f.feet.X),
                      static_cast<double>(f.feet.Z), static_cast<double>(f.yawDegrees)));

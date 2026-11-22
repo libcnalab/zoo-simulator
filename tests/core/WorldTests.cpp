@@ -9,10 +9,10 @@ namespace zoo {
 namespace {
 
 TEST(World, ConstructionClampsDimensionsAndStartsFlat) {
-    const World world(2, 600);
+    const World world(2, 3000);
     EXPECT_EQ(world.Width(), 8);
-    EXPECT_EQ(world.Depth(), 512);
-    EXPECT_TRUE(world.IsProperty({7, 511}));
+    EXPECT_EQ(world.Depth(), World::kMaxDimension);
+    EXPECT_TRUE(world.IsProperty({7, World::kMaxDimension - 1}));
     EXPECT_FALSE(world.HasWater({-1, 0}));
     EXPECT_FLOAT_EQ(world.HeightAt({3.0f, 4.0f}), 0.0f);
     EXPECT_EQ(world.At(world.EntranceTile()).terrain, Terrain::Grass);

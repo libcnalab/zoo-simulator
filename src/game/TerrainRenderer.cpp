@@ -41,8 +41,6 @@ using zoo::kTileSize;
 using zoo::TileCoord;
 using zoo::World;
 
-constexpr int kTexels = kChunkTiles * TerrainRenderer::kTexelsPerTile;
-
 /// Tiles where kinds of ground meet, and bank tiles, are cut into this many
 /// cells a side (25 cm): the grain of the detail layer's outlines and of a
 /// bank's bends.
@@ -132,16 +130,15 @@ private:
     std::vector<TilePaintInfo> infos_;
 };
 
-std::size_t TexelAt(TileCoord tile, TileCoord chunkOrigin, int i, int j) {
-    constexpr int n = TerrainRenderer::kTexelsPerTile;
-    return (static_cast<std::size_t>((tile.z - chunkOrigin.z) * n + j) * kTexels +
+std::size_t TexelAt(TileCoord tile, TileCoord chunkOrigin, int i, int j, int n, int chunkTexels) {
+    return (static_cast<std::size_t>((tile.z - chunkOrigin.z) * n + j) *
+                static_cast<std::size_t>(chunkTexels) +
             static_cast<std::size_t>((tile.x - chunkOrigin.x) * n + i)) *
            4u;
 }
 
 /// Paints one tile of a chunk's image.
-void PaintTile(const TilePaintInfo& info, TileCoord chunkOrigin, Image& image) {
-    constexpr int n = TerrainRenderer::kTexelsPerTile;
+void PaintTile(const TilePaintInfo& info, TileCoord chunkOrigin, Image& image, int n, int chunkTexels) {
     const auto& srgb = SrgbBytes();
     const auto byte = [&srgb](float linear) {
         return srgb[static_cast<std::size_t>(std::clamp(linear, 0.0f, 1.0f) * static_cast<float>(kSrgbSteps) +
@@ -151,7 +148,7 @@ void PaintTile(const TilePaintInfo& info, TileCoord chunkOrigin, Image& image) {
     const float step = kTileSize / static_cast<float>(n);
     for (int j = 0; j < n; ++j) {
         const float z = static_cast<float>(info.tile.z) * kTileSize + (static_cast<float>(j) + 0.5f) * step;
-        std::size_t at = TexelAt(info.tile, chunkOrigin, 0, j);
+        std::size_t at = TexelAt(info.tile, chunkOrigin, 0, j, n, chunkTexels);
         for (int i = 0; i < n; ++i, at += 4) {
             const float x =
                 static_cast<float>(info.tile.x) * kTileSize + (static_cast<float>(i) + 0.5f) * step;
@@ -165,11 +162,10 @@ void PaintTile(const TilePaintInfo& info, TileCoord chunkOrigin, Image& image) {
 }
 
 /// A tile beyond the map's edge (a map whose size is not a multiple of a chunk).
-void BlankTile(TileCoord tile, TileCoord chunkOrigin, Image& image) {
-    constexpr int n = TerrainRenderer::kTexelsPerTile;
+void BlankTile(TileCoord tile, TileCoord chunkOrigin, Image& image, int n, int chunkTexels) {
     auto& bytes = image.Bytes();
     for (int j = 0; j < n; ++j) {
-        std::size_t at = TexelAt(tile, chunkOrigin, 0, j);
+        std::size_t at = TexelAt(tile, chunkOrigin, 0, j, n, chunkTexels);
         for (int i = 0; i < n; ++i, at += 4) {
             bytes[at] = bytes[at + 1] = bytes[at + 2] = 0;
             bytes[at + 3] = 255;
@@ -634,6 +630,8 @@ TerrainRenderer::~TerrainRenderer() = default;
 void TerrainRenderer::Build(const zoo::World& world, bool editable) {
     const auto started = std::chrono::steady_clock::now();
     editable_ = editable;
+    texelsPerTile_ = BakedTexelsPerTile(world.Width(), world.Depth());
+    chunkTexels_ = kChunkTiles * texelsPerTile_;
     chunksX_ = world.ChunksX();
     chunksZ_ = world.ChunksZ();
     fenceRevision_ = world.FenceRevision();
@@ -675,20 +673,20 @@ void TerrainRenderer::Build(const zoo::World& world, bool editable) {
         const std::size_t index = job - detailJobs;
         Chunk& chunk = *chunks_[index];
         const ChunkInfos infos(world, chunk.origin);
-        chunk.image = Image(kTexels, kTexels);
+        chunk.image = Image(chunkTexels_, chunkTexels_);
         if (editable)
             chunk.signatures.resize(static_cast<std::size_t>(kChunkTiles * kChunkTiles));
         for (int tz = 0; tz < kChunkTiles; ++tz) {
             for (int tx = 0; tx < kChunkTiles; ++tx) {
                 const TileCoord tile{chunk.origin.x + tx, chunk.origin.z + tz};
                 if (world.InBounds(tile)) {
-                    PaintTile(infos.At(tile), chunk.origin, chunk.image);
+                    PaintTile(infos.At(tile), chunk.origin, chunk.image, texelsPerTile_, chunkTexels_);
                     if (editable) {
                         const auto indexInChunk = static_cast<std::size_t>(tz * kChunkTiles + tx);
                         chunk.signatures[indexInChunk] = PaintSignature(world, tile);
                     }
                 } else {
-                    BlankTile(tile, chunk.origin, chunk.image);
+                    BlankTile(tile, chunk.origin, chunk.image, texelsPerTile_, chunkTexels_);
                 }
             }
         }
@@ -705,7 +703,8 @@ void TerrainRenderer::Build(const zoo::World& world, bool editable) {
     const auto handOver = [&](std::size_t index) {
         Chunk& chunk = *chunks_[index];
         Prepared& made = prepared[index];
-        chunk.texture = std::make_unique<Texture2D>(device_, kTexels, kTexels, true, SurfaceFormat::Color);
+        chunk.texture =
+            std::make_unique<Texture2D>(device_, chunkTexels_, chunkTexels_, true, SurfaceFormat::Color);
         SetLevel(*chunk.texture, 0, chunk.image);
         const int count =
             std::min(chunk.texture->getLevelCountProperty() - 1, static_cast<int>(made.lowerLevels.size()));
@@ -849,7 +848,7 @@ void TerrainRenderer::Update(const zoo::World& world, int maxChunks) {
                     if (now == signature)
                         continue;
                     signature = now;
-                    PaintTile(PaintInfo(world, tile), chunk.origin, chunk.image);
+                    PaintTile(PaintInfo(world, tile), chunk.origin, chunk.image, texelsPerTile_, chunkTexels_);
                     repainted = true;
                 }
             }

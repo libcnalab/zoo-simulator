@@ -1,0 +1,14 @@
+{
+  "id": "ring_tailed_lemur", "commonName": "Ring-tailed lemur", "scientificName": "Lemur catta", "family": "Lemuridae", "model": "red_panda", "group": "primate",
+  "adultMassKg": 2.3, "shoulderHeightM": 0.42, "bodyLengthM": 0.45, "bodyRadiusM": 0.2, "walkSpeed": 0.8, "runSpeed": 4,
+  "canSwim": false, "canClimb": true, "jumpHeightM": 2.2, "lifespanYears": 25, "maturityYears": 2.5, "gestationDays": 135,
+  "litterMin": 1, "litterMax": 2, "birthIntervalYears": 1, "diet": "omnivore", "foods": ["fruit_veg", "browse", "insects"], "foodPerDayKg": 0.25, "waterPerDayL": 0.35,
+  "activity": "diurnal", "sleepHoursPerDay": 11, "groupMin": 4, "groupMax": 15, "maxAdultMales": 6,
+  "sociability": 0.9, "playfulness": 0.8, "shyness": 0.4, "aggression": 0.2, "dangerous": false,
+  "minEnclosureM2": 350, "spacePerExtraAnimalM2": 35, "waterAreaFraction": 0.01, "needsDeepWater": false,
+  "vegetationDensity": 0.5, "needsShelter": true, "tempMinC": 8, "tempMaxC": 34, "fenceHeightM": 3, "fenceStrength": 2,
+  "price": 4200, "appeal": 89, "status": "EN", "nativeRange": "Southern Madagascar", "biome": "Dry forest, scrub and gallery forest",
+  "terrainSuitability": {"forest_floor": 1, "grass": 0.75, "rock": 0.55},
+  "facts": ["Female ring-tailed lemurs lead their social groups.", "The striped tail is longer than the body.", "Groups sunbathe with their bellies facing the morning sun."],
+  "sounds": [], "sources": ["IUCN Red List; Prague Zoo visitor map; simulation husbandry values are gameplay estimates."]
+}

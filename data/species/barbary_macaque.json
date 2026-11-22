@@ -1,0 +1,14 @@
+{
+  "id": "barbary_macaque", "commonName": "Barbary macaque", "scientificName": "Macaca sylvanus", "family": "Cercopithecidae", "model": "red_panda", "group": "primate",
+  "adultMassKg": 12, "shoulderHeightM": 0.58, "bodyLengthM": 0.62, "bodyRadiusM": 0.25, "walkSpeed": 0.9, "runSpeed": 4.5,
+  "canSwim": true, "canClimb": true, "jumpHeightM": 2.5, "lifespanYears": 30, "maturityYears": 4, "gestationDays": 165,
+  "litterMin": 1, "litterMax": 1, "birthIntervalYears": 1.5, "diet": "omnivore", "foods": ["fruit_veg", "browse", "insects"], "foodPerDayKg": 0.65, "waterPerDayL": 1,
+  "activity": "diurnal", "sleepHoursPerDay": 10, "groupMin": 5, "groupMax": 18, "maxAdultMales": 6,
+  "sociability": 0.95, "playfulness": 0.85, "shyness": 0.35, "aggression": 0.25, "dangerous": false,
+  "minEnclosureM2": 500, "spacePerExtraAnimalM2": 38, "waterAreaFraction": 0.01, "needsDeepWater": false,
+  "vegetationDensity": 0.45, "needsShelter": true, "tempMinC": -5, "tempMaxC": 34, "fenceHeightM": 3.2, "fenceStrength": 3,
+  "price": 4800, "appeal": 88, "status": "EN", "nativeRange": "Atlas Mountains of Morocco and Algeria", "biome": "Cedar forest and rocky scrub",
+  "terrainSuitability": {"forest_floor": 1, "rock": 0.9, "dirt": 0.8, "grass": 0.65},
+  "facts": ["Barbary macaques are the only macaques native outside Asia.", "They have only a tiny tail.", "Adult males often help care for infants."],
+  "sounds": [], "sources": ["IUCN Red List; Prague Zoo visitor map; simulation husbandry values are gameplay estimates."]
+}

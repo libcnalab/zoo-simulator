@@ -1,0 +1,14 @@
+{
+  "id": "arctic_fox", "commonName": "Arctic fox", "scientificName": "Vulpes lagopus", "family": "Canidae", "model": "wolf", "group": "canine",
+  "adultMassKg": 4.5, "shoulderHeightM": 0.3, "bodyLengthM": 0.65, "bodyRadiusM": 0.2, "walkSpeed": 0.8, "runSpeed": 4.5,
+  "canSwim": true, "canClimb": true, "jumpHeightM": 1.1, "lifespanYears": 14, "maturityYears": 1, "gestationDays": 52,
+  "litterMin": 4, "litterMax": 8, "birthIntervalYears": 1, "diet": "carnivore", "foods": ["meat", "fish"], "foodPerDayKg": 0.45, "waterPerDayL": 0.5,
+  "activity": "cathemeral", "sleepHoursPerDay": 11, "groupMin": 2, "groupMax": 8, "maxAdultMales": 1,
+  "sociability": 0.55, "playfulness": 0.7, "shyness": 0.55, "aggression": 0.18, "dangerous": false,
+  "minEnclosureM2": 280, "spacePerExtraAnimalM2": 45, "waterAreaFraction": 0.01, "needsDeepWater": false,
+  "vegetationDensity": 0.18, "needsShelter": true, "tempMinC": -45, "tempMaxC": 18, "fenceHeightM": 2.1, "fenceStrength": 2,
+  "price": 3800, "appeal": 84, "status": "LC", "nativeRange": "Circumpolar Arctic", "biome": "Arctic tundra and sea ice",
+  "terrainSuitability": {"snow": 1, "rock": 0.7, "grass": 0.55},
+  "facts": ["Dense fur covers even the soles of an Arctic fox's feet.", "Its coat changes colour with the seasons in many populations.", "Foxes cache surplus food for lean periods."],
+  "sounds": [], "sources": ["IUCN Red List; simulation husbandry values are gameplay estimates."]
+}

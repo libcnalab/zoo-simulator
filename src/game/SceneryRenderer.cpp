@@ -54,6 +54,11 @@ bool IsEntrance(zoo::Fence fence) {
     return fence.kind == zoo::kPerimeterFence && fence.gate;
 }
 
+bool HasFurnitureLod(const zoo::PropDef& def) {
+    return def.look == "lamp" || def.look == "bin" || def.look == "bench" ||
+           def.look == "picnic_table";
+}
+
 /// Where the public stands: a path or the planted strip before a barrier.
 bool PublicSide(const zoo::World& world, zoo::TileCoord tile) {
     if (!world.InBounds(tile)) {
@@ -211,6 +216,8 @@ struct SceneryRenderer::Cell {
     StaticBatch fences;
     std::vector<FenceGroup> fenceGroups;
     StaticBatch objects;
+    StaticBatch furnitureNear;
+    StaticBatch furnitureFar;
     struct Building {
         const BuildingSight* sight;
         Matrix localFromWorld;
@@ -219,6 +226,24 @@ struct SceneryRenderer::Cell {
     std::uint64_t fenceHash = 0, fenceWanted = 0;
     std::uint64_t objectHash = 0, objectWanted = 0;
     bool fencesBuilt = false, objectsBuilt = false;
+    bool furnitureShowsFar = false;
+
+    float HorizontalDistanceSquared(const Vector3& eye) const {
+        const float dx = std::max({static_cast<float>(x0) * kTile - eye.X, 0.0f,
+                                   eye.X - static_cast<float>(x1) * kTile});
+        const float dz = std::max({static_cast<float>(z0) * kTile - eye.Z, 0.0f,
+                                   eye.Z - static_cast<float>(z1) * kTile});
+        return dx * dx + dz * dz;
+    }
+
+    bool UseFarFurniture(const Vector3& eye) {
+        const float square = HorizontalDistanceSquared(eye);
+        if (square > kFurnitureFarBeyond * kFurnitureFarBeyond)
+            furnitureShowsFar = true;
+        else if (square < kFurnitureNearWithin * kFurnitureNearWithin)
+            furnitureShowsFar = false;
+        return furnitureShowsFar;
+    }
 };
 
 struct SceneryRenderer::Grove {
@@ -228,6 +253,7 @@ struct SceneryRenderer::Grove {
     StaticBatch far;
     std::uint64_t hash = 0, wanted = 0;
     bool built = false;
+    bool nearBuilt = false;
     bool showsFar = false;
     struct Tree {
         zoo::PropId id;
@@ -505,7 +531,7 @@ void SceneryRenderer::BuildFences(const zoo::World& world, Cell& cell) {
 }
 
 void SceneryRenderer::BuildObjects(const zoo::World& world, const zoo::ZooObjects& objects, Cell& cell) {
-    ModelBuilder model;
+    ModelBuilder model, furnitureNear, furnitureFar;
     cell.buildings.clear();
     std::vector<zoo::PropId> ids;
     objects.PropsInTiles({cell.x0, cell.z0}, {cell.x1 - 1, cell.z1 - 1}, ids);
@@ -516,8 +542,18 @@ void SceneryRenderer::BuildObjects(const zoo::World& world, const zoo::ZooObject
             continue;
         }
         const Vector3 position(prop->position.x, DrawnGroundHeight(world, prop->position), prop->position.z);
-        model.SetTransform(Placement(position, prop->heading, prop->scale));
-        BuildProp(model, catalog_.props[static_cast<std::size_t>(prop->def)], Scramble(id.value, 17u, 3u));
+        const zoo::PropDef& def = catalog_.props[static_cast<std::size_t>(prop->def)];
+        const Matrix placement = Placement(position, prop->heading, prop->scale);
+        const std::uint32_t seed = Scramble(id.value, 17u, 3u);
+        if (HasFurnitureLod(def)) {
+            furnitureNear.SetTransform(placement);
+            furnitureFar.SetTransform(placement);
+            BuildProp(furnitureNear, def, seed, PropDetail::Near);
+            BuildProp(furnitureFar, def, seed, PropDetail::Far);
+        } else {
+            model.SetTransform(placement);
+            BuildProp(model, def, seed);
+        }
     }
     for (const zoo::Building& building : objects.Buildings()) {
         if (building.def < 0 || static_cast<std::size_t>(building.def) >= catalog_.buildings.size()) {
@@ -547,7 +583,11 @@ void SceneryRenderer::BuildObjects(const zoo::World& world, const zoo::ZooObject
         cell.buildings.push_back({&sight, Matrix::Invert(placement)});
     }
     model.ClearTransform();
+    furnitureNear.ClearTransform();
+    furnitureFar.ClearTransform();
     cell.objects.Build(device_, surfaces_, model);
+    cell.furnitureNear.Build(device_, surfaces_, furnitureNear);
+    cell.furnitureFar.Build(device_, surfaces_, furnitureFar);
 }
 
 const zoo::PropDef* SceneryRenderer::PlantDef(const zoo::Prop* prop) const {
@@ -579,7 +619,8 @@ std::uint64_t SceneryRenderer::GroveHash(const zoo::World& world, const zoo::Zoo
     return h.value;
 }
 
-void SceneryRenderer::BuildGrove(const zoo::World& world, const zoo::ZooObjects& objects, Grove& grove) {
+void SceneryRenderer::BuildGrove(const zoo::World& world, const zoo::ZooObjects& objects, Grove& grove,
+                                 bool keepNear) {
     using Microsoft::Xna::Framework::BoundingBox;
     ModelBuilder near, far;
     std::vector<std::size_t> firstVertex;
@@ -625,7 +666,11 @@ void SceneryRenderer::BuildGrove(const zoo::World& world, const zoo::ZooObjects&
                 }
             }
         };
-        build(near, PlantDetail::Near);
+        // A visit starts with hundreds of remote groves. Do not even construct their detailed
+        // CPU mesh: discarding it before upload still leaves the allocator's high-water mark in
+        // several gigabytes. It is built lazily when the camera comes within near range.
+        if (keepNear)
+            build(near, PlantDetail::Near);
         if (!fullDetail_)
             build(far, PlantDetail::Far);
         if (tree) {
@@ -636,7 +681,9 @@ void SceneryRenderer::BuildGrove(const zoo::World& world, const zoo::ZooObjects&
         ++count;
     }
     grove.ground = count > 0 ? heights / static_cast<float>(count) : 0.0f;
-    grove.near.Build(device_, surfaces_, near);
+    grove.near.Clear();
+    if (keepNear)
+        grove.near.Build(device_, surfaces_, near);
     // The comparison mode never submits the far form; avoid making an unused second zoo.
     grove.far.Clear();
     if (fullDetail_) {
@@ -649,7 +696,8 @@ void SceneryRenderer::BuildGrove(const zoo::World& world, const zoo::ZooObjects&
     grove.far.Add(device_, cards, palette_.Cards());
 }
 
-void SceneryRenderer::Update(const zoo::World& world, const zoo::ZooObjects& objects, int maxCells) {
+void SceneryRenderer::Update(const zoo::World& world, const zoo::ZooObjects& objects, int maxCells,
+                             std::optional<Vector3> eye) {
     if (editCacheDiscarded_)
         return;
     if (cells_.empty() || world.Width() != width_ || world.Depth() != depth_) {
@@ -671,7 +719,7 @@ void SceneryRenderer::Update(const zoo::World& world, const zoo::ZooObjects& obj
         objectsRevision_ = objects.Revision();
         pending_ = true;
     }
-    if (!pending_) {
+    if (!pending_ && !eye) {
         return;
     }
     int budget = maxCells;
@@ -699,16 +747,24 @@ void SceneryRenderer::Update(const zoo::World& world, const zoo::ZooObjects& obj
         --budget;
     }
     for (auto& grove : groves_) {
-        if (grove->built && grove->hash == grove->wanted) {
+        const bool changed = !grove->built || grove->hash != grove->wanted;
+        const bool wantsNear = fullDetail_ || (eye && !grove->UseFar(*eye));
+        if (!changed && !wantsNear && grove->nearBuilt) {
+            grove->near.Clear();
+            grove->nearBuilt = false;
+            continue;
+        }
+        if (!changed && (!wantsNear || grove->nearBuilt)) {
             continue;
         }
         if (maxCells >= 0 && budget <= 0) {
             pending_ = true;
             break;
         }
-        BuildGrove(world, objects, *grove);
+        BuildGrove(world, objects, *grove, wantsNear);
         grove->hash = grove->wanted;
         grove->built = true;
+        grove->nearBuilt = wantsNear;
         --budget;
     }
     palette_.Upload();
@@ -807,12 +863,13 @@ void SceneryRenderer::Submit(CnaEngine::App::Frame& frame, const Vector3& eye) {
     for (const auto& cell : cells_) {
         cell->fences.Submit(frame);
         cell->objects.Submit(frame);
+        (cell->UseFarFurniture(eye) ? cell->furnitureFar : cell->furnitureNear).Submit(frame);
     }
     for (const auto& grove : groves_) {
-        if (grove->near.Empty()) {
+        if (grove->far.Empty() && grove->near.Empty()) {
             continue;
         }
-        (grove->UseFar(eye) ? grove->far : grove->near).Submit(frame);
+        (grove->near.Empty() || grove->UseFar(eye) ? grove->far : grove->near).Submit(frame);
     }
     constexpr float kSlide = 1.75f;
     constexpr float kRailOffset = 0.85f;
@@ -832,6 +889,7 @@ void SceneryRenderer::Submit(CnaEngine::App::Frame& frame) const {
     for (const auto& cell : cells_) {
         cell->fences.Submit(frame);
         cell->objects.Submit(frame);
+        cell->furnitureNear.Submit(frame);
     }
     for (const auto& grove : groves_) {
         grove->near.Submit(frame);
@@ -853,10 +911,11 @@ void SceneryRenderer::Submit(CnaEngine::App::Frame& frame) const {
 std::size_t SceneryRenderer::Triangles() const {
     std::size_t total = 0;
     for (const auto& cell : cells_) {
-        total += cell->fences.Triangles() + cell->objects.Triangles();
+        total += cell->fences.Triangles() + cell->objects.Triangles() +
+                 cell->furnitureNear.Triangles() + cell->furnitureFar.Triangles();
     }
     for (const auto& grove : groves_) {
-        total += grove->near.Triangles();
+        total += grove->near.Triangles() + grove->far.Triangles();
     }
     total += holdingGates_.size() *
              (holdingGateModel_.Triangles() + holdingGateGuides_.Triangles());
@@ -915,9 +974,12 @@ std::string SceneryRenderer::Tally(const zoo::ZooObjects& objects) const {
     }
     std::sort(lines.begin(), lines.end(),
               [](const Line& a, const Line& b) { return a.each * a.count > b.each * b.count; });
-    std::string text = "  draw calls a cell (fences+objects):";
+    std::string text = "  draw calls a cell (fences+objects+furniture near/far):";
     for (const auto& cell : cells_) {
-        text += " " + std::to_string(cell->fences.Pieces()) + "+" + std::to_string(cell->objects.Pieces());
+        text += " " + std::to_string(cell->fences.Pieces()) + "+" +
+                std::to_string(cell->objects.Pieces()) + "+" +
+                std::to_string(cell->furnitureNear.Pieces()) + "/" +
+                std::to_string(cell->furnitureFar.Pieces());
     }
     text += "\n";
     std::size_t planted = 0, pieces = 0, near = 0, far = 0;
@@ -947,10 +1009,11 @@ std::string SceneryRenderer::Tally(const zoo::ZooObjects& objects) const {
 std::size_t SceneryRenderer::DrawCalls() const {
     std::size_t total = 0;
     for (const auto& cell : cells_) {
-        total += cell->fences.Pieces() + cell->objects.Pieces();
+        total += cell->fences.Pieces() + cell->objects.Pieces() +
+                 cell->furnitureNear.Pieces() + cell->furnitureFar.Pieces();
     }
     for (const auto& grove : groves_) {
-        total += grove->near.Pieces();
+        total += grove->near.Pieces() + grove->far.Pieces();
     }
     total += holdingGates_.size() * (holdingGateModel_.Pieces() + holdingGateGuides_.Pieces());
     return total;

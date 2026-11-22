@@ -98,7 +98,9 @@ constexpr std::size_t kMostFills = 4;
 constexpr float kNearWeight = 0.4f;
 /// How many beds a gardener and how many bins a cleaner has on the round at most.
 constexpr std::size_t kMostBeds = 24;
-constexpr std::size_t kMostBins = 30;
+// Sample bins in proportion to the serviced grounds so wider parks retain local litter coverage.
+constexpr int kPropertyTilesPerBinStop = 1500;
+constexpr std::size_t kMinimumBinStops = 30;
 /// Up to this many habitats the keepers' pairs are the best possible; beyond, the nearest are paired.
 /// The bit-mask solver stays cheap at this size (about one million states at the limit) and avoids
 /// a distant last pair when a growing zoo first crosses the old fourteen-habitat threshold.
@@ -1125,7 +1127,10 @@ void Staff::Engage(const Env& env, const Animals& animals) {
         member.stop = static_cast<std::uint32_t>(member.round.size() - 1);
     };
     engage(StaffRole::Gardener, beds, kMostBeds);
-    engage(StaffRole::Cleaner, bins, kMostBins);
+    const TileCoord extent = env.world.PropertyMax() - env.world.PropertyMin();
+    const auto binStops =
+        static_cast<std::size_t>((extent.x + 1) * (extent.z + 1) / kPropertyTilesPerBinStop);
+    engage(StaffRole::Cleaner, bins, std::max(kMinimumBinStops, binStops));
 }
 
 void Staff::PlanStop(const Env& env, const Animals& animals, const Visitors& visitors,

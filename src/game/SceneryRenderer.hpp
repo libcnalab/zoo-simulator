@@ -44,13 +44,17 @@ class BuildingSight;
 /// and each grove is built twice. Near the eye it is drawn as it is, one mesh per finish. Far
 /// from it, it is drawn in the plants' far form (PlantDetail): about a quarter of the
 /// triangles, merged into two meshes whatever the finishes are, because their colours and
-/// cut-outs come from one picture (PlantPalette). The far form keeps its opaque wood and
-/// crown hearts, so a far plant still casts its shadow. Groves out of view are culled by the
-/// renderer like any item (docs/PLANTS.md has the measurements that chose the sizes).
+/// cut-outs come from one picture (PlantPalette). The far form keeps opaque wood; sight queries
+/// reconstruct the full physical tree on demand instead of mistaking a card for solid foliage.
+/// Groves out of view are culled by the renderer like any item (docs/PLANTS.md has the
+/// measurements that chose the sizes).
 class SceneryRenderer {
 public:
     /// Cell edge for a zoo that changes under the player's hands.
     static constexpr int kEditCellTiles = 32;
+    /// A read-only visit normally merges scenery to reduce draw calls. Cap that merge on a huge
+    /// estate so constructing one cell never needs the geometry of the whole zoo at once.
+    static constexpr int kVisitCellTiles = 128;
     /// Edge of a grove during a visit: 80 m, 16 groves for the visitor zoo. Of 20, 32, 40 and
     /// 80 tiles (the last offset by half a grove) this was as fast as any at the entrance.
     static constexpr int kGroveTiles = 40;
@@ -62,6 +66,10 @@ public:
     /// a walk across the switch shows no jump (docs/PLANTS.md).
     static constexpr float kFarBeyond = 56.0f;
     static constexpr float kNearWithin = 48.0f;
+    /// Repeated path furniture has a small silhouette but dominated the enlarged estate's
+    /// non-plant geometry. Cells farther than this use its deliberately simplified model.
+    static constexpr float kFurnitureFarBeyond = 176.0f;
+    static constexpr float kFurnitureNearWithin = 144.0f;
 
     SceneryRenderer(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, Surfaces& surfaces,
                     const zoo::Catalog& catalog, int cellTiles = kEditCellTiles);
@@ -69,7 +77,8 @@ public:
 
     /// Brings at most `maxCells` out-of-date cells up to date (all of them when
     /// negative); call every frame. Cheap when nothing changed.
-    void Update(const zoo::World& world, const zoo::ZooObjects& objects, int maxCells = 2);
+    void Update(const zoo::World& world, const zoo::ZooObjects& objects, int maxCells = 2,
+                std::optional<Vector3> eye = std::nullopt);
     /// Animates the separately operated holding gates at animal houses while a
     /// dangerous habitat is recalled, worked in and released.
     void UpdateHoldingGates(const zoo::Zoo& zoo, double seconds);
@@ -106,7 +115,8 @@ private:
     const zoo::PropDef* PlantDef(const zoo::Prop* prop) const;
     std::uint64_t GroveHash(const zoo::World& world, const zoo::ZooObjects& objects,
                             const Grove& grove) const;
-    void BuildGrove(const zoo::World& world, const zoo::ZooObjects& objects, Grove& grove);
+    void BuildGrove(const zoo::World& world, const zoo::ZooObjects& objects, Grove& grove,
+                    bool keepNear);
 
     Microsoft::Xna::Framework::Graphics::GraphicsDevice& device_;
     Surfaces& surfaces_;

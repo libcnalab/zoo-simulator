@@ -29,13 +29,16 @@ namespace {
 
 using namespace CnaEngine;
 
+constexpr float kVisitFarPlane = 600.0f;
+constexpr float kEditorFarPlane = 3000.0f;
+
 App::GameOptions MakeOptions() {
     App::GameOptions options;
     options.title = "Zoo Simulator";
     options.application = "zoo-simulator";
     options.fieldOfViewDegrees = 50.0f;
     options.nearPlane = 0.1f;
-    options.farPlane = 3000.0f;
+    options.farPlane = kVisitFarPlane;
     return options;
 }
 
@@ -201,6 +204,14 @@ bool ZooGame::ParseArgument(std::span<const std::string_view> arguments, std::si
 
 void ZooGame::LoadGame() {
     auto& device = getGraphicsDeviceProperty();
+    if (editor_) {
+        // The overhead editor must see the whole estate. On foot an object two metres across is
+        // already about a pixel wide at 800 m; retaining the editor's 3 km plane there made the
+        // nine-sheet zoo submit distant districts with no useful visible detail.
+        auto& camera = MainCamera();
+        camera.SetPerspective(camera.FieldOfView(), camera.AspectRatio(), camera.NearPlane(),
+                              kEditorFarPlane);
+    }
     StartMark(bench_.on, "window and device");
     binder_ = std::make_shared<Enhanced::PbrMaterialBinder>(device, Renderer().StockBinder());
     Renderer().SetMaterialBinder(binder_);
@@ -430,9 +441,11 @@ void ZooGame::Adopt(std::unique_ptr<zoo::Zoo> zoo) {
     // Nothing is built during a visit: the whole zoo is one cell there (a quarter of the draw
     // calls of the editor's small cells, which an edit rebuilds quickly).
     if (!keepStatic) {
+        const int longestSide = std::max(zoo_->Map().Width(), zoo_->Map().Depth());
+        const int visitCell = longestSide > 512 ? std::min(longestSide, SceneryRenderer::kVisitCellTiles)
+                                                : longestSide;
         scenery_ = std::make_unique<SceneryRenderer>(
-            device, *surfaces_, *catalog_,
-            editor_ ? SceneryRenderer::kEditCellTiles : std::max(zoo_->Map().Width(), zoo_->Map().Depth()));
+            device, *surfaces_, *catalog_, editor_ ? SceneryRenderer::kEditCellTiles : visitCell);
         scenery_->Update(zoo_->Map(), zoo_->Objects(), -1);
         if (!editor_) {
 #if defined(__linux__) && !defined(__ANDROID__)
@@ -470,6 +483,9 @@ void ZooGame::Adopt(std::unique_ptr<zoo::Zoo> zoo) {
     play_.camera = &camera_;
     play_.animals = animals_.get();
     hud_ = Hud();
+    // A visit has a static plan, but a loaded zoo may not be the one whose plan was cached.
+    // BeginWalk rebuilds it while the loading screen is still present, not on the first M press.
+    visit_.map = VisitMap{};
 }
 
 void ZooGame::SaveTo(const std::string& path, bool quietly) {
@@ -680,7 +696,7 @@ void ZooGame::UpdateEditor(double seconds) {
     camera_.Apply(MainCamera());
     UpdateShadowArea();
     terrain_->Update(zoo_->Map());
-    scenery_->Update(zoo_->Map(), zoo_->Objects());
+    scenery_->Update(zoo_->Map(), zoo_->Objects(), 2, MainCamera().Position());
     animals_->Update(*zoo_, dt * static_cast<float>(play_.speed), static_cast<float>(tickDebt_));
     visitors_->Update(*zoo_, dt * static_cast<float>(play_.speed), static_cast<float>(tickDebt_));
     visitors_->Prepare(getGraphicsDeviceProperty());
@@ -695,7 +711,8 @@ void ZooGame::Submit(App::Frame& frame) {
     if (!without_.scenery)
         scenery_->Submit(frame, MainCamera().Position());
     if (!without_.animals)
-        animals_->Submit(frame, MainCamera());
+        animals_->Submit(frame, MainCamera(),
+                         getGraphicsDeviceProperty().getViewportProperty().getHeightProperty());
     if (editor_ && !play_.mainMenu)
         tools_->Submit(frame);
 }

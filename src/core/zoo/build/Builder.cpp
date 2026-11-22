@@ -332,14 +332,23 @@ BuildPlan Builder::DoFence(std::span<const EdgeRef> edges, int kind, bool gate, 
             plan.error = BuildError::NoMoney;
             return plan;
         }
+        bool topologyChanged = false;
         for (std::size_t i = 0; i < accepted.size(); ++i) {
             const Fence previous = replacements[i];
+            topologyChanged = topologyChanged || !previous.Exists();
             const bool toggle = previous.kind == static_cast<std::uint8_t>(kind);
             world_.SetFence(accepted[i],
                             {static_cast<std::uint8_t>(kind), gate, toggle ? previous.condition : 1.0f,
                              gate && def->id == "aviary_curtain"});
         }
-        enclosures_.Rebuild(world_, objects_, catalog_);
+        // Replacing an existing barrier by glass, mesh, a gate or another barrier changes its
+        // figures but not connected regions: every kind, including a gate, still separates the
+        // same two tiles.  Held scenario construction can therefore defer that expensive scan.
+        if (topologyChanged) {
+            enclosures_.Rebuild(world_, objects_, catalog_);
+        } else {
+            RefreshFigures();
+        }
     }
     return plan;
 }

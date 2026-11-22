@@ -1,0 +1,14 @@
+{
+  "id": "red_deer", "commonName": "Red deer", "scientificName": "Cervus elaphus", "family": "Cervidae", "model": "kiang", "group": "ungulate",
+  "adultMassKg": 190, "shoulderHeightM": 1.3, "bodyLengthM": 2.0, "bodyRadiusM": 0.5, "walkSpeed": 1.2, "runSpeed": 7,
+  "canSwim": true, "canClimb": false, "jumpHeightM": 1.8, "lifespanYears": 20, "maturityYears": 2, "gestationDays": 235,
+  "litterMin": 1, "litterMax": 2, "birthIntervalYears": 1, "diet": "herbivore", "foods": ["browse", "grass_pellets", "hay"], "foodPerDayKg": 5.5, "waterPerDayL": 12,
+  "activity": "crepuscular", "sleepHoursPerDay": 8, "groupMin": 3, "groupMax": 18, "maxAdultMales": 1,
+  "sociability": 0.8, "playfulness": 0.35, "shyness": 0.5, "aggression": 0.35, "dangerous": false,
+  "minEnclosureM2": 900, "spacePerExtraAnimalM2": 65, "waterAreaFraction": 0.03, "needsDeepWater": false,
+  "vegetationDensity": 0.38, "needsShelter": true, "tempMinC": -25, "tempMaxC": 30, "fenceHeightM": 2.4, "fenceStrength": 3,
+  "price": 3200, "appeal": 69, "status": "LC", "nativeRange": "Europe, North Africa and western Asia", "biome": "Woodland, heath and grassland",
+  "terrainSuitability": {"grass": 1, "forest_floor": 0.9, "dirt": 0.8, "snow": 0.5},
+  "facts": ["Stags grow and shed a new set of antlers each year.", "Their autumn calls carry over long distances.", "Hinds and young form social herds outside the breeding season."],
+  "sounds": [], "sources": ["IUCN Red List; Prague Zoo visitor map; simulation husbandry values are gameplay estimates."]
+}

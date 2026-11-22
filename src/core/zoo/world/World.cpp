@@ -22,8 +22,8 @@ float Falloff(float distance, float radius) {
 }  // namespace
 
 World::World(int width, int depth)
-    : width_(std::clamp(width, 8, 512)),
-      depth_(std::clamp(depth, 8, 512)),
+    : width_(std::clamp(width, 8, kMaxDimension)),
+      depth_(std::clamp(depth, 8, kMaxDimension)),
       propertyMin_{0, 0},
       propertyMax_{width_ - 1, depth_ - 1},
       entrance_{width_ / 2, depth_ - 1},
@@ -69,14 +69,18 @@ void World::TouchVertex(int vx, int vz) {
     const int maxX = std::min(width_ - 1, vx);
     const int minZ = std::max(0, vz - 1);
     const int maxZ = std::min(depth_ - 1, vz);
-    std::array<bool, 1024> touched{};
+    // A vertex belongs to at most four tile chunks.  Keeping their actual indices avoids the old
+    // fixed 32-by-32-chunk bitmap, which became an out-of-bounds stack write on multi-sheet maps.
+    std::array<std::size_t, 4> touched{};
+    std::size_t touchedCount = 0;
     for (int z = minZ; z <= maxZ; ++z)
         for (int x = minX; x <= maxX; ++x) {
             const std::size_t index =
                 static_cast<std::size_t>(z / kChunkTiles) * static_cast<std::size_t>(ChunksX()) +
                 static_cast<std::size_t>(x / kChunkTiles);
-            if (!touched[index]) {
-                touched[index] = true;
+            if (std::find(touched.begin(), touched.begin() + static_cast<std::ptrdiff_t>(touchedCount), index) ==
+                touched.begin() + static_cast<std::ptrdiff_t>(touchedCount)) {
+                touched[touchedCount++] = index;
                 ++chunkRevisions_[index];
             }
         }

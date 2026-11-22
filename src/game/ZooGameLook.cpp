@@ -136,7 +136,20 @@ void ZooGame::UpdateBoardsAndMap() {
         if (visit_.window == VisitWindow::Map) {
             visit_.window = VisitWindow::None;
         } else {
-            BuildVisitMap();
+            // The 809,000-tile nine-sheet plan is prepared once in BeginWalk. Opening it only
+            // chooses the sheet containing the visitor, so M responds in this frame.
+            if (visit_.map.shapes.empty())
+                BuildVisitMap();
+            VisitMap& map = visit_.map;
+            const float width = std::max(1.0f, map.maxX - map.minX);
+            const float depth = std::max(1.0f, map.maxZ - map.minZ);
+            const int column = std::clamp(static_cast<int>((here.x - map.minX) / width *
+                                                            static_cast<float>(map.pageColumns)),
+                                          0, std::max(1, map.pageColumns) - 1);
+            const int row = std::clamp(static_cast<int>((here.z - map.minZ) / depth *
+                                                         static_cast<float>(map.pageRows)),
+                                       0, std::max(1, map.pageRows) - 1);
+            map.page = row * std::max(1, map.pageColumns) + column;
             visit_.window = VisitWindow::Map;
             if (Automation().Options().Automated()) {
                 std::string names;
@@ -609,7 +622,8 @@ void ZooGame::BuildVisitMap() {
         }
     }
     // The plan shows what has been built, with some green about it, not the whole estate.
-    if (!map.shapes.empty()) {
+    const bool nineSheets = map.maxX - map.minX > 1200.0f && map.maxZ - map.minZ > 900.0f;
+    if (!map.shapes.empty() && !nineSheets) {
         float x0 = map.maxX, z0 = map.maxZ, x1 = map.minX, z1 = map.minZ;
         for (const VisitMap::Shape& shape : map.shapes) {
             x0 = std::min(x0, shape.x);
@@ -623,6 +637,21 @@ void ZooGame::BuildVisitMap() {
         map.maxX = std::min(map.maxX, x1 + kMargin);
         map.maxZ = std::min(map.maxZ, z1 + kMargin);
     }
+    const float planWidth = map.maxX - map.minX;
+    const float planDepth = map.maxZ - map.minZ;
+    if (planWidth > 1200.0f && planDepth > 900.0f) {
+        map.pageColumns = 3;
+        map.pageRows = 3;
+    } else if (planDepth > 600.0f) {
+        map.pageRows = 2;
+    }
+    const int column = std::clamp(static_cast<int>((walker_.Position().x - map.minX) / planWidth *
+                                                    static_cast<float>(map.pageColumns)),
+                                  0, map.pageColumns - 1);
+    const int row = std::clamp(static_cast<int>((walker_.Position().z - map.minZ) / planDepth *
+                                                 static_cast<float>(map.pageRows)),
+                               0, map.pageRows - 1);
+    map.page = row * map.pageColumns + column;
     map.shapes.insert(map.shapes.begin(),
                       {map.minX, map.minZ, map.maxX - map.minX, map.maxZ - map.minZ, Kind::Ground});
     const zoo::TileCoord gate = world.EntranceTile();
@@ -753,12 +782,19 @@ void ZooGame::AddMapPlaces(VisitMap& map) const {
     for (const zoo::Prop& prop : zoo_->Objects().Props()) {
         const auto& def = zoo_->Definitions().props[static_cast<std::size_t>(prop.def)];
         if (def.id == "snake_pavilion") {
-            if (const auto tile = paved(zoo::World::TileAt(prop.position), 1)) {
+            // This walk-through roof is scenery rather than a tile building.
+            const float halfWidth = 15.0f * prop.scale;
+            const float halfDepth = 8.8f * prop.scale;
+            map.shapes.push_back({prop.position.x - halfWidth, prop.position.z - halfDepth, 2.0f * halfWidth,
+                                  2.0f * halfDepth, VisitMap::Kind::Building});
+            VisitMap::Label label{prop.position.x, prop.position.z, def.name, true};
+            if (const auto tile = paved(zoo::World::TileAt(prop.position), 3)) {
                 const auto at = zoo::World::TileCenter(*tile);
-                // The shared house stays legible when the two nearby terrarium labels move aside.
-                map.labels.insert(map.labels.begin(), {prop.position.x, prop.position.z, def.name, true});
+                label.destination = static_cast<int>(map.places.size());
                 map.places.push_back({at.x, at.z, -std::numbers::pi_v<float> * 0.5f, def.name, false});
             }
+            // Name the house first, even when no landing is available in its aisle.
+            map.labels.insert(map.labels.begin(), std::move(label));
         }
     }
     const std::size_t habitats = map.places.size();
@@ -770,6 +806,7 @@ void ZooGame::AddMapPlaces(VisitMap& map) const {
         VisitMap::Place place;
         int stalls = 0;
         bool restroom = false, shop = false, education = false;
+        std::string educationName;
     };
     std::vector<Group> groups;
     for (const zoo::Building& building : zoo_->Objects().Buildings()) {
@@ -803,6 +840,9 @@ void ZooGame::AddMapPlaces(VisitMap& map) const {
         group->restroom = group->restroom || def.role == Role::Restroom;
         group->shop = group->shop || def.role == Role::GiftShop;
         group->education = group->education || def.role == Role::EducationCenter;
+        if (def.role == Role::EducationCenter &&
+            (group->educationName.empty() || def.id != "education_centre"))
+            group->educationName = def.name;
     }
     const int picnicTable = zoo_->Definitions().PropIndex("picnic_table");
     std::vector<zoo::PropId> nearby;
@@ -815,7 +855,7 @@ void ZooGame::AddMapPlaces(VisitMap& map) const {
     };
     for (Group& group : groups) {
         if (group.education)
-            group.place.name = "Education centre";
+            group.place.name = group.educationName.empty() ? "Education centre" : group.educationName;
         else if (group.shop)
             group.place.name = "Gift shop";
         else if (group.stalls >= 2)

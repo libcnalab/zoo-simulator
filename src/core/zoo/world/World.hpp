@@ -176,6 +176,9 @@ public:
 
     static constexpr float kMinHeight = -12.0f;
     static constexpr float kMaxHeight = 40.0f;
+    /// Large scenario estates are split into plan sheets; this remains a hard guard against a
+    /// corrupt save allocating an unbounded tile grid.
+    static constexpr int kMaxDimension = 2048;
 
     // ---- fences -----------------------------------------------------------------------
     bool EdgeInBounds(EdgeRef e) const;

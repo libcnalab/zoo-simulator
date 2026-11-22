@@ -1,0 +1,14 @@
+{
+  "id": "addax", "commonName": "Addax", "scientificName": "Addax nasomaculatus", "family": "Bovidae", "model": "kiang", "group": "ungulate",
+  "adultMassKg": 95, "shoulderHeightM": 1.05, "bodyLengthM": 1.65, "bodyRadiusM": 0.42, "walkSpeed": 1, "runSpeed": 5,
+  "canSwim": true, "canClimb": false, "jumpHeightM": 1.2, "lifespanYears": 25, "maturityYears": 2.5, "gestationDays": 260,
+  "litterMin": 1, "litterMax": 1, "birthIntervalYears": 1, "diet": "herbivore", "foods": ["hay", "grass_pellets", "browse"], "foodPerDayKg": 3.8, "waterPerDayL": 7,
+  "activity": "nocturnal", "sleepHoursPerDay": 9, "groupMin": 3, "groupMax": 12, "maxAdultMales": 1,
+  "sociability": 0.75, "playfulness": 0.3, "shyness": 0.55, "aggression": 0.25, "dangerous": false,
+  "minEnclosureM2": 850, "spacePerExtraAnimalM2": 60, "waterAreaFraction": 0.01, "needsDeepWater": false,
+  "vegetationDensity": 0.08, "needsShelter": true, "tempMinC": 5, "tempMaxC": 46, "fenceHeightM": 2.2, "fenceStrength": 3,
+  "price": 7000, "appeal": 79, "status": "CR", "nativeRange": "Sahara and Sahel", "biome": "Desert and arid grassland",
+  "terrainSuitability": {"sand": 1, "savanna": 0.8, "dirt": 0.75},
+  "facts": ["Broad hooves help addax walk over loose sand.", "Its pale coat reflects desert heat.", "Only a very small wild population survives in the Sahara."],
+  "sounds": [], "sources": ["IUCN Red List; Prague Zoo visitor map; simulation husbandry values are gameplay estimates."]
+}

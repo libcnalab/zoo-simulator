@@ -34,6 +34,13 @@ class TerrainRenderer {
 public:
     /// Texels of baked ground colour along one tile edge.
     static constexpr int kTexelsPerTile = 32;
+    /// Very large worlds keep a quarter-resolution baked colour map. Ground-detail textures and
+    /// geometry retain their ordinary resolution, so paths and banks stay sharp while the base
+    /// colour no longer consumes several gigabytes.
+    static constexpr int BakedTexelsPerTile(int width, int depth) {
+        return static_cast<std::int64_t>(width) * static_cast<std::int64_t>(depth) > 512 * 512 ? 8
+                                                                                               : kTexelsPerTile;
+    }
 
     TerrainRenderer(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, Surfaces& surfaces);
     ~TerrainRenderer();
@@ -94,6 +101,8 @@ private:
     std::vector<std::unique_ptr<Land>> land_;
     std::unique_ptr<Microsoft::Xna::Framework::Graphics::Texture2D> apronTexture_;
     bool editable_ = true;
+    int texelsPerTile_ = kTexelsPerTile;
+    int chunkTexels_ = zoo::kChunkTiles * kTexelsPerTile;
     double paintSeconds_ = 0.0;
     double buildSeconds_ = 0.0;
 };

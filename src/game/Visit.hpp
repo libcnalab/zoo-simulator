@@ -53,6 +53,7 @@ struct VisitMap {
         float x = 0, z = 0;
         std::string text;
         bool habitat = false;  ///< an animal's name (bold); else a building's
+        int destination = -1;  ///< clickable house label linked to a place on the plan
     };
     /// A place one can go to straight from the map: a habitat's front, a house's door, the gate.
     struct Place {
@@ -62,6 +63,9 @@ struct VisitMap {
         bool habitat = false;
     };
     float minX = 0, minZ = 0, maxX = 1, maxZ = 1;
+    int pageColumns = 1;  ///< equal-scale plan sheets from west to east
+    int pageRows = 1;     ///< equal-scale plan sheets from north to south
+    int page = 0;         ///< row-major sheet index, north-west first
     std::vector<Shape> shapes;
     std::vector<Label> labels;
     std::vector<Place> places;
@@ -128,6 +132,7 @@ struct VisitFigures {
     int castFailed = 0;    ///< of them CNA could not make
     int animals = 0;
     int animalsDrawn = 0;
+    int animalsProxied = 0;
     int solids = 0;        ///< shapes of the collision world
     float framesPerSecond = 0.0f;
     Vector3 feet = Vector3(0.0f, 0.0f, 0.0f);

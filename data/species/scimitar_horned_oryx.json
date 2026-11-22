@@ -1,0 +1,14 @@
+{
+  "id": "scimitar_horned_oryx", "commonName": "Scimitar-horned oryx", "scientificName": "Oryx dammah", "family": "Bovidae", "model": "kiang", "group": "ungulate",
+  "adultMassKg": 180, "shoulderHeightM": 1.15, "bodyLengthM": 1.8, "bodyRadiusM": 0.48, "walkSpeed": 1.2, "runSpeed": 6,
+  "canSwim": true, "canClimb": false, "jumpHeightM": 1.4, "lifespanYears": 22, "maturityYears": 2, "gestationDays": 250,
+  "litterMin": 1, "litterMax": 1, "birthIntervalYears": 1, "diet": "herbivore", "foods": ["hay", "grass_pellets", "browse"], "foodPerDayKg": 5.5, "waterPerDayL": 10,
+  "activity": "diurnal", "sleepHoursPerDay": 8, "groupMin": 3, "groupMax": 18, "maxAdultMales": 2,
+  "sociability": 0.8, "playfulness": 0.35, "shyness": 0.4, "aggression": 0.3, "dangerous": false,
+  "minEnclosureM2": 900, "spacePerExtraAnimalM2": 65, "waterAreaFraction": 0.01, "needsDeepWater": false,
+  "vegetationDensity": 0.12, "needsShelter": true, "tempMinC": 5, "tempMaxC": 45, "fenceHeightM": 2.3, "fenceStrength": 3,
+  "price": 6200, "appeal": 80, "status": "EN", "nativeRange": "Sahel region of North Africa", "biome": "Arid steppe and desert edge",
+  "terrainSuitability": {"sand": 1, "savanna": 0.9, "dirt": 0.75, "grass": 0.55},
+  "facts": ["Long swept-back horns give this oryx its name.", "It can tolerate extreme heat and scarce water.", "Captive-bred animals have been returned to protected areas in Chad."],
+  "sounds": [], "sources": ["IUCN Red List; Prague Zoo visitor map; simulation husbandry values are gameplay estimates."]
+}

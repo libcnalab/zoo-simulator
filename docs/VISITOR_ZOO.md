@@ -1,33 +1,49 @@
 # Greenhill Zoo — visitor plan
 
-Greenhill has free admission and automatic animal care. Its 224 × 224 tile map measures
-448 × 448 m (200,704 m²). The fenced zoo occupies 424 × 424 m (179,776 m²).
-The third expansion adds 64 m on each side of the previous map, including 54,272 m² inside
-the property. The two earlier extensions added 128 m to the north.
+Greenhill has free admission and automatic animal care. The current world is 1,284 × 648 tiles;
+its fenced 1,272 × 636 tile property measures **2,544 × 1,272 m (3,235,968 m²)**. This is exactly
+4.5 times the area of the preceding 424 × 424 tile estate. A fresh visit opens with **589 animals
+of 49 species in 118 habitats**.
+
+On the east, Gobi Steppe holds five Przewalski's horses on 5,628 m². On the west, Tibetan
+Plateau holds five kiangs on 4,580 m². Each herd has an eight-year-old stallion, three mares
+aged nine, six and five, and the oldest mare's filly aged 0.6 years. Both species appear on the
+[current Prague Zoo visitor plan](https://www.zoopraha.cz/navsteva/30-mapa-zoo-praha).
+
+The established central zoo, its side gardens, steppe paddocks and northern expansion retain
+their entrance-relative positions. Six continental districts fill the new south-west,
+south-east, mid-west, mid-east, north-west and north-east sheets; a compact European landscape
+occupies the northern centre. Their 96 additional exhibits reuse the established 49-species
+catalogue in separate, plausible conservation groups. The first design pass is deliberately a
+work in progress: later passes must keep replacing mechanical-looking geometry and unjustifiably
+large paddocks with more varied, real-zoo-inspired exhibits rather than merely filling area.
+
+Press M to open the visitor plan. Nine buttons select **NW, N, NE, W, Centre, E, SW, S and SE**.
+The sheets form a 3 × 3 grid in row-major order, each covers exactly 424 × 212 tiles
+(848 × 424 m), all retain the same scale, and north remains at the top.
+
+The enlarged plan is prepared once while the visit's loading screen is still visible. Opening it
+with M no longer scans all 808,992 property tiles in the input frame: it reuses the prepared
+shapes and only selects the sheet containing the visitor. A real 65-frame offscreen input script
+opened the map and captured all nine sheets without a blocked frame at M; the previous build
+visibly paused for about two seconds there. Loading another zoo invalidates and rebuilds the plan.
+
 North leads into the zoo from the south gate. Entrance coordinates `(east, north)` mean
 world tile `(entrance.x + east, entrance.z - north)`; one tile is 2 m. The entrance tile is
-`(111,217)`, centred at world `(223,435)` metres. Construct with `VisitorZooConfig(seed)`,
+`(642,642)`, centred at world `(1,285,1,285)` metres. Construct with `VisitorZooConfig(seed)`,
 then call `BuildVisitorZoo(zoo, options)`. `withoutSpecies` suppresses animals only.
 
 ```text
-                              NORTH
-                              Snow Leopard Heights
-                                /             \
-       Red Panda Canopy — northern woodland circuit + picnic glade — Lynx Ridge
-                      /             |                 /
-Woodland Aviary — Polar Sound    Bear Falls — Wolf Wood — Tiger Forest — Snake Pavilion
-                  |              \    northern court    /       |
-Capybara Marsh — Penguin Cove === woodland shortcut ======= Lion Rock
-                  |             Red Dune                        |
-             Elephant Valley === central food court ============ |
-                  |           shaded garden shortcut       Acacia Plain — Aldabra Meadow
-                  |                                    giraffes + zebras
-             Rhino Hollow    Kangaroo Grove — Ostrich Rise      |
-                    \           Meerkat Lookout — Flamingo Lagoon
-                     \        ENTRANCE PLAZA                 /
-                      education, shops, fountain, shaded seats
-                                  SOUTH GATE
+                                  NORTH
+     boreal / Arctic        European conservation       islands / tropical forest
+     Americas districts    established northern zoo    Asian steppe / mountains
+     Australia / islands   established zoo and gate    African plains / wetlands
+                                  SOUTH
 ```
+
+The detailed sections below retain the measurements and design decisions of earlier expansion
+stages. Where their old map dimensions or totals differ from the figures above, they are
+historical baselines rather than the current estate.
 
 Two gravel walks link existing galleries through the new land. On the west, follow the path
 from Elephant Valley past Capybara Marsh and the picnic stop to Woodland Aviary and Polar Sound.
@@ -40,9 +56,9 @@ combine elliptical lobes. Every habitat has a keeper gate, shelter, stocked feed
 enrichment, a public information board and benches. Planting concentrates behind the open
 viewing ground, with woods between habitats and around the perimeter.
 
-The seed-1 zoo contains **107 animals in 18 habitats, 55 buildings and 4,680 props** when every species
+An earlier seed-1 layout contained **107 animals in 18 habitats, 55 buildings and 4,680 props** when every species
 is included (74 animals and 2,817 props before the plan's rework of
-2026-11-14, below). The farthest public path tile is **78.1 m** walking distance
+2026-11-14, below). Its farthest public path tile was **78.1 m** walking distance
 from a visitor facility. `VisitorZooTests.DISABLED_PrintPlan` prints these measurements. Families
 are written out in "The zoo's plan" below. **S** = south; **W/E** = west/east.
 The principal fronts face south and the zoo's centre. Habitat areas are unchanged: the public
@@ -323,7 +339,7 @@ Clicking Aldabra Meadow places the visitor at (385, 289) m on its southern galle
 
 A revision-7 visit loaded with its original 107 animals and 800 guests. Saving it again
 preserved the world, every animal record and each of the 70 visitors' nonempty lists
-of species seen. New visits use cache revision 10 for the reptile and waterfowl exhibits.
+of species seen. Revision 10 added the reptile and waterfowl exhibits. Revision 11 adds the two steppe herds.
 
 ## Snake Pavilion and Woodland Aviary
 
@@ -332,8 +348,8 @@ the glass for Jamal, the eastern corn snake, and Faris, the black-headed python.
 heated rock hide, low feeding dishes and a water basin. The Snake Pavilion stop on the visitor
 map lands inside the aisle. [Photographs from the visitor game](evidence/snake-pavilion-2026-11-21.jpg).
 
-A fresh seed-1 visit now has 116 animals of 23 species in 22 habitats. Press M to see the
-33 destinations, including both terraria and the shared pavilion entrance.
+At revision 10 a fresh seed-1 visit had 116 animals of 23 species in 22 habitats.
+Press M to see the current map's 37 destinations, including both terraria and the shared pavilion entrance.
 
 The 676 m² Woodland Aviary occupies the west garden. The two net curtains admit visitors to a boardwalk
 between the feeding bank and the pond. The four Mandarin ducks can use the entire habitat,

@@ -15,10 +15,9 @@ namespace zoogame {
 /// How much of a plant is written.
 enum class PlantDetail : std::uint8_t {
     Near,  ///< every spray, twig and root: what a visitor stands next to
-    /// The same plant, the same shape in the same place, with a quarter or less of the
-    /// triangles: one card stands for four and carries their four sprays, hearts and stems
-    /// have fewer sides, and what is thinner than a wrist is left out. Made to be taken for
-    /// the near one from some seventy metres on.
+    /// The same plant's height, colour and silhouette as a compact distance impostor: a simple
+    /// stem, an opaque crown core for shadows and a few crossed foliage cards. Made to be taken
+    /// for the near one beyond the 48--56 m grove transition.
     Far,
 };
 
@@ -36,8 +35,9 @@ inline bool OpaqueTreeSurface(Pattern finish) {
            finish == Pattern::LeafShade || finish == Pattern::Needles;
 }
 
-/// Add the wood and opaque crown surfaces of this individual to a sight query. Leaves on
-/// cut-out cards have holes, so a card's rectangular outline cannot obstruct the whole view.
+/// Add the full-detail wood and opaque crown surfaces of this individual to a sight query.
+/// Leaves on cut-out cards have holes, so a card's rectangular outline cannot obstruct the whole
+/// view; `detail` remains in the interface because the query cache follows the drawn grove LOD.
 void BuildTreeSight(CnaEngine::Collision::StaticWorld& sight, const zoo::PropDef& def,
                     std::uint32_t seed, PlantDetail detail, const Matrix& placement);
 

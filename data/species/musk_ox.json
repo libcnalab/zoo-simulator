@@ -1,0 +1,14 @@
+{
+  "id": "musk_ox", "commonName": "Musk ox", "scientificName": "Ovibos moschatus", "family": "Bovidae", "model": "rhino", "group": "ungulate",
+  "adultMassKg": 300, "shoulderHeightM": 1.3, "bodyLengthM": 2.2, "bodyRadiusM": 0.65, "walkSpeed": 1, "runSpeed": 5.5,
+  "canSwim": true, "canClimb": false, "jumpHeightM": 1.1, "lifespanYears": 24, "maturityYears": 3, "gestationDays": 245,
+  "litterMin": 1, "litterMax": 1, "birthIntervalYears": 1, "diet": "herbivore", "foods": ["hay", "grass_pellets", "browse"], "foodPerDayKg": 7, "waterPerDayL": 15,
+  "activity": "diurnal", "sleepHoursPerDay": 9, "groupMin": 3, "groupMax": 15, "maxAdultMales": 2,
+  "sociability": 0.85, "playfulness": 0.3, "shyness": 0.35, "aggression": 0.45, "dangerous": true,
+  "minEnclosureM2": 1000, "spacePerExtraAnimalM2": 85, "waterAreaFraction": 0.02, "needsDeepWater": false,
+  "vegetationDensity": 0.16, "needsShelter": true, "tempMinC": -45, "tempMaxC": 18, "fenceHeightM": 2.4, "fenceStrength": 4,
+  "price": 6500, "appeal": 78, "status": "LC", "nativeRange": "Arctic North America and Greenland", "biome": "Arctic tundra",
+  "terrainSuitability": {"snow": 1, "grass": 0.75, "rock": 0.6},
+  "facts": ["A dense undercoat called qiviut insulates musk oxen.", "Threatened herds form a defensive ring around calves.", "Despite the name, they are closer to goats and sheep than cattle."],
+  "sounds": [], "sources": ["IUCN Red List; simulation husbandry values are gameplay estimates."]
+}

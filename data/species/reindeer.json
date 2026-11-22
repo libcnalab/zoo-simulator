@@ -1,0 +1,14 @@
+{
+  "id": "reindeer", "commonName": "Reindeer", "scientificName": "Rangifer tarandus", "family": "Cervidae", "model": "kiang", "group": "ungulate",
+  "adultMassKg": 150, "shoulderHeightM": 1.2, "bodyLengthM": 1.8, "bodyRadiusM": 0.5, "walkSpeed": 1.3, "runSpeed": 7,
+  "canSwim": true, "canClimb": false, "jumpHeightM": 1.6, "lifespanYears": 20, "maturityYears": 2, "gestationDays": 225,
+  "litterMin": 1, "litterMax": 2, "birthIntervalYears": 1, "diet": "herbivore", "foods": ["browse", "hay", "grass_pellets"], "foodPerDayKg": 5, "waterPerDayL": 12,
+  "activity": "cathemeral", "sleepHoursPerDay": 7, "groupMin": 3, "groupMax": 20, "maxAdultMales": 2,
+  "sociability": 0.85, "playfulness": 0.35, "shyness": 0.45, "aggression": 0.25, "dangerous": false,
+  "minEnclosureM2": 900, "spacePerExtraAnimalM2": 65, "waterAreaFraction": 0.03, "needsDeepWater": false,
+  "vegetationDensity": 0.24, "needsShelter": true, "tempMinC": -40, "tempMaxC": 20, "fenceHeightM": 2.2, "fenceStrength": 3,
+  "price": 4500, "appeal": 76, "status": "VU", "nativeRange": "Arctic and subarctic Eurasia and North America", "biome": "Tundra and boreal forest",
+  "terrainSuitability": {"snow": 1, "grass": 0.85, "forest_floor": 0.7, "rock": 0.5},
+  "facts": ["Both male and female reindeer can grow antlers.", "Broad hooves spread their weight on snow and soft ground.", "Some wild herds migrate over very long distances."],
+  "sounds": [], "sources": ["IUCN Red List; Prague Zoo visitor map; simulation husbandry values are gameplay estimates."]
+}

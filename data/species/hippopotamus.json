@@ -1,0 +1,14 @@
+{
+  "id": "hippopotamus", "commonName": "Common hippopotamus", "scientificName": "Hippopotamus amphibius", "family": "Hippopotamidae", "model": "rhino", "group": "pachyderm",
+  "adultMassKg": 1800, "shoulderHeightM": 1.5, "bodyLengthM": 3.4, "bodyRadiusM": 1.0, "walkSpeed": 1, "runSpeed": 4.2,
+  "canSwim": true, "canClimb": false, "jumpHeightM": 0.6, "lifespanYears": 50, "maturityYears": 6, "gestationDays": 240,
+  "litterMin": 1, "litterMax": 1, "birthIntervalYears": 2, "diet": "herbivore", "foods": ["grass_pellets", "hay"], "foodPerDayKg": 36, "waterPerDayL": 80,
+  "activity": "nocturnal", "sleepHoursPerDay": 12, "groupMin": 2, "groupMax": 12, "maxAdultMales": 1,
+  "sociability": 0.55, "playfulness": 0.35, "shyness": 0.2, "aggression": 0.75, "dangerous": true,
+  "minEnclosureM2": 1200, "spacePerExtraAnimalM2": 180, "waterAreaFraction": 0.45, "needsDeepWater": true,
+  "vegetationDensity": 0.12, "needsShelter": true, "tempMinC": 10, "tempMaxC": 38, "fenceHeightM": 2.0, "fenceStrength": 5,
+  "price": 16000, "appeal": 95, "status": "VU", "nativeRange": "Sub-Saharan Africa", "biome": "Rivers, lakes and adjacent grassland",
+  "terrainSuitability": {"grass": 1, "dirt": 0.85, "sand": 0.7},
+  "facts": ["Hippos spend hot daylight hours in water.", "Their eyes, ears and nostrils sit high on the head.", "At night they leave the water to graze."],
+  "sounds": [], "sources": ["IUCN Red List; Prague Zoo Hippo House; simulation husbandry values are gameplay estimates."]
+}

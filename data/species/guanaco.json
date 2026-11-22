@@ -1,0 +1,14 @@
+{
+  "id": "guanaco", "commonName": "Guanaco", "scientificName": "Lama guanicoe", "family": "Camelidae", "model": "kiang", "group": "ungulate",
+  "adultMassKg": 100, "shoulderHeightM": 1.15, "bodyLengthM": 1.8, "bodyRadiusM": 0.45, "walkSpeed": 1.2, "runSpeed": 6.5,
+  "canSwim": true, "canClimb": false, "jumpHeightM": 1.5, "lifespanYears": 25, "maturityYears": 2, "gestationDays": 345,
+  "litterMin": 1, "litterMax": 1, "birthIntervalYears": 1, "diet": "herbivore", "foods": ["hay", "grass_pellets", "browse"], "foodPerDayKg": 4, "waterPerDayL": 8,
+  "activity": "diurnal", "sleepHoursPerDay": 8, "groupMin": 3, "groupMax": 15, "maxAdultMales": 1,
+  "sociability": 0.8, "playfulness": 0.4, "shyness": 0.4, "aggression": 0.25, "dangerous": false,
+  "minEnclosureM2": 800, "spacePerExtraAnimalM2": 60, "waterAreaFraction": 0.02, "needsDeepWater": false,
+  "vegetationDensity": 0.2, "needsShelter": true, "tempMinC": -20, "tempMaxC": 35, "fenceHeightM": 2.2, "fenceStrength": 3,
+  "price": 3800, "appeal": 72, "status": "LC", "nativeRange": "Western and southern South America", "biome": "Dry steppe, scrub and mountain grassland",
+  "terrainSuitability": {"grass": 1, "savanna": 0.85, "rock": 0.7, "dirt": 0.65},
+  "facts": ["Guanacos are wild relatives of domestic llamas.", "They live from sea level to high Andean slopes.", "A herd male warns the group with a loud alarm call."],
+  "sounds": [], "sources": ["IUCN Red List; Prague Zoo visitor map; simulation husbandry values are gameplay estimates."]
+}

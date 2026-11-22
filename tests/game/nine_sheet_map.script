@@ -1,0 +1,21 @@
+# SPDX-License-Identifier: MIT
+# Visual smoke test for the nine equal visitor-map sheets. Run from build/ at 1280x720.
+5 key M
+10 click 582 53
+13 shot ../build-probe/shots/map-nine-nw.png
+16 click 638 53
+19 shot ../build-probe/shots/map-nine-n.png
+22 click 694 53
+25 shot ../build-probe/shots/map-nine-ne.png
+28 click 582 75
+31 shot ../build-probe/shots/map-nine-w.png
+34 click 638 75
+37 shot ../build-probe/shots/map-nine-centre.png
+40 click 694 75
+43 shot ../build-probe/shots/map-nine-e.png
+46 click 582 97
+49 shot ../build-probe/shots/map-nine-sw.png
+52 click 638 97
+55 shot ../build-probe/shots/map-nine-s.png
+58 click 694 97
+61 shot ../build-probe/shots/map-nine-se.png

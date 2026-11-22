@@ -64,6 +64,34 @@ TEST(ObjectsTests, SpatialQueriesMatchBruteForceWithNegativeCoordinates) {
             expected.push_back(p.id);
     EXPECT_EQ(actual, expected);
 }
+TEST(ObjectsTests, SpatialQueriesStayCurrentAcrossIncrementalEdits) {
+    ZooObjects objects;
+    Prop far;
+    far.position = {40.0f, 40.0f};
+    const PropId farId = objects.AddProp(far);
+    std::vector<PropId> found;
+    objects.PropsNear({0.0f, 0.0f}, 5.0f, found);  // materialise the bucket cache
+    EXPECT_TRUE(found.empty());
+
+    Prop near;
+    near.position = {2.0f, 1.0f};
+    const PropId nearId = objects.AddProp(near);
+    objects.PropsNear({0.0f, 0.0f}, 5.0f, found);
+    EXPECT_EQ(found, std::vector<PropId>{nearId});
+
+    // Buildings advance the shared object revision but do not alter prop buckets.
+    const BuildingId building = objects.AddBuilding(Building{});
+    objects.PropsNear({0.0f, 0.0f}, 5.0f, found);
+    EXPECT_EQ(found, std::vector<PropId>{nearId});
+    EXPECT_TRUE(objects.RemoveBuilding(building));
+    objects.PropsNear({0.0f, 0.0f}, 5.0f, found);
+    EXPECT_EQ(found, std::vector<PropId>{nearId});
+
+    // Removing a prop shifts vector indices and therefore deliberately takes the rebuild path.
+    EXPECT_TRUE(objects.RemoveProp(farId));
+    objects.PropsNear({0.0f, 0.0f}, 5.0f, found);
+    EXPECT_EQ(found, std::vector<PropId>{nearId});
+}
 TEST(ObjectsTests, FootprintAndDoorRotationsAreConsistent) {
     BuildingDef d;
     d.width = 3;

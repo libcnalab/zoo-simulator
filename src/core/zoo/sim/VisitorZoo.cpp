@@ -7,6 +7,7 @@
 #include <optional>
 #include <set>
 #include <span>
+#include <tuple>
 #include <utility>
 
 #include "zoo/sim/ScenarioScript.hpp"
@@ -29,7 +30,7 @@ struct HabitatPlan {
     int rn;
 };
 
-constexpr std::array<HabitatPlan, 22> kHabitats{{
+constexpr std::array<HabitatPlan, 118> kHabitats{{
     {"Meerkat Lookout", "meerkat", 10, 18, 5, 4},
     {"Flamingo Lagoon", "flamingo", 28, 24, 9, 7},
     {"Acacia Plain", "giraffe", 48, 53, 18, 19},
@@ -59,7 +60,137 @@ constexpr std::array<HabitatPlan, 22> kHabitats{{
     {"Corn Snake Terrarium", "corn_snake", 78, 123, 2, 3},
     {"Python Terrarium", "black_headed_python", 86, 123, 2, 3},
     {"Woodland Aviary", "mandarin_duck", -83, 127, 6, 6},
+    {"Gobi Steppe", "przewalski_horse", 155, 84, 25, 18},
+    {"Tibetan Plateau", "kiang", -155, 84, 23, 16},
+    // The first enlargement is now a pair of complete visitor districts instead of two
+    // paddocks standing alone at the ends of long service walks.
+    {"Cheetah Run", "cheetah", 132, 32, 18, 14},
+    {"Emu Meadow", "emu", 184, 32, 14, 12},
+    {"Wombat Burrows", "common_wombat", 187, 135, 11, 9},
+    {"Cassowary Rainforest", "southern_cassowary", 132, 151, 13, 12},
+    {"Maned Wolf Pampas", "maned_wolf", 177, 184, 15, 12},
+    {"Hippo Lake", "hippopotamus", -132, 32, 20, 16},
+    {"Tapir Creek", "south_american_tapir", -184, 35, 14, 12},
+    {"Prairie Dog Town", "black_tailed_prairie_dog", -187, 135, 12, 10},
+    {"Peccary Brush", "collared_peccary", -132, 153, 14, 12},
+    {"Puma Canyon", "puma", -177, 184, 14, 12},
+    // The former three rigid rows are now a chain of smaller, irregular landscapes.  Their
+    // centres and footprints deliberately vary; winding paths use the open seams between them.
+    {"Bison Prairie", "american_bison", -169, 245, 20, 15},
+    {"Reindeer Ridge", "reindeer", -102, 252, 18, 14},
+    {"Arctic Fox Tundra", "arctic_fox", -37, 238, 13, 11},
+    {"Hyena Basin", "spotted_hyena", 39, 254, 17, 13},
+    {"Oryx Dunes", "scimitar_horned_oryx", 127, 241, 19, 14},
+    {"Anteater Grassland", "giant_anteater", 180, 296, 16, 12},
+    {"Lemur Island", "ring_tailed_lemur", 111, 321, 14, 12},
+    {"Macaque Cliffs", "barbary_macaque", 28, 306, 16, 13},
+    {"Guanaco Range", "guanaco", -60, 326, 19, 14},
+    {"Addax Desert", "addax", -154, 310, 18, 13},
+    {"Okapi Forest", "okapi", -174, 381, 17, 14},
+    {"Red Deer Glade", "red_deer", -92, 394, 18, 14},
+    {"Musk Ox Tundra", "musk_ox", 3, 376, 18, 14},
+    {"European Bison Wood", "european_bison", 105, 396, 20, 15},
+    // South-west: an Australian and island district.  The unequal footprints and staggered
+    // centres follow the two bends of its walk instead of a rectangular exhibit grid.
+    {"Outback Emu Range", "emu", -584, 51, 17, 12},
+    {"Wombat Creek", "common_wombat", -519, 41, 14, 11},
+    {"Red Kangaroo Plain", "kangaroo", -449, 51, 18, 13},
+    {"Cassowary Gully", "southern_cassowary", -369, 36, 15, 13},
+    {"Island Tortoise Garden", "aldabra_tortoise", -289, 56, 14, 11},
+    {"Wetland Bird Reach", "mandarin_duck", -569, 151, 13, 12},
+    {"Coastal Penguin Rocks", "penguin", -499, 168, 16, 12},
+    {"Flamingo Billabong", "flamingo", -419, 154, 18, 13},
+    {"Tasman Wombat Wood", "common_wombat", -349, 171, 13, 11},
+    {"Forest Cassowary Walk", "southern_cassowary", -279, 146, 16, 13},
+    // South-east: open African country broken by cats, wetlands and smaller hoofstock gardens.
+    {"Serengeti Giraffe Plain", "giraffe", 289, 54, 21, 16},
+    {"Zebra Kopje", "zebra", 359, 39, 19, 14},
+    {"Cheetah Grass Run", "cheetah", 429, 52, 17, 12},
+    {"Hyena Moon Basin", "spotted_hyena", 509, 37, 16, 13},
+    {"Oryx Sandveld", "scimitar_horned_oryx", 584, 57, 18, 13},
+    {"Addax Dry Valley", "addax", 279, 148, 17, 12},
+    {"Lion Savanna", "lion", 349, 169, 18, 14},
+    {"Hippo River Bend", "hippopotamus", 424, 153, 19, 14},
+    {"Okapi Forest Edge", "okapi", 504, 170, 16, 13},
+    {"Anteater Termite Plain", "giant_anteater", 574, 145, 16, 12},
+    // Mid-west: the Americas, from prairie through pampas to tropical river forest.
+    {"North Bison Range", "american_bison", -584, 263, 19, 14},
+    {"Prairie Dog Colony", "black_tailed_prairie_dog", -519, 253, 13, 10},
+    {"Puma Mesa", "puma", -449, 263, 16, 13},
+    {"Peccary Scrub", "collared_peccary", -369, 248, 15, 12},
+    {"Tapir Rain Creek", "south_american_tapir", -289, 268, 16, 13},
+    {"Capybara Oxbow", "capybara", -569, 363, 17, 13},
+    {"Maned Wolf Cerrado", "maned_wolf", -499, 380, 16, 12},
+    {"Guanaco Foothills", "guanaco", -419, 366, 18, 13},
+    {"Anteater Palm Savanna", "giant_anteater", -349, 383, 15, 12},
+    {"Puma Forest Pass", "puma", -279, 358, 15, 12},
+    // Mid-east: Asian steppe and mountain forests, with the route folding around the slopes.
+    {"Kiang High Steppe", "kiang", 289, 266, 18, 13},
+    {"Przewalski Valley", "przewalski_horse", 359, 251, 19, 14},
+    {"Red Panda Bamboo Wood", "red_panda", 429, 264, 14, 11},
+    {"Tiger River Forest", "tiger", 509, 249, 17, 14},
+    {"Snow Leopard Pass", "snow_leopard", 584, 269, 15, 12},
+    {"Macaque Temple Wood", "barbary_macaque", 279, 360, 16, 13},
+    {"Asian Elephant Forest", "elephant", 349, 381, 20, 15},
+    {"Rhino Monsoon Plain", "rhino", 424, 365, 18, 14},
+    {"Tiger Bamboo Ravine", "tiger", 504, 382, 16, 13},
+    {"Red Panda Cedar Hill", "red_panda", 574, 357, 14, 11},
+    // North-west: a boreal-to-Arctic journey rather than one oversized tundra paddock.
+    {"Reindeer Migration Wood", "reindeer", -584, 475, 18, 13},
+    {"Musk Ox Ridge", "musk_ox", -519, 465, 18, 14},
+    {"Arctic Fox Fell", "arctic_fox", -449, 475, 13, 11},
+    {"Polar Bear Fjord", "polar_bear", -369, 460, 18, 14},
+    {"Northern Wolf Taiga", "wolf", -289, 480, 17, 13},
+    {"Red Deer Boreal Glade", "red_deer", -569, 575, 18, 13},
+    {"European Bison Taiga", "european_bison", -499, 592, 19, 14},
+    {"Lynx Spruce Ridge", "lynx", -419, 578, 15, 12},
+    {"Brown Bear River", "brown_bear", -349, 595, 17, 14},
+    {"Arctic Fox Coast", "arctic_fox", -279, 570, 13, 10},
+    // North-centre: a compact European conservation landscape with deliberately small exhibits.
+    {"Bison Conservation Wood", "european_bison", -160, 475, 18, 13},
+    {"Red Deer Coppice", "red_deer", -95, 465, 17, 13},
+    {"Lynx Limestone Hill", "lynx", -25, 475, 14, 11},
+    {"Wolf Carpathian Wood", "wolf", 55, 460, 16, 13},
+    {"Bear Mountain Stream", "brown_bear", 135, 480, 17, 14},
+    {"Tortoise Conservatory", "aldabra_tortoise", -145, 575, 13, 10},
+    {"Flamingo Fen", "flamingo", -75, 592, 16, 12},
+    {"European Bison Meadow", "european_bison", 5, 578, 18, 13},
+    {"Red Deer Riverside", "red_deer", 75, 595, 17, 13},
+    {"Lynx Quiet Forest", "lynx", 145, 570, 14, 11},
+    // North-east: islands and tropical forest, alternating intimate primate gardens and birds.
+    {"Ring-tailed Lemur Island", "ring_tailed_lemur", 289, 478, 15, 12},
+    {"Macaque Forest Temple", "barbary_macaque", 359, 463, 16, 13},
+    {"Cassowary Palm Forest", "southern_cassowary", 429, 476, 15, 12},
+    {"Aldabra Island", "aldabra_tortoise", 509, 461, 15, 11},
+    {"Flamingo Mangrove", "flamingo", 584, 481, 17, 13},
+    {"Lemur Canopy Walk", "ring_tailed_lemur", 279, 572, 15, 12},
+    {"Tapir Tropical River", "south_american_tapir", 349, 593, 16, 13},
+    {"Okapi Rainforest", "okapi", 424, 577, 16, 13},
+    {"Cassowary Fern Gully", "southern_cassowary", 504, 594, 15, 12},
+    {"Tropical Penguin Coast", "penguin", 574, 569, 16, 12},
 }};
+
+bool SteppeEquid(std::string_view species) {
+    return species == "przewalski_horse" || species == "kiang";
+}
+
+bool ExpansionCat(std::string_view species) {
+    return species == "cheetah" || species == "puma";
+}
+
+bool ExpansionCanid(std::string_view species) {
+    return species == "maned_wolf" || species == "arctic_fox" || species == "spotted_hyena";
+}
+
+bool ExpansionRatite(std::string_view species) {
+    return species == "emu" || species == "southern_cassowary";
+}
+
+bool ExpansionHerd(std::string_view species) {
+    return species == "american_bison" || species == "reindeer" ||
+           species == "scimitar_horned_oryx" || species == "guanaco" || species == "addax" ||
+           species == "red_deer" || species == "musk_ox" || species == "european_bison";
+}
 
 bool Terrarium(std::string_view species) {
     return species == "corn_snake" || species == "black_headed_python";
@@ -90,10 +221,12 @@ std::vector<TileCoord> RegionTiles(const Script& script, const HabitatPlan& plan
 }
 
 int StandOffDepth(std::string_view species) {
-    if (species == "elephant" || species == "rhino") {
+    if (species == "elephant" || species == "rhino" || species == "hippopotamus" ||
+        species == "american_bison" || species == "european_bison") {
         return 2;
     }
-    if (species == "giraffe" || species == "ostrich" || species == "camel" || species == "kangaroo") {
+    if (SteppeEquid(species) || ExpansionHerd(species) || ExpansionRatite(species) || species == "giraffe" ||
+        species == "ostrich" || species == "camel" || species == "kangaroo" || species == "okapi") {
         return 1;
     }
     return 0;
@@ -115,7 +248,8 @@ std::vector<TileCoord> PublicOutline(const Script& script, const HabitatPlan& pl
     return tiles;
 }
 
-void Walks(Zoo& zoo, Script& script, std::span<const HabitatPlan> habitats, bool sideGardens) {
+void Walks(Zoo& zoo, Script& script, std::span<const HabitatPlan> habitats, bool sideGardens,
+           bool steppeGardens, bool northernExpansion, bool continentalExpansion) {
     // The plaza leaves a small planting island for its fountain; the two arms meet beyond it.
     script.Path(-10, 0, -3, 13, PathKind::Cobblestone);
     script.Path(3, 0, 10, 13, PathKind::Cobblestone);
@@ -163,6 +297,146 @@ void Walks(Zoo& zoo, Script& script, std::span<const HabitatPlan> habitats, bool
         // The reed marsh lies between the western rest stop and Penguin Cove.
         script.PathAlong({{-97, 86}, {-90, 86}, {-85, 84}}, 2, PathKind::Boardwalk);
         script.PathAlong({{-73, 84}, {-65, 87}, {-60, 86}}, 2, PathKind::Gravel);
+    }
+    if (steppeGardens) {
+        for (const int side : {-1, 1}) {
+            script.PathAlong({{side * 96, 72}, {side * 115, 70}, {side * 136, 70}, {side * 155, 70}}, 3,
+                             PathKind::Gravel);
+            script.PathAlong({{side * 96, 94}, {side * 119, 101}, {side * 144, 99}, {side * 155, 98}}, 3,
+                             PathKind::Gravel);
+            // Fill the former empty wing with a continuous outer circuit around five exhibits.
+            script.PathAlong({{side * 98, 43}, {side * 113, 38}, {side * 132, 40},
+                              {side * 157, 44}, {side * 178, 45}, {side * 181, 64}},
+                             3, PathKind::Gravel);
+            script.PathAlong({{side * 180, 104}, {side * 187, 119}, {side * 187, 145},
+                              {side * 165, 151}, {side * 143, 154}, {side * 145, 172},
+                              {side * 174, 176}, {side * 177, 198}, {side * 145, 202},
+                              {side * 105, 194}, {side * 66, 180}, {side * 38, 162}},
+                             3, PathKind::Gravel);
+            script.PathAlong({{side * 155, 99}, {side * 174, 108}, {side * 183, 123}}, 2,
+                             PathKind::Gravel);
+            script.PathAlong({{side * 132, 42}, {side * 130, 61}, {side * 136, 70}}, 2,
+                             PathKind::Gravel);
+        }
+    }
+    if (northernExpansion) {
+        // A broad, asymmetric landscape loop replaces the former parallel avenues.  Smaller
+        // exhibits sit against its changing bends, while a woodland cross-trail offers shortcuts
+        // without turning the district into a machine-made grid.
+        script.PathAlong({{-190, 218}, {-150, 211}, {-111, 222}, {-70, 210}, {-25, 222},
+                          {18, 213},   {63, 225},   {106, 212},  {151, 224}, {190, 218},
+                          {200, 250},  {188, 280},  {204, 310},  {185, 340}, {198, 371},
+                          {178, 404},  {136, 417},  {91, 407},   {45, 420},  {-5, 409},
+                          {-50, 419},  {-96, 405},  {-140, 417}, {-180, 402}, {-196, 370},
+                          {-183, 338}, {-201, 305}, {-185, 275}, {-198, 245}, {-190, 218}},
+                         3, PathKind::Asphalt);
+        script.PathAlong({{-174, 349}, {-132, 359}, {-91, 345}, {-48, 358}, {-7, 346},
+                          {34, 359},   {74, 345},   {113, 356}, {151, 344}, {185, 340}},
+                         3, PathKind::Gravel);
+        script.PathAlong({{-150, 281}, {-112, 292}, {-73, 280}, {-34, 291}, {7, 279},
+                          {48, 292},   {88, 281},   {126, 293}, {160, 310}, {185, 340}},
+                         2, PathKind::Gravel);
+        // Three independent approaches retain a loop from the established zoo.
+        script.PathAlong({{0, 196}, {-6, 207}, {-25, 222}}, 3, PathKind::Asphalt);
+        script.PathAlong({{-177, 198}, {-184, 207}, {-190, 218}}, 3, PathKind::Gravel);
+        script.PathAlong({{177, 198}, {184, 207}, {190, 218}}, 3, PathKind::Gravel);
+        for (const HabitatPlan& plan : habitats.subspan(34, 14)) {
+            TileCoord join{plan.east, plan.north < 280 ? 218 : plan.north < 350 ? 350 : 417};
+            // Exact vertices on the winding middle walk. A shared nominal northing left the four
+            // central rings a few tiles short of the curve even though they looked connected.
+            if (plan.north >= 280 && plan.north < 350) {
+                switch (plan.east) {
+                    case -154: join = {-174, 349}; break;
+                    case -60: join = {-48, 358}; break;
+                    case 28: join = {34, 359}; break;
+                    case 111: join = {113, 356}; break;
+                    case 180: join = {185, 340}; break;
+                    default: break;
+                }
+            }
+            const int clearance = plan.rn + StandOffDepth(plan.species) + 2;
+            const int frontNorth = join.z < plan.north ? plan.north - clearance
+                                                       : plan.north + clearance;
+            const int bend = ((plan.east + plan.north) & 1) == 0 ? -5 : 5;
+            script.PathAlong({{plan.east, frontNorth},
+                              {(plan.east + join.x) / 2 + bend, (frontNorth + join.z) / 2},
+                              join},
+                             2, PathKind::Gravel);
+        }
+    }
+    if (continentalExpansion) {
+        // Each new sheet is a landscape district with an asymmetric, gently winding circuit.  The
+        // route bends towards individual habitat fronts; it is intentionally not copied as a
+        // rectangular grid.  Neighbouring circuits meet at short greenways on the sheet seams.
+        const auto districtLoop = [&](int east, int north, PathKind kind) {
+            script.PathAlong({{east - 195, north - 26}, {east - 170, north - 42},
+                              {east - 122, north - 34}, {east - 72, north - 45},
+                              {east - 18, north - 33},  {east + 34, north - 44},
+                              {east + 91, north - 32},  {east + 145, north - 46},
+                              {east + 191, north - 25}, {east + 180, north + 3},
+                              {east + 196, north + 31}, {east + 151, north + 45},
+                              {east + 96, north + 34},  {east + 43, north + 47},
+                              {east - 9, north + 35},   {east - 62, north + 45},
+                              {east - 119, north + 33}, {east - 168, north + 46},
+                              {east - 196, north + 21}, {east - 195, north - 26}},
+                             3, kind);
+            script.PathAlong({{east - 168, north + 2}, {east - 115, north - 5},
+                              {east - 58, north + 7}, {east, north - 4},
+                              {east + 55, north + 8}, {east + 112, north - 6},
+                              {east + 180, north + 3}},
+                             2, PathKind::Gravel);
+        };
+        for (const auto& [east, north, kind] :
+             std::array<std::tuple<int, int, PathKind>, 7>{{{-424, 106, PathKind::Boardwalk},
+                                                             {424, 106, PathKind::Gravel},
+                                                             {-424, 318, PathKind::Gravel},
+                                                             {424, 318, PathKind::Asphalt},
+                                                             {-424, 530, PathKind::Gravel},
+                                                             {0, 530, PathKind::Asphalt},
+                                                             {424, 530, PathKind::Boardwalk}}}) {
+            districtLoop(east, north, kind);
+        }
+        // Only the northern row has three new neighbouring districts. In the two established
+        // centre sheets the short nominal seam had no centre circuit to meet; the curved gateways
+        // below are their real connections.
+        script.PathAlong({{-229, 530}, {-214, 535}, {-195, 530}}, 3, PathKind::Gravel);
+        script.PathAlong({{195, 530}, {214, 525}, {229, 530}}, 3, PathKind::Gravel);
+        // Vertical seams in the outer columns, kept near district edges so they do not divide a
+        // habitat.  Both sides are linked, providing a choice of direction around every sheet.
+        for (const int east : {-594, 254, 594}) {
+            script.PathAlong({{east, 151}, {east + (east < 0 ? 7 : -7), 212}, {east, 273}}, 3,
+                             PathKind::Gravel);
+            script.PathAlong({{east, 363}, {east + (east < 0 ? -6 : 6), 424}, {east, 485}}, 3,
+                             PathKind::Gravel);
+        }
+        // The west sheets are asymmetric: their inner edge is not the mirror of the outer edge.
+        // Meet actual circuit vertices instead of leaving the inner greenway floating nearby.
+        script.PathAlong({{-273, 151}, {-267, 212}, {-279, 272}}, 3, PathKind::Gravel);
+        script.PathAlong({{-273, 363}, {-267, 424}, {-279, 484}}, 3, PathKind::Gravel);
+        // The established centre sheets remain the heart of the plan.  Curved gateways join the
+        // new circuits to their existing west, east and northern walks without cutting exhibits.
+        // Use literal vertices from both circuits. The former visually close endpoints were up
+        // to fifteen tiles apart, leaving the whole western column as a separate route graph.
+        script.PathAlong({{-228, 137}, {-211, 154}, {-193, 181}, {-177, 198}}, 3, PathKind::Gravel);
+        script.PathAlong({{229, 126}, {211, 154}, {193, 181}, {177, 198}}, 3, PathKind::Gravel);
+        script.PathAlong({{-228, 349}, {-207, 345}, {-185, 340}}, 3, PathKind::Gravel);
+        script.PathAlong({{229, 318}, {214, 329}, {200, 342}}, 3, PathKind::Gravel);
+        script.PathAlong({{-195, 504}, {-205, 466}, {-180, 402}}, 3, PathKind::Gravel);
+        script.PathAlong({{195, 504}, {205, 466}, {178, 404}}, 3, PathKind::Gravel);
+        // Every exhibit gets a short, slightly bent branch from its near side to the district's
+        // middle promenade.  These are local paths, not a repeated rectangular lattice, and make
+        // both lobes of every habitat reachable even where the outer loop swings away.
+        for (const HabitatPlan& plan : habitats.subspan(48)) {
+            const int districtNorth = plan.north < 212 ? 106 : plan.north < 424 ? 318 : 530;
+            const int clearance = plan.rn + StandOffDepth(plan.species) + 2;
+            const int frontNorth = plan.north < districtNorth ? plan.north + clearance
+                                                               : plan.north - clearance;
+            const int bend = ((plan.east / 7 + plan.north) & 1) == 0 ? -4 : 4;
+            script.PathAlong({{plan.east, frontNorth},
+                              {plan.east + bend, (frontNorth + districtNorth) / 2},
+                              {plan.east, districtNorth}},
+                             2, PathKind::Gravel);
+        }
     }
     script.PathAlong({{-18, 49}, {-6, 46}, {0, 38}, {16, 36}, {27, 39}}, 2, PathKind::Gravel);
     script.PathAlong({{-20, 70}, {-3, 69}, {11, 74}, {28, 77}}, 2, PathKind::Gravel);
@@ -236,6 +510,154 @@ struct HabitatStyle {
 // the heavy (the eye loses them at a few metres), a timber paddock fence for camels and kangaroos.
 // Each is a barrier the species' own figures accept (Containment); a dry moat is not in the catalog.
 HabitatStyle Style(std::string_view species) {
+    if (ExpansionCat(species)) {
+        const bool forest = species == "puma";
+        return {forest ? Terrain::ForestFloor : Terrain::Savanna,
+                "heavy_mesh",
+                "high_glass_wall",
+                "medium_shelter",
+                "meat_platform",
+                forest ? "juniper" : "savanna_shrub",
+                forest ? "granite_boulder" : "sandstone_rock",
+                {"scratching_post", "climbing_frame", "log_pile", "ball", "fallen_log"},
+                forest ? std::vector<std::string_view>{"pine", "birch", "juniper", "juniper", "tall_grass"}
+                       : std::vector<std::string_view>{"acacia", "savanna_shrub", "savanna_shrub", "tall_grass"}};
+    }
+    if (ExpansionCanid(species)) {
+        const bool cold = species == "arctic_fox";
+        const bool open = species == "spotted_hyena";
+        return {cold ? Terrain::Snow : open ? Terrain::Savanna : Terrain::Grass,
+                open ? "heavy_mesh" : "tall_mesh",
+                "high_glass_wall",
+                cold ? "cooled_den" : "medium_shelter",
+                "meat_platform",
+                cold ? "juniper" : open ? "savanna_shrub" : "tall_grass",
+                cold ? "ice_rock" : open ? "sandstone_rock" : "granite_boulder",
+                {"log_pile", "fallen_log", "ball", "scratching_post"},
+                cold ? std::vector<std::string_view>{"juniper", "juniper", "pine"}
+                     : open ? std::vector<std::string_view>{"acacia", "savanna_shrub", "tall_grass"}
+                            : std::vector<std::string_view>{"tall_grass", "tall_grass", "juniper", "birch"}};
+    }
+    if (ExpansionRatite(species)) {
+        const bool forest = species == "southern_cassowary";
+        return {forest ? Terrain::ForestFloor : Terrain::Grass,
+                "tall_mesh",
+                "glass_wall",
+                "medium_shelter",
+                "pellet_fruit_trough",
+                forest ? "tropical_fern" : "savanna_shrub",
+                forest ? "granite_boulder" : "sandstone_rock",
+                {"log_pile", "fallen_log", "termite_mound"},
+                forest ? std::vector<std::string_view>{"tropical_fern", "tropical_fern", "palm", "birch"}
+                       : std::vector<std::string_view>{"acacia", "savanna_shrub", "tall_grass", "tall_grass"}};
+    }
+    if (species == "hippopotamus") {
+        return {Terrain::Grass,
+                "cable_barrier",
+                "high_glass_wall",
+                "heated_barn",
+                "hay_rack",
+                "savanna_shrub",
+                "sandstone_rock",
+                {"log_pile", "ball", "scratching_post"},
+                {"tall_grass", "tall_grass", "savanna_shrub", "acacia"}};
+    }
+    if (species == "south_american_tapir") {
+        return {Terrain::ForestFloor,
+                "heavy_mesh",
+                "glass_wall",
+                "heated_barn",
+                "pellet_fruit_trough",
+                "tropical_fern",
+                "granite_boulder",
+                {"log_pile", "fallen_log", "scratching_post"},
+                {"tropical_fern", "tropical_fern", "palm", "willow", "birch"}};
+    }
+    if (species == "black_tailed_prairie_dog") {
+        return {Terrain::Dirt,
+                "wire_mesh",
+                "glass_wall",
+                "small_shelter",
+                "pellet_fruit_trough",
+                "tall_grass",
+                "sandstone_rock",
+                {"termite_mound", "log_pile"},
+                {"tall_grass", "tall_grass", "savanna_shrub"}};
+    }
+    if (species == "collared_peccary" || species == "common_wombat") {
+        return {species == "common_wombat" ? Terrain::Grass : Terrain::ForestFloor,
+                "tall_mesh",
+                "glass_wall",
+                "medium_shelter",
+                "pellet_fruit_trough",
+                "juniper",
+                "granite_boulder",
+                {"log_pile", "fallen_log", "scratching_post"},
+                {"tall_grass", "juniper", "birch", "tropical_fern"}};
+    }
+    if (species == "giant_anteater") {
+        return {Terrain::Grass,
+                "tall_mesh",
+                "glass_wall",
+                "medium_shelter",
+                "insect_feeder",
+                "tall_grass",
+                "sandstone_rock",
+                {"termite_mound", "fallen_log", "log_pile"},
+                {"tall_grass", "tall_grass", "savanna_shrub", "acacia"}};
+    }
+    if (species == "ring_tailed_lemur" || species == "barbary_macaque") {
+        const bool rocky = species == "barbary_macaque";
+        return {rocky ? Terrain::Rock : Terrain::ForestFloor,
+                "tall_mesh",
+                "high_glass_wall",
+                "heated_barn",
+                "pellet_fruit_trough",
+                rocky ? "juniper" : "tropical_fern",
+                "granite_boulder",
+                {"climbing_frame", "tyre_swing", "fallen_log", "log_pile"},
+                rocky ? std::vector<std::string_view>{"pine", "juniper", "juniper", "birch"}
+                      : std::vector<std::string_view>{"tropical_fern", "palm", "birch", "tall_grass"}};
+    }
+    if (species == "okapi") {
+        return {Terrain::ForestFloor,
+                "tall_cable_fence",
+                "glass_wall",
+                "heated_barn",
+                "giraffe_browse_feeder",
+                "tropical_fern",
+                "granite_boulder",
+                {"log_pile", "fallen_log", "scratching_post"},
+                {"tropical_fern", "tropical_fern", "palm", "birch", "oak"}};
+    }
+    if (ExpansionHerd(species)) {
+        const bool desert = species == "addax" || species == "scimitar_horned_oryx";
+        const bool cold = species == "reindeer" || species == "musk_ox";
+        const bool forest = species == "red_deer" || species == "european_bison";
+        const bool powerful = species == "american_bison" || species == "european_bison";
+        return {cold ? Terrain::Snow : desert ? Terrain::Sand : forest ? Terrain::ForestFloor : Terrain::Grass,
+                powerful ? "cable_barrier" : species == "musk_ox" ? "heavy_mesh" : "paddock_rail",
+                "glass_wall",
+                cold ? "cooled_den" : "large_shelter",
+                "hay_rack",
+                desert ? "desert_scrub" : "juniper",
+                cold ? "ice_rock" : desert ? "sandstone_rock" : "granite_boulder",
+                {"log_pile", "scratching_post", "fallen_log"},
+                desert ? std::vector<std::string_view>{"desert_scrub", "desert_scrub", "tall_grass"}
+                       : forest ? std::vector<std::string_view>{"oak", "birch", "juniper", "tall_grass"}
+                                : std::vector<std::string_view>{"tall_grass", "juniper", "birch", "pine"}};
+    }
+    if (SteppeEquid(species)) {
+        return {species == "kiang" ? Terrain::Grass : Terrain::Savanna,
+                "paddock_rail",
+                "paddock_rail",
+                "large_shelter",
+                "hay_rack",
+                "desert_scrub",
+                "sandstone_rock",
+                {"log_pile", "scratching_post", "fallen_log"},
+                {"tall_grass", "juniper", "desert_scrub", "tall_grass", "birch"}};
+    }
     if (species == "mandarin_duck") {
         return {Terrain::Grass,
                 "aviary_mesh",
@@ -500,6 +922,84 @@ constexpr Resident Young(Sex sex, float age, int mother) {
 std::span<const Resident> Family(std::string_view species) {
     constexpr Sex m = Sex::Male;
     constexpr Sex f = Sex::Female;
+    if (species == "cheetah") {
+        static constexpr Resident coalition[] = {Adult(m, 6), Adult(m, 5), Adult(m, 4)};
+        return coalition;
+    }
+    if (species == "puma") {
+        static constexpr Resident family[] = {Adult(f, 7), Young(f, 0.8f, 0), Young(m, 0.8f, 0)};
+        return family;
+    }
+    if (ExpansionRatite(species)) {
+        static constexpr Resident family[] = {Adult(m, 7), Adult(f, 6), Adult(f, 5),
+                                              Young(f, 0.5f, 1), Young(m, 0.5f, 1)};
+        return family;
+    }
+    if (species == "maned_wolf") {
+        static constexpr Resident family[] = {Adult(m, 6), Adult(f, 5), Young(f, 0.4f, 1), Young(m, 0.4f, 1)};
+        return family;
+    }
+    if (species == "arctic_fox") {
+        static constexpr Resident family[] = {Adult(m, 4), Adult(f, 4), Young(f, 0.3f, 1),
+                                              Young(m, 0.3f, 1), Young(f, 0.3f, 1)};
+        return family;
+    }
+    if (species == "spotted_hyena") {
+        static constexpr Resident clan[] = {Adult(f, 8), Adult(f, 6), Adult(f, 5), Adult(m, 5),
+                                            Young(f, 0.6f, 1), Young(m, 0.6f, 1)};
+        return clan;
+    }
+    if (species == "hippopotamus") {
+        static constexpr Resident group[] = {Adult(m, 18), Adult(f, 16), Adult(f, 12), Young(f, 2, 1)};
+        return group;
+    }
+    if (species == "south_american_tapir") {
+        static constexpr Resident family[] = {Adult(f, 9), Young(m, 0.8f, 0)};
+        return family;
+    }
+    if (species == "black_tailed_prairie_dog") {
+        static constexpr Resident colony[] = {Adult(m, 4), Adult(f, 4), Adult(f, 3), Adult(f, 3),
+                                              Young(f, 0.25f, 1), Young(m, 0.25f, 1),
+                                              Young(f, 0.25f, 2), Young(m, 0.25f, 2)};
+        return colony;
+    }
+    if (species == "collared_peccary") {
+        static constexpr Resident herd[] = {Adult(m, 5), Adult(f, 5), Adult(f, 4), Adult(f, 3),
+                                            Young(f, 0.5f, 1), Young(m, 0.5f, 2)};
+        return herd;
+    }
+    if (species == "common_wombat") {
+        static constexpr Resident family[] = {Adult(f, 6), Young(f, 0.5f, 0)};
+        return family;
+    }
+    if (species == "giant_anteater") {
+        static constexpr Resident family[] = {Adult(f, 7), Young(m, 0.7f, 0)};
+        return family;
+    }
+    if (species == "ring_tailed_lemur") {
+        static constexpr Resident troop[] = {Adult(f, 8), Adult(f, 6), Adult(f, 5), Adult(m, 6),
+                                             Adult(m, 4), Young(f, 0.5f, 1), Young(m, 0.5f, 2)};
+        return troop;
+    }
+    if (species == "barbary_macaque") {
+        static constexpr Resident troop[] = {Adult(m, 10), Adult(m, 7), Adult(f, 9), Adult(f, 7),
+                                             Adult(f, 5), Young(f, 0.8f, 2), Young(m, 0.8f, 3)};
+        return troop;
+    }
+    if (species == "okapi") {
+        static constexpr Resident family[] = {Adult(f, 8), Young(f, 1, 0)};
+        return family;
+    }
+    if (ExpansionHerd(species)) {
+        static constexpr Resident herd[] = {Adult(m, 8), Adult(f, 9), Adult(f, 6), Adult(f, 5),
+                                            Young(f, 0.7f, 1)};
+        return herd;
+    }
+    if (SteppeEquid(species)) {
+        static constexpr Resident herd[] = {Adult(m, 8), Adult(f, 9), Adult(f, 6), Adult(f, 5),
+                                            Young(f, 0.6f, 1)};
+        return herd;
+    }
     if (species == "mandarin_duck") {
         static constexpr Resident flock[] = {Adult(m, 3), Adult(f, 3), Adult(m, 2), Adult(f, 2)};
         return flock;
@@ -1011,12 +1511,19 @@ void HabitatPlants(Zoo& zoo, Script& script, const Site& site, const HabitatStyl
     std::stable_sort(beds.begin(), beds.end(), [](const Bed& a, const Bed& b) { return a.rank > b.rank; });
     const Builder builder = zoo.FreeBuilder();
     const Catalog& catalog = zoo.Definitions();
-    const auto density = [&] { return zoo.Habitats().Find(site.id)->stats.vegetationDensity; };
+    const EnclosureStats& initial = zoo.Habitats().Find(site.id)->stats;
+    const float dryM2 = initial.areaM2 * (1.0f - initial.waterShare);
+    float vegetationM2 = initial.vegetationM2;
+    const auto density = [&] { return dryM2 > 0.0f ? std::min(1.0f, vegetationM2 / dryM2) : 0.0f; };
     // First keep every trunk behind the depth of the planted strip, not only massive trees. A
     // slender acacia a metre inside Elephant Valley's cable still put its crown in the view.
-    const auto plant = [&](bool setBack, std::span<const std::string_view> flora) {
+    const auto plant = [&](bool setBack, std::span<const std::string_view> flora,
+                           bool understory = false) {
         std::vector<PropId> placed;
-        for (const float spacing : {3.6f, 2.6f, 2.0f}) {
+        // The last pass is chiefly for walk-through grasses and ferns beneath a woodland
+        // canopy.  Keeping it tighter lets shy forest species such as okapi reach their cover
+        // band without adding another row of trees or closing the public sight lines.
+        for (const float spacing : {3.6f, 2.6f, 2.0f, 1.4f}) {
             for (const Bed& bed : beds) {
                 if (density() >= wanted) {
                     return placed;
@@ -1027,8 +1534,9 @@ void HabitatPlants(Zoo& zoo, Script& script, const Site& site, const HabitatStyl
                 const int def = catalog.PropIndex(kind);
                 const Vec2 point = World::TileCenter(bed.tile) + Vec2{script.Random().Range(-0.7f, 0.7f),
                                                                       script.Random().Range(-0.7f, 0.7f)};
-                const float scale =
-                    small ? script.Random().Range(0.6f, 0.8f) : script.Random().Range(0.8f, 1.25f);
+                const float scale = small       ? script.Random().Range(0.6f, 0.8f)
+                                    : understory ? script.Random().Range(0.55f, 0.85f)
+                                                 : script.Random().Range(0.8f, 1.25f);
                 const float heading = script.Random().Range(0.0f, kTwoPi);
                 bool open = false;
                 for (const Vec2 from : site.watched) {
@@ -1044,14 +1552,16 @@ void HabitatPlants(Zoo& zoo, Script& script, const Site& site, const HabitatStyl
                 }
                 if (def < 0 || open ||
                     !Fits(zoo, builder, site, def, point, scale,
-                          small   ? 0.4f
-                          : tight ? 0.8f
-                                  : 1.8f,
-                          spacing)) {
+                          small        ? 0.4f
+                          : tight      ? 0.8f
+                          : understory ? 0.55f
+                                       : 1.8f,
+                          understory ? spacing * 0.65f : spacing)) {
                     continue;
                 }
                 if (const PropId id = script.Prop(kind, point, heading, scale)) {
                     placed.push_back(id);
+                    vegetationM2 += catalog.props[static_cast<std::size_t>(def)].vegetationM2;
                 }
             }
         }
@@ -1081,7 +1591,12 @@ void HabitatPlants(Zoo& zoo, Script& script, const Site& site, const HabitatStyl
             }
         }
         if (!low.empty()) {
-            plant(true, low);
+            plant(true, low, true);
+        }
+        if (density() < target - kCoverBand + kCoverMargin && plan.species == "lynx") {
+            // Grasses fit between the trunks at the woodland edge without blocking a sight line.
+            constexpr std::array<std::string_view, 1> grasses{"tall_grass"};
+            plant(true, grasses);
         }
     }
     // Retain the old safe fallback for a future style with no suitable low layer. None of the
@@ -1089,11 +1604,22 @@ void HabitatPlants(Zoo& zoo, Script& script, const Site& site, const HabitatStyl
     if (density() < target - kCoverBand + kCoverMargin) {
         Builder remover = zoo.FreeBuilder();
         for (const PropId id : setBack) {
+            const Prop* prop = zoo.Objects().FindProp(id);
+            const float removed = prop != nullptr
+                                      ? catalog.props[static_cast<std::size_t>(prop->def)].vegetationM2
+                                      : 0.0f;
             if (remover.RemoveProp(id).Ok()) {
+                vegetationM2 = std::max(0.0f, vegetationM2 - removed);
                 --script.Report().props;
             }
         }
         plant(false, style.flora);
+    }
+    if (plan.species == "okapi" && density() < wanted) {
+        // After moving the canopy closer, use a final low fern layer. It occupies gaps that a
+        // second tree cannot, while the sight-line test above still keeps every public view open.
+        constexpr std::array<std::string_view, 1> ferns{"tropical_fern"};
+        plant(false, ferns, true);
     }
     // Short of the aim is a problem only where the residents would feel it (Animals.cpp: welfare
     // counts a habitat as too bare beyond 0.15 under the species' figure).
@@ -1241,8 +1767,8 @@ void Furnish(Zoo& zoo, Script& script, const Site& site, const HabitatStyle& sty
         next += trough ? 0U : 1U;
     }
 
-    if (plan.species == "aldabra_tortoise") {
-        // Slow walkers can also drink near the shelter without crossing the whole meadow.
+    if (plan.species == "aldabra_tortoise" || SteppeEquid(plan.species)) {
+        // Residents can drink near the shelter as well as at the main viewing front.
         Need(zoo, script, site, drinkingPoint, Share(site, -0.38f, 0.46f), site.clear);
     }
     const Vec2 rise = Rise(script, plan);
@@ -1287,7 +1813,14 @@ void Enrich(Zoo& zoo, Script& script, const Site& site, const HabitatStyle& styl
                 needed, species.playfulness * (0.5f + 0.25f * static_cast<float>(Family(resident).size())));
         }
     }
-    const auto have = [&] { return zoo.Habitats().Find(site.id)->stats.enrichment; };
+    float enrichment = zoo.Habitats().Find(site.id)->stats.enrichment;
+    const auto have = [&] { return enrichment; };
+    const auto credit = [&](std::string_view kind) {
+        const int def = zoo.Definitions().PropIndex(kind);
+        if (def >= 0) {
+            enrichment += zoo.Definitions().props[static_cast<std::size_t>(def)].enrichment;
+        }
+    };
     // A log pile made for a bear dwarfs a bird or a meerkat: theirs are the smallest the catalog makes.
     const std::string_view lives = site.plan->species;
     const float size = lives == "meerkat" || lives == "flamingo" || lives == "penguin" ? 0.7f : 1.0f;
@@ -1297,11 +1830,59 @@ void Enrich(Zoo& zoo, Script& script, const Site& site, const HabitatStyle& styl
     for (int i = 0; i < 30 && (i < 2 || have() < needed); ++i) {
         const std::string_view toy = style.toys[static_cast<std::size_t>(i) % style.toys.size()];
         const Vec2 place = PlayPlace(site, i);
-        if (!Settle(zoo, script, site, toy, place, site.clear * 0.75f, size) &&
-            !Settle(zoo, script, rim, toy, place, 0.4f, size)) {
+        bool settled = Settle(zoo, script, site, toy, place, site.clear * 0.75f, size) ||
+                       Settle(zoo, script, rim, toy, place, 0.4f, size);
+        std::string_view settledKind = toy;
+        if (!settled) {
             rim.margin = 0;
-            if (!Settle(zoo, script, rim, toy, place, 0.4f, size)) {
+            settled = Settle(zoo, script, rim, toy, place, 0.4f, size);
+            if (!settled) {
+                // In the aviary a compact log pile can fit on a bank too narrow for a fallen trunk.
+                if (lives == "mandarin_duck" && toy != "log_pile" &&
+                    Settle(zoo, script, rim, "log_pile", place, 0.4f, size)) {
+                    settled = true;
+                    settledKind = "log_pile";
+                } else {
+                    break;
+                }
+            }
+        }
+        if (settled) {
+            credit(settledKind);
+        }
+    }
+    if (lives == "capybara" && have() < needed * 0.95f) {
+        // Capybara Marsh has little dry ground after its feeding bank, pool and wetland planting.
+        // Preserve the global construction RNG (and therefore every later habitat) by replacing a
+        // few deterministic low plants in-place instead of running another random placement pass.
+        std::vector<PropId> candidates;
+        for (const Prop& prop : zoo.Objects().Props()) {
+            if (zoo.Habitats().At(World::TileAt(prop.position)) == site.id) {
+                const PropDef& def = zoo.Definitions().props[static_cast<std::size_t>(prop.def)];
+                if (def.role == PropRole::Bush) {
+                    candidates.push_back(prop.id);
+                }
+            }
+        }
+        for (const PropId id : candidates) {
+            if (have() >= needed * 0.95f) {
                 break;
+            }
+            const Prop* found = zoo.Objects().FindProp(id);
+            if (found == nullptr) {
+                continue;
+            }
+            const Prop old = *found;
+            const std::string oldKind = zoo.Definitions().props[static_cast<std::size_t>(old.def)].id;
+            Builder builder = zoo.FreeBuilder();
+            if (!builder.RemoveProp(id).Ok()) {
+                continue;
+            }
+            --script.Report().props;
+            if (script.Prop("ball", old.position, old.heading, old.scale, true)) {
+                credit("ball");
+            } else {
+                script.Prop(oldKind, old.position, old.heading, old.scale, true);
             }
         }
     }
@@ -1377,6 +1958,20 @@ void Stock(Zoo& zoo, Script& script, const Site& site, std::string_view speciesI
             }
             id = zoo.Fauna().Add(env, species, resident.sex, resident.age, at);
         }
+        // On a wet or densely furnished habitat, random attempts can miss the small usable bank.
+        // Do not leave a hole in the family: the habitat tiles provide a deterministic exhaustive
+        // fallback without consuming more of the construction RNG.
+        if (!id) {
+            for (const TileCoord tile : site.tiles) {
+                const Vec2 at = World::TileCenter(tile);
+                if (free(at)) {
+                    id = zoo.Fauna().Add(env, species, resident.sex, resident.age, at);
+                    if (id) {
+                        break;
+                    }
+                }
+            }
+        }
         if (!id && mother != nullptr) {
             id = zoo.Fauna().Add(env, species, resident.sex, resident.age, beside);
         }
@@ -1394,7 +1989,11 @@ void Stock(Zoo& zoo, Script& script, const Site& site, std::string_view speciesI
         if (dam) {
             Animal* young = zoo.Fauna().Find(id);
             young->mother = dam;
-            young->father = zoo.Fauna().Find(family.front())->sex == Sex::Male ? family.front() : AnimalId{};
+            const auto sire = std::ranges::find_if(family, [&zoo](AnimalId relative) {
+                const Animal* animal = zoo.Fauna().Find(relative);
+                return animal != nullptr && animal->sex == Sex::Male;
+            });
+            young->father = sire != family.end() ? *sire : AnimalId{};
             Animal* parent = zoo.Fauna().Find(dam);
             parent->lastBirthTick = parent->lastBirthTick == 0
                                         ? young->bornTick
@@ -1483,6 +2082,44 @@ void DryMoatFront(Zoo& zoo, Script& script, const Site& site) {
     }
 }
 
+void HabitatShell(Zoo& zoo, Script& script, const HabitatPlan& plan) {
+    Site site;
+    site.plan = &plan;
+    site.tiles = RegionTiles(script, plan);
+    const HabitatStyle style = Style(plan.species);
+    script.PaintTiles(site.tiles, style.ground);
+    site.id = script.EncloseTiles(site.tiles, style.fence, std::string(plan.name));
+    if (!site.id) {
+        return;
+    }
+    const int stripDepth = StandOffDepth(plan.species);
+    if (stripDepth > 0) {
+        StandOffWithService(zoo, script, site, stripDepth);
+        if (style.front == "dry_moat") {
+            DryMoatFront(zoo, script, site);
+        }
+    } else if (Terrarium(plan.species)) {
+        script.ViewingFront(site.tiles, style.front, {Dir::South, Dir::East, Dir::West});
+    } else {
+        script.ViewingFront(site.tiles, style.front, {Dir::South, plan.east < 0 ? Dir::East : Dir::West});
+    }
+    script.KeeperGate(site.tiles, style.fence);
+    if (plan.species == "mandarin_duck") {
+        const int north = plan.north - 2;
+        Builder builder = zoo.FreeBuilder();
+        for (Dir side : {Dir::West, Dir::East}) {
+            const int edge = plan.east + (side == Dir::West ? -plan.rx : plan.rx);
+            const auto door = EdgeOf(script.Tile(edge, north), side);
+            const auto result =
+                builder.PlaceFence(std::span(&door, 1), script.FenceKind("aviary_curtain"), true);
+            if (!result.Ok())
+                script.Problem(std::string(plan.name) + ": cannot place visitor curtain");
+        }
+        script.Path(plan.east - plan.rx - 1, north, plan.east + plan.rx + 1, north, PathKind::Boardwalk);
+        script.Prop("aviary_net", script.Point(plan.east, plan.north));
+    }
+}
+
 void Habitat(Zoo& zoo, Script& script, const HabitatPlan& plan, const VisitorZooOptions& options) {
     Site site;
     site.plan = &plan;
@@ -1502,44 +2139,19 @@ void Habitat(Zoo& zoo, Script& script, const HabitatPlan& plan, const VisitorZoo
                          1.0f + 1.2f * zoo.SpeciesList().All()[static_cast<std::size_t>(index)].bodyRadiusM);
         }
     }
-    Builder builder = zoo.FreeBuilder();
-    builder.PaintTerrain(site.tiles, style.ground);
-    site.id = script.EncloseTiles(site.tiles, style.fence, std::string(plan.name));
+    site.id = zoo.Habitats().At(script.Tile(plan.east, plan.north));
     if (!site.id) {
+        script.Problem(std::string(plan.name) + ": shell is missing");
         return;
     }
-    const int stripDepth = StandOffDepth(plan.species);
-    if (stripDepth > 0) {
-        // Visitors also use the back circuit: the same clearance protects that walk.
-        // Keep every habitat tile and all its provisions, moving the public edge out.
-        StandOffWithService(zoo, script, site, stripDepth);
-        if (style.front == "dry_moat") {
-            DryMoatFront(zoo, script, site);
-        }
-    } else if (Terrarium(plan.species)) {
-        script.ViewingFront(site.tiles, style.front, {Dir::South, Dir::East, Dir::West});
-    } else {
-        script.ViewingFront(site.tiles, style.front, {Dir::South, plan.east < 0 ? Dir::East : Dir::West});
-    }
-    script.KeeperGate(site.tiles, style.fence);
     if (plan.species == "mandarin_duck") {
         // Two visitor curtains keep the flock inside the mesh. The public walk cuts between the
         // feeding bank and the pond. Birds can cross it anywhere inside their habitat.
         const int north = plan.north - 2;
-        for (Dir side : {Dir::West, Dir::East}) {
-            const int edge = plan.east + (side == Dir::West ? -plan.rx : plan.rx);
-            const auto door = EdgeOf(script.Tile(edge, north), side);
-            const auto result =
-                builder.PlaceFence(std::span(&door, 1), script.FenceKind("aviary_curtain"), true);
-            if (!result.Ok())
-                script.Problem("Woodland Aviary: cannot place visitor curtain");
-        }
         for (int east = plan.east - plan.rx; east <= plan.east + plan.rx; ++east) {
             const TileCoord tile = script.Tile(east, north);
             site.kept.emplace(tile.z, tile.x);
         }
-        script.Path(plan.east - plan.rx - 1, north, plan.east + plan.rx + 1, north, PathKind::Boardwalk);
-        script.Prop("aviary_net", script.Point(plan.east, plan.north));
     }
     const bool small = plan.rx <= 5;
     if (small || plan.species == "mandarin_duck" || species.waterAreaFraction >= 0.3f) {
@@ -1558,6 +2170,9 @@ void Habitat(Zoo& zoo, Script& script, const HabitatPlan& plan, const VisitorZoo
             site.kept.emplace(tile.z, tile.x);
         }
     };
+    // The remaining edits cannot merge or split an enclosure. HabitatPlants and Enrich maintain
+    // their own running cover figures, so the caller can commit every habitat's shelter,
+    // pool-furnishing and planting work with one statistics rebuild for the whole estate.
     if (const auto door = Shelter(zoo, script, plan, site.tiles, site.id, style.shelter)) {
         keep(*door, small ? 0 : 1, small ? 0 : 1);
     }
@@ -1707,8 +2322,21 @@ void Service(Zoo& zoo, Script& script, std::vector<ServiceApron>& wideAprons, st
     const BuildingDef& def = zoo.Definitions().buildings[static_cast<std::size_t>(index)];
     const TileCoord size = FootprintSize(def, facing);
     const TileCoord wanted = script.Tile(east, north + size.z - 1);
-    const auto candidates = NearFirst(TilesInRect({wanted.x - 5, wanted.z - 5}, {wanted.x + 5, wanted.z + 5}),
-                                      World::TileCenter(wanted));
+    auto candidates = NearFirst(TilesInRect({wanted.x - 18, wanted.z - 18}, {wanted.x + 18, wanted.z + 18}),
+                                World::TileCenter(wanted));
+    // Prefer a door that opens directly onto an already connected walk.  A diagonal avenue can
+    // otherwise be geometrically near while the little rectangular apron between it and the door
+    // is cut by planting or a habitat stand-off.  Keep the wider search as a fallback for the few
+    // old-zoo kiosks that intentionally sit at the end of a short paved forecourt.
+    const TileCoord gate = zoo.Map().EntranceTile();
+    const auto opensOnConnectedWalk = [&](TileCoord origin) {
+        const TileCoord front = FrontTile(def, origin, facing);
+        return zoo.Map().InBounds(front) && zoo.Map().At(front).path != PathKind::None &&
+               zoo.Routes().Reachable(gate, front, NavProfile::Visitor());
+    };
+    std::stable_sort(candidates.begin(), candidates.end(), [&](TileCoord a, TileCoord b) {
+        return opensOnConnectedWalk(a) && !opensOnConnectedWalk(b);
+    });
     for (const TileCoord origin : candidates) {
         bool clear = true;
         const TileCoord far{origin.x + size.x - 1, origin.z + size.z - 1};
@@ -1716,7 +2344,12 @@ void Service(Zoo& zoo, Script& script, std::vector<ServiceApron>& wideAprons, st
             clear = clear && zoo.Map().InBounds(tile) && zoo.Habitats().RegionAt(tile) == Region::Public &&
                     zoo.Map().At(tile).path == PathKind::None;
         }
-        if (!clear || builder.CheckBuilding(index, origin, facing) != BuildError::None) {
+        // Script::Building levels the chosen footprint before placement.  A candidate whose only
+        // fault is the untouched estate's relief is therefore viable; rejecting it here used to
+        // leave whole western districts without services even though the automatic levelling
+        // would have made the same site legal a moment later.
+        const BuildError building = builder.CheckBuilding(index, origin, facing);
+        if (!clear || (building != BuildError::None && building != BuildError::TooSteep)) {
             continue;
         }
         const TileCoord front = FrontTile(def, origin, facing);
@@ -1729,7 +2362,9 @@ void Service(Zoo& zoo, Script& script, std::vector<ServiceApron>& wideAprons, st
         if (!path) {
             continue;
         }
-        const TileCoord gate = zoo.Map().EntranceTile();
+        if (!zoo.Routes().Reachable(gate, *path, NavProfile::Visitor())) {
+            continue;
+        }
         // Remember a two-tile-wide way straight out of the door, but lay it only after every
         // facility has selected its site. Otherwise an early widened apron displaces a later kiosk.
         const TileCoord ahead = Step(facing);
@@ -1804,6 +2439,9 @@ bool PublicProp(Zoo& zoo, Script& script, std::string_view kind, Vec2 position, 
 }
 
 std::string_view ParkTree(int east, int north, int variant) {
+    if (std::abs(east) > 106) {
+        return variant == 0 ? "birch" : "pine";
+    }
     if (east > 30 && north > 105) {
         return variant == 0 ? "bamboo_clump" : "birch";
     }
@@ -2043,7 +2681,8 @@ void WidenThinWalks(Zoo& zoo, Script& script) {
     }
 }
 
-void Facilities(Zoo& zoo, Script& script, bool sideGardens) {
+void Facilities(Zoo& zoo, Script& script, bool sideGardens, bool steppeGardens, bool northernExpansion,
+                bool continentalExpansion) {
     std::vector<ServiceApron> serviceAprons;
     script.PathTiles(script.Ellipse(13, 74, 10.0f, 4.0f), PathKind::Cobblestone);
     // A second shaded rest place makes the new northern circuit a destination rather than an
@@ -2052,6 +2691,10 @@ void Facilities(Zoo& zoo, Script& script, bool sideGardens) {
     if (sideGardens) {
         script.PathTiles(script.Ellipse(96, 80, 5.0f, 4.0f), PathKind::Cobblestone);
         script.PathTiles(script.Ellipse(-97, 80, 5.0f, 4.0f), PathKind::Cobblestone);
+    }
+    if (northernExpansion) {
+        // The pavilions below stand on the lawn between paired cross-zoo avenues. Their own
+        // cobbled aprons join both sides without paving over the building sites first.
     }
     // Trunks stand on unpaved islands; the broad crowns shade the two rows of tables.
     for (int e = 6; e <= 21; e += 3) {
@@ -2079,7 +2722,6 @@ void Facilities(Zoo& zoo, Script& script, bool sideGardens) {
     Service(zoo, script, serviceAprons, "ice_cream_stand", -5, 18, Dir::North);
     Service(zoo, script, serviceAprons, "drinks_stall", 31, 94, Dir::East);
     Service(zoo, script, serviceAprons, "ice_cream_stand", 32, 139, Dir::South);
-    Service(zoo, script, serviceAprons, "drinks_stall", 71, 166, Dir::West);
     Service(zoo, script, serviceAprons, "drinks_stall", -4, 56, Dir::South);
     Service(zoo, script, serviceAprons, "drinks_stall", -72, 52, Dir::East);
     Service(zoo, script, serviceAprons, "drinks_stall", 70, 52, Dir::West);
@@ -2094,6 +2736,68 @@ void Facilities(Zoo& zoo, Script& script, bool sideGardens) {
     Service(zoo, script, serviceAprons, "drinks_stall", 66, 123, Dir::West);
     Service(zoo, script, serviceAprons, "drinks_stall", 66, 91, Dir::West);
     Service(zoo, script, serviceAprons, "ice_cream_stand", -67, 84, Dir::East);
+    if (steppeGardens) {
+        for (const int side : {-1, 1}) {
+            Service(zoo, script, serviceAprons, "drinks_stall", side * 122, 75, Dir::South);
+            Service(zoo, script, serviceAprons, "restroom", side * 151, 106, Dir::South);
+            Service(zoo, script, serviceAprons, "ice_cream_stand", side * 173, 65, Dir::North);
+            Service(zoo, script, serviceAprons, "drinks_stall", side * 108, 44,
+                    side < 0 ? Dir::East : Dir::West);
+            Service(zoo, script, serviceAprons, "restroom", side * 186, 53, Dir::South);
+            Service(zoo, script, serviceAprons, "drinks_stall", side * 181, 116, Dir::South);
+            Service(zoo, script, serviceAprons, "ice_cream_stand", side * 154, 172, Dir::North);
+            Service(zoo, script, serviceAprons, "restroom", side * 176, 202, Dir::South);
+        }
+    }
+    if (continentalExpansion) {
+        // Four stops per sheet follow different bends of each circuit.  They are deliberately
+        // offset rather than stamped at page centres, and Service snaps each door to a connected
+        // walk before accepting the site.
+        for (const auto& [east, north] :
+             std::array<std::pair<int, int>, 7>{{{-424, 106}, {424, 106}, {-424, 318}, {424, 318},
+                                                  {-424, 530}, {0, 530}, {424, 530}}}) {
+            Service(zoo, script, serviceAprons, "restroom", east - 150, north + 2, Dir::South);
+            Service(zoo, script, serviceAprons, "drinks_stall", east - 55, north - 3, Dir::North);
+            Service(zoo, script, serviceAprons, "ice_cream_stand", east + 55, north + 3, Dir::South);
+            Service(zoo, script, serviceAprons, "burger_stall", east + 150, north - 2, Dir::North);
+        }
+        // Large exhibit rings can put the opposite viewing side hundreds of metres along the
+        // path from a central kiosk. These compact stops sit on the actual habitat branches.
+        Service(zoo, script, serviceAprons, "drinks_stall", 359, 56, Dir::South);
+        Service(zoo, script, serviceAprons, "drinks_stall", 594, 151, Dir::West);
+        Service(zoo, script, serviceAprons, "restroom", 359, 268, Dir::South);
+        Service(zoo, script, serviceAprons, "drinks_stall", 594, 363, Dir::West);
+        Service(zoo, script, serviceAprons, "ice_cream_stand", -349, 579, Dir::North);
+        Service(zoo, script, serviceAprons, "drinks_stall", 75, 580, Dir::North);
+        Service(zoo, script, serviceAprons, "drinks_stall", 424, 530, Dir::South);
+        Service(zoo, script, serviceAprons, "restroom", 359, 478, Dir::South);
+    }
+    if (northernExpansion) {
+        Service(zoo, script, serviceAprons, "americas_lodge", -127, 280, Dir::South);
+        Service(zoo, script, serviceAprons, "tundra_station", 0, 280, Dir::South);
+        Service(zoo, script, serviceAprons, "african_plains_pavilion", 127, 280, Dir::South);
+        Service(zoo, script, serviceAprons, "forest_discovery_house", -127, 350, Dir::South);
+        Service(zoo, script, serviceAprons, "education_centre", 127, 350, Dir::South);
+        Service(zoo, script, serviceAprons, "burger_stall", -42, 282, Dir::North);
+        Service(zoo, script, serviceAprons, "drinks_stall", 42, 282, Dir::North);
+        Service(zoo, script, serviceAprons, "ice_cream_stand", -50, 350, Dir::North);
+        Service(zoo, script, serviceAprons, "drinks_stall", 50, 350, Dir::North);
+        // Stops follow the bends of the perimeter and two inner paths.  Their spacing is dense
+        // enough for visitors but does not reveal the plan-sheet grid in the landscape.
+        int stop = 0;
+        for (const auto& [east, north] :
+             std::array<std::pair<int, int>, 18>{{{-187, 231}, {-130, 214}, {-68, 220}, {-8, 214},
+                                                   {53, 224},   {115, 213},  {172, 228}, {194, 282},
+                                                   {181, 339},  {172, 397},  {112, 412}, {48, 416},
+                                                   {-18, 411},  {-82, 414},  {-145, 407}, {-189, 365},
+                                                   {-187, 305}, {-122, 351}}}) {
+            const std::string_view kind = stop % 3 == 0   ? "restroom"
+                                          : stop % 3 == 1 ? "drinks_stall"
+                                                          : "ice_cream_stand";
+            Service(zoo, script, serviceAprons, kind, east, north, Dir::South);
+            ++stop;
+        }
+    }
     if (sideGardens) {
         Service(zoo, script, serviceAprons, "restroom", 92, 82, Dir::East);
         Service(zoo, script, serviceAprons, "drinks_stall", 92, 77, Dir::East);
@@ -2126,6 +2830,13 @@ void Facilities(Zoo& zoo, Script& script, bool sideGardens) {
             PublicProp(zoo, script, "bench", script.Point(side * 101, 80),
                        side < 0 ? -kPi * 0.5f : kPi * 0.5f);
             PublicProp(zoo, script, "litter_bin", script.Point(side * 100, 77));
+        }
+    }
+    if (northernExpansion) {
+        for (const int north : {280, 350}) {
+            for (const int east : {-133, -129, 129, 133}) {
+                PublicProp(zoo, script, "picnic_table", script.Point(east, north));
+            }
         }
     }
     PublicProp(zoo, script, "info_board", script.Point(0, 168), kPi);
@@ -2203,6 +2914,8 @@ void GroundDetail(Zoo& zoo, Script& script, std::span<const HabitatPlan> habitat
             terrain = Terrain::Rock;
         } else if (plan.species == "tiger" || plan.species == "wolf") {
             terrain = Terrain::Grass;
+        } else if (plan.species == "kangaroo") {
+            terrain = Terrain::Savanna;
         } else if (plan.species == "flamingo" || plan.species == "elephant") {
             terrain = Terrain::Sand;
         }
@@ -2275,8 +2988,11 @@ ZooConfig VisitorZooConfig(std::uint64_t seed) {
     config.name = "Greenhill Zoo";
     config.seed = seed;
     config.world.seed = seed;
-    config.world.width = 224;
-    config.world.depth = 224;
+    // Nine equal visitor-map sheets form a 3 by 3 estate.  Each sheet is the size of one half of
+    // the preceding 424 by 424 property: 424 by 212 tiles.  The resulting 1,272 by 636 tile
+    // property is exactly 4.5 times its area, with the usual six-tile scenery margin around it.
+    config.world.width = 1272 + 2 * config.world.margin;
+    config.world.depth = 636 + 2 * config.world.margin;
     config.world.relief = 0.12f;
     config.sandbox = true;
     config.autoCare = true;
@@ -2293,11 +3009,31 @@ ScenarioReport BuildVisitorZoo(Zoo& zoo, const VisitorZooOptions& options) {
         return script.Finish();
     }
     const bool sideGardens = besideGate >= 103;
-    const auto habitats = std::span(kHabitats).first(sideGardens ? kHabitats.size() : kHabitats.size() - 5);
-    Walks(zoo, script, habitats, sideGardens);
+    const bool steppeGardens = besideGate >= 185;
+    const bool northernExpansion = gate.z - map.PropertyMin().z >= 423;
+    const bool continentalExpansion = besideGate >= 600 && gate.z - map.PropertyMin().z >= 635;
+    const auto habitats = std::span(kHabitats).first(continentalExpansion ? kHabitats.size()
+                                                     : northernExpansion ? 48
+                                                     : steppeGardens   ? 34
+                                                     : sideGardens    ? 22
+                                                                      : 17);
+    script.Hold();
+    Walks(zoo, script, habitats, sideGardens, steppeGardens, northernExpansion, continentalExpansion);
+    for (const HabitatPlan& plan : habitats) {
+        HabitatShell(zoo, script, plan);
+    }
+    script.Release();
+    // All habitat regions, gates and viewing fronts are now stable. Updating their statistics
+    // scans the whole map, so defer it across the 118 independent furnishing passes.
+    script.Hold();
     for (const HabitatPlan& plan : habitats) {
         Habitat(zoo, script, plan, options);
     }
+    script.Release();
+    // Animals were stocked while enclosure-stat rebuilds were deliberately deferred. Align their
+    // opening welfare once with the now-complete shelter, planting and enrichment figures; from
+    // here ordinary simulation smoothing owns it again.
+    zoo.Fauna().RefreshWelfare(zoo.MakeEnv());
     WidenElephantKangarooWalk(zoo, script);
     // What follows stands outside the habitats and asks about none of their figures.
     script.Hold();
@@ -2306,7 +3042,7 @@ ScenarioReport BuildVisitorZoo(Zoo& zoo, const VisitorZooOptions& options) {
     if (sideGardens) {
         script.Prop("snake_pavilion", script.Point(82, 123));
     }
-    Facilities(zoo, script, sideGardens);
+    Facilities(zoo, script, sideGardens, steppeGardens, northernExpansion, continentalExpansion);
     GroundDetail(zoo, script, habitats);
     Parkland(zoo, script);
     script.Release();

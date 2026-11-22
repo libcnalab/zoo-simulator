@@ -1125,6 +1125,22 @@ has 24 bones and eight clips. The shell plates, skin and claws were generated wi
 mesh and painted in animal coordinates. The adult body shape and grazing posture follow
 the Smithsonian's description of the species. [Smithsonian’s National Zoo](https://www.nationalzoo.si.edu/animals/aldabra-tortoise)
 
+### Distant bodies
+
+The nine-sheet visitor zoo can place more than a hundred outdoor animals inside one wide entrance
+view. Camera-frustum culling alone is not enough: a two-pixel body still submitted every skin,
+material and triangle of its close model. `AnimalRenderer` therefore measures the largest real
+body dimension in screen pixels. Below 10 px it draws a roughly 80-triangle bird or 120-triangle
+quadruped silhouette at the animal's true scale, position, heading and water height. The palette
+keeps broad cues such as flamingo pink, polar-bear white, elephant grey and tiger orange. Above
+14 px the full skinned, textured model returns; the gap is hysteresis.
+
+This is a display LOD only. The animal's simulation, activity, social state, identification target,
+sounds, wake and sightline remain unchanged. Camera field of view is part of the calculation, so
+raising the 7x binoculars makes the full model eligible again. The diagnostics panel reports total
+drawn animals and how many currently use the distant LOD. The pure projection and hysteresis rules
+are covered by `AnimalLodTests`.
+
 ### Looking at one animal
 
 ```bash

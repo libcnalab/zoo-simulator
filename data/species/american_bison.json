@@ -1,0 +1,14 @@
+{
+  "id": "american_bison", "commonName": "American bison", "scientificName": "Bison bison", "family": "Bovidae", "model": "rhino", "group": "ungulate",
+  "adultMassKg": 700, "shoulderHeightM": 1.8, "bodyLengthM": 2.8, "bodyRadiusM": 0.85, "walkSpeed": 1.1, "runSpeed": 6.5,
+  "canSwim": true, "canClimb": false, "jumpHeightM": 1.4, "lifespanYears": 25, "maturityYears": 3, "gestationDays": 285,
+  "litterMin": 1, "litterMax": 1, "birthIntervalYears": 1, "diet": "herbivore", "foods": ["hay", "grass_pellets"], "foodPerDayKg": 18, "waterPerDayL": 35,
+  "activity": "diurnal", "sleepHoursPerDay": 8, "groupMin": 3, "groupMax": 15, "maxAdultMales": 2,
+  "sociability": 0.75, "playfulness": 0.35, "shyness": 0.25, "aggression": 0.5, "dangerous": true,
+  "minEnclosureM2": 1400, "spacePerExtraAnimalM2": 120, "waterAreaFraction": 0.03, "needsDeepWater": false,
+  "vegetationDensity": 0.18, "needsShelter": true, "tempMinC": -30, "tempMaxC": 35, "fenceHeightM": 2.4, "fenceStrength": 5,
+  "price": 7000, "appeal": 86, "status": "NT", "nativeRange": "North America", "biome": "Prairie and open woodland",
+  "terrainSuitability": {"grass": 1, "savanna": 0.8, "dirt": 0.65, "snow": 0.55},
+  "facts": ["American bison are the largest land mammals in North America.", "A heavy shoulder hump supports powerful neck muscles.", "Herds graze, wallow and travel across open plains."],
+  "sounds": [], "sources": ["IUCN Red List; Prague Zoo visitor map; simulation husbandry values are gameplay estimates."]
+}

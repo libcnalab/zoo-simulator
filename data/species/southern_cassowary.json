@@ -1,0 +1,14 @@
+{
+  "id": "southern_cassowary", "commonName": "Southern cassowary", "scientificName": "Casuarius casuarius", "family": "Casuariidae", "model": "ostrich", "group": "bird",
+  "adultMassKg": 48, "shoulderHeightM": 1.65, "bodyLengthM": 1.45, "bodyRadiusM": 0.45, "walkSpeed": 1, "runSpeed": 5.5,
+  "canSwim": true, "canClimb": false, "jumpHeightM": 1.4, "lifespanYears": 35, "maturityYears": 3.5, "gestationDays": 52,
+  "litterMin": 3, "litterMax": 5, "birthIntervalYears": 1, "diet": "omnivore", "foods": ["fruit_veg", "insects"], "foodPerDayKg": 2.2, "waterPerDayL": 7,
+  "activity": "diurnal", "sleepHoursPerDay": 8, "groupMin": 1, "groupMax": 5, "maxAdultMales": 2,
+  "sociability": 0.15, "playfulness": 0.25, "shyness": 0.7, "aggression": 0.55, "dangerous": true,
+  "minEnclosureM2": 600, "spacePerExtraAnimalM2": 250, "waterAreaFraction": 0.05, "needsDeepWater": false,
+  "vegetationDensity": 0.43, "needsShelter": true, "tempMinC": 12, "tempMaxC": 36, "fenceHeightM": 2.2, "fenceStrength": 3,
+  "price": 6500, "appeal": 85, "status": "LC", "nativeRange": "New Guinea and northeastern Australia", "biome": "Tropical rainforest",
+  "terrainSuitability": {"forest_floor": 1, "grass": 0.65, "dirt": 0.6},
+  "facts": ["Cassowaries carry a tall casque on the head.", "They disperse the seeds of large rainforest fruits.", "The male incubates the eggs and raises the chicks."],
+  "sounds": [], "sources": ["BirdLife International; Prague Zoo visitor map; simulation husbandry values are gameplay estimates."]
+}

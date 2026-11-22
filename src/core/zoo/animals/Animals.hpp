@@ -260,6 +260,10 @@ public:
     /// null id otherwise, also for an unknown species). It gets a fresh name, mild
     /// random needs and starts Idle. Buying and its price are the caller's business.
     AnimalId Add(const Env& env, int species, Sex sex, float ageYears, Vec2 position);
+    /// Immediately aligns every resident's cached welfare with the current completed habitat.
+    /// Scenario builders use this once after deferred bulk construction; ordinary play lets
+    /// welfare move smoothly during Step().
+    void RefreshWelfare(const Env& env);
     /// Removes an animal without ceremony (sold, released to the wild).
     bool Remove(AnimalId id);
     Animal* Find(AnimalId id);

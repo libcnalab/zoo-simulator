@@ -118,8 +118,8 @@ scattered pixels of its crowns (slightly thinner leaves); after it the differenc
 reference drops (RMSE 3,150 -> 2,690, the rest is moving people and the farther groves). Side by
 side, the frame just before the switch and the all-near reference of the same frame cannot be
 told apart by eye (the crops are in the task's scratch output, not in the repository). Forced close (all groves far at 10 to 30 m) the far
-form shows its flat, coarse hearts as smooth dark blobs between the cards: it is not meant to be
-seen there.
+form used to show its flat, coarse hearts as dark blobs between the cards. The nine-sheet pass
+below removes those rendered hearts rather than relying on their distance to hide them.
 
 ## Far-away quality of cut-outs
 
@@ -191,8 +191,25 @@ second, runs of different rounds): 80 tiles offset by half a grove (the earlier 
 ## Open
 
 - Cut-out edges far away are aliased (no alpha-to-coverage, no MSAA).
-- The far form forced close shows flat hearts; at the switching distance it does not.
 - Plants are fill-bound as much as triangle-bound: the far form cuts the triangles a frame by
   1.4 million but buys about 1 ms; overlapping alpha-tested cards remain the larger cost.
 - The hedge is in no habitat of the visitor zoo (fence kind "hedge" exists, the plan does not
   use it); it was looked at as a specimen placed by a probe build.
+
+## Nine-sheet distance impostors (2026-11-22)
+
+The earlier far plant was a quarter-detail model intended for the compact zoo. On the 1,272 × 636
+tile property, 28,552 pines and 16,783 birches made that form itself the principal scene. Beyond
+the existing 48/56 m switch, the visit now draws a four-sided trunk and crossed foliage cards:
+20 triangles for a common tree, 24 for a palm and 8 for a shrub or ground plant. Full detail and
+the hysteresis are unchanged.
+
+An early version kept a small opaque heart in each far crown. Three entrance captures showed that
+its facets read as dark geometric diamonds through gaps in the cards, even when the heart was made
+very small and lit from above. It is no longer rendered. `BuildTreeSight` constructs the near
+tree's wood and dense crown only for the rare cached crosshair ray, preserving physical occlusion
+without adding the heart to every frame.
+
+In the saved 118-habitat zoo, the all-far plant mesh is 1,114,836 triangles, down from about 18.7
+million; the complete static scene is 4,927,209, down from 22,517,706. The final visual check is
+`build-probe/shots/nine-sheet-lod-entrance-final.png`, and all three plant geometry tests pass.

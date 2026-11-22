@@ -1,0 +1,14 @@
+{
+  "id": "maned_wolf", "commonName": "Maned wolf", "scientificName": "Chrysocyon brachyurus", "family": "Canidae", "model": "wolf", "group": "canine",
+  "adultMassKg": 25, "shoulderHeightM": 0.88, "bodyLengthM": 1.05, "bodyRadiusM": 0.33, "walkSpeed": 1.1, "runSpeed": 5.5,
+  "canSwim": true, "canClimb": false, "jumpHeightM": 1.6, "lifespanYears": 16, "maturityYears": 1.5, "gestationDays": 65,
+  "litterMin": 2, "litterMax": 5, "birthIntervalYears": 1, "diet": "omnivore", "foods": ["meat", "fruit_veg"], "foodPerDayKg": 1.6, "waterPerDayL": 3,
+  "activity": "crepuscular", "sleepHoursPerDay": 12, "groupMin": 1, "groupMax": 4, "maxAdultMales": 2,
+  "sociability": 0.25, "playfulness": 0.45, "shyness": 0.65, "aggression": 0.2, "dangerous": false,
+  "minEnclosureM2": 500, "spacePerExtraAnimalM2": 120, "waterAreaFraction": 0.02, "needsDeepWater": false,
+  "vegetationDensity": 0.35, "needsShelter": true, "tempMinC": 5, "tempMaxC": 35, "fenceHeightM": 2.3, "fenceStrength": 3,
+  "price": 6000, "appeal": 83, "status": "NT", "nativeRange": "Central South America", "biome": "Cerrado grassland and scrub",
+  "terrainSuitability": {"grass": 1, "savanna": 0.9, "dirt": 0.65},
+  "facts": ["Long legs lift the maned wolf above tall grass.", "Fruit can form a large part of its varied diet.", "Pairs share a territory while often foraging alone."],
+  "sounds": [], "sources": ["IUCN Red List; Prague Zoo visitor map; simulation husbandry values are gameplay estimates."]
+}

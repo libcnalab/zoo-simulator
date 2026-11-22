@@ -517,6 +517,19 @@ void Bench(Maker& k) {
     }
 }
 
+void FarBench(Maker& k) {
+    // At this distance the gaps between individual slats are sub-pixel. Keep the bench's
+    // unmistakable seat, raked back and two end frames, without its hidden faces and fittings.
+    MeshWriter& wood = k.m.Use(k.def.color, Pattern::Wood);
+    wood.BoxAt(0.0f, 0.0f, 0.405f, 1.6f, 0.08f, 0.42f);
+    wood.Beam(Vector3(-0.8f, 0.57f, -0.24f), Vector3(0.8f, 0.91f, -0.34f), 0.08f, 0.28f);
+    MeshWriter& iron = k.m.Use(kDarkSteel, Pattern::Metal);
+    for (const float x : {-0.68f, 0.68f}) {
+        iron.Beam(Vector3(x, 0.0f, 0.18f), Vector3(x, 0.45f, 0.12f), 0.07f, 0.07f);
+        iron.Beam(Vector3(x, 0.0f, -0.22f), Vector3(x, 0.68f, -0.28f), 0.07f, 0.07f);
+    }
+}
+
 void PicnicTable(Maker& k) {
     // Planks with gaps between them: the top at table height, the seats at 0.45 m.
     MeshWriter& wood = k.m.Use(k.def.color, Pattern::Planks);
@@ -540,6 +553,18 @@ void PicnicTable(Maker& k) {
     }
 }
 
+void FarPicnicTable(Maker& k) {
+    MeshWriter& wood = k.m.Use(k.def.color, Pattern::Planks);
+    wood.BoxAt(0.0f, 0.0f, 0.68f, 1.8f, 0.10f, 0.78f);
+    wood.BoxAt(0.0f, -0.74f, 0.39f, 1.8f, 0.09f, 0.30f);
+    wood.BoxAt(0.0f, 0.74f, 0.39f, 1.8f, 0.09f, 0.30f);
+    MeshWriter& frame = k.Timber();
+    for (const float x : {-0.7f, 0.7f}) {
+        frame.Beam(Vector3(x, -0.72f, 0.0f), Vector3(x, -0.25f, 0.68f), 0.11f, 0.11f);
+        frame.Beam(Vector3(x, 0.72f, 0.0f), Vector3(x, 0.25f, 0.68f), 0.11f, 0.11f);
+    }
+}
+
 void Bin(Maker& k) {
     MeshWriter& body = k.m.Use(k.def.color, Pattern::Metal);
     body.Tube(Vector3(0.0f, 0.03f, 0.0f), Vector3(0.0f, 0.8f, 0.0f), 0.23f, 0.25f, 10, false, true);
@@ -558,6 +583,17 @@ void Bin(Maker& k) {
     Limb(dark, Vector3(-0.22f, 0.86f, 0.0f), Vector3(-0.22f, 1.05f, 0.0f), 0.015f, 0.015f, 4);
     Limb(dark, Vector3(0.22f, 0.86f, 0.0f), Vector3(0.22f, 1.05f, 0.0f), 0.015f, 0.015f, 4);
     body.Tube(Vector3(0.0f, 1.05f, 0.0f), Vector3(0.0f, 1.14f, 0.0f), 0.31f, 0.05f, 10, true, true);
+}
+
+void FarBin(Maker& k) {
+    // Six sides preserve a round silhouette while replacing the liner, twelve timber staves,
+    // rings, stays and rain roof of the close model.
+    MeshWriter& body = k.m.Use(k.def.color, Pattern::Metal);
+    body.Tube(Vector3(0.0f, 0.03f, 0.0f), Vector3(0.0f, 0.82f, 0.0f), 0.25f, 0.25f, 6, false,
+              true);
+    MeshWriter& dark = k.m.Use(kDarkSteel, Pattern::Metal);
+    dark.Tube(Vector3(0.0f, 0.82f, 0.0f), Vector3(0.0f, 1.10f, 0.0f), 0.29f, 0.08f, 6, false,
+              true);
 }
 
 void Lamp(Maker& k) {
@@ -580,6 +616,19 @@ void Lamp(Maker& k) {
     }
     iron.Tube(Vector3(0.0f, H - 0.12f, 0.0f), Vector3(0.0f, H - 0.02f, 0.0f), 0.22f, 0.05f, 8, true, true);
     iron.Tube(Vector3(0.0f, H - 0.02f, 0.0f), Vector3(0.0f, H + 0.07f, 0.0f), 0.02f, 0.008f, 5, false, true);
+}
+
+void FarLamp(Maker& k) {
+    // A lamp remains a dark vertical landmark at long range. Four-sided tubes and one lantern
+    // retain that silhouette for a fraction of the close model's geometry.
+    MeshWriter& iron = k.m.Use(k.def.color, Pattern::Metal);
+    const float H = k.H;
+    iron.Tube(Vector3(0.0f, -0.3f, 0.0f), Vector3(0.0f, H - 0.38f, 0.0f), 0.09f, 0.04f, 4,
+              false, false);
+    MeshWriter& glass = k.m.Use({0.95f, 0.9f, 0.7f}, Pattern::Plain);
+    glass.BoxAt(0.0f, 0.0f, H - 0.38f, 0.24f, 0.28f, 0.24f);
+    iron.Tube(Vector3(0.0f, H - 0.10f, 0.0f), Vector3(0.0f, H + 0.06f, 0.0f), 0.19f, 0.0f, 4,
+              false, false);
 }
 
 void InfoBoard(Maker& k) {
@@ -651,7 +700,7 @@ void Marker(Maker& k) {
 
 }  // namespace
 
-void BuildProp(ModelBuilder& model, const zoo::PropDef& def, std::uint32_t seed) {
+void BuildProp(ModelBuilder& model, const zoo::PropDef& def, std::uint32_t seed, PropDetail detail) {
     if (BuildPlant(model, def, seed)) {
         return;
     }
@@ -706,13 +755,13 @@ void BuildProp(ModelBuilder& model, const zoo::PropDef& def, std::uint32_t seed)
     } else if (look == "ice_block") {
         IceBlock(k);
     } else if (look == "bench") {
-        Bench(k);
+        detail == PropDetail::Far ? FarBench(k) : Bench(k);
     } else if (look == "picnic_table") {
-        PicnicTable(k);
+        detail == PropDetail::Far ? FarPicnicTable(k) : PicnicTable(k);
     } else if (look == "bin") {
-        Bin(k);
+        detail == PropDetail::Far ? FarBin(k) : Bin(k);
     } else if (look == "lamp") {
-        Lamp(k);
+        detail == PropDetail::Far ? FarLamp(k) : Lamp(k);
     } else if (look == "info_board") {
         InfoBoard(k);
     } else if (look == "fountain") {

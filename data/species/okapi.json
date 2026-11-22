@@ -1,0 +1,14 @@
+{
+  "id": "okapi", "commonName": "Okapi", "scientificName": "Okapia johnstoni", "family": "Giraffidae", "model": "giraffe", "group": "ungulate",
+  "adultMassKg": 250, "shoulderHeightM": 1.65, "bodyLengthM": 2.1, "bodyRadiusM": 0.55, "walkSpeed": 1, "runSpeed": 5,
+  "canSwim": true, "canClimb": false, "jumpHeightM": 1.3, "lifespanYears": 30, "maturityYears": 3, "gestationDays": 440,
+  "litterMin": 1, "litterMax": 1, "birthIntervalYears": 2, "diet": "herbivore", "foods": ["browse", "fruit_veg", "hay"], "foodPerDayKg": 8, "waterPerDayL": 15,
+  "activity": "diurnal", "sleepHoursPerDay": 9, "groupMin": 1, "groupMax": 3, "maxAdultMales": 1,
+  "sociability": 0.2, "playfulness": 0.35, "shyness": 0.8, "aggression": 0.15, "dangerous": false,
+  "minEnclosureM2": 700, "spacePerExtraAnimalM2": 180, "waterAreaFraction": 0.02, "needsDeepWater": false,
+  "vegetationDensity": 0.6, "needsShelter": true, "tempMinC": 12, "tempMaxC": 30, "fenceHeightM": 2.6, "fenceStrength": 3,
+  "price": 11000, "appeal": 91, "status": "EN", "nativeRange": "Democratic Republic of the Congo", "biome": "Dense tropical rainforest",
+  "terrainSuitability": {"forest_floor": 1, "grass": 0.55, "dirt": 0.5},
+  "facts": ["The okapi is the giraffe's closest living relative.", "Striped hindquarters break up its outline in forest shade.", "A long tongue strips leaves and helps clean its face."],
+  "sounds": [], "sources": ["IUCN Red List; simulation husbandry values are gameplay estimates."]
+}

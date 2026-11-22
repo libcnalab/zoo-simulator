@@ -109,7 +109,7 @@ struct Watch {
 TEST(Keeper, TheVisitorZooHasItsCrew) {
     const auto zoo = VisitorZoo();
     const Staff& staff = zoo->Keepers();
-    ASSERT_EQ(staff.All().size(), 15u);
+    ASSERT_EQ(staff.All().size(), 17u);
     int gardeners = 0;
     int cleaners = 0;
     for (const StaffMember& member : staff.All()) {
@@ -305,7 +305,8 @@ TEST(Keeper, DangerousHabitatsHaveOutsideServiceAndLockoutWorkInside) {
     std::map<std::uint32_t, int> operatedRelease;
     std::map<std::uint32_t, int> activeStreak;
     std::map<std::uint32_t, int> longestActive;
-    for (int i = 0; i < 50000; ++i) {
+    // Observe four complete days so the longer rounds also include the return from the holding gate.
+    for (int i = 0; i < 4 * kTicksPerDay; ++i) {
         zoo->Step();
         std::set<std::uint32_t> activeNow;
         for (const StaffMember& member : zoo->Keepers().All()) {

@@ -1,0 +1,14 @@
+{
+  "id": "spotted_hyena", "commonName": "Spotted hyena", "scientificName": "Crocuta crocuta", "family": "Hyaenidae", "model": "wolf", "group": "carnivore",
+  "adultMassKg": 62, "shoulderHeightM": 0.82, "bodyLengthM": 1.4, "bodyRadiusM": 0.43, "walkSpeed": 1.1, "runSpeed": 6,
+  "canSwim": true, "canClimb": false, "jumpHeightM": 1.3, "lifespanYears": 25, "maturityYears": 2.5, "gestationDays": 110,
+  "litterMin": 1, "litterMax": 3, "birthIntervalYears": 1.5, "diet": "carnivore", "foods": ["meat"], "foodPerDayKg": 3.8, "waterPerDayL": 5,
+  "activity": "nocturnal", "sleepHoursPerDay": 13, "groupMin": 3, "groupMax": 12, "maxAdultMales": 4,
+  "sociability": 0.9, "playfulness": 0.65, "shyness": 0.25, "aggression": 0.55, "dangerous": true,
+  "minEnclosureM2": 850, "spacePerExtraAnimalM2": 100, "waterAreaFraction": 0.02, "needsDeepWater": false,
+  "vegetationDensity": 0.22, "needsShelter": true, "tempMinC": 3, "tempMaxC": 40, "fenceHeightM": 2.5, "fenceStrength": 4,
+  "price": 6800, "appeal": 86, "status": "LC", "nativeRange": "Sub-Saharan Africa", "biome": "Savanna, scrub and woodland",
+  "terrainSuitability": {"savanna": 1, "grass": 0.8, "dirt": 0.75, "sand": 0.55},
+  "facts": ["Spotted hyenas live in complex female-led clans.", "Powerful jaws let them crack large bones.", "Their calls include the famous high-pitched whoop and laugh."],
+  "sounds": [], "sources": ["IUCN Red List; Prague Zoo visitor map; simulation husbandry values are gameplay estimates."]
+}

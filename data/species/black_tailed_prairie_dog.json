@@ -1,0 +1,14 @@
+{
+  "id": "black_tailed_prairie_dog", "commonName": "Black-tailed prairie dog", "scientificName": "Cynomys ludovicianus", "family": "Sciuridae", "model": "meerkat", "group": "rodent",
+  "adultMassKg": 1.1, "shoulderHeightM": 0.24, "bodyLengthM": 0.38, "bodyRadiusM": 0.15, "walkSpeed": 0.6, "runSpeed": 3,
+  "canSwim": true, "canClimb": true, "jumpHeightM": 0.7, "lifespanYears": 9, "maturityYears": 1, "gestationDays": 34,
+  "litterMin": 3, "litterMax": 5, "birthIntervalYears": 1, "diet": "herbivore", "foods": ["grass_pellets", "hay", "fruit_veg"], "foodPerDayKg": 0.09, "waterPerDayL": 0.08,
+  "activity": "diurnal", "sleepHoursPerDay": 11, "groupMin": 4, "groupMax": 18, "maxAdultMales": 3,
+  "sociability": 0.9, "playfulness": 0.7, "shyness": 0.45, "aggression": 0.15, "dangerous": false,
+  "minEnclosureM2": 180, "spacePerExtraAnimalM2": 18, "waterAreaFraction": 0, "needsDeepWater": false,
+  "vegetationDensity": 0.18, "needsShelter": true, "tempMinC": -15, "tempMaxC": 38, "fenceHeightM": 1.3, "fenceStrength": 1,
+  "price": 450, "appeal": 74, "status": "LC", "nativeRange": "Great Plains of North America", "biome": "Shortgrass prairie",
+  "terrainSuitability": {"grass": 1, "dirt": 0.9, "savanna": 0.75},
+  "facts": ["Prairie dogs live in connected burrow colonies.", "Different alarm calls identify different kinds of danger.", "Their grazing changes prairie vegetation around a colony."],
+  "sounds": [], "sources": ["IUCN Red List; Prague Zoo Plains exhibit; simulation husbandry values are gameplay estimates."]
+}

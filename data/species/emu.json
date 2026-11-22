@@ -1,0 +1,14 @@
+{
+  "id": "emu", "commonName": "Emu", "scientificName": "Dromaius novaehollandiae", "family": "Casuariidae", "model": "ostrich", "group": "bird",
+  "adultMassKg": 38, "shoulderHeightM": 1.75, "bodyLengthM": 1.35, "bodyRadiusM": 0.42, "walkSpeed": 1.2, "runSpeed": 7,
+  "canSwim": true, "canClimb": false, "jumpHeightM": 1.1, "lifespanYears": 20, "maturityYears": 2, "gestationDays": 56,
+  "litterMin": 5, "litterMax": 15, "birthIntervalYears": 1, "independentYoung": false, "diet": "omnivore", "foods": ["fruit_veg", "grass_pellets", "insects"],
+  "foodPerDayKg": 1.5, "waterPerDayL": 8, "activity": "diurnal", "sleepHoursPerDay": 7, "groupMin": 2, "groupMax": 12, "maxAdultMales": 4,
+  "sociability": 0.65, "playfulness": 0.35, "shyness": 0.35, "aggression": 0.25, "dangerous": false,
+  "minEnclosureM2": 500, "spacePerExtraAnimalM2": 60, "waterAreaFraction": 0.03, "needsDeepWater": false,
+  "vegetationDensity": 0.25, "needsShelter": true, "tempMinC": -5, "tempMaxC": 42, "fenceHeightM": 1.9, "fenceStrength": 2,
+  "price": 2400, "appeal": 66, "status": "LC", "nativeRange": "Australia", "biome": "Open woodland, scrub and grassland",
+  "terrainSuitability": {"grass": 1, "savanna": 0.9, "dirt": 0.75, "sand": 0.6},
+  "facts": ["Emus are the second-tallest living birds.", "The male incubates the eggs and guards the chicks.", "Powerful legs carry an emu across large dry ranges."],
+  "sounds": [], "sources": ["BirdLife International; Prague Zoo visitor map; simulation husbandry values are gameplay estimates."]
+}

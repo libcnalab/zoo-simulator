@@ -1,0 +1,14 @@
+{
+  "id": "collared_peccary", "commonName": "Collared peccary", "scientificName": "Dicotyles tajacu", "family": "Tayassuidae", "model": "capybara", "group": "ungulate",
+  "adultMassKg": 22, "shoulderHeightM": 0.52, "bodyLengthM": 0.95, "bodyRadiusM": 0.34, "walkSpeed": 0.9, "runSpeed": 5,
+  "canSwim": true, "canClimb": false, "jumpHeightM": 1.0, "lifespanYears": 20, "maturityYears": 1.5, "gestationDays": 145,
+  "litterMin": 1, "litterMax": 3, "birthIntervalYears": 1, "diet": "omnivore", "foods": ["fruit_veg", "grass_pellets", "insects"], "foodPerDayKg": 1.3, "waterPerDayL": 3,
+  "activity": "cathemeral", "sleepHoursPerDay": 10, "groupMin": 3, "groupMax": 15, "maxAdultMales": 4,
+  "sociability": 0.8, "playfulness": 0.45, "shyness": 0.4, "aggression": 0.35, "dangerous": false,
+  "minEnclosureM2": 400, "spacePerExtraAnimalM2": 45, "waterAreaFraction": 0.04, "needsDeepWater": false,
+  "vegetationDensity": 0.4, "needsShelter": true, "tempMinC": 2, "tempMaxC": 40, "fenceHeightM": 1.6, "fenceStrength": 2,
+  "price": 1800, "appeal": 67, "status": "LC", "nativeRange": "Southwestern United States to northern Argentina", "biome": "Desert scrub, forest and grassland",
+  "terrainSuitability": {"forest_floor": 1, "savanna": 0.85, "grass": 0.75, "dirt": 0.7},
+  "facts": ["Peccaries are native American hoofed mammals.", "A pale collar circles the shoulders.", "Herd members use scent to recognise one another."],
+  "sounds": [], "sources": ["IUCN Red List; Prague Zoo visitor map; simulation husbandry values are gameplay estimates."]
+}

@@ -18,14 +18,20 @@ void ExpectNoProblems(const ScenarioReport& report) {
 }
 void ExpectConnected(const Zoo& zoo) {
     const World& map = zoo.Map();
+    int disconnected = 0;
+    TileCoord first;
     for (int z = 0; z < map.Depth(); ++z) {
         for (int x = 0; x < map.Width(); ++x) {
-            if (map.At({x, z}).path != PathKind::None) {
-                ASSERT_TRUE(zoo.Routes().Reachable(map.EntranceTile(), {x, z}, NavProfile::Visitor()))
-                    << x << "," << z;
+            if (map.At({x, z}).path != PathKind::None &&
+                !zoo.Routes().Reachable(map.EntranceTile(), {x, z}, NavProfile::Visitor())) {
+                if (disconnected == 0) {
+                    first = {x, z};
+                }
+                ++disconnected;
             }
         }
     }
+    EXPECT_EQ(disconnected, 0) << "first disconnected path tile=" << first.x << ',' << first.z;
 }
 void ExpectPublicAccess(const Zoo& zoo) {
     std::vector<TileCoord> doors;
@@ -65,7 +71,11 @@ void ExpectPublicAccess(const Zoo& zoo) {
     }
     std::cout << "Farthest walk to a facility: " << longest << " m at " << farthest.x << ',' << farthest.z
               << '\n';
-    if (longest > 85.0f) {
+    const int propertyDepth = zoo.Map().PropertyMax().z - zoo.Map().PropertyMin().z + 1;
+    // A nine-sheet estate allows a 360 m (roughly four-and-a-half-minute) walk to the nearest
+    // public service. Tighter limits encouraged empty service plazas instead of habitat land.
+    const float maximumWalk = propertyDepth > 424 ? 360.0f : propertyDepth > 212 ? 170.0f : 85.0f;
+    if (longest > maximumWalk) {
         for (const Enclosure& habitat : zoo.Habitats().All()) {
             float farthestView = 0.0f;
             for (const ViewingSpot& spot : habitat.viewing) {
@@ -75,7 +85,7 @@ void ExpectPublicAccess(const Zoo& zoo) {
             std::cout << habitat.name << " farthest facility=" << farthestView << '\n';
         }
     }
-    EXPECT_LE(longest, 85.0f);
+    EXPECT_LE(longest, maximumWalk);
     const Vec2 entrance = World::TileCenter(zoo.Map().EntranceTile());
     float firstFence = 1.0e9f;
     for (const Enclosure& enclosure : zoo.Habitats().All()) {
@@ -184,12 +194,12 @@ void PrintPlan(const Zoo& zoo) {
 }  // namespace
 TEST(VisitorZooTests, CompleteZoo) {
     Zoo zoo(testdata::GameCatalog(), testdata::GameSpecies(), VisitorZooConfig());
-    EXPECT_EQ(zoo.Map().Width(), 224);
-    EXPECT_EQ(zoo.Map().Depth(), 224);
+    EXPECT_EQ(zoo.Map().Width(), 1284);
+    EXPECT_EQ(zoo.Map().Depth(), 648);
     ExpectNoProblems(BuildVisitorZoo(zoo));
     ExpectConnected(zoo);
     ExpectPublicAccess(zoo);
-    EXPECT_EQ(zoo.Habitats().All().size(), 22U);
+    EXPECT_EQ(zoo.Habitats().All().size(), 118U);
     std::set<int> species;
     const Env env = zoo.MakeEnv();
     for (const Animal& animal : zoo.Fauna().All()) {
@@ -212,7 +222,7 @@ TEST(VisitorZooTests, CompleteZoo) {
         EXPECT_GE(Containment(def, enclosure->stats), 0.99f) << def.id;
         EXPECT_GE(enclosure->stats.shelterCapacity, group.allAnimals) << def.id;
     }
-    EXPECT_EQ(species.size(), 23U);
+    EXPECT_EQ(species.size(), 49U);
     PrintPlan(zoo);
     for (const Enclosure& enclosure : zoo.Habitats().All()) {
         EXPECT_GE(enclosure.stats.gates, 1) << enclosure.name;
@@ -237,7 +247,7 @@ TEST(VisitorZooTests, SpeciesCanBeOmittedWithoutRemovingTheirHabitat) {
     Zoo zoo(testdata::GameCatalog(), testdata::GameSpecies(), VisitorZooConfig());
     ExpectNoProblems(BuildVisitorZoo(zoo, {{"flamingo"}}));
     EXPECT_EQ(zoo.AnimalCount(zoo.SpeciesList().IndexOf("flamingo")), 0);
-    EXPECT_EQ(zoo.Habitats().All().size(), 22U);
+    EXPECT_EQ(zoo.Habitats().All().size(), 118U);
     bool lagoon = false;
     for (const Enclosure& enclosure : zoo.Habitats().All()) {
         if (enclosure.name == "Flamingo Lagoon") {
@@ -271,7 +281,52 @@ TEST(VisitorZooTests, PreviousMapWidthRetainsTheNorthernCircuit) {
     Zoo zoo(testdata::GameCatalog(), testdata::GameSpecies(), config);
     ExpectNoProblems(BuildVisitorZoo(zoo));
     ExpectConnected(zoo);
-    EXPECT_EQ(zoo.Fauna().All().size(), 99U);
+    EXPECT_EQ(zoo.Fauna().All().size(), 111U);
+}
+
+TEST(VisitorZooTests, NineSheetPropertyKeepsTheEstablishedExpansionStocked) {
+    ZooConfig previous = VisitorZooConfig();
+    previous.world.width = 224;
+    previous.world.depth = 224;
+    Zoo old(testdata::GameCatalog(), testdata::GameSpecies(), previous);
+    ExpectNoProblems(BuildVisitorZoo(old));
+    ASSERT_EQ(old.Habitats().All().size(), 22U);
+
+    Zoo expanded(testdata::GameCatalog(), testdata::GameSpecies(), VisitorZooConfig());
+    ExpectNoProblems(BuildVisitorZoo(expanded));
+    const World& map = expanded.Map();
+    const int oldWidth = old.Map().PropertyMax().x - old.Map().PropertyMin().x + 1;
+    const int oldDepth = old.Map().PropertyMax().z - old.Map().PropertyMin().z + 1;
+    EXPECT_EQ(map.PropertyMax().x - map.PropertyMin().x + 1, 6 * oldWidth);
+    EXPECT_EQ(map.PropertyMax().z - map.PropertyMin().z + 1, 3 * oldDepth);
+    const int shift = map.EntranceTile().x - old.Map().EntranceTile().x;
+    for (const std::string id : {"przewalski_horse", "kiang"}) {
+        const int species = expanded.SpeciesList().IndexOf(id);
+        // The continental estate adds one second five-animal conservation group for each equid.
+        ASSERT_EQ(expanded.AnimalCount(species), 10) << id;
+        std::set<EnclosureId> homes;
+        bool establishedRangeStocked = false;
+        for (const Animal& animal : expanded.Fauna().All()) {
+            if (animal.species != species) {
+                continue;
+            }
+            const Enclosure* home = expanded.Habitats().Find(animal.home);
+            ASSERT_NE(home, nullptr);
+            homes.insert(animal.home);
+            if (id == "kiang") {
+                establishedRangeStocked = establishedRangeStocked ||
+                                          home->max.x < old.Map().PropertyMin().x + shift;
+            } else {
+                establishedRangeStocked = establishedRangeStocked ||
+                                          home->min.x > old.Map().PropertyMax().x + shift;
+            }
+            ASSERT_FALSE(home->viewing.empty());
+            EXPECT_TRUE(expanded.Routes().Reachable(map.EntranceTile(), home->viewing.front().tile,
+                                                    NavProfile::Visitor()));
+        }
+        EXPECT_EQ(homes.size(), 2U) << id;
+        EXPECT_TRUE(establishedRangeStocked) << id;
+    }
 }
 
 TEST(VisitorZooTests, SmallMapsReportTheirLimits) {

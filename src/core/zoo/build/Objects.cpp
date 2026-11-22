@@ -31,17 +31,24 @@ int Bucket(float coordinate) {
 BuildingId ZooObjects::AddBuilding(Building building) {
     if (nextBuilding_ == 0 || nextBuilding_ == std::numeric_limits<std::uint32_t>::max())
         return {};
+    const bool bucketsCurrent = bucketsRevision_ == revision_;
     building.id = BuildingId{nextBuilding_++};
     buildings_.push_back(building);
     ++revision_;
+    // Buildings share the public revision with props but cannot change a prop bucket.
+    if (bucketsCurrent)
+        bucketsRevision_ = revision_;
     return building.id;
 }
 bool ZooObjects::RemoveBuilding(BuildingId id) {
     auto it = Locate(buildings_, id);
     if (it == buildings_.end() || it->id != id)
         return false;
+    const bool bucketsCurrent = bucketsRevision_ == revision_;
     buildings_.erase(it);
     ++revision_;
+    if (bucketsCurrent)
+        bucketsRevision_ = revision_;
     return true;
 }
 Building* ZooObjects::FindBuilding(BuildingId id) {
@@ -55,10 +62,18 @@ const Building* ZooObjects::FindBuilding(BuildingId id) const {
 PropId ZooObjects::AddProp(Prop prop) {
     if (nextProp_ == 0 || nextProp_ == std::numeric_limits<std::uint32_t>::max())
         return {};
+    const bool bucketsCurrent = bucketsRevision_ == revision_;
     prop.id = PropId{nextProp_++};
     props_.push_back(prop);
     ++revision_;
-    bucketsRevision_ = 0;
+    if (bucketsCurrent) {
+        const std::uint32_t index = static_cast<std::uint32_t>(props_.size() - 1u);
+        const Prop& added = props_.back();
+        buckets_[{Bucket(added.position.x), Bucket(added.position.z)}].push_back(index);
+        bucketsRevision_ = revision_;
+    } else {
+        bucketsRevision_ = 0;
+    }
     return prop.id;
 }
 bool ZooObjects::RemoveProp(PropId id) {

@@ -73,7 +73,7 @@ constexpr double kKeepEvery = 120.0;
 
 // Bump when BuildVisitorZoo or the fill sequence changes without changing the data or save
 // version. Data files and every option that affects the filled state are hashed separately.
-constexpr std::uint64_t kVisitCacheRevision = 10;
+constexpr std::uint64_t kVisitCacheRevision = 12;
 
 void CacheHash(std::uint64_t& hash, std::string_view bytes) {
     for (const unsigned char byte : bytes) {
@@ -192,9 +192,11 @@ std::unique_ptr<zoo::Zoo> ZooGame::MakeVisitorZoo() {
     zoo::VisitorZooOptions options;
     if (!emptyMap_) {
         // A habitat whose animals the game cannot show yet is built and named, and waits for them.
+        // Several species deliberately share an existing body plan; the asset key is `model`, not
+        // the species id (for example, cheetah currently uses the lion body).
         const auto assets = CnaEngine::App::FindAssetDirectory("assets");
         for (const zoo::SpeciesDef& def : species_->All()) {
-            if (!assets || !std::filesystem::exists(*assets / "animals" / (def.id + ".glb")))
+            if (!assets || !std::filesystem::exists(*assets / "animals" / (def.model + ".glb")))
                 options.withoutSpecies.push_back(def.id);
         }
     }
@@ -337,6 +339,8 @@ ZooGame::Pose ZooGame::EntrancePose() const {
 
 void ZooGame::BeginWalk(const Pose& pose) {
     walker_.Enter(*zoo_, {pose.x, pose.z}, pose.yaw, pose.pitch);
+    if (visit_.map.shapes.empty())
+        BuildVisitMap();
     visit_.screen = VisitScreen::Walking;
     visit_.window = VisitWindow::None;
     visit_.hintLeft = 14.0f;
@@ -506,6 +510,7 @@ void ZooGame::FillVisitFigures() {
     f.castFailed = visitors_->Failed();
     f.animals = static_cast<int>(zoo_->Fauna().All().size());
     f.animalsDrawn = static_cast<int>(animals_->Drawn());
+    f.animalsProxied = static_cast<int>(animals_->Proxied());
     f.solids = static_cast<int>(walker_.Shapes());
     f.framesPerSecond = static_cast<float>(FrameTimes().FramesPerSecond());
     f.feet = walker_.Feet();
@@ -523,11 +528,11 @@ void ZooGame::PrintVisitFigures(const char* when) const {
     std::printf(
         "zoo: visit %s: %s, at %.1f,%.1f heading %.0f; visitors %d simulated, %zu in range, %zu in view, %zu "
         "drawn; "
-        "avatars %d ready of %zu, %d failed; animals %zu, %zu drawn\n",
+        "avatars %d ready of %zu, %d failed; animals %zu, %zu drawn (%zu distant LOD)\n",
         when, visit_.clock.c_str(), static_cast<double>(at.x), static_cast<double>(at.z),
         static_cast<double>(walker_.Yaw() * 180.0f / kPi), zoo_->Guests().Count(), visitors_->InRange(),
         visitors_->InView(), visitors_->Drawn(), visitors_->Ready(), visitors_->CastSize(),
-        visitors_->Failed(), zoo_->Fauna().All().size(), animals_->Drawn());
+        visitors_->Failed(), zoo_->Fauna().All().size(), animals_->Drawn(), animals_->Proxied());
     const SoundFigures& sound = sounds_->Figures();
     std::printf(
         "zoo: visit %s: sound %s, %d recordings (%d decoded, %d failed), %d voices (%d heard), %d steps, "
@@ -681,7 +686,7 @@ void ZooGame::UpdateVisit(double seconds) {
     camera_.Apply(MainCamera());
     UpdateShadowArea();
     terrain_->Update(zoo_->Map());
-    scenery_->Update(zoo_->Map(), zoo_->Objects());
+    scenery_->Update(zoo_->Map(), zoo_->Objects(), 2, MainCamera().Position());
     const float lived = dt * static_cast<float>(play_.speed);
     {
         const Bench::Scope timed(bench_, Bench::Animals);

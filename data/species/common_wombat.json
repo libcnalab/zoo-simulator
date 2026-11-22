@@ -1,0 +1,14 @@
+{
+  "id": "common_wombat", "commonName": "Common wombat", "scientificName": "Vombatus ursinus", "family": "Vombatidae", "model": "capybara", "group": "marsupial",
+  "adultMassKg": 26, "shoulderHeightM": 0.36, "bodyLengthM": 0.9, "bodyRadiusM": 0.34, "walkSpeed": 0.7, "runSpeed": 4,
+  "canSwim": true, "canClimb": false, "jumpHeightM": 0.6, "lifespanYears": 25, "maturityYears": 2, "gestationDays": 22,
+  "litterMin": 1, "litterMax": 1, "birthIntervalYears": 2, "diet": "herbivore", "foods": ["grass_pellets", "hay", "browse"],
+  "foodPerDayKg": 1.1, "waterPerDayL": 1.5, "activity": "nocturnal", "sleepHoursPerDay": 15, "groupMin": 1, "groupMax": 3, "maxAdultMales": 1,
+  "sociability": 0.2, "playfulness": 0.45, "shyness": 0.65, "aggression": 0.2, "dangerous": false,
+  "minEnclosureM2": 220, "spacePerExtraAnimalM2": 70, "waterAreaFraction": 0.01, "needsDeepWater": false,
+  "vegetationDensity": 0.32, "needsShelter": true, "tempMinC": -5, "tempMaxC": 30, "fenceHeightM": 1.4, "fenceStrength": 2,
+  "price": 4200, "appeal": 82, "status": "LC", "nativeRange": "Southeastern Australia and Tasmania", "biome": "Temperate forest, heath and grassland",
+  "terrainSuitability": {"grass": 1, "forest_floor": 0.9, "dirt": 0.85},
+  "facts": ["Wombats dig extensive burrow systems.", "Their pouch opens backward so soil does not cover the young.", "A hard rump protects a wombat inside its burrow."],
+  "sounds": [], "sources": ["IUCN Red List; Zoo Praha annual report; simulation husbandry values are gameplay estimates."]
+}

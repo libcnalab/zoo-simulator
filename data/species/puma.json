@@ -1,0 +1,14 @@
+{
+  "id": "puma", "commonName": "Puma", "scientificName": "Puma concolor", "family": "Felidae", "model": "lion_female", "group": "big_cat",
+  "adultMassKg": 65, "shoulderHeightM": 0.75, "bodyLengthM": 1.55, "bodyRadiusM": 0.42, "walkSpeed": 1.1, "runSpeed": 7,
+  "canSwim": true, "canClimb": true, "jumpHeightM": 3.5, "lifespanYears": 20, "maturityYears": 2, "gestationDays": 92,
+  "litterMin": 2, "litterMax": 4, "birthIntervalYears": 2, "diet": "carnivore", "foods": ["meat"], "foodPerDayKg": 3.5, "waterPerDayL": 5,
+  "activity": "crepuscular", "sleepHoursPerDay": 14, "groupMin": 1, "groupMax": 3, "maxAdultMales": 1,
+  "sociability": 0.15, "playfulness": 0.55, "shyness": 0.55, "aggression": 0.4, "dangerous": true,
+  "minEnclosureM2": 750, "spacePerExtraAnimalM2": 260, "waterAreaFraction": 0.02, "needsDeepWater": false,
+  "vegetationDensity": 0.38, "needsShelter": true, "tempMinC": -20, "tempMaxC": 38, "fenceHeightM": 3, "fenceStrength": 4,
+  "price": 8500, "appeal": 88, "status": "LC", "nativeRange": "Western Hemisphere", "biome": "Mountains, forest, scrub and grassland",
+  "terrainSuitability": {"forest_floor": 1, "rock": 0.9, "grass": 0.7},
+  "facts": ["Pumas occupy the widest range of any land mammal in the Americas.", "They can leap several metres from a standing start.", "Adults usually maintain solitary territories."],
+  "sounds": [], "sources": ["IUCN Red List; simulation husbandry values are gameplay estimates."]
+}

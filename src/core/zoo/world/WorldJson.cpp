@@ -187,8 +187,9 @@ std::optional<World> WorldFromJson(const nlohmann::json& json, std::string* erro
             throw std::runtime_error("width and depth must be integers");
         const int width = json["width"].get<int>();
         const int depth = json["depth"].get<int>();
-        if (width < 8 || width > 512 || depth < 8 || depth > 512)
-            throw std::runtime_error("world dimensions must be in [8, 512]");
+        if (width < 8 || width > World::kMaxDimension || depth < 8 || depth > World::kMaxDimension)
+            throw std::runtime_error("world dimensions must be in [8, " +
+                                     std::to_string(World::kMaxDimension) + "]");
         for (const char* key : {"property", "entrance", "heights", "tiles", "fences_h", "fences_v"})
             if (!json.contains(key))
                 throw std::runtime_error(std::string("missing field: ") + key);

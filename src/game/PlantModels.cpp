@@ -258,6 +258,99 @@ void PlantCardAt(MeshWriter& cards, PlantCard picture, const Vector3& foot, cons
                mirror ? r.u1 : r.u0, r.v0, mirror ? r.u0 : r.u1, r.v1);
 }
 
+/// A genuine distance impostor. The former "far" form retained hundreds of triangles per tree;
+/// on the nine-sheet estate its pines and birches alone cost most of every frame. Beyond the
+/// grove switch, a simple stem and crossed foliage cards preserve the plant's height, colour and
+/// silhouette for a few dozen triangles. Physical sight queries use the full tree below.
+bool FarImpostor(Maker& k, std::string_view look) {
+    const bool tree = look == "oak" || look == "birch" || look == "pine" || look == "spruce" ||
+                      look == "acacia" || look == "baobab" || look == "palm" || look == "willow";
+    const bool bush = look == "juniper" || look == "shrub" || look == "scrub";
+    const bool cardPlant = look == "bamboo" || look == "fern" || look == "reeds" || look == "grass";
+    if (!tree && !bush && !cardPlant && look != "flower_bed")
+        return false;
+
+    const float turn = k.R(0.0f, kPi);
+    const float height = k.H * k.R(0.9f, 1.1f);
+    if (tree) {
+        const bool conifer = look == "pine" || look == "spruce";
+        const float widthShare = look == "oak"       ? 0.42f
+                                 : look == "willow"  ? 0.4f
+                                 : look == "acacia"  ? 0.34f
+                                 : look == "palm"    ? 0.34f
+                                 : look == "spruce"  ? 0.23f
+                                 : look == "baobab"  ? 0.2f
+                                 : look == "pine"    ? 0.19f
+                                                       : 0.15f;
+        const float tallShare = look == "spruce" ? 0.43f : look == "birch" ? 0.31f : 0.23f;
+        const float crownY = look == "spruce" ? height * 0.52f : height * 0.74f;
+        const float width = std::max(k.def.radiusM * 1.5f, height * widthShare);
+        const float tall = std::max(0.6f, height * tallShare);
+        const float girth =
+            look == "baobab" ? k.def.radiusM * 0.9f : std::max(0.09f, k.def.radiusM * 0.45f);
+        MeshWriter& bark = look == "birch" ? k.m.Use({0.86f, 0.85f, 0.8f}, Pattern::BirchBark)
+                                             : k.Bark();
+        const std::array<Vector3, 2> stem{Up(-0.3f), Up(std::max(0.7f, crownY))};
+        const std::array<float, 2> radii{girth, girth * 0.38f};
+        bark.Pipe(stem, radii, 4);
+
+        if (look == "palm") {
+            MeshWriter& fronds = k.m.Use(k.def.color, Pattern::Fronds);
+            for (int i = 0; i < 4; ++i) {
+                const float angle = turn + 0.5f * kPi * static_cast<float>(i);
+                const Vector3 out = Polar(angle, 1.0f);
+                const Vector3 tip = Vector3::Normalize(out + Up(i % 2 == 0 ? 0.15f : -0.12f));
+                PlantCardAt(fronds, PlantCard::PalmFrond, Up(crownY), Polar(angle + 0.5f * kPi, 1.0f),
+                            tip, width * 1.7f, width * 1.7f, Vector3::Normalize(out + Up(0.5f)), i % 2);
+            }
+            return true;
+        }
+
+        MeshWriter& sprays = conifer ? k.m.Use(k.def.color, Pattern::NeedleSpray)
+                                     : k.m.Use(k.def.color, Pattern::LeafSpray);
+        for (int i = 0; i < 3; ++i) {
+            const float angle = turn + kPi * static_cast<float>(i) / 3.0f;
+            sprays.Card(Up(crownY), Polar(angle, width), Up(tall),
+                         Vector3::Normalize(Polar(angle + 0.5f * kPi, 0.45f, 0.9f)), 0.0f, 0.0f, 1.0f,
+                         1.0f);
+        }
+        return true;
+    }
+
+    if (bush || look == "flower_bed") {
+        const bool conifer = look == "juniper";
+        const float width = std::max(0.35f, k.def.radiusM * (look == "flower_bed" ? 0.9f : 1.15f));
+        const float tall = look == "flower_bed" ? std::min(0.35f, height * 0.3f) : height * 0.48f;
+        MeshWriter& sprays = conifer ? k.m.Use(k.def.color, Pattern::NeedleSpray)
+                                     : k.m.Use(k.def.color, Pattern::LeafSpray);
+        for (int i = 0; i < 2; ++i) {
+            const float angle = turn + 0.5f * kPi * static_cast<float>(i);
+            sprays.Card(Up(tall), Polar(angle, width), Up(tall),
+                         Vector3::Normalize(Polar(angle + 0.5f * kPi, 0.35f, 0.94f)), 0.0f, 0.0f, 1.0f,
+                         1.0f);
+        }
+        return true;
+    }
+
+    MeshWriter& cards = k.m.Use(k.def.color, Pattern::Fronds);
+    const PlantCard first = look == "bamboo" ? PlantCard::BambooA
+                            : look == "fern" ? PlantCard::FernFrond
+                            : look == "reeds" ? PlantCard::ReedsA
+                                               : PlantCard::GrassA;
+    const PlantCard second = look == "bamboo" ? PlantCard::BambooB
+                             : look == "fern" ? PlantCard::FernFrond
+                             : look == "reeds" ? PlantCard::ReedsB
+                                                : PlantCard::GrassB;
+    const float width = std::max(0.3f, k.def.radiusM * 1.35f);
+    const float tall = std::max(0.35f, height * (look == "bamboo" ? 0.9f : 0.65f));
+    for (int i = 0; i < 2; ++i) {
+        const float angle = turn + 0.5f * kPi * static_cast<float>(i);
+        PlantCardAt(cards, i == 0 ? first : second, Up(-0.04f), Polar(angle, 1.0f), Up(), width * 2.0f,
+                    tall, Vector3::Normalize(Polar(angle + 0.5f * kPi, 0.3f, 0.95f)), i == 1);
+    }
+    return true;
+}
+
 /// The line of an arching leaf: out of `base` towards `out` (level, unit) at `elevation`,
 /// bending down by `droop` times its length at the tip.
 struct Arch {
@@ -909,6 +1002,9 @@ bool IsPlant(const zoo::PropDef& def) {
 bool BuildPlant(ModelBuilder& model, const zoo::PropDef& def, std::uint32_t seed, PlantDetail detail) {
     const std::string_view look = def.look;
     Maker k(model, def, seed, detail);
+    if (detail == PlantDetail::Far) {
+        return FarImpostor(k, look);
+    }
     bool dropsLeaves = false;
     if (look == "oak") {
         Oak(k);
@@ -957,9 +1053,11 @@ bool BuildPlant(ModelBuilder& model, const zoo::PropDef& def, std::uint32_t seed
 }
 
 void BuildTreeSight(CnaEngine::Collision::StaticWorld& sight, const zoo::PropDef& def,
-                    std::uint32_t seed, PlantDetail detail, const Matrix& placement) {
+                    std::uint32_t seed, PlantDetail /*detail*/, const Matrix& placement) {
     ModelBuilder model;
-    BuildPlant(model, def, seed, detail);
+    // The drawn distance impostor is deliberately only wood and cut-out cards. A sight query is
+    // rare and cached, so use the physical near tree to retain its dense crown and branches.
+    BuildPlant(model, def, seed, PlantDetail::Near);
     for (const ModelPart& part : model.Parts()) {
         if (OpaqueTreeSurface(part.finish.pattern)) {
             const auto& mesh = part.writer.mesh;

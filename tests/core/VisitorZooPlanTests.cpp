@@ -321,6 +321,10 @@ const std::map<std::string, std::vector<Named>> kFamilies{
       Child(kFemale, 1.2f), Child(kMale, 0.7f), Child(kFemale, 0.65f)}},
     {"lynx", {Grown(kFemale, 6.0f), Child(kFemale, 0.45f), Child(kMale, 0.45f)}},
     {"red_panda", {Grown(kFemale, 5.0f), Child(kFemale, 0.2f), Child(kMale, 0.2f)}},
+    {"przewalski_horse",
+     {Grown(kMale, 8), Grown(kFemale, 9), Grown(kFemale, 6), Grown(kFemale, 5), Child(kFemale, 0.6f)}},
+    {"kiang",
+     {Grown(kMale, 8), Grown(kFemale, 9), Grown(kFemale, 6), Grown(kFemale, 5), Child(kFemale, 0.6f)}},
     {"mandarin_duck", {Grown(kMale, 3), Grown(kFemale, 3), Grown(kMale, 2), Grown(kFemale, 2)}},
     {"corn_snake", {Grown(kMale, 7.0f)}},
     {"black_headed_python", {Grown(kMale, 7.0f)}},
@@ -333,6 +337,7 @@ const std::map<std::string, std::vector<Named>> kFamilies{
 
 // Purpose-built alternatives to exposed chain-link, by habitat.
 const std::map<std::string, std::string> kBarriers{
+    {"Gobi Steppe", "paddock_rail"},      {"Tibetan Plateau", "paddock_rail"},
     {"Acacia Plain", "tall_cable_fence"}, {"Ostrich Rise", "tall_cable_fence"},
     {"Elephant Valley", "dry_moat"},      {"Rhino Hollow", "dry_moat"},
     {"Red Dune", "paddock_rail"},         {"Kangaroo Grove", "paddock_rail"},
@@ -502,9 +507,9 @@ protected:
 TEST_P(VisitorZooPlan, NorthernWoodlandLoopUsesExpandedLand) {
     const World& map = zoo_.Map();
     const TileCoord gate = map.EntranceTile();
-    EXPECT_EQ(map.Width(), 224);
-    EXPECT_EQ(map.Depth(), 224);
-    EXPECT_EQ(gate.z - map.PropertyMin().z, 211);
+    EXPECT_EQ(map.Width(), 1284);
+    EXPECT_EQ(map.Depth(), 648);
+    EXPECT_EQ(gate.z - map.PropertyMin().z, 635);
 
     for (const TileCoord tile : {TileCoord{gate.x - 24, gate.z - 163}, TileCoord{gate.x, gate.z - 174},
                                  TileCoord{gate.x + 38, gate.z - 162}, TileCoord{gate.x, gate.z - 164}}) {
@@ -921,7 +926,7 @@ TEST_P(VisitorZooPlan, FamiliesWithTheirYoungOnTheOpeningDay) {
         EXPECT_GE(static_cast<int>(group.size()), def.groupMin) << species;
         EXPECT_LE(static_cast<int>(group.size()), def.groupMax) << species;
     }
-    EXPECT_EQ(sucklings, 35);
+    EXPECT_EQ(sucklings, 37);
 }
 
 TEST_P(VisitorZooPlan, FamiliesAreWholeWhenTheVisitBegins) {
@@ -1119,7 +1124,7 @@ TEST_P(VisitorZooPlan, BenchesStandInShade) {
             }
         }
     }
-    EXPECT_EQ(benches, 66);
+    EXPECT_EQ(benches, 72);
     // Three walks run between the planted strips of two habitats and have no lawn for a tree; a
     // strip's own planting stays below the eye (VisitorZooHabitatTests). Their benches are the
     // exception, by name, so that a fourth is noticed.

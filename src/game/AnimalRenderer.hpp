@@ -47,7 +47,9 @@ enum class AnimalPose : std::uint8_t {
 /// stand in floats at the surface, with the model's `swim` clip if it has one. The simulation moves animals twenty times a second; between its
 /// steps the bodies glide, turn at a believable rate, and their gaits play at
 /// the pace of the ground they cover, so the feet do not slide. Bodies wholly
-/// outside the camera are not submitted to either render pass.
+/// outside the camera are not submitted to either render pass. A body smaller than ten screen
+/// pixels uses a low-poly silhouette until it is fourteen pixels again; the actual field of view
+/// makes binoculars restore the full animated model.
 class AnimalRenderer {
 public:
     AnimalRenderer(Microsoft::Xna::Framework::Content::ContentManager& content,
@@ -60,7 +62,8 @@ public:
     void Update(const zoo::Zoo& zoo, float seconds, float tickFraction);
     /// For a newly adopted zoo, forget the old actors but retain the expensive species models.
     void Clear();
-    void Submit(CnaEngine::App::Frame& frame, const CnaEngine::Graphics::Camera& camera) const;
+    void Submit(CnaEngine::App::Frame& frame, const CnaEngine::Graphics::Camera& camera,
+                int viewportHeight) const;
 
     /// Where the animal's body stands (its feet); nothing for an animal without
     /// a body in the world (unknown, crated, inside a shelter).
@@ -69,6 +72,8 @@ public:
     std::optional<AnimalSightTarget> SightTargetOf(zoo::AnimalId id) const;
     /// Bodies submitted for the last frame, after camera culling.
     std::size_t Drawn() const { return drawn_; }
+    /// Of Drawn(), bodies represented by their small-distance silhouette rather than a skinned mesh.
+    std::size_t Proxied() const { return proxied_; }
     /// Species drawn with a stand-in because their own model does not exist yet.
     const std::vector<std::string>& StandIns() const { return standIns_; }
 
@@ -139,6 +144,11 @@ private:
         float waterWidth = 0.0f;
         float waterLength = 0.0f;
         Matrix world;
+        Matrix proxyWorld;
+        float visualSize = 1.0f;
+        std::uint8_t proxyKind = 0;
+        std::uint8_t proxyMaterial = 0;
+        bool proxy = false;
         bool visible = false;
         bool seen = false;
         bool called = false;  ///< has given the call of its current Vocalize activity
@@ -171,9 +181,12 @@ private:
     std::unique_ptr<Microsoft::Xna::Framework::Graphics::Texture2D> waterTexture_;
     CnaEngine::Graphics::Material waterMaterial_;
     CnaEngine::Graphics::GpuMesh waterMesh_;
+    std::array<CnaEngine::Graphics::GpuMesh, 2> proxyMeshes_;
+    std::array<CnaEngine::Graphics::Material, 10> proxyMaterials_;
     std::vector<std::string> standIns_;
     std::int64_t tick_ = -1;
     mutable std::size_t drawn_ = 0;
+    mutable std::size_t proxied_ = 0;
 };
 
 }  // namespace zoogame

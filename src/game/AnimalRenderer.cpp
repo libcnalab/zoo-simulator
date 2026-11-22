@@ -9,6 +9,7 @@
 #include <exception>
 #include <fstream>
 #include <stdexcept>
+#include <string_view>
 
 #include <nlohmann/json.hpp>
 
@@ -21,6 +22,7 @@
 #include "Microsoft/Xna/Framework/Graphics/ModelBone.hpp"
 
 #include "AnimalWater.hpp"
+#include "AnimalLod.hpp"
 #include "AnimalTextures.hpp"
 
 #include "GroundPaint.hpp"
@@ -46,6 +48,32 @@ constexpr float kJuvenileShare = 0.5f;
 constexpr float kFloatDepthShare = 0.62f;
 /// ...and then, without a figure from its model, this share of its height is under water.
 constexpr float kFloatSunkShare = 0.72f;
+
+std::uint8_t ProxyMaterial(const zoo::SpeciesDef& def) {
+    const std::string_view id = def.id;
+    if (id == "flamingo")
+        return 7;  // pink
+    if (id == "tiger" || id == "cheetah")
+        return 2;  // orange
+    if (id == "polar_bear" || id == "arctic_fox")
+        return 6;  // white
+    if (id == "elephant" || id == "rhino" || id == "hippopotamus" || id == "common_wombat")
+        return 3;  // grey
+    if (id == "penguin" || id == "southern_cassowary" || id == "musk_ox" ||
+        id == "black_headed_python")
+        return 5;  // dark
+    if (id == "red_panda" || id == "maned_wolf")
+        return 8;  // rust
+    if (id == "corn_snake" || id == "aldabra_tortoise")
+        return 9;  // muted green
+    if (def.group == "bear" || def.group == "primate")
+        return 1;
+    if (def.group == "canine" || def.group == "pachyderm")
+        return 3;
+    if (def.group == "bird")
+        return 4;
+    return 0;
+}
 
 // The imported model retains named scene nodes, while its skin palette has anonymous
 // joints in topological order. Match their model-space bind transforms once per model.
@@ -189,6 +217,45 @@ AnimalRenderer::AnimalRenderer(Microsoft::Xna::Framework::Content::ContentManage
                  {1.0f, 0.0f, -1.0f}, 0.0f, 0.0f, 1.0f, 1.0f);
     waterMesh_ = Graphics::GpuMesh::Upload(device, mesh.mesh,
                                            Graphics::VertexLayout::PositionNormalTexture());
+
+    // Under ten pixels the expensive rig, toes and facial topology cannot be resolved. These
+    // two deliberately small meshes retain a moving animal's body plan, scale and colour until
+    // the real model becomes legible. A quadruped is about 120 triangles; a bird about 80.
+    MeshWriter quadruped;
+    quadruped.Blob({0.0f, 0.58f, -0.08f}, {0.42f, 0.27f, 0.48f}, 1u, 0.0f, 6, 4);
+    quadruped.Blob({0.0f, 0.72f, 0.42f}, {0.22f, 0.20f, 0.24f}, 2u, 0.0f, 5, 3);
+    for (const float x : {-0.25f, 0.25f}) {
+        for (const float z : {-0.30f, 0.20f}) {
+            quadruped.Tube({x, 0.05f, z}, {x, 0.48f, z}, 0.045f, 0.055f, 4, true, false);
+        }
+    }
+    proxyMeshes_[0] = Graphics::GpuMesh::Upload(
+        device, quadruped.mesh, Graphics::VertexLayout::PositionNormalTexture());
+
+    MeshWriter bird;
+    bird.Blob({0.0f, 0.53f, -0.05f}, {0.34f, 0.42f, 0.36f}, 3u, 0.0f, 6, 4);
+    bird.Tube({0.0f, 0.70f, 0.20f}, {0.0f, 0.90f, 0.30f}, 0.12f, 0.10f, 5, false, false);
+    bird.Blob({0.0f, 0.92f, 0.32f}, {0.16f, 0.15f, 0.17f}, 4u, 0.0f, 5, 3);
+    bird.Tube({-0.10f, 0.02f, -0.02f}, {-0.10f, 0.34f, -0.02f}, 0.025f, 0.035f, 4, false,
+              false);
+    bird.Tube({0.10f, 0.02f, -0.02f}, {0.10f, 0.34f, -0.02f}, 0.025f, 0.035f, 4, false,
+              false);
+    proxyMeshes_[1] =
+        Graphics::GpuMesh::Upload(device, bird.mesh, Graphics::VertexLayout::PositionNormalTexture());
+
+    const std::array<Vector3, 10> colors = {
+        Vector3(0.55f, 0.38f, 0.20f), Vector3(0.24f, 0.14f, 0.08f),
+        Vector3(0.68f, 0.28f, 0.07f), Vector3(0.36f, 0.37f, 0.36f),
+        Vector3(0.72f, 0.68f, 0.56f), Vector3(0.07f, 0.08f, 0.09f),
+        Vector3(0.82f, 0.83f, 0.80f), Vector3(0.82f, 0.32f, 0.42f),
+        Vector3(0.55f, 0.18f, 0.07f), Vector3(0.25f, 0.34f, 0.18f)};
+    for (std::size_t i = 0; i < proxyMaterials_.size(); ++i) {
+        auto& material = proxyMaterials_[i];
+        material.name = "distant animal";
+        material.shading = Graphics::ShadingModel::PhysicallyBased;
+        material.diffuseColor = colors[i];
+        material.roughness = 0.88f;
+    }
 }
 
 AnimalRenderer::~AnimalRenderer() = default;
@@ -197,6 +264,7 @@ void AnimalRenderer::Clear() {
     actors_.clear();
     tick_ = -1;
     drawn_ = 0;
+    proxied_ = 0;
 }
 
 const AnimalRenderer::Kind* AnimalRenderer::Load(const std::string& model) {
@@ -437,6 +505,9 @@ void AnimalRenderer::Update(const zoo::Zoo& zoo, float seconds, float tickFracti
         actor.standing = standing;
         actor.bodyRadius = def.bodyRadiusM * bodyScale * femaleShare;
         const float length = def.bodyLengthM * bodyScale;
+        actor.visualSize = std::max(standing, length);
+        actor.proxyKind = def.group == "bird" ? 1 : 0;
+        actor.proxyMaterial = ProxyMaterial(def);
         // Half the body's diagonal, plus enough for a tall animal's morning shadow. This is
         // deliberately generous: submitting a marginal animal is cheap; losing its visible
         // nose or shadow at a screen edge is not.
@@ -530,6 +601,12 @@ void AnimalRenderer::Update(const zoo::Zoo& zoo, float seconds, float tickFracti
         actor.world = Matrix::CreateScale(actor.scale) * Matrix::CreateRotationX(-actor.pitch) *
                       Matrix::CreateRotationY(actor.heading) *
                       Matrix::CreateTranslation(actor.shown.x, ground, actor.shown.z);
+        const float proxyX = std::max(0.08f, actor.bodyRadius * 2.0f / 0.84f);
+        const float proxyY = std::max(0.08f, standing / (actor.proxyKind == 1 ? 1.07f : 0.92f));
+        const float proxyZ = std::max(0.08f, length / (actor.proxyKind == 1 ? 0.72f : 1.22f));
+        actor.proxyWorld = Matrix::CreateScale(proxyX, proxyY, proxyZ) *
+                           Matrix::CreateRotationY(actor.heading) *
+                           Matrix::CreateTranslation(actor.shown.x, ground, actor.shown.z);
 
         // A moving body pushes concentric ripples out from its waterline. Stretching the same
         // tiny transparent picture along its heading turns those rings into a wake at speed;
@@ -548,11 +625,14 @@ void AnimalRenderer::Update(const zoo::Zoo& zoo, float seconds, float tickFracti
     UpdateGreetings(zoo, seconds);
 }
 
-void AnimalRenderer::Submit(CnaEngine::App::Frame& frame, const CnaEngine::Graphics::Camera& camera) const {
+void AnimalRenderer::Submit(CnaEngine::App::Frame& frame, const CnaEngine::Graphics::Camera& camera,
+                            int viewportHeight) const {
     using Microsoft::Xna::Framework::BoundingSphere;
     using Microsoft::Xna::Framework::ContainmentType;
     const auto& frustum = camera.Frustum();
+    const Vector3 eye = camera.Position();
     drawn_ = 0;
+    proxied_ = 0;
     for (const auto& [id, actor] : actors_) {
         if (!actor->visible)
             continue;
@@ -560,8 +640,18 @@ void AnimalRenderer::Submit(CnaEngine::App::Frame& frame, const CnaEngine::Graph
         const BoundingSphere bounds(feet + Vector3(0.0f, 0.5f * actor->standing, 0.0f), actor->bounds);
         if (frustum.Contains(bounds) == ContainmentType::Disjoint)
             continue;
-        const auto& skin = actor->greeting ? actor->greeting->skin : actor->animator.SkinPalette();
-        frame.Add(*actor->kind->view, actor->world, &skin);
+        const float distance = Vector3::Distance(eye, bounds.Center);
+        const float pixels =
+            AnimalProjectedPixels(actor->visualSize, distance, camera.FieldOfView(), viewportHeight);
+        actor->proxy = UseAnimalProxy(actor->proxy, pixels);
+        if (actor->proxy) {
+            frame.Add(proxyMeshes_[actor->proxyKind], proxyMaterials_[actor->proxyMaterial],
+                      actor->proxyWorld);
+            ++proxied_;
+        } else {
+            const auto& skin = actor->greeting ? actor->greeting->skin : actor->animator.SkinPalette();
+            frame.Add(*actor->kind->view, actor->world, &skin);
+        }
         if (actor->water > 0.02f) {
             const Matrix water = Matrix::CreateScale(actor->waterWidth * actor->water, 1.0f,
                                                      actor->waterLength * actor->water) *

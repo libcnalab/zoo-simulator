@@ -1,0 +1,14 @@
+{
+  "id": "cheetah", "commonName": "Cheetah", "scientificName": "Acinonyx jubatus", "family": "Felidae", "model": "lion", "group": "big_cat",
+  "adultMassKg": 48, "shoulderHeightM": 0.82, "bodyLengthM": 1.35, "bodyRadiusM": 0.42, "walkSpeed": 1.3, "runSpeed": 8.5,
+  "canSwim": true, "canClimb": true, "jumpHeightM": 2.2, "lifespanYears": 15, "maturityYears": 2, "gestationDays": 93,
+  "litterMin": 2, "litterMax": 5, "birthIntervalYears": 1.5, "diet": "carnivore", "foods": ["meat"], "foodPerDayKg": 2.8, "waterPerDayL": 4,
+  "activity": "diurnal", "sleepHoursPerDay": 12, "groupMin": 1, "groupMax": 4, "maxAdultMales": 3,
+  "sociability": 0.45, "playfulness": 0.55, "shyness": 0.45, "aggression": 0.25, "dangerous": true,
+  "minEnclosureM2": 700, "spacePerExtraAnimalM2": 120, "waterAreaFraction": 0.02, "needsDeepWater": false,
+  "vegetationDensity": 0.22, "needsShelter": true, "tempMinC": 5, "tempMaxC": 38, "fenceHeightM": 2.6, "fenceStrength": 4,
+  "price": 9000, "appeal": 92, "status": "VU", "nativeRange": "Eastern and southern Africa", "biome": "Open savanna and dry grassland",
+  "terrainSuitability": {"savanna": 1, "grass": 0.85, "dirt": 0.7, "sand": 0.6},
+  "facts": ["Cheetahs accelerate rapidly over short distances.", "Their claws give extra grip while running.", "Males may live together in small coalitions."],
+  "sounds": [], "sources": ["IUCN Red List; Prague Zoo visitor map; simulation husbandry values are gameplay estimates."]
+}

@@ -1,0 +1,14 @@
+{
+  "id": "giant_anteater", "commonName": "Giant anteater", "scientificName": "Myrmecophaga tridactyla", "family": "Myrmecophagidae", "model": "capybara", "group": "insectivore",
+  "adultMassKg": 35, "shoulderHeightM": 0.65, "bodyLengthM": 1.8, "bodyRadiusM": 0.38, "walkSpeed": 0.8, "runSpeed": 3.5,
+  "canSwim": true, "canClimb": false, "jumpHeightM": 0.7, "lifespanYears": 26, "maturityYears": 2.5, "gestationDays": 190,
+  "litterMin": 1, "litterMax": 1, "birthIntervalYears": 1.5, "diet": "insectivore", "foods": ["insects"], "foodPerDayKg": 1.2, "waterPerDayL": 2.5,
+  "activity": "cathemeral", "sleepHoursPerDay": 15, "groupMin": 1, "groupMax": 2, "maxAdultMales": 1,
+  "sociability": 0.15, "playfulness": 0.4, "shyness": 0.6, "aggression": 0.2, "dangerous": false,
+  "minEnclosureM2": 500, "spacePerExtraAnimalM2": 180, "waterAreaFraction": 0.02, "needsDeepWater": false,
+  "vegetationDensity": 0.38, "needsShelter": true, "tempMinC": 8, "tempMaxC": 36, "fenceHeightM": 1.7, "fenceStrength": 2,
+  "price": 5800, "appeal": 84, "status": "VU", "nativeRange": "Central and South America", "biome": "Grassland, savanna and forest",
+  "terrainSuitability": {"grass": 1, "savanna": 0.9, "forest_floor": 0.8, "dirt": 0.7},
+  "facts": ["A giant anteater can flick its long tongue many times a minute.", "It has no teeth and crushes insects in a muscular stomach.", "A single young rides on its mother's back."],
+  "sounds": [], "sources": ["IUCN Red List; Prague Zoo visitor map; simulation husbandry values are gameplay estimates."]
+}

@@ -639,3 +639,96 @@ the renderer reported 20.2 MiB of vertex buffers and 3.7 MiB of index buffers ac
 591 meshes, down from 20.8 and 3.8 MiB. Three matched 1280 × 720 captures had identical
 RGB pixels, covering the editor opening, its countryside overview and the east garden
 in a populated visit.
+
+## Nine-sheet estate vegetation (2026-11-22)
+
+The 1,272 × 636 tile property contains 73,587 props, including 28,552 pines and 16,783
+birches. The former `PlantDetail::Far` still built between roughly one hundred and six hundred
+triangles for each plant. It was a useful lower-detail tree in the old estate, but not a distance
+impostor at the scale of the nine sheets.
+
+The far form now uses a four-sided stem and crossed cut-out foliage cards. Common trees use 20
+triangles (24 for palms); shrubs and ground plants use 8. An intermediate form retained a coarse
+opaque crown heart, but entrance screenshots exposed it as a dark diamond between the cards, even
+after shrinking it and changing its normals. The rendered heart was removed. A rare, cached animal
+sight query reconstructs the full physical tree instead, so a card's rectangular gaps do not make
+its dense crown transparent to identification. The detailed visible form inside the 48/56 m
+hysteresis is unchanged and is still built lazily.
+
+Across the saved 118-habitat zoo, all-far vegetation fell from about **18.7 million to 1.11
+million triangles**, total static scenery from **22.52 million to 4.93 million**, and scenery
+preparation from 7.6 to about 2 seconds. The final entrance screenshot is
+`build-probe/shots/nine-sheet-lod-entrance-final.png`; unlike both rejected heart variants, it has
+no geometric knots in the canopies.
+
+A matched 120-frame software-OpenGL entrance run with shadows at the intermediate 1.82-million
+form improved from **0.5 to 0.8 fps** and from 21.08 to 11.92 million engine-pass triangles per
+frame. Resident memory fell from 7,921 to 5,847 MiB; owned GPU vertex storage fell from 1,124 to
+547 MiB. These absolute frame rates do not predict a hardware GPU, but the matched direction and
+allocation counts do. With shadows disabled the final 1.11-million form measured 0.9 fps, 10.71
+million triangles per frame, 5,637 MiB resident and 512.5 MiB of owned GPU vertices. The
+intermediate no-shadow form was also 0.9 fps and 11.09 million triangles; rasterisation is now
+dominated by other visible geometry and overlapping cut-outs rather than raw plant triangle count.
+
+After the final plant form and the visit distance below were both in place, the same full run with
+shadows measured **1.3 fps**, 1,996 engine-pass draws and 8.02 million triangles per frame, with
+5,673 MiB resident. Against the original enlarged scene, that is 0.5 -> 1.3 fps, 3,538 -> 1,996
+draws, 21.08 -> 8.02 million triangles and 7,921 -> 5,673 MiB. The relative software-renderer
+speedup is 2.6×; a hardware result still needs measurement on the player's machine.
+
+Two plausible follow-ups were first measured at the 3 km view and rejected. Reducing visit cells
+from 256 to 128 tiles cut triangles only from 11.09 to 10.73 million but raised engine-pass draws
+from 3,387 to 4,339 and reduced the software result from 0.9 to 0.8 fps. Supplying tight boxes in
+addition to the engine's existing batch spheres saved only ten draws and 0.8 percent of triangles.
+The latter stayed reverted. The smaller cells were tested again below after shortening the view;
+there they can actually discard enough distant geometry to win.
+
+The visit and overhead editor also inherited the same 3 km camera far plane. That is necessary to
+show the whole estate from above, but on foot a two-metre object is already only a few pixels tall
+hundreds of metres away. The visit now uses 600 m while the editor explicitly retains 3 km. An
+intermediate 800 m run improved 0.9 to 1.3 fps, 3,387 to 1,848 engine-pass draws and 10.71 to 7.20
+million triangles. The final 600 m no-shadow run measured **1.6 fps**, 1,115 draws and 4.83 million
+triangles. Entrance captures at 3 km, 800 m and 600 m show no static-scene or horizon loss
+(`nine-sheet-lod-entrance-final.png`, `nine-sheet-800m.png` and `nine-sheet-600m.png` in
+`build-probe/shots`). The shorter plane also leaves more depth-buffer precision for fences and
+terrain; it does not remove or simplify any zoo content.
+
+## Nine-sheet estate furniture and animal LOD (2026-11-22)
+
+At 600 m, retesting 128-tile (256 m) visit cells improved the no-shadow entrance from **1.6 to
+1.7 fps**, mean frame time 614 to 583 ms and engine-pass geometry 4.83 to 4.56 million triangles.
+Draws rose from 1,115 to 1,468, but unlike the 3 km experiment the finer culling now saved enough
+work to cover them. This cell size is retained.
+
+Path furniture is separated from the other static objects in each cell. Within 144 m it keeps the
+original models. Beyond 176 m, with hysteresis in between, lamps retain a pole and lantern, bins
+their body and rain hood, and benches and picnic tables their readable slabs and frames rather
+than individual staves, rings, slats and fixings. This changed **1.7 to 1.8 fps**, 583 to 553 ms
+and 4.56 to 4.29 million engine-pass triangles; draws were effectively unchanged (1,468 to
+1,478). Close furniture is byte-for-byte the existing geometry. A matching far fence model was
+rejected: despite lowering 4.29 to 4.06 million triangles it worsened 553 to 565 ms and added
+about 105 MiB resident memory by retaining a second copy of 1.88 million detailed fence
+triangles.
+
+Category isolation then found the dominant remaining cost. Removing only scenery changed 553 to
+490 ms; removing only terrain changed it to 518 ms. Removing only animal drawing, while retaining
+all 589 animals and their simulation, changed **1.8 to 4.5 fps**, 553 to 225 ms and 4.29 to 1.47
+million triangles. The entrance frustum contained 141 fully skinned bodies, most too small to
+resolve but still carrying their complete rigs, materials and topology.
+
+An animal whose largest body dimension falls below ten vertical screen pixels now uses a
+low-poly quadruped or bird silhouette scaled to its real body length, radius and standing height,
+with a restrained species/group colour. It still moves, turns, sits at its true ground or water
+height, casts a shadow and retains its water disturbance. Above fourteen pixels the original
+animated and textured model returns; between the thresholds the previous choice remains. The
+calculation uses the actual viewport and camera field of view, so 7x binoculars restore the full
+model without a special case. At the entrance 117 of 141 visible animals used this form.
+
+With no shadows the animal LOD changed **1.8 to 3.5 fps**, mean frame time 553 to 285 ms and
+engine-pass geometry 4.29 to 2.00 million triangles. With shadows, the final enlarged zoo measures
+**2.9 fps**, 345 ms, 1,668 draws and 2.64 million triangles, versus 1.3 fps before animal and
+furniture LOD and 0.5 fps in the first enlarged rendering. The absolute llvmpipe rates are not a
+hardware forecast; they are matched evidence that the enlargement regression is now primarily
+removed rather than hidden by deleting zoo content. Reviewed 1280x720 captures are
+`animal-lod-entrance.png`, `animal-lod-giraffe-near.png` and `animal-lod-lion-near.png` in
+`build-probe/shots`.

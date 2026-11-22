@@ -304,6 +304,15 @@ AnimalId Animals::Add(const Env& env, int species, Sex sex, float ageYears, Vec2
     return animals_.back().id;
 }
 
+void Animals::RefreshWelfare(const Env& env) {
+    habitatScratch_.clear();
+    for (Animal& animal : animals_) {
+        const WelfareReport report = WelfareWithGroup(env, animal, GroupOf(env, animal));
+        animal.welfare = report.overall;
+        animal.issues = report.issues;
+    }
+}
+
 bool Animals::Remove(AnimalId id) {
     auto it =
         std::lower_bound(animals_.begin(), animals_.end(), id.value,

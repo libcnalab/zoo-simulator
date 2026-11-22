@@ -1,0 +1,144 @@
+{
+  "bones": 33,
+  "clips": [
+    {
+      "duration": 6.0,
+      "events": [],
+      "frames": 181,
+      "loop": true,
+      "name": "idle",
+      "speed": 0.0
+    },
+    {
+      "duration": 0.8,
+      "events": [
+        {
+          "name": "step",
+          "time": 0.0
+        },
+        {
+          "name": "step",
+          "time": 0.2
+        },
+        {
+          "name": "step",
+          "time": 0.4
+        },
+        {
+          "name": "step",
+          "time": 0.6
+        }
+      ],
+      "frames": 25,
+      "loop": true,
+      "name": "walk",
+      "speed": 1.1923
+    },
+    {
+      "duration": 0.6333,
+      "events": [
+        {
+          "name": "step",
+          "time": 0.0
+        },
+        {
+          "name": "step",
+          "time": 0.0
+        },
+        {
+          "name": "step",
+          "time": 0.3167
+        },
+        {
+          "name": "step",
+          "time": 0.3167
+        }
+      ],
+      "frames": 20,
+      "loop": true,
+      "name": "trot",
+      "speed": 2.4182
+    },
+    {
+      "duration": 3.0,
+      "events": [],
+      "frames": 91,
+      "loop": true,
+      "name": "eat",
+      "speed": 0.0
+    },
+    {
+      "duration": 2.4,
+      "events": [],
+      "frames": 73,
+      "loop": true,
+      "name": "drink",
+      "speed": 0.0
+    },
+    {
+      "duration": 8.0,
+      "events": [],
+      "frames": 241,
+      "loop": true,
+      "name": "rest",
+      "speed": 0.0
+    },
+    {
+      "duration": 8.0,
+      "events": [],
+      "frames": 241,
+      "loop": true,
+      "name": "sleep",
+      "speed": 0.0
+    },
+    {
+      "duration": 2.6,
+      "events": [
+        {
+          "name": "call",
+          "time": 0.572
+        }
+      ],
+      "frames": 79,
+      "loop": false,
+      "name": "vocalize",
+      "speed": 0.0
+    },
+    {
+      "duration": 9.0,
+      "events": [],
+      "frames": 271,
+      "loop": true,
+      "name": "sentry",
+      "speed": 0.0
+    }
+  ],
+  "generator": "tools/animals (zoogen)",
+  "license": "CC BY 4.0",
+  "meta": {
+    "activity_clips": {
+      "sentinel": "sentry"
+    },
+    "asset_license": "CC BY 4.0",
+    "common_name": "Przewalski's horse",
+    "scientific_name": "Equus przewalskii",
+    "shoulder_height_m": 1.35,
+    "source": "Shikaki_Naito, Zebra Anatomy, CC BY 4.0"
+  },
+  "name": "przewalski_horse",
+  "skeleton_bounds_animal_space": {
+    "max": [
+      1.387,
+      0.2859,
+      1.6099
+    ],
+    "min": [
+      -0.8572,
+      -0.2859,
+      0.0
+    ]
+  },
+  "texture": 2048,
+  "triangles": 28494,
+  "vertices": 14250
+}

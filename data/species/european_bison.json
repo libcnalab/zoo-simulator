@@ -1,0 +1,14 @@
+{
+  "id": "european_bison", "commonName": "European bison", "scientificName": "Bison bonasus", "family": "Bovidae", "model": "rhino", "group": "ungulate",
+  "adultMassKg": 700, "shoulderHeightM": 1.85, "bodyLengthM": 2.8, "bodyRadiusM": 0.85, "walkSpeed": 1.1, "runSpeed": 6,
+  "canSwim": true, "canClimb": false, "jumpHeightM": 1.4, "lifespanYears": 25, "maturityYears": 3, "gestationDays": 265,
+  "litterMin": 1, "litterMax": 1, "birthIntervalYears": 1, "diet": "herbivore", "foods": ["browse", "hay", "grass_pellets"], "foodPerDayKg": 12, "waterPerDayL": 28,
+  "activity": "cathemeral", "sleepHoursPerDay": 8, "groupMin": 3, "groupMax": 15, "maxAdultMales": 2,
+  "sociability": 0.75, "playfulness": 0.3, "shyness": 0.35, "aggression": 0.5, "dangerous": true,
+  "minEnclosureM2": 1400, "spacePerExtraAnimalM2": 130, "waterAreaFraction": 0.03, "needsDeepWater": false,
+  "vegetationDensity": 0.35, "needsShelter": true, "tempMinC": -30, "tempMaxC": 30, "fenceHeightM": 2.4, "fenceStrength": 5,
+  "price": 7500, "appeal": 86, "status": "NT", "nativeRange": "Central and eastern Europe", "biome": "Mixed forest and forest meadow",
+  "terrainSuitability": {"forest_floor": 1, "grass": 0.9, "snow": 0.5},
+  "facts": ["European bison are Europe's heaviest wild land mammals.", "The species survived through coordinated captive breeding.", "Reintroduced herds now live in several European forests."],
+  "sounds": [], "sources": ["IUCN Red List; Prague Zoo Plains exhibit; simulation husbandry values are gameplay estimates."]
+}
