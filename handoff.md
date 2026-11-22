@@ -5,6 +5,57 @@ For the next agent, who starts without any earlier context. Read this file first
 whatever you take up (`docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `docs/VISITORS.md`,
 `docs/WEB.md`, `docs/PERFORMANCE.md`, `docs/CODEX_TASKS.md` for the history of delegated tasks).
 
+## Current backlog (2026-11-22)
+
+- Treat the current 3 × 3, 4.5-times-larger estate as a long-form zoo-design project, not a
+  one-pass enlargement. Rework mechanical-looking geometry, reduce habitats whose area is not
+  justified by their species and group, and use recovered land for varied real-zoo-inspired
+  exhibits and facilities. Preserve welfare, public and service access, performance and the nine
+  equal map sheets. Cinema mode from `6e2f119` is complete: it shows one representative of each
+  resident species for about three seconds, supports Left/Right and returns with C.
+
+### Apocalypse mode
+
+Add a deliberately opt-in, reversible spectacle mode. It must not be possible to trigger by an
+ordinary press of E, because short E remains **Read the board**.
+
+- **Activation:** holding E continuously for at least 3.0 seconds while walking with no modal
+  window fills a clear warning/progress indicator. Releasing early cancels with no state change.
+  Another deliberate three-second hold disables the mode. Keyboard focus loss, pause, map, board
+  or title cancels a partial hold. Automated input must be able to exercise the same path.
+- **Reversible breaches:** choose one deterministic, visually useful fence segment in every
+  ordinary outdoor habitat and open it without touching the property perimeter or a shared wall
+  whose removal would trap navigation. Record the exact former fence/gate state, do not destroy
+  catalog data, and restore it byte-for-byte when the mode is disabled. Terraria and other sealed
+  indoor exhibits need a defined safe exception rather than a fake hole through a building.
+- **Animals:** residents leave through their real breach and move on valid zoo ground; do not
+  teleport or merely clear containment flags. Loose-animal routing must respect buildings, deep
+  water, scenery and the estate boundary, scale to all 589 residents without all-pairs searches,
+  and remain deterministic. Species retain plausible speeds and locomotion. Decide explicitly
+  how shelter occupants join and how dangerous, aquatic or tiny species differ.
+- **Visitors:** groups notice a relevant loose animal, switch to a visible panic/run state and
+  route toward a safe exit or protected building. They must not run through fences, habitats,
+  water or one another, and should calm after the threat or mode ends. Response can depend on
+  distance and species danger so a distant tortoise does not produce the same panic as a nearby
+  lion. Keep the existing group membership and avoid replacing simulation with random motion.
+- **Return to normal:** disabling closes every recorded breach, routes or safely returns loose
+  residents to their own habitat without overlap, clears panic, and leaves no permanent edit to
+  the zoo. Define behaviour when a breach is edited, an animal dies/is born, or a save is loaded
+  while the mode is active. Save/load and state hashing must represent the mode explicitly or
+  refuse such a save with a clear message; never silently load a half-restored estate.
+- **Presentation:** show a persistent APOCALYPSE status, the three-second hold progress and a
+  concise first activation warning. Add suitable alarms/crowd reactions only from attributed
+  assets; normal visit audio and Cinema must recover after exit. Decide and test mutual exclusion
+  with Cinema, binoculars, map travel and pause.
+- **Verification gates:** focused hold/cancel/toggle tests; deterministic breach selection and
+  exact restoration; save/load policy; every eligible habitat has one reachable breach; animals
+  and visitors remain in world bounds and avoid solids/water; repeated on/off cycles are identical;
+  a full 3 × 3 runtime script visually proves breach, escape, panic and restoration; benchmark the
+  589-animal/800-visitor case and reject quadratic frame-time growth.
+
+A visual prototype is roughly 8–12 agent hours. A safe reversible implementation with simulation,
+tests and save policy is estimated at 25–40 hours; a polished danger-aware version at 50–90 hours.
+
 ## 0. Start here
 
 - The default map is now 224 × 224 tiles, 448 × 448 m including the border. The new east and
