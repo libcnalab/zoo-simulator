@@ -93,8 +93,9 @@ Matched Normal / More / Many measurements and their limitations are in `docs/PER
 On the offscreen Mesa path Many filled in 81.3 s and measured 5.0 fps / 198.9 ms mean / 207.7 ms
 p95, 3.25 ms simulation, 89.05 ms people pass and 5,631 MB peak RSS. This is intentionally kept
 despite being slow. Inspected captures are `build-probe/shots/many-entrance.png`,
-`many-meerkat-hub.png` and `many-remote-okapi.png`; the last remains a north-east map view because
-the existing numeric-plus-species `--stand` selector did not resolve a repeated remote species.
+`many-meerkat-hub.png` and `many-remote-okapi.png`. The last is the actual north-east Okapi
+Rainforest view. `--stand habitat:N:species` now counts only habitats containing that species;
+previously it decremented N for every populated habitat and could silently remain at the entrance.
 
 ## 0. Start here
 

@@ -756,6 +756,6 @@ frustum makes the people pass non-monotonic between More and Many.
 Many is therefore deliberately labelled experimental and the settings window warns that it can
 be much slower. Normal remains 800. The inspected evidence is
 `build-probe/shots/many-entrance.png`, `many-meerkat-hub.png` and
-`many-remote-okapi.png`; the last is the north-east map sheet because the automated numeric-plus-
-species `--stand` selector did not resolve a repeated remote species. The entrance capture shows
-the intended dense plaza without replacing visitors by scenery.
+`many-remote-okapi.png`; the last is the actual north-east Okapi Rainforest view selected by
+`--stand habitat:2:okapi`. The entrance capture shows the intended dense plaza without replacing
+visitors by scenery.

@@ -397,11 +397,14 @@ std::optional<ZooGame::Pose> ZooGame::StandPose(std::string_view what) const {
             for (const zoo::Animal& animal : zoo_->Fauna().All()) {
                 if (!animal.Visible() || !(animal.home == enclosure.id))
                     continue;
-                populated = !enclosure.viewing.empty();
                 if (!only.empty() &&
                     (animal.species < 0 ||
                      zoo_->SpeciesList().All()[static_cast<std::size_t>(animal.species)].id != only))
                     continue;
+                // With habitat:N:species, N counts habitats containing that species, not every
+                // populated habitat encountered before it. The old order made habitat:2:okapi
+                // stop on the third habitat in the whole zoo and return no pose.
+                populated = !enclosure.viewing.empty();
                 const auto target = animals_->SightTargetOf(animal.id);
                 if (!target)
                     continue;
