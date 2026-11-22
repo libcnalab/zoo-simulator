@@ -26,13 +26,22 @@ Cassowary Walk. Two diagonal links make smaller loops, while the west-column, ce
 northern-sheet connections remain. Four services snap to named vertices of these real trails
 instead of the removed avenue. Six exhibit centres alternate north or south of their former rows,
 so the ten stops now follow the bends instead of two exact parallel lines. The inspected in-game
-sheet is `build-probe/shots/map-nine-sw.png`. This is intentionally a first improvement rather than
-a claim that the district is finished: the six other continental sheets still use the first-pass
-circuit template.
+sheet is `build-probe/shots/map-nine-sw.png`.
 
-The two-seed route regression checks six gravel, boardwalk and cross-link vertices and their
-reachability from the entrance. Both seeds pass, as do the complete 118-habitat layout and the
-short and full deterministic fills for seeds 1–3. The same audit exposed an older 3 × 3 planting
+The south-east African district is the second second-pass sheet. Its ten staggered habitats now
+follow a broad gravel savanna trail and a separate river boardwalk; two narrow cobblestone links
+make shorter predator loops. The pool of Hippo River Bend sits directly on the river arm,
+and four main services plus a northern Lion Savanna drinks stop follow real path vertices. A short
+boardwalk arm preserves the inherited seam connection without a 435 m detour. The western generic
+districts also receive a three-tile-wide centre crossing where their old shallow bends had left two
+isolated 2 m path tips. The inspected in-game sheet is `build-probe/shots/map-nine-se.png`. These
+are intentionally successive improvements rather than a claim that the estate is finished: five
+continental sheets still use the first-pass circuit template.
+
+Two-seed route regressions check six named surface and cross-link vertices in each redesigned
+district and their reachability from the entrance. Both seeds pass, as do the complete 118-habitat
+layout, path-width test and short and full deterministic fills for seeds 1–3. The same audit
+exposed an older 3 × 3 planting
 fallback which removed safely set-back trees and replanted them near viewing barriers when a new
 habitat missed its vegetation target. It now retains every tree and fills remaining cover with
 non-blocking low understorey: a new 0.8 m `forest_fern` on forest floor, tall grass elsewhere.
