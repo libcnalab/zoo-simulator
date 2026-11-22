@@ -18,6 +18,26 @@ catalogue in separate, plausible conservation groups. The first design pass is d
 work in progress: later passes must keep replacing mechanical-looking geometry and unjustifiably
 large paddocks with more varied, real-zoo-inspired exhibits rather than merely filling area.
 
+The south-west Australian district is the first second-pass sheet. Its copied outer circuit and
+straight middle promenade are gone. A low gravel trail now bends past Outback Emu Range, Wombat
+Creek, Red Kangaroo Plain, Cassowary Gully and Island Tortoise Garden; a separate boardwalk follows
+Wetland Bird Reach, Coastal Penguin Rocks, Flamingo Billabong, Tasman Wombat Wood and Forest
+Cassowary Walk. Two diagonal links make smaller loops, while the west-column, central-zoo and
+northern-sheet connections remain. Four services snap to named vertices of these real trails
+instead of the removed avenue. The inspected in-game sheet is
+`build-probe/shots/map-nine-sw.png`. This is intentionally a first improvement rather than a claim
+that the district is finished: the ten exhibit centres remain recognisably row-based, and the six
+other continental sheets still use the first-pass circuit template.
+
+The two-seed route regression checks six gravel, boardwalk and cross-link vertices and their
+reachability from the entrance. Both seeds pass, as do the complete 118-habitat layout and the
+short and full deterministic fills for seeds 1–3. The same audit exposed an older 3 × 3 planting
+fallback which removed safely set-back trees and replanted them near viewing barriers when a new
+habitat missed its vegetation target. It now retains every tree and fills remaining cover with
+non-blocking low understorey: a new 0.8 m `forest_fern` on forest floor, tall grass elsewhere.
+Both seeds pass the no-plant-on-path, bench sight-line, tree set-back and dry-bank invariants; the
+full zoo keeps its welfare through the six-hour regression.
+
 Press M to open the visitor plan. Nine buttons select **NW, N, NE, W, Centre, E, SW, S and SE**.
 The sheets form a 3 × 3 grid in row-major order, each covers exactly 424 × 212 tiles
 (848 × 424 m), all retain the same scale, and north remains at the top.

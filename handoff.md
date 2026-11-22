@@ -1,4 +1,4 @@
-# Handoff: Zoo Simulator (state of 2026-11-21)
+# Handoff: Zoo Simulator (state of 2026-11-22)
 
 For the next agent, who starts without any earlier context. Read this file first, then
 `docs/REALISM.md` (progress log and the honest list of what is open), and the document of
@@ -11,8 +11,13 @@ whatever you take up (`docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `docs/V
   one-pass enlargement. Rework mechanical-looking geometry, reduce habitats whose area is not
   justified by their species and group, and use recovered land for varied real-zoo-inspired
   exhibits and facilities. Preserve welfare, public and service access, performance and the nine
-  equal map sheets. Cinema mode from `6e2f119` is complete: it shows one representative of each
-  resident species for about three seconds, supports Left/Right and returns with C.
+  equal map sheets. The south-west Australian sheet now has the first second-pass layout: separate
+  winding gravel and wetland-boardwalk trails with two cross-links replace its copied middle avenue
+  and rectangular circuit. Its ten exhibit positions are still visibly row-based, and the six
+  other continental sheets still share the first-pass circuit template. Cinema mode from `6e2f119`
+  is complete: it shows one representative of each resident species for about three seconds,
+  supports Left/Right and returns with C. `9c5edb4` prevents every Cinema cut from rebuilding the
+  entire walker collision world when no object, fence or navigation revision changed.
 
 ### Apocalypse mode
 

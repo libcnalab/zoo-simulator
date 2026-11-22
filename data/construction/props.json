@@ -1052,6 +1052,27 @@
       "look": "birch",
       "color": "#67904e",
       "color2": "#614b35"
+    },
+    {
+      "id": "forest_fern",
+      "name": "Low forest fern",
+      "role": "bush",
+      "placement": "anywhere",
+      "radiusM": 0.45,
+      "heightM": 0.8,
+      "blocksWalking": false,
+      "cost": 35,
+      "vegetationM2": 2,
+      "shadeM2": 0.1,
+      "biome": "tropical",
+      "enrichment": 0.01,
+      "foods": [],
+      "capacity": 0,
+      "feedHeightM": 0,
+      "beauty": 0,
+      "look": "fern",
+      "color": "#388b54",
+      "color2": "#614b35"
     }
   ]
 }
