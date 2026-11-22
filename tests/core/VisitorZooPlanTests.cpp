@@ -1534,6 +1534,31 @@ TEST_P(VisitorZooPlan, BorealDistrictHasItsOwnMigrationFjordAndRidgeCircuits) {
     }
 }
 
+TEST_P(VisitorZooPlan, EuropeanDistrictHasItsOwnConservationLeafAndWetlandShortcut) {
+    const World& map = zoo_.Map();
+    const TileCoord gate = map.EntranceTile();
+    struct TrailPoint {
+        int east;
+        int north;
+        PathKind kind;
+    };
+    constexpr std::array<TrailPoint, 6> points{{
+        {-130, 494, PathKind::Asphalt},
+        {20, 500, PathKind::Asphalt},
+        {105, 558, PathKind::Asphalt},
+        {-180, 555, PathKind::Asphalt},
+        {-75, 522, PathKind::Boardwalk},
+        {45, 540, PathKind::Boardwalk},
+    }};
+    for (const TrailPoint point : points) {
+        const TileCoord tile{gate.x + point.east, gate.z - point.north};
+        ASSERT_TRUE(map.InBounds(tile));
+        EXPECT_EQ(map.At(tile).path, point.kind) << point.east << ',' << point.north;
+        EXPECT_TRUE(zoo_.Routes().Reachable(gate, tile, NavProfile::Visitor()))
+            << point.east << ',' << point.north;
+    }
+}
+
 INSTANTIATE_TEST_SUITE_P(Seeds, VisitorZooPlan, testing::Values(1ULL, 2ULL));
 
 // Slopes include every paved tile. A tile whose axial runs are both one tile lies on a walk 2 m

@@ -150,17 +150,18 @@ constexpr std::array<HabitatPlan, 118> kHabitats{{
     {"Lynx Spruce Ridge", "lynx", -419, 592, 15, 12},
     {"Brown Bear River", "brown_bear", -349, 570, 17, 14},
     {"Arctic Fox Coast", "arctic_fox", -279, 598, 13, 10},
-    // North-centre: a compact European conservation landscape with deliberately small exhibits.
-    {"Bison Conservation Wood", "european_bison", -160, 475, 18, 13},
-    {"Red Deer Coppice", "red_deer", -95, 465, 17, 13},
-    {"Lynx Limestone Hill", "lynx", -25, 475, 14, 11},
-    {"Wolf Carpathian Wood", "wolf", 55, 460, 16, 13},
-    {"Bear Mountain Stream", "brown_bear", 135, 480, 17, 14},
-    {"Tortoise Conservatory", "aldabra_tortoise", -145, 575, 13, 10},
-    {"Flamingo Fen", "flamingo", -75, 592, 16, 12},
-    {"European Bison Meadow", "european_bison", 5, 578, 18, 13},
-    {"Red Deer Riverside", "red_deer", 75, 595, 17, 13},
-    {"Lynx Quiet Forest", "lynx", 145, 570, 14, 11},
+    // North-centre: a compact European conservation leaf with a wetland shortcut. Alternating
+    // centres follow its outer lobe rather than two straight exhibit rows.
+    {"Bison Conservation Wood", "european_bison", -160, 470, 18, 13},
+    {"Red Deer Coppice", "red_deer", -95, 488, 17, 13},
+    {"Lynx Limestone Hill", "lynx", -25, 462, 14, 11},
+    {"Wolf Carpathian Wood", "wolf", 55, 488, 16, 13},
+    {"Bear Mountain Stream", "brown_bear", 135, 468, 17, 14},
+    {"Tortoise Conservatory", "aldabra_tortoise", -145, 585, 13, 10},
+    {"Flamingo Fen", "flamingo", -75, 565, 16, 12},
+    {"European Bison Meadow", "european_bison", 5, 595, 18, 13},
+    {"Red Deer Riverside", "red_deer", 75, 590, 17, 13},
+    {"Lynx Quiet Forest", "lynx", 145, 592, 14, 11},
     // North-east: islands and tropical forest, alternating intimate primate gardens and birds.
     {"Ring-tailed Lemur Island", "ring_tailed_lemur", 289, 478, 15, 12},
     {"Macaque Forest Temple", "barbary_macaque", 359, 463, 16, 13},
@@ -577,6 +578,17 @@ void Walks(Zoo& zoo, Script& script, std::span<const HabitatPlan> habitats, bool
         script.PathAlong({{-289, 510}, {-279, 484}}, 3, PathKind::Gravel);
         script.PathAlong({{-229, 530}, {-210, 518}, {-195, 504}}, 3, PathKind::Gravel);
 
+        // The north-centre conservation route is one irregular leaf-shaped asphalt loop. A
+        // wetland boardwalk crosses its middle as a useful shortcut rather than a straight avenue.
+        script.PathAlong(
+            {{-195, 504}, {-170, 486}, {-130, 494}, {-95, 480}, {-55, 497}, {-25, 485}, {20, 500},
+             {55, 482},   {95, 497},   {135, 485},  {175, 502}, {195, 530}, {178, 558}, {145, 570},
+             {105, 558},  {75, 575},   {35, 560},   {5, 580},   {-35, 562}, {-75, 578}, {-110, 560},
+             {-145, 575}, {-180, 555}, {-195, 530}, {-195, 504}},
+            3, PathKind::Asphalt);
+        script.PathAlong({{-145, 575}, {-115, 540}, {-75, 522}, {-35, 540}, {5, 520}, {45, 540}, {75, 575}},
+                         3, PathKind::Boardwalk);
+
         // The remaining new sheets are landscape districts with an asymmetric, gently winding
         // circuit. Neighbouring circuits meet at short greenways on the sheet seams.
         const auto districtLoop = [&](int east, int north, PathKind kind) {
@@ -597,8 +609,8 @@ void Walks(Zoo& zoo, Script& script, std::span<const HabitatPlan> habitats, bool
                               {east + 180, north + 3}},
                              2, PathKind::Gravel);
         };
-        for (const auto& [east, north, kind] : std::array<std::tuple<int, int, PathKind>, 2>{
-                 {{0, 530, PathKind::Asphalt}, {424, 530, PathKind::Boardwalk}}}) {
+        for (const auto& [east, north, kind] :
+             std::array<std::tuple<int, int, PathKind>, 1>{{{424, 530, PathKind::Boardwalk}}}) {
             districtLoop(east, north, kind);
         }
         // Only the northern row has three new neighbouring districts. In the two established
@@ -752,6 +764,30 @@ void Walks(Zoo& zoo, Script& script, std::span<const HabitatPlan> habitats, bool
                              2, PathKind::Gravel);
         }
 
+        constexpr std::array<TileCoord, 10> kEuropeanJoins{{
+            {-170, 486},
+            {-95, 480},
+            {-25, 485},
+            {55, 482},
+            {135, 485},
+            {-145, 575},
+            {-75, 578},
+            {5, 580},
+            {75, 575},
+            {145, 570},
+        }};
+        for (std::size_t i = 0; i < kEuropeanJoins.size(); ++i) {
+            const HabitatPlan& plan = habitats[98 + i];
+            const TileCoord join = kEuropeanJoins[i];
+            const int clearance = plan.rn + StandOffDepth(plan.species) + 2;
+            const int frontNorth = join.z < plan.north ? plan.north - clearance : plan.north + clearance;
+            const int bend = i % 2 == 0 ? 3 : -3;
+            script.PathAlong({{plan.east, frontNorth},
+                              {(plan.east + join.x) / 2 + bend, (frontNorth + join.z) / 2},
+                              {join.x, join.z}},
+                             2, PathKind::Gravel);
+        }
+
         // Every other exhibit gets a short, slightly bent branch from its near side to the
         // district's middle promenade. These make both lobes reachable where the loop swings away.
         for (const HabitatPlan& plan : habitats.subspan(48)) {
@@ -769,6 +805,9 @@ void Walks(Zoo& zoo, Script& script, std::span<const HabitatPlan> habitats, bool
             }
             if (plan.east < -212 && plan.north >= 424) {
                 continue;  // the boreal sheet was joined to its own trails above
+            }
+            if (plan.east >= -212 && plan.east <= 212 && plan.north >= 424) {
+                continue;  // the European sheet was joined to its own leaf loop above
             }
             const int districtNorth = plan.north < 212 ? 106 : plan.north < 424 ? 318 : 530;
             const int clearance = plan.rn + StandOffDepth(plan.species) + 2;
@@ -3133,10 +3172,18 @@ void Facilities(Zoo& zoo, Script& script, bool sideGardens, bool steppeGardens, 
         Service(zoo, script, serviceAprons, "drinks_stall", -520, 536, Dir::North);
         Service(zoo, script, serviceAprons, "ice_cream_stand", -435, 540, Dir::South);
         Service(zoo, script, serviceAprons, "burger_stall", -229, 530, Dir::North);
+        // European stops follow the leaf loop and its wetland shortcut.
+        Service(zoo, script, serviceAprons, "restroom", -170, 486, Dir::South);
+        Service(zoo, script, serviceAprons, "drinks_stall", -115, 540, Dir::North);
+        Service(zoo, script, serviceAprons, "ice_cream_stand", 45, 540, Dir::South);
+        Service(zoo, script, serviceAprons, "burger_stall", 175, 558, Dir::North);
+        // The leaf's long southern lobe does not meet the wetland shortcut. A small stop at its
+        // centre keeps the two middle viewing galleries within the 360 m service-walk limit.
+        Service(zoo, script, serviceAprons, "drinks_stall", 20, 500, Dir::North);
         // Four stops per other sheet follow different bends of each circuit. They are deliberately
         // offset rather than stamped at page centres, and Service snaps each door to a connected
         // walk before accepting the site.
-        for (const auto& [east, north] : std::array<std::pair<int, int>, 2>{{{0, 530}, {424, 530}}}) {
+        for (const auto& [east, north] : std::array<std::pair<int, int>, 1>{{{424, 530}}}) {
             Service(zoo, script, serviceAprons, "restroom", east - 150, north + 2, Dir::South);
             Service(zoo, script, serviceAprons, "drinks_stall", east - 55, north - 3, Dir::North);
             Service(zoo, script, serviceAprons, "ice_cream_stand", east + 55, north + 3, Dir::South);

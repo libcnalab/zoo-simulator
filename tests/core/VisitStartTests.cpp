@@ -95,17 +95,17 @@ TEST(VisitStart, MatchesGameSequence) {
 // three adult tortoises that graze locally. The Snake Pavilion adds two terraria, and visitors
 // now share the Woodland Aviary boardwalk with four Mandarin ducks. The doubled property adds two
 // steppe herds and longer visitor and staff rounds. The nine-sheet estate adds six continental
-// districts; five outer sheets now have separate landscape circuits, and low forest ferns
+// districts; six outer and northern sheets now have separate landscape circuits, and low forest ferns
 // complete the shy okapi's cover without blocking its routes).
 void CheckFillHashes(std::int64_t ticks) {
     constexpr std::array<std::array<std::uint64_t, 2>, 3> shortHashes{
-        {{13743739413161183035ULL, 16867155107346306098ULL},
-         {14057382806528620002ULL, 12200998467423427393ULL},
-         {47516671015216966ULL, 13161172980493751793ULL}}};
+        {{12006203786466831994ULL, 12621422986806704493ULL},
+         {3222936136675531016ULL, 9034976012575040188ULL},
+         {14833152612377785640ULL, 17231365181310351891ULL}}};
     constexpr std::array<std::array<std::uint64_t, 2>, 3> fullHashes{
-        {{17402084840628186836ULL, 18388785069122908621ULL},
-         {2984094864041050101ULL, 15029574612347241492ULL},
-         {679946413688004187ULL, 6248863855300017139ULL}}};
+        {{12953401036470618889ULL, 9137755032747491247ULL},
+         {4399853754136559292ULL, 14213059023253528211ULL},
+         {9347344252639647409ULL, 15973049633521578205ULL}}};
     for (const std::uint64_t seed : {1ULL, 2ULL, 3ULL}) {
         Zoo zoo(testdata::GameCatalog(), testdata::GameSpecies(), VisitorZooConfig(seed));
         BuildVisitorZoo(zoo);

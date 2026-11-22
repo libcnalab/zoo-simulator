@@ -58,8 +58,16 @@ reindeer, musk ox, Arctic fox, polar bear and wolf; a separate fjord boardwalk s
 deer, bison, lynx, bear and fox coast. Three mixed ridge links make smaller loops, while both
 southern seams, the north-centre crossing and the main-zoo gateway remain. Four services sit on
 literal migration, ridge and gateway vertices. The inspected in-game sheet is
-`build-probe/shots/map-nine-nw.png`. Two continental sheets still use the first-pass circuit
-template.
+`build-probe/shots/map-nine-nw.png`.
+
+The north-centre European district is the sixth second-pass sheet. Ten staggered conservation
+habitats surround one irregular asphalt leaf rather than two straight rows. A wetland boardwalk
+cuts across its northern half, while both neighbouring-sheet seams and both established-zoo
+gateways remain connected. Five main services follow literal leaf and boardwalk vertices; a sixth
+small drinks stop in the long southern lobe keeps its Lynx Limestone and Wolf Carpathian galleries
+inside the 360 m service-walk limit. The inspected in-game sheet is
+`build-probe/shots/map-nine-n.png`. Only the north-east tropical district still uses the
+first-pass circuit template.
 
 Two-seed route regressions check six named surface and cross-link vertices in each redesigned
 district and their reachability from the entrance. Both seeds pass, as do the complete 118-habitat
