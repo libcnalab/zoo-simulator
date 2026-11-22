@@ -99,13 +99,13 @@ TEST(VisitStart, MatchesGameSequence) {
 // ferns complete the shy okapi's cover without blocking its routes).
 void CheckFillHashes(std::int64_t ticks) {
     constexpr std::array<std::array<std::uint64_t, 2>, 3> shortHashes{
-        {{9215975922650522847ULL, 13956416785707342175ULL},
-         {9630788956402888454ULL, 2322178689066598860ULL},
-         {13195719226797550746ULL, 9301459865069687658ULL}}};
+        {{9810625861868355631ULL, 10327648881656985645ULL},
+         {15183939783561375000ULL, 7589579120528843768ULL},
+         {7621341278037168584ULL, 10234429506393845304ULL}}};
     constexpr std::array<std::array<std::uint64_t, 2>, 3> fullHashes{
-        {{11535091493920510919ULL, 13554879671005127491ULL},
-         {9771087655307082775ULL, 5000010116556199964ULL},
-         {1145790569534162508ULL, 6838822968249214089ULL}}};
+        {{11254584915310015428ULL, 329116193380823236ULL},
+         {6185334626447353803ULL, 7579194289353818255ULL},
+         {16649011818249704707ULL, 14660362524443231240ULL}}};
     for (const std::uint64_t seed : {1ULL, 2ULL, 3ULL}) {
         Zoo zoo(testdata::GameCatalog(), testdata::GameSpecies(), VisitorZooConfig(seed));
         BuildVisitorZoo(zoo);

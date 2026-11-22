@@ -93,15 +93,15 @@ constexpr std::array<HabitatPlan, 118> kHabitats{{
     // South-west: an Australian and island district.  The unequal footprints and staggered
     // centres follow the two bends of its walk instead of a rectangular exhibit grid.
     {"Outback Emu Range", "emu", -584, 51, 17, 12},
-    {"Wombat Creek", "common_wombat", -519, 41, 14, 11},
+    {"Wombat Creek", "common_wombat", -519, 78, 14, 11},
     {"Red Kangaroo Plain", "kangaroo", -449, 51, 18, 13},
-    {"Cassowary Gully", "southern_cassowary", -369, 36, 15, 13},
+    {"Cassowary Gully", "southern_cassowary", -369, 84, 15, 13},
     {"Island Tortoise Garden", "aldabra_tortoise", -289, 56, 14, 11},
     {"Wetland Bird Reach", "mandarin_duck", -569, 151, 13, 12},
-    {"Coastal Penguin Rocks", "penguin", -499, 168, 16, 12},
-    {"Flamingo Billabong", "flamingo", -419, 154, 18, 13},
-    {"Tasman Wombat Wood", "common_wombat", -349, 171, 13, 11},
-    {"Forest Cassowary Walk", "southern_cassowary", -279, 146, 16, 13},
+    {"Coastal Penguin Rocks", "penguin", -499, 166, 16, 12},
+    {"Flamingo Billabong", "flamingo", -419, 184, 18, 13},
+    {"Tasman Wombat Wood", "common_wombat", -349, 148, 13, 11},
+    {"Forest Cassowary Walk", "southern_cassowary", -279, 176, 16, 13},
     // South-east: open African country broken by cats, wetlands and smaller hoofstock gardens.
     {"Serengeti Giraffe Plain", "giraffe", 289, 54, 21, 16},
     {"Zebra Kopje", "zebra", 359, 39, 19, 14},

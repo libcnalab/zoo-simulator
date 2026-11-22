@@ -24,10 +24,11 @@ Creek, Red Kangaroo Plain, Cassowary Gully and Island Tortoise Garden; a separat
 Wetland Bird Reach, Coastal Penguin Rocks, Flamingo Billabong, Tasman Wombat Wood and Forest
 Cassowary Walk. Two diagonal links make smaller loops, while the west-column, central-zoo and
 northern-sheet connections remain. Four services snap to named vertices of these real trails
-instead of the removed avenue. The inspected in-game sheet is
-`build-probe/shots/map-nine-sw.png`. This is intentionally a first improvement rather than a claim
-that the district is finished: the ten exhibit centres remain recognisably row-based, and the six
-other continental sheets still use the first-pass circuit template.
+instead of the removed avenue. Six exhibit centres alternate north or south of their former rows,
+so the ten stops now follow the bends instead of two exact parallel lines. The inspected in-game
+sheet is `build-probe/shots/map-nine-sw.png`. This is intentionally a first improvement rather than
+a claim that the district is finished: the six other continental sheets still use the first-pass
+circuit template.
 
 The two-seed route regression checks six gravel, boardwalk and cross-link vertices and their
 reachability from the entrance. Both seeds pass, as do the complete 118-habitat layout and the
