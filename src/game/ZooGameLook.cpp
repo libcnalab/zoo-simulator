@@ -167,7 +167,6 @@ void ZooGame::UpdateBoardsAndMap() {
 void ZooGame::LookAtAnimals(float seconds) {
     const auto eye = FromXna(walker_.Eye());
     const auto gaze = FromXna(walker_.Gaze());
-    const auto& species = zoo_->SpeciesList().All();
     const zoo::Animal* found = nullptr;
     std::optional<GazeHit> best;
     std::optional<float> obstruction;
@@ -196,25 +195,30 @@ void ZooGame::LookAtAnimals(float seconds) {
 
     AnimalCard& card = visit_.card;
     if (found != nullptr) {
-        const zoo::SpeciesDef& def = species[static_cast<std::size_t>(found->species)];
         if (!(lookedAt_ == found->id) && card.shown > 0.0f) {
             // Another animal: the card of the one before goes first.
             card.shown = std::max(0.0f, card.shown - 6.0f * seconds);
             return;
         }
         lookedAt_ = found->id;
-        card.name = found->name;
-        card.species = def.commonName;
-        card.latin = def.scientificName;
-        card.about = Capital(std::string(zoo::ToString(found->sex))) + ", " +
-                     AgeText(zoo::AgeYears(*found, zoo_->Time()));
-        card.doing = ActivityText(*found);
-        card.shown = std::min(1.0f, card.shown + 3.0f * seconds);
+        SetAnimalCard(*found, std::min(1.0f, card.shown + 3.0f * seconds));
     } else {
         card.shown = std::max(0.0f, card.shown - 2.5f * seconds);
         if (card.shown <= 0.0f)
             lookedAt_ = {};
     }
+}
+
+void ZooGame::SetAnimalCard(const zoo::Animal& animal, float shown) {
+    const zoo::SpeciesDef& def = species_->All()[static_cast<std::size_t>(animal.species)];
+    AnimalCard& card = visit_.card;
+    card.name = animal.name;
+    card.species = def.commonName;
+    card.latin = def.scientificName;
+    card.about = Capital(std::string(zoo::ToString(animal.sex))) + ", " +
+                 AgeText(zoo::AgeYears(animal, zoo_->Time()));
+    card.doing = ActivityText(animal);
+    card.shown = shown;
 }
 
 void ZooGame::OpenBoard(const zoo::Prop& board) {

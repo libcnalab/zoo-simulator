@@ -547,6 +547,74 @@ void ZooGame::PrintVisitFigures(const char* when) const {
                     static_cast<int>(visit_.window));
 }
 
+void ZooGame::UpdateCinema(float seconds) {
+    constexpr float kSecondsPerAnimal = 3.0f;
+    const auto& all = zoo_->Fauna().All();
+    visit_.cinemaTotal = static_cast<int>(cinemaSpecies_.size());
+    if (controls_.KeyboardFree() && !cinemaSpecies_.empty()) {
+        if (controls_.Pressed(Keys::Right)) {
+            // cinemaNext_ already names the species after the current representative.
+            cinemaLeft_ = 0.0f;
+        } else if (controls_.Pressed(Keys::Left)) {
+            const std::size_t current =
+                visit_.cinemaIndex > 0 ? static_cast<std::size_t>(visit_.cinemaIndex - 1) : 0;
+            cinemaNext_ = (current + cinemaSpecies_.size() - 1) % cinemaSpecies_.size();
+            cinemaLeft_ = 0.0f;
+        }
+    }
+    cinemaLeft_ -= seconds;
+
+    const zoo::Animal* featured = cinemaAnimal_ ? zoo_->Fauna().Find(cinemaAnimal_) : nullptr;
+    std::optional<Vector3> position = featured ? animals_->PositionOf(featured->id) : std::nullopt;
+    bool changed = false;
+    if (cinemaLeft_ <= 0.0f || featured == nullptr || !position) {
+        featured = nullptr;
+        position.reset();
+        for (std::size_t tried = 0; tried < cinemaSpecies_.size(); ++tried) {
+            const std::size_t index = cinemaNext_ % cinemaSpecies_.size();
+            cinemaNext_ = (index + 1) % cinemaSpecies_.size();
+            const int wantedSpecies = cinemaSpecies_[index];
+            for (const zoo::Animal& candidate : all) {
+                if (candidate.species != wantedSpecies || !candidate.Visible())
+                    continue;
+                const auto at = animals_->PositionOf(candidate.id);
+                if (!at)
+                    continue;
+                featured = &candidate;
+                position = at;
+                cinemaAnimal_ = candidate.id;
+                visit_.cinemaIndex = static_cast<int>(index + 1);
+                cinemaLeft_ = kSecondsPerAnimal;
+                changed = true;
+                break;
+            }
+            if (featured != nullptr)
+                break;
+        }
+    }
+
+    if (featured == nullptr || !position || featured->species < 0 ||
+        featured->species >= static_cast<int>(species_->All().size())) {
+        visit_.cinema = false;
+        cinemaAnimal_ = {};
+        visit_.card.shown = 0.0f;
+        visit_.Flash("No animal is outdoors for Cinema mode", 3.0f);
+        camera_.SetEye(walker_.Eye(), walker_.Yaw(), walker_.Pitch());
+        return;
+    }
+
+    const zoo::SpeciesDef& def = species_->All()[static_cast<std::size_t>(featured->species)];
+    const float size = std::max(def.bodyLengthM, def.shoulderHeightM) *
+                       zoo::BodyScale(*featured, def, zoo_->Time());
+    if (changed)
+        camera_.FrameFollowTarget(*position, size);
+    else
+        camera_.SetFollowTarget(*position, size);
+    camera_.Update(controls_, seconds, zoo_->Map());
+    lookedAt_ = featured->id;
+    SetAnimalCard(*featured, 1.0f);
+}
+
 void ZooGame::UpdateVisit(double seconds) {
     const auto dt = static_cast<float>(seconds);
     const bool automated = Automation().Options().Automated() || script_.has_value();
@@ -586,6 +654,33 @@ void ZooGame::UpdateVisit(double seconds) {
         }
         if (controls_.Pressed(Keys::F5) && visit_.screen == VisitScreen::Walking)
             visit_.request = VisitRequest::Save;
+        if (controls_.Pressed(Keys::C) && visit_.screen == VisitScreen::Walking &&
+            visit_.window == VisitWindow::None) {
+            visit_.cinema = !visit_.cinema;
+            cinemaAnimal_ = {};
+            cinemaSpecies_.clear();
+            cinemaNext_ = 0;
+            cinemaLeft_ = 0.0f;
+            visit_.cinemaIndex = 0;
+            visit_.binoculars = false;
+            if (visit_.cinema) {
+                std::vector<bool> resident(species_->All().size(), false);
+                for (const zoo::Animal& animal : zoo_->Fauna().All())
+                    if (animal.InWorld() && animal.species >= 0 &&
+                        animal.species < static_cast<int>(resident.size()))
+                        resident[static_cast<std::size_t>(animal.species)] = true;
+                for (std::size_t species = 0; species < resident.size(); ++species)
+                    if (resident[species])
+                        cinemaSpecies_.push_back(static_cast<int>(species));
+                visit_.cinemaTotal = static_cast<int>(cinemaSpecies_.size());
+                visit_.Flash("Cinema mode", 1.5f);
+            } else {
+                visit_.cinemaTotal = 0;
+                visit_.card.shown = 0.0f;
+                camera_.SetEye(walker_.Eye(), walker_.Yaw(), walker_.Pitch());
+                visit_.Flash("Back to the visit", 1.5f);
+            }
+        }
     }
     HandleVisitRequest();
     if (const int to = std::exchange(visit_.travelTo, -1);
@@ -602,7 +697,7 @@ void ZooGame::UpdateVisit(double seconds) {
         visit_.screen = VisitScreen::Paused;
     const bool walking = visit_.screen == VisitScreen::Walking;
     // The mouse is let go while the map is open, to point at a place on it.
-    const bool capture = walking && !automated && visit_.window != VisitWindow::Map;
+    const bool capture = walking && !automated && visit_.window != VisitWindow::Map && !visit_.cinema;
     if (capture != MouseCaptured())
         CaptureMouse(capture);
 
@@ -610,7 +705,7 @@ void ZooGame::UpdateVisit(double seconds) {
     play_.speed = visit_.screen == VisitScreen::Paused ? 0 : 1;
     if (walking) {
         Walker::Input input;
-        if (controls_.KeyboardFree()) {
+        if (controls_.KeyboardFree() && !visit_.cinema) {
             const auto axis = [&](Keys plus, Keys plusToo, Keys minus, Keys minusToo) {
                 return (controls_.Down(plus) || controls_.Down(plusToo) ? 1.0f : 0.0f) -
                        (controls_.Down(minus) || controls_.Down(minusToo) ? 1.0f : 0.0f);
@@ -623,14 +718,14 @@ void ZooGame::UpdateVisit(double seconds) {
                 visit_.Flash(visit_.running ? "Running" : "Walking", 1.4f);
             }
         }
-        input.run = visit_.running;
+        input.run = visit_.running && !visit_.cinema;
         // Over the map the mouse points; it does not turn the head.
         if (visit_.window == VisitWindow::Map)
             look = Vector2(0.0f, 0.0f);
 
         // Binoculars: B raises and lowers them, the right mouse button holds them up. They are
         // used standing still, and the head turns as much less as the view is narrower.
-        const bool free = visit_.window == VisitWindow::None;
+        const bool free = visit_.window == VisitWindow::None && !visit_.cinema;
         if (controls_.KeyboardFree() && controls_.Pressed(Keys::B) && free)
             visit_.binoculars = !visit_.binoculars;
         if (!free)
@@ -653,8 +748,12 @@ void ZooGame::UpdateVisit(double seconds) {
         const float turn = kTurnPerPixel * visit_.settings.sensitivity;
         input.turn = look.X * turn;
         input.tilt = look.Y * turn * (visit_.settings.invertY ? -1.0f : 1.0f);
-        walker_.Update(*zoo_, input, dt);
-        UpdateBoardsAndMap();
+        if (!visit_.cinema) {
+            walker_.Update(*zoo_, input, dt);
+            UpdateBoardsAndMap();
+        } else {
+            visit_.prompt.clear();
+        }
         sinceKept_ += seconds;
         if (sinceKept_ >= kKeepEvery) {
             sinceKept_ = 0.0;
@@ -680,6 +779,8 @@ void ZooGame::UpdateVisit(double seconds) {
         // Behind the title: the entrance as someone standing there sees it, looking slowly about.
         const float yaw = walker_.Yaw() + 0.32f * std::sin(titleTime_ * 0.09f);
         camera_.SetEye(walker_.Eye(), yaw, 0.02f);
+    } else if (visit_.cinema) {
+        UpdateCinema(dt);
     } else {
         camera_.SetEye(walker_.Eye(), walker_.Yaw(), walker_.Pitch());
     }
@@ -692,7 +793,7 @@ void ZooGame::UpdateVisit(double seconds) {
         const Bench::Scope timed(bench_, Bench::Animals);
         animals_->Update(*zoo_, lived, static_cast<float>(tickDebt_));
     }
-    if (visit_.screen == VisitScreen::Walking) {
+    if (visit_.screen == VisitScreen::Walking && !visit_.cinema) {
         const Bench::Scope timed(bench_, Bench::AnimalLook);
         LookAtAnimals(dt);
     }
@@ -704,7 +805,7 @@ void ZooGame::UpdateVisit(double seconds) {
     }
     UpdateSky();
 
-    const bool afoot = visit_.screen == VisitScreen::Walking;
+    const bool afoot = visit_.screen == VisitScreen::Walking && !visit_.cinema;
     const Bench::Scope timed(bench_, Bench::Sound);
     sounds_->Update(*zoo_, CnaEngine::Audio::ListenerFrom(MainCamera()),
                     {.feet = walker_.Position(),

@@ -169,6 +169,10 @@ struct Visit {
     bool binoculars = false;
     /// 0..1: how far they are raised to the eyes (the view narrows and the eyepieces close in).
     float binocularsUp = 0.0f;
+    /// C follows one visible representative of each resident species, changing every three seconds.
+    bool cinema = false;
+    int cinemaIndex = 0;  ///< one-based position in the resident-species order
+    int cinemaTotal = 0;
     AnimalCard card;
     BoardText board;
     VisitMap map;

@@ -1,0 +1,12 @@
+# SPDX-License-Identifier: MIT
+# Cinema enters on C, Left/Right move by species, the timer advances after about three seconds,
+# and C returns to the walk.
+2 key C
+8 shot ../build-probe/shots/cinema-first.png
+12 key Right
+18 shot ../build-probe/shots/cinema-next.png
+22 key Left
+28 shot ../build-probe/shots/cinema-previous.png
+210 shot ../build-probe/shots/cinema-auto.png
+213 key C
+218 shot ../build-probe/shots/cinema-return.png

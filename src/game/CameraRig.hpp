@@ -29,6 +29,8 @@ public:
     void GoTo(zoo::Vec2 focus);
     /// The thing Follow mode orbits; call every frame while in that mode.
     void SetFollowTarget(const Vector3& position, float size);
+    /// Cuts to a newly featured subject and frames it at a distance proportional to its size.
+    void FrameFollowTarget(const Vector3& position, float size);
     /// Looks out of eyes at `eye` along `yaw` and `pitch` (below the horizon): the
     /// mode becomes Eye, in which Update() leaves the camera where this put it.
     void SetEye(const Vector3& eye, float yaw, float pitch);

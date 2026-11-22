@@ -76,6 +76,14 @@ void CameraRig::SetFollowTarget(const Vector3& position, float size) {
     followSize_ = size;
 }
 
+void CameraRig::FrameFollowTarget(const Vector3& position, float size) {
+    followTarget_ = position;
+    followSize_ = size;
+    distanceGoal_ = distance_ = std::clamp(size * 4.0f, 3.0f, 14.0f);
+    pitchGoal_ = pitch_ = 0.28f;
+    mode_ = CameraMode::Follow;
+}
+
 void CameraRig::SetEye(const Vector3& eye, float yaw, float pitch) {
     mode_ = CameraMode::Eye;
     position_ = eye;

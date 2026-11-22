@@ -28,6 +28,16 @@ shapes and only selects the sheet containing the visitor. A real 65-frame offscr
 opened the map and captured all nine sheets without a blocked frame at M; the previous build
 visibly paused for about two seconds there. Loading another zoo invalidates and rebuilds the plan.
 
+Press C for Cinema mode. It follows one outdoor representative of each resident species and cuts
+to the next species every three seconds, framing a meerkat close enough to read while keeping a
+giraffe or elephant inside the view. A flock of twenty flamingos therefore gets one three-second
+shot, not twenty consecutive shots. The ordinary animal card remains on screen and the top
+counter reports progress through the resident species. A species with every member inside a
+shelter is skipped for this pass and remains eligible when the order loops. Pressing C again
+returns to the visitor's unchanged position and heading. Left and Right cut immediately to the
+previous or next species and restart its three-second interval. `tests/game/cinema.script` checks
+both manual directions, the following automatic advance and the restored entrance view.
+
 North leads into the zoo from the south gate. Entrance coordinates `(east, north)` mean
 world tile `(entrance.x + east, entrance.z - north)`; one tile is 2 m. The entrance tile is
 `(642,642)`, centred at world `(1,285,1,285)` metres. Construct with `VisitorZooConfig(seed)`,

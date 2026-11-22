@@ -97,6 +97,9 @@ private:
     void LookAtAnimals(float seconds);
     void OpenBoard(const zoo::Prop& board);
     void BuildVisitMap();
+    /// Advances and frames the visit's stable three-second animal sequence.
+    void UpdateCinema(float seconds);
+    void SetAnimalCard(const zoo::Animal& animal, float shown);
     /// How much nearer the binoculars bring things now: 1 without them, kBinocularPower raised.
     float Magnification() const;
     /// Binoculars of 7 x: what one buys for a zoo or for birds.
@@ -188,6 +191,10 @@ private:
     bool freshZoo_ = false;
     float titleTime_ = 0.0f;
     double sinceKept_ = 0.0;
+    zoo::AnimalId cinemaAnimal_;
+    std::vector<int> cinemaSpecies_;
+    std::size_t cinemaNext_ = 0;
+    float cinemaLeft_ = 0.0f;
 };
 
 }  // namespace zoogame

@@ -322,8 +322,10 @@ void VisitorHud::Walking(ui::Ui& ui, Visit& visit) {
         Eyepieces(ui, visit.binocularsUp);
     // A dot to aim with: where the eyes look.
     const Vector2 middle(std::round(0.5f * screen.X), std::round(0.5f * screen.Y));
-    ui.Paint().Disc(middle, 2.6f, ui::Rgb(0, 0, 0, 70));
-    ui.Paint().Disc(middle, 1.7f, ui::Rgb(255, 255, 255, 170));
+    if (!visit.cinema) {
+        ui.Paint().Disc(middle, 2.6f, ui::Rgb(0, 0, 0, 70));
+        ui.Paint().Disc(middle, 1.7f, ui::Rgb(255, 255, 255, 170));
+    }
 
     if (!visit.clock.empty()) {
         const float width = ui.Paint().TextWidth(visit.clock, theme::kTitle, true);
@@ -339,13 +341,25 @@ void VisitorHud::Walking(ui::Ui& ui, Visit& visit) {
     else
         Card(ui, visit);
 
+    if (visit.cinema) {
+        const std::string progress =
+            Format("CINEMA   %d / %d", visit.cinemaIndex, visit.cinemaTotal);
+        const float width = ui.Paint().TextWidth(progress, theme::kSmall, true);
+        Shadowed(ui, progress, 0.5f * (screen.X - width), 18.0f, theme::kSmall,
+                 ui::Rgb(255, 255, 255, 220), true);
+        KeyHints(ui, middle.X, screen.Y - 52.0f,
+                 {{"Left Right", "Previous / next species"}, {"C", "Return to the visit"}}, 1.0f);
+    }
+
     visit.hintLeft = std::max(0.0f, visit.hintLeft - ui.Seconds());
-    if (visit.hintLeft > 0.0f && visit.window == VisitWindow::None && visit.binocularsUp <= 0.0f)
+    if (!visit.cinema && visit.hintLeft > 0.0f && visit.window == VisitWindow::None &&
+        visit.binocularsUp <= 0.0f)
         KeyHints(ui, middle.X, screen.Y - 52.0f,
                  {{"W A S D", "Walk"},
                   {"Mouse", "Look around"},
                   {"Shift", "Walk / run"},
                   {"B", "Binoculars"},
+                  {"C", "Cinema"},
                   {"M", "Map"},
                   {"Esc", "Menu"}},
                  std::min(1.0f, visit.hintLeft / 1.5f));
