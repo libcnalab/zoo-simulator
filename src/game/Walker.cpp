@@ -229,7 +229,9 @@ void Walker::Rebuild(const zoo::Zoo& zoo) {
 }
 
 void Walker::Enter(const zoo::Zoo& zoo, zoo::Vec2 at, float yaw, float pitch) {
-    Rebuild(zoo);
+    if (!built_ || objectsRevision_ != zoo.Objects().Revision() ||
+        fenceRevision_ != zoo.Map().FenceRevision() || navRevision_ != zoo.Map().NavRevision())
+        Rebuild(zoo);
     const float ground = DrawnGroundHeight(zoo.Map(), at);
     body_ = CnaEngine::Collision::CharacterController(Body(), Vector3(at.x, ground, at.z));
     body_.Teleport(world_, Vector3(at.x, ground + 0.05f, at.z));
