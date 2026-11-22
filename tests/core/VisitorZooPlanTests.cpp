@@ -1459,6 +1459,31 @@ TEST_P(VisitorZooPlan, AfricanDistrictHasItsOwnSavannaRiverAndPredatorCircuits) 
     }
 }
 
+TEST_P(VisitorZooPlan, AmericanDistrictHasItsOwnPrairieOxbowAndCrossLinkCircuits) {
+    const World& map = zoo_.Map();
+    const TileCoord gate = map.EntranceTile();
+    struct TrailPoint {
+        int east;
+        int north;
+        PathKind kind;
+    };
+    constexpr std::array<TrailPoint, 6> points{{
+        {-550, 300, PathKind::Gravel},
+        {-410, 299, PathKind::Gravel},
+        {-535, 356, PathKind::Boardwalk},
+        {-460, 354, PathKind::Boardwalk},
+        {-510, 315, PathKind::Boardwalk},
+        {-435, 320, PathKind::Cobblestone},
+    }};
+    for (const TrailPoint point : points) {
+        const TileCoord tile{gate.x + point.east, gate.z - point.north};
+        ASSERT_TRUE(map.InBounds(tile));
+        EXPECT_EQ(map.At(tile).path, point.kind) << point.east << ',' << point.north;
+        EXPECT_TRUE(zoo_.Routes().Reachable(gate, tile, NavProfile::Visitor()))
+            << point.east << ',' << point.north;
+    }
+}
+
 INSTANTIATE_TEST_SUITE_P(Seeds, VisitorZooPlan, testing::Values(1ULL, 2ULL));
 
 // Slopes include every paved tile. A tile whose axial runs are both one tile lies on a walk 2 m

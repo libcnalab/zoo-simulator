@@ -16,8 +16,10 @@ whatever you take up (`docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `docs/V
   and rectangular circuit. Six exhibit centres now alternate around those bends instead of sitting
   on two exact parallel rows. The south-east African sheet is the second redesign: staggered
   habitats follow separate gravel savanna and river-boardwalk trails with two cobblestone predator
-  links, real service vertices and a short seam connection. Five continental sheets still share
-  the first-pass circuit template. Cinema mode from `6e2f119`
+  links, real service vertices and a short seam connection. The mid-west American sheet is the
+  third redesign: staggered habitats follow separate prairie and oxbow trails with three mixed
+  cross-links, all five inherited seams and two remote-gallery services. Four continental sheets
+  still share the first-pass circuit template. Cinema mode from `6e2f119`
   is complete: it shows one representative of each resident species for about three seconds,
   supports Left/Right and returns with C. `9c5edb4` prevents every Cinema cut from rebuilding the
   entire walker collision world when no object, fence or navigation revision changed.

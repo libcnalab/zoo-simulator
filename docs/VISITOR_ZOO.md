@@ -32,10 +32,18 @@ The south-east African district is the second second-pass sheet. Its ten stagger
 follow a broad gravel savanna trail and a separate river boardwalk; two narrow cobblestone links
 make shorter predator loops. The pool of Hippo River Bend sits directly on the river arm,
 and four main services plus a northern Lion Savanna drinks stop follow real path vertices. A short
-boardwalk arm preserves the inherited seam connection without a 435 m detour. The western generic
-districts also receive a three-tile-wide centre crossing where their old shallow bends had left two
-isolated 2 m path tips. The inspected in-game sheet is `build-probe/shots/map-nine-se.png`. These
-are intentionally successive improvements rather than a claim that the estate is finished: five
+boardwalk arm preserves the inherited seam connection without a 435 m detour. The remaining
+north-west generic district also receives a three-tile-wide centre crossing where its old shallow
+bend had left one isolated 2 m path tip. The inspected in-game sheet is
+`build-probe/shots/map-nine-se.png`.
+
+The mid-west American district is the third second-pass sheet. A dry gravel prairie trail follows
+North Bison Range through Tapir Rain Creek, while a separate oxbow boardwalk bends past Capybara,
+maned wolf, guanaco, anteater and puma exhibits. Three boardwalk, cobblestone and gravel cross-links
+make shorter loops; five inherited sheet connections remain. Six services sit on real vertices or
+on the remote Capybara and Peccary galleries, keeping every public tile within the 360 m service
+walk limit. The inspected in-game sheet is `build-probe/shots/map-nine-w.png`. These are
+intentionally successive improvements rather than a claim that the estate is finished: four
 continental sheets still use the first-pass circuit template.
 
 Two-seed route regressions check six named surface and cross-link vertices in each redesigned

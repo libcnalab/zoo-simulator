@@ -114,17 +114,18 @@ constexpr std::array<HabitatPlan, 118> kHabitats{{
     {"Hippo River Bend", "hippopotamus", 424, 153, 19, 14},
     {"Okapi Forest Edge", "okapi", 504, 176, 16, 13},
     {"Anteater Termite Plain", "giant_anteater", 574, 150, 16, 12},
-    // Mid-west: the Americas, from prairie through pampas to tropical river forest.
-    {"North Bison Range", "american_bison", -584, 263, 19, 14},
-    {"Prairie Dog Colony", "black_tailed_prairie_dog", -519, 253, 13, 10},
-    {"Puma Mesa", "puma", -449, 263, 16, 13},
-    {"Peccary Scrub", "collared_peccary", -369, 248, 15, 12},
-    {"Tapir Rain Creek", "south_american_tapir", -289, 268, 16, 13},
-    {"Capybara Oxbow", "capybara", -569, 363, 17, 13},
-    {"Maned Wolf Cerrado", "maned_wolf", -499, 380, 16, 12},
-    {"Guanaco Foothills", "guanaco", -419, 366, 18, 13},
-    {"Anteater Palm Savanna", "giant_anteater", -349, 383, 15, 12},
-    {"Puma Forest Pass", "puma", -279, 358, 15, 12},
+    // Mid-west: an American prairie trail and an oxbow boardwalk. Alternating centres follow the
+    // meanders rather than repeating the two-row continental template.
+    {"North Bison Range", "american_bison", -584, 248, 19, 14},
+    {"Prairie Dog Colony", "black_tailed_prairie_dog", -519, 267, 13, 10},
+    {"Puma Mesa", "puma", -449, 242, 16, 13},
+    {"Peccary Scrub", "collared_peccary", -369, 255, 15, 12},
+    {"Tapir Rain Creek", "south_american_tapir", -289, 260, 16, 13},
+    {"Capybara Oxbow", "capybara", -569, 382, 17, 13},
+    {"Maned Wolf Cerrado", "maned_wolf", -499, 365, 16, 12},
+    {"Guanaco Foothills", "guanaco", -419, 390, 18, 13},
+    {"Anteater Palm Savanna", "giant_anteater", -349, 365, 15, 12},
+    {"Puma Forest Pass", "puma", -279, 386, 15, 12},
     // Mid-east: Asian steppe and mountain forests, with the route folding around the slopes.
     {"Kiang High Steppe", "kiang", 289, 266, 18, 13},
     {"Przewalski Valley", "przewalski_horse", 359, 251, 19, 14},
@@ -474,6 +475,41 @@ void Walks(Zoo& zoo, Script& script, std::span<const HabitatPlan> habitats, bool
         script.PathAlong({{359, 73}, {367, 99}, {386, 136}}, 2, PathKind::Cobblestone);
         script.PathAlong({{499, 78}, {486, 102}, {463, 133}}, 2, PathKind::Cobblestone);
 
+        // The mid-west American sheet pairs a dry prairie trail with a wetter oxbow boardwalk.
+        // Three cross-links create smaller loops, and short arms retain all inherited sheet seams.
+        script.PathAlong({{-594, 273},
+                          {-584, 286},
+                          {-550, 300},
+                          {-519, 280},
+                          {-486, 295},
+                          {-449, 279},
+                          {-410, 299},
+                          {-369, 282},
+                          {-330, 300},
+                          {-289, 282},
+                          {-260, 296},
+                          {-244, 320},
+                          {-228, 349}},
+                         3, PathKind::Gravel);
+        script.PathAlong({{-594, 363},
+                          {-569, 342},
+                          {-535, 356},
+                          {-499, 337},
+                          {-460, 354},
+                          {-419, 340},
+                          {-382, 360},
+                          {-349, 342},
+                          {-315, 357},
+                          {-279, 339},
+                          {-250, 348},
+                          {-228, 349}},
+                         3, PathKind::Boardwalk);
+        script.PathAlong({{-519, 280}, {-510, 315}, {-499, 337}}, 2, PathKind::Boardwalk);
+        script.PathAlong({{-449, 279}, {-435, 320}, {-419, 340}}, 2, PathKind::Cobblestone);
+        script.PathAlong({{-369, 282}, {-365, 320}, {-349, 342}}, 2, PathKind::Gravel);
+        script.PathAlong({{-289, 282}, {-279, 272}}, 3, PathKind::Gravel);
+        script.PathAlong({{-279, 339}, {-273, 363}}, 3, PathKind::Boardwalk);
+
         // The remaining new sheets are landscape districts with an asymmetric, gently winding
         // circuit. Neighbouring circuits meet at short greenways on the sheet seams.
         const auto districtLoop = [&](int east, int north, PathKind kind) {
@@ -495,18 +531,15 @@ void Walks(Zoo& zoo, Script& script, std::span<const HabitatPlan> habitats, bool
                              2, PathKind::Gravel);
         };
         for (const auto& [east, north, kind] :
-             std::array<std::tuple<int, int, PathKind>, 5>{{{-424, 318, PathKind::Gravel},
-                                                            {424, 318, PathKind::Asphalt},
+             std::array<std::tuple<int, int, PathKind>, 4>{{{424, 318, PathKind::Asphalt},
                                                             {-424, 530, PathKind::Gravel},
                                                             {0, 530, PathKind::Asphalt},
                                                             {424, 530, PathKind::Boardwalk}}}) {
             districtLoop(east, north, kind);
         }
-        // The two western middle promenades otherwise leave a one-tile cusp where their shallow
+        // The remaining north-western middle promenade leaves a one-tile cusp where its shallow
         // bends cross the sheet centre. Keep the public walk at least two tiles wide there.
-        for (const int north : {318, 530}) {
-            script.PathAlong({{-430, north}, {-420, north}, {-410, north}}, 3, PathKind::Gravel);
-        }
+        script.PathAlong({{-430, 530}, {-420, 530}, {-410, 530}}, 3, PathKind::Gravel);
         // Only the northern row has three new neighbouring districts. In the two established
         // centre sheets the short nominal seam had no centre circuit to meet; the curved gateways
         // below are their real connections.
@@ -586,6 +619,30 @@ void Walks(Zoo& zoo, Script& script, std::span<const HabitatPlan> habitats, bool
                              2, PathKind::Gravel);
         }
 
+        constexpr std::array<TileCoord, 10> kAmericanJoins{{
+            {-584, 286},
+            {-519, 280},
+            {-449, 279},
+            {-369, 282},
+            {-289, 282},
+            {-569, 342},
+            {-499, 337},
+            {-419, 340},
+            {-349, 342},
+            {-279, 339},
+        }};
+        for (std::size_t i = 0; i < kAmericanJoins.size(); ++i) {
+            const HabitatPlan& plan = habitats[68 + i];
+            const TileCoord join = kAmericanJoins[i];
+            const int clearance = plan.rn + StandOffDepth(plan.species) + 2;
+            const int frontNorth = join.z < plan.north ? plan.north - clearance : plan.north + clearance;
+            const int bend = i % 2 == 0 ? -3 : 3;
+            script.PathAlong({{plan.east, frontNorth},
+                              {(plan.east + join.x) / 2 + bend, (frontNorth + join.z) / 2},
+                              {join.x, join.z}},
+                             2, PathKind::Gravel);
+        }
+
         // Every other exhibit gets a short, slightly bent branch from its near side to the
         // district's middle promenade. These make both lobes reachable where the loop swings away.
         for (const HabitatPlan& plan : habitats.subspan(48)) {
@@ -594,6 +651,9 @@ void Walks(Zoo& zoo, Script& script, std::span<const HabitatPlan> habitats, bool
             }
             if (plan.east > 212 && plan.north < 212) {
                 continue;  // the African sheet was joined to its own trails above
+            }
+            if (plan.east < -212 && plan.north >= 212 && plan.north < 424) {
+                continue;  // the American sheet was joined to its own trails above
             }
             const int districtNorth = plan.north < 212 ? 106 : plan.north < 424 ? 318 : 530;
             const int clearance = plan.rn + StandOffDepth(plan.species) + 2;
@@ -2935,11 +2995,19 @@ void Facilities(Zoo& zoo, Script& script, bool sideGardens, bool steppeGardens, 
         Service(zoo, script, serviceAprons, "burger_stall", 605, 137, Dir::North);
         // The northern Lion Savanna gallery is a long perimeter walk from the four trail stops.
         Service(zoo, script, serviceAprons, "drinks_stall", 349, 191, Dir::South);
+        // American stops follow the prairie, oxbow and cross-link vertices.
+        Service(zoo, script, serviceAprons, "restroom", -584, 286, Dir::South);
+        Service(zoo, script, serviceAprons, "drinks_stall", -510, 315, Dir::North);
+        Service(zoo, script, serviceAprons, "ice_cream_stand", -435, 320, Dir::South);
+        Service(zoo, script, serviceAprons, "burger_stall", -250, 348, Dir::North);
+        // Long perimeter galleries on opposite sides of the two meanders need their own small stops.
+        Service(zoo, script, serviceAprons, "drinks_stall", -369, 239, Dir::North);
+        Service(zoo, script, serviceAprons, "restroom", -569, 400, Dir::South);
         // Four stops per other sheet follow different bends of each circuit. They are deliberately
         // offset rather than stamped at page centres, and Service snaps each door to a connected
         // walk before accepting the site.
-        for (const auto& [east, north] : std::array<std::pair<int, int>, 5>{
-                 {{-424, 318}, {424, 318}, {-424, 530}, {0, 530}, {424, 530}}}) {
+        for (const auto& [east, north] :
+             std::array<std::pair<int, int>, 4>{{{424, 318}, {-424, 530}, {0, 530}, {424, 530}}}) {
             Service(zoo, script, serviceAprons, "restroom", east - 150, north + 2, Dir::South);
             Service(zoo, script, serviceAprons, "drinks_stall", east - 55, north - 3, Dir::North);
             Service(zoo, script, serviceAprons, "ice_cream_stand", east + 55, north + 3, Dir::South);
