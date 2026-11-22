@@ -39,6 +39,26 @@ cd build-probe/web/web-package && python3 -m http.server 8000
 # then http://localhost:8000/ in Chrome
 ```
 
+## Rebuilt (2026-11-22)
+
+The final WebGL 2 package was rebuilt successfully with `CCACHE_DISABLE=1` and two parallel
+jobs after the seven district redesigns, experimental `Many` crowd and indexed species-viewpoint
+fix. CMake regenerated the Emscripten build and Ninja completed all 88 steps, including linking
+`zoo-simulator.html`. The resulting `web-package/` occupies 226 MB:
+
+| file | bytes |
+|---|---:|
+| `zoo-simulator.js` | 299,283 |
+| `zoo-simulator.wasm` | 37,174,319 |
+| `zoo-simulator.data` | 198,797,117 |
+
+Static verification identifies the wasm as a version-1 WebAssembly module. Both HTML entry
+points reference `zoo-simulator.js`, whose loader references the `.data` and `.wasm` payloads.
+The managed sandbox rejected `python3 -m http.server 8765` at socket creation with `EPERM`, so
+this rebuild was not launched in a browser. That restriction is external to the generated files;
+serve `web-package/` in an environment allowed to bind a local port for the final interactive
+smoke test.
+
 ## What differs in the browser
 
 - `data/` is preloaded at `/data` beside `/assets` (`src/game/CMakeLists.txt`); the avatars of

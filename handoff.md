@@ -5,6 +5,17 @@ For the next agent, who starts without any earlier context. Read this file first
 whatever you take up (`docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `docs/VISITORS.md`,
 `docs/WEB.md`, `docs/PERFORMANCE.md`, `docs/CODEX_TASKS.md` for the history of delegated tasks).
 
+## Final verification (2026-11-22)
+
+The final Emscripten/WebGL 2 rebuild completed successfully after the district redesigns, the
+experimental 3,000-visitor setting and the indexed species-viewpoint fix. The deliverable is
+`build-probe/web/web-package/` (226 MB): 299,283-byte JavaScript, 37,174,319-byte WebAssembly
+and 198,797,117-byte preloaded data. `file` identifies the wasm as a valid version-1 module;
+both HTML entry points reference the JavaScript loader, and that loader references the data and
+wasm payloads. An HTTP browser smoke test could not be repeated because this managed sandbox
+rejects opening a listening socket with `EPERM`; the build itself completed all 88 steps and
+linked `zoo-simulator.html` without an error. See `docs/WEB.md` for the command and limitation.
+
 ## Current backlog (2026-11-22)
 
 - Treat the current 3 × 3, 4.5-times-larger estate as a long-form zoo-design project, not a
