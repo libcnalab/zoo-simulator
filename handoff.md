@@ -20,8 +20,10 @@ whatever you take up (`docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `docs/V
   third redesign: staggered habitats follow separate prairie and oxbow trails with three mixed
   cross-links, all five inherited seams and two remote-gallery services. The mid-east Asian sheet
   is the fourth redesign: mountain switchback, monsoon boardwalk, temple gateway, three mixed
-  cross-links and three remote-gallery stops. Three continental sheets still share the first-pass
-  circuit template. Cinema mode from `6e2f119`
+  cross-links and three remote-gallery stops. The north-west boreal sheet is the fifth redesign:
+  migration trail, fjord boardwalk, three ridge links and every inherited gateway. Only the
+  north-centre and north-east sheets still share the first-pass circuit template. Cinema mode from
+  `6e2f119`
   is complete: it shows one representative of each resident species for about three seconds,
   supports Left/Right and returns with C. `9c5edb4` prevents every Cinema cut from rebuilding the
   entire walker collision world when no object, fence or navigation revision changed.

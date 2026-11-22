@@ -51,7 +51,14 @@ serves macaque, elephant, rhino, tiger and red panda. A gravel temple gateway an
 cross-links create smaller loops while preserving four sheet seams and the established central
 connection. Eight services include the gateway and the remote Macaque, Rhino and Red Panda Bamboo
 galleries, so all public paths stay inside the 360 m walk limit. The inspected in-game sheet is
-`build-probe/shots/map-nine-e.png`. Three continental sheets still use the first-pass circuit
+`build-probe/shots/map-nine-e.png`.
+
+The north-west boreal district is the fifth second-pass sheet. A gravel migration trail follows
+reindeer, musk ox, Arctic fox, polar bear and wolf; a separate fjord boardwalk serves the northern
+deer, bison, lynx, bear and fox coast. Three mixed ridge links make smaller loops, while both
+southern seams, the north-centre crossing and the main-zoo gateway remain. Four services sit on
+literal migration, ridge and gateway vertices. The inspected in-game sheet is
+`build-probe/shots/map-nine-nw.png`. Two continental sheets still use the first-pass circuit
 template.
 
 Two-seed route regressions check six named surface and cross-link vertices in each redesigned
