@@ -84,11 +84,12 @@ struct CrowdLevel {
     const char* name;  ///< in the settings window
     int people;
 };
-inline constexpr std::array<CrowdLevel, 5> kCrowdLevels{{{"nobody", "Nobody", 0},
+inline constexpr std::array<CrowdLevel, 6> kCrowdLevels{{{"nobody", "Nobody", 0},
                                                          {"few", "Few", 150},
                                                          {"fewer", "Fewer", 500},
                                                          {"normal", "Normal", 800},
-                                                         {"more", "More", 1200}}};
+                                                         {"more", "More", 1200},
+                                                         {"many", "Many (experimental)", 3000}}};
 inline constexpr int kNormalCrowd = 3;
 
 /// What the player set (kept in the engine's preferences).

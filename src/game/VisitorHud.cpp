@@ -242,6 +242,9 @@ void VisitorHud::Settings(ui::Ui& ui, Visit& visit, const Box& box) {
         s.crowd = std::clamp(s.crowd + step, 0, static_cast<int>(kCrowdLevels.size()) - 1);
         visit.settingsChanged = true;
     }
+    if (s.crowd == static_cast<int>(kCrowdLevels.size()) - 1) {
+        hud::Note(ui, body, "Experimental: 3,000 simulated visitors can be much slower.");
+    }
     visit.settingsChanged |= Switch(ui, row(), "Diagnostics (F4)", s.diagnostics);
     hud::Note(ui, body, "F11 switches between a window and the full screen, F12 saves a picture.");
 }

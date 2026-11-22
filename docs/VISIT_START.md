@@ -44,6 +44,11 @@ and snow leopard families. See the six opening and continuation hashes in `docs/
 Revision 5 starts fresh visits on the 224 × 224 tile map. Its six deterministic starts are
 recorded under “East and west garden walks” in `docs/VISITOR_ZOO.md`.
 
+Revision 13 covers the completed second design pass over the nine-sheet Visitor Zoo. All seven
+new landscape districts now have their own paths, habitat positions and service sites; an older
+revision must not restore a first-pass district over the current generated plan. It also admits
+the separate `many` crowd-cache key for the experimental 3,000-person setting.
+
 In matched one-frame software-GL runs, the fresh path built and filled in 2.58 s and stored a
 2,431,686-byte entry. The second run loaded it in 0.04 s with the same state hash
 `2609457543749151601`, reducing startup through `visitors and tools` from 8.15 to 5.65 s. A

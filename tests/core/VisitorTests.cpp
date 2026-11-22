@@ -153,6 +153,17 @@ TEST(VisitorTests, AnEmptyZooDrawsAlmostNobody) {
     EXPECT_LT(zoo.Guests().Rating(), 0.6f + 1e-6f);
 }
 
+TEST(VisitorTests, CapacityAllowsTheExperimentalManyCrowd) {
+    Visitors visitors(1);
+    VisitorPace pace;
+    pace.most = 3000;
+    visitors.SetPace(pace);
+    EXPECT_EQ(visitors.Pace().most, 3000);
+    pace.most = 3001;
+    visitors.SetPace(pace);
+    EXPECT_EQ(visitors.Pace().most, 3000);
+}
+
 TEST(VisitorTests, RainKeepsPeopleAtHome) {
     const std::unique_ptr<Zoo> zoo = StarterZoo();
     AdvanceToHour(*zoo, 13.0f);

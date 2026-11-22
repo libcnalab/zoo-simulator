@@ -201,7 +201,7 @@ float PaceOf(const Visitor& visitor);
 class Visitors {
 public:
     /// The most a zoo can hold (and a save may contain); VisitorPace::most is the crowd wanted.
-    static constexpr int kMaxVisitors = 1200;
+    static constexpr int kMaxVisitors = 3000;
     static constexpr int kMaxGroupSize = 5;
     static constexpr std::size_t kMaxLitter = 1500;
 

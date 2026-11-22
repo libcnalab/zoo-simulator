@@ -143,7 +143,7 @@ bool ZooGame::ParseArgument(std::span<const std::string_view> arguments, std::si
         return true;
     }
     if (name == "--crowd" && hasValue) {
-        // The settings window's crowd (nobody, few, fewer, normal, more), for runs that do
+        // The settings window's crowd (nobody, few, fewer, normal, more, many), for runs that do
         // not read the player's preferences.
         const std::string_view value = arguments[++index];
         for (std::size_t i = 0; i < kCrowdLevels.size(); ++i) {

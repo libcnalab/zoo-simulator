@@ -76,32 +76,25 @@ ordinary press of E, because short E remains **Read the board**.
 A visual prototype is roughly 8–12 agent hours. A safe reversible implementation with simulation,
 tests and save policy is estimated at 25–40 hours; a polished danger-aware version at 50–90 hours.
 
-### Experimental `Many` visitor crowd
+### Experimental `Many` visitor crowd (implemented)
 
-Add a sixth visitor-count setting named **Many (experimental)** above the current `More` level.
-It is intentionally allowed to be slow: the purpose is to let the owner see the estate genuinely
-crowded, not to claim that every machine can run it at the normal frame rate.
+The sixth setting is **Many (experimental)** with stable preference/CLI key `many` and 3,000 real
+simulated visitors. Normal remains 800 and More 1,200. Arrivals use the existing proportional
+`CrowdPace`; increasing the setting fills through the gate and decreasing it retains the existing
+whole-group `SendHome` policy. The settings window warns that Many can be much slower.
 
-- Start at **3,000 simultaneous visitors** (2.5 times `More` and 3.75 times `Normal`) and inspect a
-  filled nine-sheet zoo. If that still does not read as exceptionally crowded and remains stable,
-  try 4,000 and 5,000 before choosing the final experimental cap. Do not change the 800-person
-  default or the existing five settings.
-- Use the stable preference/CLI key `many`, show `Many (experimental)` in settings and a concise
-  performance warning. `--crowd many` must exercise exactly the same setting in automated runs.
-- Scale arrivals with the cap through the existing `CrowdPace`; changing to Many during a visit
-  should fill progressively rather than teleporting thousands of people into view. Changing down
-  must continue to send home whole groups through the existing deterministic policy.
-- All requested visitors remain real simulated groups with destinations and path constraints.
-  Rendering may retain its bounded avatar/flat-person LOD and frustum budgets, but must not report
-  a fake crowd count or silently replace people with scenery.
-- Correctness is still mandatory even though speed is experimental: no crash or allocation
-  failure, nobody outside the estate or walking through habitats, no broken queues/group links,
-  stable save/preferences behaviour, and bounded overnight departure. Add focused crowd-setting
-  tests for the new cap and settings round-trip.
-- Record a matched Normal / More / Many benchmark after the zoo has filled: actual visitor count,
-  fill time, simulation-step time, FPS/frame percentiles, memory, people in range/view/drawn and
-  the number of flat versus full avatars. Capture and inspect at least the entrance, a busy hub and
-  a remote district. Keep the mode even if it is slow, but document the measured cost honestly.
+`Visitors::kMaxVisitors` and the save guard are both 3,000. Focused core/game tests cover the new
+capacity, six-level table, exact key/name/cap and unchanged Normal index. A real seed-1
+`--crowd many` visit reached exactly 3,000 people, spread 2,693 around all 118 habitat fronts,
+rendered its first frames and saved/reloaded the complete crowd with an identical state hash.
+Cache revision 13 prevents any pre-second-pass start from restoring an old district layout.
+
+Matched Normal / More / Many measurements and their limitations are in `docs/PERFORMANCE.md`.
+On the offscreen Mesa path Many filled in 81.3 s and measured 5.0 fps / 198.9 ms mean / 207.7 ms
+p95, 3.25 ms simulation, 89.05 ms people pass and 5,631 MB peak RSS. This is intentionally kept
+despite being slow. Inspected captures are `build-probe/shots/many-entrance.png`,
+`many-meerkat-hub.png` and `many-remote-okapi.png`; the last remains a north-east map view because
+the existing numeric-plus-species `--stand` selector did not resolve a repeated remote species.
 
 ## 0. Start here
 

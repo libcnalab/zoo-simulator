@@ -732,3 +732,30 @@ hardware forecast; they are matched evidence that the enlargement regression is 
 removed rather than hidden by deleting zoo content. Reviewed 1280x720 captures are
 `animal-lod-entrance.png`, `animal-lod-giraffe-near.png` and `animal-lod-lion-near.png` in
 `build-probe/shots`.
+
+## Experimental 3,000-person crowd (2026-11-22)
+
+The sixth crowd setting, **Many (experimental)**, keeps 3,000 real simulated visitors rather than
+decorative extras. A fresh seed-1 nine-sheet visit built all 118 habitats in 40.8 s, filled to
+exactly 3,000 people in 81.3 s and spread 2,693 of them around the estate. The resulting cache
+saved and reloaded all 3,000 people in 0.64--0.67 s with the same state hash. No crash, failed
+allocation, avatar failure or visitor-count truncation occurred.
+
+These matched 1280x720 offscreen runs used `--bench --frames 300 --lockstep --without shadows
+--without animals`; they measure 259 settled frame intervals after each fresh fill. This Mesa
+offscreen path is dominated by a roughly 100 ms engine/driver pass and is not a hardware-GPU
+forecast. It is useful for the within-run comparison, but the exact local crowd in the entrance
+frustum makes the people pass non-monotonic between More and Many.
+
+| Setting | Simulated / visible / drawn | Fill | fps | mean / p95 | simulation | people pass | peak RSS |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| Normal | 800 / 95 / 95 | 31.9 s | 8.1 | 123.3 / 127.7 ms | 1.82 ms | 8.62 ms | 5,595 MB |
+| More | 1,200 / 110 / 110 | 38.1 s | 4.9 | 202.2 / 208.4 ms | 1.97 ms | 92.34 ms | 5,624 MB |
+| Many | 3,000 / 302 / 302 | 81.3 s | 5.0 | 198.9 / 207.7 ms | 3.25 ms | 89.05 ms | 5,631 MB |
+
+Many is therefore deliberately labelled experimental and the settings window warns that it can
+be much slower. Normal remains 800. The inspected evidence is
+`build-probe/shots/many-entrance.png`, `many-meerkat-hub.png` and
+`many-remote-okapi.png`; the last is the north-east map sheet because the automated numeric-plus-
+species `--stand` selector did not resolve a repeated remote species. The entrance capture shows
+the intended dense plaza without replacing visitors by scenery.
