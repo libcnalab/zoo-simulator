@@ -123,17 +123,17 @@ struct SoundFigures {
 
 /// What the diagnostics overlay shows.
 struct VisitFigures {
-    int visitors = 0;      ///< people the simulation has in the zoo
-    int inRange = 0;       ///< near enough to be drawn
-    int inView = 0;        ///< of them in front of the eyes
-    int drawn = 0;         ///< drawn on the last frame (the nearest of those in view)
-    int castSize = 0;      ///< avatars asked of CNA
-    int castReady = 0;     ///< of them ready to be drawn
-    int castFailed = 0;    ///< of them CNA could not make
+    int visitors = 0;    ///< people the simulation has in the zoo
+    int inRange = 0;     ///< near enough to be drawn
+    int inView = 0;      ///< of them in front of the eyes
+    int drawn = 0;       ///< drawn on the last frame (the nearest of those in view)
+    int castSize = 0;    ///< avatars asked of CNA
+    int castReady = 0;   ///< of them ready to be drawn
+    int castFailed = 0;  ///< of them CNA could not make
     int animals = 0;
     int animalsDrawn = 0;
     int animalsProxied = 0;
-    int solids = 0;        ///< shapes of the collision world
+    int solids = 0;  ///< shapes of the collision world
     float framesPerSecond = 0.0f;
     Vector3 feet = Vector3(0.0f, 0.0f, 0.0f);
     float yawDegrees = 0.0f;

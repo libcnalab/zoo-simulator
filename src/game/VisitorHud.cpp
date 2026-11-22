@@ -342,11 +342,10 @@ void VisitorHud::Walking(ui::Ui& ui, Visit& visit) {
         Card(ui, visit);
 
     if (visit.cinema) {
-        const std::string progress =
-            Format("CINEMA   %d / %d", visit.cinemaIndex, visit.cinemaTotal);
+        const std::string progress = Format("CINEMA   %d / %d", visit.cinemaIndex, visit.cinemaTotal);
         const float width = ui.Paint().TextWidth(progress, theme::kSmall, true);
-        Shadowed(ui, progress, 0.5f * (screen.X - width), 18.0f, theme::kSmall,
-                 ui::Rgb(255, 255, 255, 220), true);
+        Shadowed(ui, progress, 0.5f * (screen.X - width), 18.0f, theme::kSmall, ui::Rgb(255, 255, 255, 220),
+                 true);
         KeyHints(ui, middle.X, screen.Y - 52.0f,
                  {{"Left Right", "Previous / next species"}, {"C", "Return to the visit"}}, 1.0f);
     }
@@ -498,8 +497,7 @@ void VisitorHud::Map(ui::Ui& ui, Visit& visit) {
     const float scale = std::min((screen.X - 120.0f) / spanX, (screen.Y - header - 104.0f) / spanZ);
     const Box plan{std::round(0.5f * (screen.X - spanX * scale)),
                    std::round(0.5f * (screen.Y - spanZ * scale)) + 0.5f * (header - 30.0f),
-                   std::round(spanX * scale),
-                   std::round(spanZ * scale)};
+                   std::round(spanX * scale), std::round(spanZ * scale)};
     const float panelWidth = std::min(screen.X - 12.0f, std::max(plan.w + 32.0f, 340.0f));
     const Box panel{plan.MidX() - panelWidth * 0.5f, plan.y - header, panelWidth, plan.h + header + 48.0f};
     ui.Paint().Fill({0.0f, 0.0f, screen.X, screen.Y}, ui::Rgb(0, 0, 0, 90));
@@ -518,19 +516,19 @@ void VisitorHud::Map(ui::Ui& ui, Visit& visit) {
             const Box button{left + static_cast<float>(index % 3) * buttonWidth,
                              panel.y + 6.0f + static_cast<float>(index / 3) * buttonHeight,
                              buttonWidth - 3.0f, buttonHeight - 2.0f};
-            if (ui.Button(button, labels[static_cast<std::size_t>(index)],
-                          {.selected = map.page == index, .bold = map.page == index,
-                           .size = theme::kSmall - 1.0f}))
+            if (ui.Button(
+                    button, labels[static_cast<std::size_t>(index)],
+                    {.selected = map.page == index, .bold = map.page == index, .size = theme::kSmall - 1.0f}))
                 map.page = index;
         }
     } else if (rows == 2 && columns == 1) {
         const Box upper{panel.MidX() - 112.0f, panel.y + 6.0f, 108.0f, 30.0f};
         const Box lower{panel.MidX() + 4.0f, panel.y + 6.0f, 108.0f, 30.0f};
-        if (ui.Button(upper, "Upper half", {.selected = map.page == 0, .bold = map.page == 0,
-                                             .size = theme::kSmall}))
+        if (ui.Button(upper, "Upper half",
+                      {.selected = map.page == 0, .bold = map.page == 0, .size = theme::kSmall}))
             map.page = 0;
-        if (ui.Button(lower, "Lower half", {.selected = map.page == 1, .bold = map.page == 1,
-                                             .size = theme::kSmall}))
+        if (ui.Button(lower, "Lower half",
+                      {.selected = map.page == 1, .bold = map.page == 1, .size = theme::kSmall}))
             map.page = 1;
     }
 
@@ -613,8 +611,7 @@ void VisitorHud::Map(ui::Ui& ui, Visit& visit) {
         }
     }
     for (const auto& [label, box, size] : names) {
-        ui.Paint().Round(box, 4.0f,
-                         label.habitat ? ui::Rgb(38, 34, 28, 200) : ui::Rgb(255, 255, 255, 190));
+        ui.Paint().Round(box, 4.0f, label.habitat ? ui::Rgb(38, 34, 28, 200) : ui::Rgb(255, 255, 255, 190));
         ui.Paint().Text(label.text, Vector2(box.x + 5.0f, box.y + 2.0f), size,
                         label.habitat ? ui::Rgb(250, 244, 226, 255) : ui::Rgb(60, 50, 40, 255),
                         label.habitat);
@@ -671,7 +668,8 @@ void VisitorHud::Map(ui::Ui& ui, Visit& visit) {
     const auto legend = [&](std::string_view name, ui::Rgba color, bool bold = false) {
         ui.Paint().Disc(Vector2(legendX, legendY), 5.0f, color);
         legendX += ui.Paint().Text(name, Vector2(legendX + 10.0f, legendY - 8.0f), theme::kSmall,
-                                   ui::Rgb(38, 34, 28, 255), bold) + 28.0f;
+                                   ui::Rgb(38, 34, 28, 255), bold) +
+                   28.0f;
     };
     legend("You are here", ui::Rgb(214, 40, 40, 255), true);
     legend("Habitat", ui::Rgb(34, 110, 62, 255));

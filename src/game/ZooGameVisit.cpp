@@ -166,9 +166,8 @@ void PruneVisitCaches(const std::filesystem::path& directory) {
         }
         entries.push_back({it->last_write_time(failed), it->path()});
     }
-    std::sort(entries.begin(), entries.end(), [](const Entry& a, const Entry& b) {
-        return a.written > b.written;
-    });
+    std::sort(entries.begin(), entries.end(),
+              [](const Entry& a, const Entry& b) { return a.written > b.written; });
     constexpr std::size_t kRetainedVisitCaches = 8;
     for (std::size_t index = kRetainedVisitCaches; index < entries.size(); ++index) {
         std::filesystem::remove(entries[index].path, failed);
@@ -270,12 +269,12 @@ void ZooGame::PrepareVisit(zoo::Zoo& zoo, bool fill) {
         // The people who came in first are set down all over the zoo, as if it had been
         // open since nine; the rest of the time they and the later ones settle
         // (zoo::FillForVisit, docs/VISIT_START.md).
-        const zoo::VisitStartOptions options{.day = day,
-                                             .hour = hour,
-                                             .fillTicks = warmUpTicks_ > 0 ? warmUpTicks_ : kFillTicks,
-                                             .pace = pace,
-                                             .fillArrivals = kFillArrivals * pace.arrivals /
-                                                             kVisitPeople.arrivals};
+        const zoo::VisitStartOptions options{
+            .day = day,
+            .hour = hour,
+            .fillTicks = warmUpTicks_ > 0 ? warmUpTicks_ : kFillTicks,
+            .pace = pace,
+            .fillArrivals = kFillArrivals * pace.arrivals / kVisitPeople.arrivals};
         const zoo::VisitStartReport filled = zoo::FillForVisit(zoo, options, [this](float share) {
             ShowLoading("The gates opened at nine: the morning's visitors are coming in",
                         0.3f + 0.4f * share);
@@ -341,6 +340,15 @@ void ZooGame::BeginWalk(const Pose& pose) {
     walker_.Enter(*zoo_, {pose.x, pose.z}, pose.yaw, pose.pitch);
     if (visit_.map.shapes.empty())
         BuildVisitMap();
+    // A new or loaded visit always starts under the visitor's control. In particular, do not
+    // retain a featured animal or a resident-species order from the zoo that Adopt just replaced.
+    visit_.cinema = false;
+    visit_.cinemaIndex = 0;
+    visit_.cinemaTotal = 0;
+    cinemaAnimal_ = {};
+    cinemaSpecies_.clear();
+    cinemaNext_ = 0;
+    cinemaLeft_ = 0.0f;
     visit_.screen = VisitScreen::Walking;
     visit_.window = VisitWindow::None;
     visit_.hintLeft = 14.0f;
@@ -537,8 +545,8 @@ void ZooGame::PrintVisitFigures(const char* when) const {
     std::printf(
         "zoo: visit %s: sound %s, %d recordings (%d decoded, %d failed), %d voices (%d heard), %d steps, "
         "%d calls, last \"%s\"\n",
-        when, sound.device ? "plays" : "has no device", sound.files, sound.loaded, sound.failed,
-        sound.voices, sound.audible, sound.steps, sound.calls, sound.lastCall.c_str());
+        when, sound.device ? "plays" : "has no device", sound.files, sound.loaded, sound.failed, sound.voices,
+        sound.audible, sound.steps, sound.calls, sound.lastCall.c_str());
     if (visit_.card.shown > 0.0f || !visit_.prompt.empty() || visit_.window != VisitWindow::None)
         std::printf("zoo: visit %s: looking at \"%s, %s\" (%s); E: \"%s\"; window %d\n", when,
                     visit_.card.shown > 0.0f ? visit_.card.name.c_str() : "",
@@ -604,8 +612,8 @@ void ZooGame::UpdateCinema(float seconds) {
     }
 
     const zoo::SpeciesDef& def = species_->All()[static_cast<std::size_t>(featured->species)];
-    const float size = std::max(def.bodyLengthM, def.shoulderHeightM) *
-                       zoo::BodyScale(*featured, def, zoo_->Time());
+    const float size =
+        std::max(def.bodyLengthM, def.shoulderHeightM) * zoo::BodyScale(*featured, def, zoo_->Time());
     if (changed)
         camera_.FrameFollowTarget(*position, size);
     else

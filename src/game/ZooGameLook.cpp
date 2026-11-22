@@ -143,12 +143,12 @@ void ZooGame::UpdateBoardsAndMap() {
             VisitMap& map = visit_.map;
             const float width = std::max(1.0f, map.maxX - map.minX);
             const float depth = std::max(1.0f, map.maxZ - map.minZ);
-            const int column = std::clamp(static_cast<int>((here.x - map.minX) / width *
-                                                            static_cast<float>(map.pageColumns)),
-                                          0, std::max(1, map.pageColumns) - 1);
-            const int row = std::clamp(static_cast<int>((here.z - map.minZ) / depth *
-                                                         static_cast<float>(map.pageRows)),
-                                       0, std::max(1, map.pageRows) - 1);
+            const int column = std::clamp(
+                static_cast<int>((here.x - map.minX) / width * static_cast<float>(map.pageColumns)), 0,
+                std::max(1, map.pageColumns) - 1);
+            const int row =
+                std::clamp(static_cast<int>((here.z - map.minZ) / depth * static_cast<float>(map.pageRows)),
+                           0, std::max(1, map.pageRows) - 1);
             map.page = row * std::max(1, map.pageColumns) + column;
             visit_.window = VisitWindow::Map;
             if (Automation().Options().Automated()) {
@@ -215,8 +215,8 @@ void ZooGame::SetAnimalCard(const zoo::Animal& animal, float shown) {
     card.name = animal.name;
     card.species = def.commonName;
     card.latin = def.scientificName;
-    card.about = Capital(std::string(zoo::ToString(animal.sex))) + ", " +
-                 AgeText(zoo::AgeYears(animal, zoo_->Time()));
+    card.about =
+        Capital(std::string(zoo::ToString(animal.sex))) + ", " + AgeText(zoo::AgeYears(animal, zoo_->Time()));
     card.doing = ActivityText(animal);
     card.shown = shown;
 }
@@ -240,17 +240,14 @@ void ZooGame::OpenBoard(const zoo::Prop& board) {
         BoardText text;
         text.title = zoo_->Config().name;
         text.latin = "Welcome to the zoo";
-        text.rows.emplace_back(
-            "Open today", ClockText(zoo::visitor_tuning::kOpeningHour) + " - " +
-                              ClockText(zoo::visitor_tuning::kClosingHour));
+        text.rows.emplace_back("Open today", ClockText(zoo::visitor_tuning::kOpeningHour) + " - " +
+                                                 ClockText(zoo::visitor_tuning::kClosingHour));
         text.rows.emplace_back("Last admission", ClockText(zoo::visitor_tuning::kLastAdmissionHour));
         const std::size_t animals = std::ranges::count_if(
             zoo_->Fauna().All(), [](const zoo::Animal& animal) { return animal.InWorld(); });
-        text.rows.emplace_back(
-            "Animals today",
-            Format("%zu in %zu habitats", animals, zoo_->Habitats().All().size()));
-        text.facts = {"Follow the paths to the animal habitats.",
-                      "Press M to see the visitor map.",
+        text.rows.emplace_back("Animals today",
+                               Format("%zu in %zu habitats", animals, zoo_->Habitats().All().size()));
+        text.facts = {"Follow the paths to the animal habitats.", "Press M to see the visitor map.",
                       "Press E beside a habitat board to learn about its animals."};
         visit_.board = std::move(text);
         visit_.window = VisitWindow::Board;
@@ -336,12 +333,12 @@ std::optional<ZooGame::Pose> ZooGame::StandPose(std::string_view what) const {
                 const float sx = to.x - from.x;
                 const float sz = to.z - from.z;
                 const float length2 = std::max(sx * sx + sz * sz, 1.0e-4f);
-                const int samples = std::max(
-                    1, static_cast<int>(std::ceil(std::sqrt(length2) / (0.25f * zoo::kTileSize))));
+                const int samples =
+                    std::max(1, static_cast<int>(std::ceil(std::sqrt(length2) / (0.25f * zoo::kTileSize))));
                 for (int sample = 1; sample < samples; ++sample) {
                     const float along = static_cast<float>(sample) / static_cast<float>(samples);
-                    const zoo::TileCoord tile = zoo::World::TileAt(
-                        {from.x + along * sx, from.z + along * sz});
+                    const zoo::TileCoord tile =
+                        zoo::World::TileAt({from.x + along * sx, from.z + along * sz});
                     if (zoo_->Map().InBounds(tile) && zoo_->Map().At(tile).building)
                         return true;
                 }
@@ -439,19 +436,15 @@ std::optional<ZooGame::Pose> ZooGame::StandPose(std::string_view what) const {
                     // Devalue an end panel where the service barrier fills one side of the
                     // frame, but do not let that preference outweigh an unobstructed animal.
                     const zoo::Dir barrierSide = zoo::Opposite(spot.side);
-                    const bool horizontal = barrierSide == zoo::Dir::North ||
-                                            barrierSide == zoo::Dir::South;
+                    const bool horizontal = barrierSide == zoo::Dir::North || barrierSide == zoo::Dir::South;
                     int span = 0;
-                    for (const zoo::Dir along : horizontal
-                                                   ? std::array{zoo::Dir::East, zoo::Dir::West}
-                                                   : std::array{zoo::Dir::North, zoo::Dir::South}) {
+                    for (const zoo::Dir along : horizontal ? std::array{zoo::Dir::East, zoo::Dir::West}
+                                                           : std::array{zoo::Dir::North, zoo::Dir::South}) {
                         const zoo::TileCoord beside = inside + zoo::Step(along);
-                        if (!zoo_->Map().InBounds(beside) ||
-                            !(zoo_->Habitats().At(beside) == enclosure.id))
+                        if (!zoo_->Map().InBounds(beside) || !(zoo_->Habitats().At(beside) == enclosure.id))
                             continue;
                         const zoo::Fence neighbour = zoo_->Map().FenceOn(beside, barrierSide);
-                        const zoo::FenceDef* neighbourDef =
-                            zoo_->Definitions().FenceByKind(neighbour.kind);
+                        const zoo::FenceDef* neighbourDef = zoo_->Definitions().FenceByKind(neighbour.kind);
                         span += !neighbour.gate && neighbourDef != nullptr &&
                                         neighbourDef->style == barrierDef->style
                                     ? 1
@@ -553,7 +546,8 @@ std::optional<ZooGame::Pose> ZooGame::StandPose(std::string_view what) const {
             const bool atJob = member.working && task != nullptr && task->work != zoo::StaffActivity::Rest;
             if (wanted == 0 ? !atJob : member.id.value != static_cast<std::uint32_t>(wanted))
                 continue;
-            if (!only.empty() && (task == nullptr || zoo::ToString(member.working ? task->work : member.activity) != only))
+            if (!only.empty() &&
+                (task == nullptr || zoo::ToString(member.working ? task->work : member.activity) != only))
                 continue;
             constexpr float kNearest = 4.5f;
             constexpr int kReach = 9;  // tiles
@@ -575,13 +569,15 @@ std::optional<ZooGame::Pose> ZooGame::StandPose(std::string_view what) const {
             }
             const float dx = member.position.x - at.x;
             const float dz = member.position.z - at.z;
-            std::fprintf(stderr, "zoo: keeper %u (%s) %s, %.1f m away at %.1f, %.1f\n", member.id.value,
-                         std::string(zoo::DisplayName(member.role)).c_str(),
-                         std::string(zoo::Describe(member.working && task != nullptr ? task->work : member.activity))
-                             .c_str(),
-                         static_cast<double>(std::hypot(dx, dz)), static_cast<double>(member.position.x),
-                         static_cast<double>(member.position.z));
-            return Pose{at.x, at.z, std::atan2(dx, dz), std::clamp(std::atan2(0.75f, std::hypot(dx, dz)), 0.0f, 0.3f)};
+            std::fprintf(
+                stderr, "zoo: keeper %u (%s) %s, %.1f m away at %.1f, %.1f\n", member.id.value,
+                std::string(zoo::DisplayName(member.role)).c_str(),
+                std::string(zoo::Describe(member.working && task != nullptr ? task->work : member.activity))
+                    .c_str(),
+                static_cast<double>(std::hypot(dx, dz)), static_cast<double>(member.position.x),
+                static_cast<double>(member.position.z));
+            return Pose{at.x, at.z, std::atan2(dx, dz),
+                        std::clamp(std::atan2(0.75f, std::hypot(dx, dz)), 0.0f, 0.3f)};
         }
     }
     return std::nullopt;
@@ -649,12 +645,12 @@ void ZooGame::BuildVisitMap() {
     } else if (planDepth > 600.0f) {
         map.pageRows = 2;
     }
-    const int column = std::clamp(static_cast<int>((walker_.Position().x - map.minX) / planWidth *
-                                                    static_cast<float>(map.pageColumns)),
-                                  0, map.pageColumns - 1);
-    const int row = std::clamp(static_cast<int>((walker_.Position().z - map.minZ) / planDepth *
-                                                 static_cast<float>(map.pageRows)),
-                               0, map.pageRows - 1);
+    const int column = std::clamp(
+        static_cast<int>((walker_.Position().x - map.minX) / planWidth * static_cast<float>(map.pageColumns)),
+        0, map.pageColumns - 1);
+    const int row = std::clamp(
+        static_cast<int>((walker_.Position().z - map.minZ) / planDepth * static_cast<float>(map.pageRows)), 0,
+        map.pageRows - 1);
     map.page = row * map.pageColumns + column;
     map.shapes.insert(map.shapes.begin(),
                       {map.minX, map.minZ, map.maxX - map.minX, map.maxZ - map.minZ, Kind::Ground});
@@ -853,9 +849,9 @@ void ZooGame::AddMapPlaces(VisitMap& map) const {
     const auto picnicArea = [&](const VisitMap::Place& place) {
         zoo_->Objects().PropsNear({place.x, place.z}, 18.0f, nearby);
         return std::ranges::count_if(nearby, [&](zoo::PropId id) {
-            const zoo::Prop* prop = zoo_->Objects().FindProp(id);
-            return prop && prop->def == picnicTable;
-        }) >= 2;
+                   const zoo::Prop* prop = zoo_->Objects().FindProp(id);
+                   return prop && prop->def == picnicTable;
+               }) >= 2;
     };
     for (Group& group : groups) {
         if (group.education)
@@ -883,7 +879,7 @@ void ZooGame::AddMapPlaces(VisitMap& map) const {
         const VisitMap::Label* near = nullptr;
         for (const auto& label : map.labels)
             if (label.habitat && (near == nullptr || std::hypot(label.x - place.x, label.z - place.z) <
-                                                       std::hypot(near->x - place.x, near->z - place.z)))
+                                                         std::hypot(near->x - place.x, near->z - place.z)))
                 near = &label;
         if (near != nullptr)
             place.name += " by " + near->text;
