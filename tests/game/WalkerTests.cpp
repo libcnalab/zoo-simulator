@@ -44,7 +44,7 @@ constexpr float kSlack = 0.02f;
 constexpr std::array<Dir, 4> kSides{Dir::North, Dir::East, Dir::South, Dir::West};
 
 /// Greenhill Zoo as the game builds it for a visit, once for the whole program.
-const zoo::Zoo& Greenhill() {
+zoo::Zoo& Greenhill() {
     static const std::unique_ptr<zoo::Zoo> zoo = [] {
         auto made = std::make_unique<zoo::Zoo>(zoo::testdata::GameCatalog(), zoo::testdata::GameSpecies(),
                                                zoo::VisitorZooConfig(1));
@@ -53,7 +53,8 @@ const zoo::Zoo& Greenhill() {
         // boardwalk is a temporary obstacle in play, tested separately in a stocked aviary.
         for (const zoo::Animal& resident : made->Fauna().All()) {
             const auto* home = made->Habitats().Find(resident.home);
-            if (home && home->walkThrough) made->Fauna().Crate(resident.id);
+            if (home && home->walkThrough)
+                made->Fauna().Crate(resident.id);
         }
         return made;
     }();
@@ -71,6 +72,31 @@ TEST(Walker, DamagedSavedHeadingsAreReducedInBoundedTime) {
         EXPECT_TRUE(std::isfinite(walker.Yaw()));
         EXPECT_LE(std::abs(walker.Yaw()), kPi);
     }
+}
+
+TEST(Walker, ApocalypsePatchesOnlyItsGateSolidsWithoutRebuildingTheEstate) {
+    zoo::Zoo& zoo = Greenhill();
+    Walker walker;
+    walker.Enter(zoo, World::TileCenter(zoo.Map().EntranceTile()), kPi);
+    const std::size_t closedShapes = walker.Shapes();
+    std::string error;
+    ASSERT_TRUE(zoo.EnableApocalypse(&error)) << error;
+    const std::size_t breaches = zoo.Apocalypse().breaches.size();
+
+    const auto openedAt = std::chrono::steady_clock::now();
+    walker.Update(zoo, {}, kFrame);
+    const double openSeconds =
+        std::chrono::duration<double>(std::chrono::steady_clock::now() - openedAt).count();
+    EXPECT_EQ(walker.Shapes() + breaches, closedShapes);
+    EXPECT_LT(openSeconds, 2.0) << "the full estate collision world was rebuilt";
+
+    zoo.DisableApocalypse();
+    const auto closedAt = std::chrono::steady_clock::now();
+    walker.Update(zoo, {}, kFrame);
+    const double closeSeconds =
+        std::chrono::duration<double>(std::chrono::steady_clock::now() - closedAt).count();
+    EXPECT_EQ(walker.Shapes(), closedShapes);
+    EXPECT_LT(closeSeconds, 2.0) << "the full estate collision world was rebuilt";
 }
 
 TEST(Walker, MapLandingsKeepBodyRoomAroundFurniture) {
@@ -206,7 +232,8 @@ std::string Forbidden(const zoo::Zoo& zoo, Vec2 p) {
     switch (zoo.Habitats().RegionAt(tile)) {
         case Region::Enclosure: {
             const zoo::Enclosure* home = zoo.Habitats().Find(zoo.Habitats().At(tile));
-            if (home && home->walkThrough && map.At(tile).path != zoo::PathKind::None) break;
+            if (home && home->walkThrough && map.At(tile).path != zoo::PathKind::None)
+                break;
             return "the habitat " + (home != nullptr ? home->name : std::string("?"));
         }
         case Region::StandOff:

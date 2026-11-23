@@ -8,11 +8,11 @@
 #include <cstdlib>
 #include <numbers>
 
-#include "CnaEngine/Collision/StaticWorld.hpp"
-#include "Microsoft/Xna/Framework/Ray.hpp"
 #include "BuildingModels.hpp"
+#include "CnaEngine/Collision/StaticWorld.hpp"
 #include "FenceModels.hpp"
 #include "GroundPaint.hpp"
+#include "Microsoft/Xna/Framework/Ray.hpp"
 #include "ModelSight.hpp"
 #include "PlantModels.hpp"
 #include "PropModels.hpp"
@@ -55,8 +55,7 @@ bool IsEntrance(zoo::Fence fence) {
 }
 
 bool HasFurnitureLod(const zoo::PropDef& def) {
-    return def.look == "lamp" || def.look == "bin" || def.look == "bench" ||
-           def.look == "picnic_table";
+    return def.look == "lamp" || def.look == "bin" || def.look == "bench" || def.look == "picnic_table";
 }
 
 /// Where the public stands: a path or the planted strip before a barrier.
@@ -72,8 +71,10 @@ bool PublicSide(const zoo::World& world, zoo::TileCoord tile) {
 /// 0 when both or neither side is public. Across(a, b) points to the tile north of a
 /// horizontal edge and east of a vertical one.
 int AnimalSide(const zoo::World& world, const zoo::EdgeRef& edge) {
-    const zoo::TileCoord across = edge.horizontal ? zoo::TileCoord{edge.x, edge.z - 1} : zoo::TileCoord{edge.x, edge.z};
-    const zoo::TileCoord behind = edge.horizontal ? zoo::TileCoord{edge.x, edge.z} : zoo::TileCoord{edge.x - 1, edge.z};
+    const zoo::TileCoord across =
+        edge.horizontal ? zoo::TileCoord{edge.x, edge.z - 1} : zoo::TileCoord{edge.x, edge.z};
+    const zoo::TileCoord behind =
+        edge.horizontal ? zoo::TileCoord{edge.x, edge.z} : zoo::TileCoord{edge.x - 1, edge.z};
     const bool publicAcross = PublicSide(world, across);
     const bool publicBehind = PublicSide(world, behind);
     if (publicAcross == publicBehind) {
@@ -95,7 +96,8 @@ struct FenceGroup {
     std::vector<FenceRow> rows;
 
     void Add(const FenceRow& row) {
-        bounds = rows.empty() ? row.bounds : Microsoft::Xna::Framework::BoundingBox::CreateMerged(bounds, row.bounds);
+        bounds = rows.empty() ? row.bounds
+                              : Microsoft::Xna::Framework::BoundingBox::CreateMerged(bounds, row.bounds);
         rows.push_back(row);
     }
 };
@@ -124,9 +126,8 @@ void WritePanel(ModelBuilder& model, const zoo::World& world, const zoo::Catalog
                     ground = std::min(ground, world.VertexHeight(x + i, z));
                 }
                 const float width = static_cast<float>(run) * kTile;
-                model.SetTransform(
-                    Matrix::CreateTranslation(static_cast<float>(x) * kTile + width * 0.5f, ground,
-                                              static_cast<float>(z) * kTile));
+                model.SetTransform(Matrix::CreateTranslation(static_cast<float>(x) * kTile + width * 0.5f,
+                                                             ground, static_cast<float>(z) * kTile));
                 BuildEntranceArch(model, width);
                 model.ClearTransform();
             }
@@ -145,8 +146,7 @@ void WritePanel(ModelBuilder& model, const zoo::World& world, const zoo::Catalog
 }
 
 void WritePost(ModelBuilder& model, const zoo::World& world, const zoo::Catalog& catalog, int vx, int vz) {
-    const zoo::EdgeRef around[4] = {
-        {vx - 1, vz, true}, {vx, vz, true}, {vx, vz - 1, false}, {vx, vz, false}};
+    const zoo::EdgeRef around[4] = {{vx - 1, vz, true}, {vx, vz, true}, {vx, vz - 1, false}, {vx, vz, false}};
     FenceLook best;
     bool any = false;
     bool gatePost = false;
@@ -175,8 +175,8 @@ void WritePost(ModelBuilder& model, const zoo::World& world, const zoo::Catalog&
 
 // ModelBuilder appends vertices to persistent material streams. Advance one cursor per
 // material so even an arch extending beyond its row gets the bounds of its actual mesh.
-std::optional<Microsoft::Xna::Framework::BoundingBox> OpaqueBoundsSince(
-    const ModelBuilder& model, std::vector<std::size_t>& cursors) {
+std::optional<Microsoft::Xna::Framework::BoundingBox> OpaqueBoundsSince(const ModelBuilder& model,
+                                                                        std::vector<std::size_t>& cursors) {
     using Microsoft::Xna::Framework::BoundingBox;
     std::optional<BoundingBox> bounds;
     cursors.resize(model.Parts().size());
@@ -197,7 +197,8 @@ std::optional<Microsoft::Xna::Framework::BoundingBox> OpaqueBoundsSince(
     return bounds;
 }
 
-void WriteRow(ModelBuilder& model, const zoo::World& world, const zoo::Catalog& catalog, const FenceRow& row) {
+void WriteRow(ModelBuilder& model, const zoo::World& world, const zoo::Catalog& catalog,
+              const FenceRow& row) {
     for (int x = row.first; x < row.end; ++x) {
         if (row.posts)
             WritePost(model, world, catalog, x, row.z);
@@ -229,10 +230,10 @@ struct SceneryRenderer::Cell {
     bool furnitureShowsFar = false;
 
     float HorizontalDistanceSquared(const Vector3& eye) const {
-        const float dx = std::max({static_cast<float>(x0) * kTile - eye.X, 0.0f,
-                                   eye.X - static_cast<float>(x1) * kTile});
-        const float dz = std::max({static_cast<float>(z0) * kTile - eye.Z, 0.0f,
-                                   eye.Z - static_cast<float>(z1) * kTile});
+        const float dx =
+            std::max({static_cast<float>(x0) * kTile - eye.X, 0.0f, eye.X - static_cast<float>(x1) * kTile});
+        const float dz =
+            std::max({static_cast<float>(z0) * kTile - eye.Z, 0.0f, eye.Z - static_cast<float>(z1) * kTile});
         return dx * dx + dz * dz;
     }
 
@@ -265,10 +266,10 @@ struct SceneryRenderer::Grove {
     Microsoft::Xna::Framework::BoundingBox treeBounds;
 
     bool UseFar(const Vector3& eye) {
-        const float dx = std::max({static_cast<float>(x0) * kTile - eye.X, 0.0f,
-                                   eye.X - static_cast<float>(x1) * kTile});
-        const float dz = std::max({static_cast<float>(z0) * kTile - eye.Z, 0.0f,
-                                   eye.Z - static_cast<float>(z1) * kTile});
+        const float dx =
+            std::max({static_cast<float>(x0) * kTile - eye.X, 0.0f, eye.X - static_cast<float>(x1) * kTile});
+        const float dz =
+            std::max({static_cast<float>(z0) * kTile - eye.Z, 0.0f, eye.Z - static_cast<float>(z1) * kTile});
         const float dy = eye.Y - ground;
         const float square = dx * dx + dy * dy + dz * dz;
         if (square > kFarBeyond * kFarBeyond)
@@ -382,14 +383,13 @@ void SceneryRenderer::UpdateHoldingGates(const zoo::Zoo& zoo, double seconds) {
             if (def.role != zoo::BuildingRole::AnimalShelter) {
                 continue;
             }
-            const zoo::Vec2 front = zoo::World::TileCenter(
-                zoo::FrontTile(def, building->origin, building->facing));
+            const zoo::Vec2 front =
+                zoo::World::TileCenter(zoo::FrontTile(def, building->origin, building->facing));
             bool assigned = false;
             bool housed = true;
             for (const zoo::Animal& animal : zoo.Fauna().All()) {
                 if (!animal.InWorld() ||
-                    (animal.home != member.lockout &&
-                     zoo.Habitats().At(animal.position) != member.lockout)) {
+                    (animal.home != member.lockout && zoo.Habitats().At(animal.position) != member.lockout)) {
                     continue;
                 }
                 if (animal.shelter == id) {
@@ -417,8 +417,8 @@ void SceneryRenderer::UpdateHoldingGates(const zoo::Zoo& zoo, double seconds) {
                             ground, zoo.Map().VertexHeight(building->origin.x + x, building->origin.z + z));
                     }
                 }
-                const zoo::Vec2 inside = zoo::World::TileCenter(
-                    zoo::DoorTile(def, building->origin, building->facing));
+                const zoo::Vec2 inside =
+                    zoo::World::TileCenter(zoo::DoorTile(def, building->origin, building->facing));
                 const zoo::Vec2 doorway = (inside + front) * 0.5f;
                 gate.placement = Placement({doorway.x, ground, doorway.z}, FacingAngle(building->facing));
             }
@@ -674,7 +674,8 @@ void SceneryRenderer::BuildGrove(const zoo::World& world, const zoo::ZooObjects&
         if (!fullDetail_)
             build(far, PlantDetail::Far);
         if (tree) {
-            grove.treeBounds = grove.trees.empty() ? bounds : BoundingBox::CreateMerged(grove.treeBounds, bounds);
+            grove.treeBounds =
+                grove.trees.empty() ? bounds : BoundingBox::CreateMerged(grove.treeBounds, bounds);
             grove.trees.push_back({id, prop->def, placement, bounds});
         }
         heights += position.Y;
@@ -698,8 +699,6 @@ void SceneryRenderer::BuildGrove(const zoo::World& world, const zoo::ZooObjects&
 
 void SceneryRenderer::Update(const zoo::World& world, const zoo::ZooObjects& objects, int maxCells,
                              std::optional<Vector3> eye) {
-    if (editCacheDiscarded_)
-        return;
     if (cells_.empty() || world.Width() != width_ || world.Depth() != depth_) {
         Layout(world);
     }
@@ -710,11 +709,12 @@ void SceneryRenderer::Update(const zoo::World& world, const zoo::ZooObjects& obj
             if (worldChanged) {
                 cell->fenceWanted = FenceHash(world, *cell);
             }
-            cell->objectWanted = ObjectHash(world, objects, *cell);
+            if (!editCacheDiscarded_)
+                cell->objectWanted = ObjectHash(world, objects, *cell);
         }
-        for (auto& grove : groves_) {
-            grove->wanted = GroveHash(world, objects, *grove);
-        }
+        if (!editCacheDiscarded_)
+            for (auto& grove : groves_)
+                grove->wanted = GroveHash(world, objects, *grove);
         worldRevision_ = world.Revision();
         objectsRevision_ = objects.Revision();
         pending_ = true;
@@ -726,7 +726,8 @@ void SceneryRenderer::Update(const zoo::World& world, const zoo::ZooObjects& obj
     pending_ = false;
     for (auto& cell : cells_) {
         const bool fences = !cell->fencesBuilt || cell->fenceHash != cell->fenceWanted;
-        const bool things = !cell->objectsBuilt || cell->objectHash != cell->objectWanted;
+        const bool things =
+            !editCacheDiscarded_ && (!cell->objectsBuilt || cell->objectHash != cell->objectWanted);
         if (!fences && !things) {
             continue;
         }
@@ -746,6 +747,11 @@ void SceneryRenderer::Update(const zoo::World& world, const zoo::ZooObjects& obj
         }
         --budget;
     }
+    // A read-only visit releases the large plant-atlas construction cache. Fence batches do
+    // not use that cache and remain live: apocalypse gates can therefore disappear over a few
+    // bounded frames without reconstructing buildings or vegetation.
+    if (editCacheDiscarded_)
+        return;
     for (auto& grove : groves_) {
         const bool changed = !grove->built || grove->hash != grove->wanted;
         const bool wantsNear = fullDetail_ || (eye && !grove->UseFar(*eye));
@@ -776,7 +782,7 @@ void SceneryRenderer::DiscardEditCache(bool discardCpuTextureCopies) {
 }
 
 std::optional<float> SceneryRenderer::ObstructionInSight(const zoo::World& world, const Vector3& eye,
-                                                       const Vector3& direction, float reach) {
+                                                         const Vector3& direction, float reach) {
     const Microsoft::Xna::Framework::Ray ray(eye, direction);
     std::optional<float> nearest;
     for (const auto& cell : cells_) {
@@ -876,12 +882,10 @@ void SceneryRenderer::Submit(CnaEngine::App::Frame& frame, const Vector3& eye) {
     for (const auto& [id, gate] : holdingGates_) {
         (void)id;
         holdingGateGuides_.Submit(
-            frame, Matrix::CreateTranslation(kRailOffset * gate.slideDirection, 0.0f, 0.0f) *
-                       gate.placement);
-        holdingGateModel_.Submit(
-            frame, Matrix::CreateTranslation((1.0f - gate.closed) * kSlide * gate.slideDirection,
-                                             0.0f, 0.0f) *
-                       gate.placement);
+            frame, Matrix::CreateTranslation(kRailOffset * gate.slideDirection, 0.0f, 0.0f) * gate.placement);
+        holdingGateModel_.Submit(frame, Matrix::CreateTranslation(
+                                            (1.0f - gate.closed) * kSlide * gate.slideDirection, 0.0f, 0.0f) *
+                                            gate.placement);
     }
 }
 
@@ -899,26 +903,23 @@ void SceneryRenderer::Submit(CnaEngine::App::Frame& frame) const {
     for (const auto& [id, gate] : holdingGates_) {
         (void)id;
         holdingGateGuides_.Submit(
-            frame, Matrix::CreateTranslation(kRailOffset * gate.slideDirection, 0.0f, 0.0f) *
-                       gate.placement);
-        holdingGateModel_.Submit(
-            frame, Matrix::CreateTranslation((1.0f - gate.closed) * kSlide * gate.slideDirection,
-                                             0.0f, 0.0f) *
-                       gate.placement);
+            frame, Matrix::CreateTranslation(kRailOffset * gate.slideDirection, 0.0f, 0.0f) * gate.placement);
+        holdingGateModel_.Submit(frame, Matrix::CreateTranslation(
+                                            (1.0f - gate.closed) * kSlide * gate.slideDirection, 0.0f, 0.0f) *
+                                            gate.placement);
     }
 }
 
 std::size_t SceneryRenderer::Triangles() const {
     std::size_t total = 0;
     for (const auto& cell : cells_) {
-        total += cell->fences.Triangles() + cell->objects.Triangles() +
-                 cell->furnitureNear.Triangles() + cell->furnitureFar.Triangles();
+        total += cell->fences.Triangles() + cell->objects.Triangles() + cell->furnitureNear.Triangles() +
+                 cell->furnitureFar.Triangles();
     }
     for (const auto& grove : groves_) {
         total += grove->near.Triangles() + grove->far.Triangles();
     }
-    total += holdingGates_.size() *
-             (holdingGateModel_.Triangles() + holdingGateGuides_.Triangles());
+    total += holdingGates_.size() * (holdingGateModel_.Triangles() + holdingGateGuides_.Triangles());
     return total;
 }
 
@@ -976,9 +977,8 @@ std::string SceneryRenderer::Tally(const zoo::ZooObjects& objects) const {
               [](const Line& a, const Line& b) { return a.each * a.count > b.each * b.count; });
     std::string text = "  draw calls a cell (fences+objects+furniture near/far):";
     for (const auto& cell : cells_) {
-        text += " " + std::to_string(cell->fences.Pieces()) + "+" +
-                std::to_string(cell->objects.Pieces()) + "+" +
-                std::to_string(cell->furnitureNear.Pieces()) + "/" +
+        text += " " + std::to_string(cell->fences.Pieces()) + "+" + std::to_string(cell->objects.Pieces()) +
+                "+" + std::to_string(cell->furnitureNear.Pieces()) + "/" +
                 std::to_string(cell->furnitureFar.Pieces());
     }
     text += "\n";
@@ -1009,8 +1009,8 @@ std::string SceneryRenderer::Tally(const zoo::ZooObjects& objects) const {
 std::size_t SceneryRenderer::DrawCalls() const {
     std::size_t total = 0;
     for (const auto& cell : cells_) {
-        total += cell->fences.Pieces() + cell->objects.Pieces() +
-                 cell->furnitureNear.Pieces() + cell->furnitureFar.Pieces();
+        total += cell->fences.Pieces() + cell->objects.Pieces() + cell->furnitureNear.Pieces() +
+                 cell->furnitureFar.Pieces();
     }
     for (const auto& grove : groves_) {
         total += grove->near.Pieces() + grove->far.Pieces();

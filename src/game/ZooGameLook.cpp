@@ -128,34 +128,38 @@ void ZooGame::UpdateBoardsAndMap() {
         const float dz = boardRead_.z - here.z;
         if ((keys && controls_.Pressed(Keys::E)) || dx * dx + dz * dz > kBoardLeave * kBoardLeave)
             visit_.window = VisitWindow::None;
-    } else if (keys && controls_.Pressed(Keys::E) && boardInReach_) {
+    } else if (keys && controls_.Released(Keys::E) && !apocalypseTriggeredThisHold_ && boardInReach_) {
         if (const zoo::Prop* prop = zoo_->Objects().FindProp(boardInReach_))
             OpenBoard(*prop);
     }
     if (keys && controls_.Pressed(Keys::M)) {
-        if (visit_.window == VisitWindow::Map) {
-            visit_.window = VisitWindow::None;
+        if (visit_.apocalypse) {
+            visit_.Flash("Map travel is unavailable during APOCALYPSE", 2.5f);
         } else {
-            // The 809,000-tile nine-sheet plan is prepared once in BeginWalk. Opening it only
-            // chooses the sheet containing the visitor, so M responds in this frame.
-            if (visit_.map.shapes.empty())
-                BuildVisitMap();
-            VisitMap& map = visit_.map;
-            const float width = std::max(1.0f, map.maxX - map.minX);
-            const float depth = std::max(1.0f, map.maxZ - map.minZ);
-            const int column = std::clamp(
-                static_cast<int>((here.x - map.minX) / width * static_cast<float>(map.pageColumns)), 0,
-                std::max(1, map.pageColumns) - 1);
-            const int row =
-                std::clamp(static_cast<int>((here.z - map.minZ) / depth * static_cast<float>(map.pageRows)),
-                           0, std::max(1, map.pageRows) - 1);
-            map.page = row * std::max(1, map.pageColumns) + column;
-            visit_.window = VisitWindow::Map;
-            if (Automation().Options().Automated()) {
-                std::string names;
-                for (const VisitMap::Place& place : visit_.map.places)
-                    names += (names.empty() ? "" : "; ") + place.name;
-                std::printf("zoo: map: %zu places: %s\n", visit_.map.places.size(), names.c_str());
+            if (visit_.window == VisitWindow::Map) {
+                visit_.window = VisitWindow::None;
+            } else {
+                // The 809,000-tile nine-sheet plan is prepared once in BeginWalk. Opening it only
+                // chooses the sheet containing the visitor, so M responds in this frame.
+                if (visit_.map.shapes.empty())
+                    BuildVisitMap();
+                VisitMap& map = visit_.map;
+                const float width = std::max(1.0f, map.maxX - map.minX);
+                const float depth = std::max(1.0f, map.maxZ - map.minZ);
+                const int column = std::clamp(
+                    static_cast<int>((here.x - map.minX) / width * static_cast<float>(map.pageColumns)), 0,
+                    std::max(1, map.pageColumns) - 1);
+                const int row = std::clamp(
+                    static_cast<int>((here.z - map.minZ) / depth * static_cast<float>(map.pageRows)), 0,
+                    std::max(1, map.pageRows) - 1);
+                map.page = row * std::max(1, map.pageColumns) + column;
+                visit_.window = VisitWindow::Map;
+                if (Automation().Options().Automated()) {
+                    std::string names;
+                    for (const VisitMap::Place& place : visit_.map.places)
+                        names += (names.empty() ? "" : "; ") + place.name;
+                    std::printf("zoo: map: %zu places: %s\n", visit_.map.places.size(), names.c_str());
+                }
             }
         }
     }

@@ -626,6 +626,130 @@ bool Animals::Recapture(const Env& env, AnimalId id) {
     return true;
 }
 
+bool Animals::ReleaseForApocalypse(AnimalId id, EnclosureId home, Vec2 insideGate) {
+    Animal* animal = Find(id);
+    if (animal == nullptr || !animal->InWorld() || animal->loose) {
+        return false;
+    }
+    animal->home = home;
+    animal->shelter = {};
+    animal->activity = AnimalActivity::BreakOut;
+    animal->target = insideGate;
+    animal->targetProp = {};
+    animal->activityLeft = 0;
+    animal->activityTicks = 0;
+    animal->moving = DistanceSquared(animal->position, insideGate) > tuning::kMovementStartDistanceSquaredM2;
+    animal->route.clear();
+    animal->routeIndex = 0;
+    animal->stallBest = -1.0f;
+    animal->stallTicks = 0;
+    animal->following = {};
+    return true;
+}
+
+bool Animals::ReturnFromApocalypse(const Env& env, AnimalId id, EnclosureId homeId) {
+    Animal* animal = Find(id);
+    if (animal == nullptr) {
+        return false;
+    }
+    const Enclosure* home = env.enclosures.Find(homeId);
+    if (home == nullptr || animal->species < 0 ||
+        static_cast<std::size_t>(animal->species) >= env.species.All().size()) {
+        animal->activity = AnimalActivity::Crated;
+        animal->loose = false;
+        animal->shelter = {};
+        animal->moving = false;
+        animal->speed = 0.0f;
+        animal->route.clear();
+        animal->routeIndex = 0;
+        return true;
+    }
+
+    const SpeciesDef& species = env.species.All()[static_cast<std::size_t>(animal->species)];
+    const float scale = BodyScale(*animal, species, env.time);
+    const float radius = species.bodyRadiusM * scale;
+    const float wade = tuning::kWadingShoulderFraction * species.shoulderHeightM * scale;
+    const NavProfile profile = NavProfile::Animal(wade, species.canSwim);
+    std::vector<PropId> nearby;
+    std::vector<std::pair<float, TileCoord>> candidates;
+    Vec2 chosen{};
+    bool found = false;
+    for (int z = home->min.z; z <= home->max.z; ++z) {
+        for (int x = home->min.x; x <= home->max.x; ++x) {
+            const TileCoord tile{x, z};
+            if (env.enclosures.At(tile) != homeId || !env.nav.Passable(tile, profile)) {
+                continue;
+            }
+            const Vec2 candidate = World::TileCenter(tile);
+            candidates.emplace_back(DistanceSquared(candidate, World::TileCenter(home->anchor)), tile);
+        }
+    }
+    std::ranges::sort(candidates, [](const auto& a, const auto& b) {
+        if (a.first != b.first)
+            return a.first < b.first;
+        if (a.second.z != b.second.z)
+            return a.second.z < b.second.z;
+        return a.second.x < b.second.x;
+    });
+    for (const auto& [score, tile] : candidates) {
+        (void)score;
+        const Vec2 candidate = World::TileCenter(tile);
+        bool free = true;
+        env.objects.PropsNear(candidate, radius + tuning::kObstacleSearchRadiusM, nearby);
+        for (const PropId propId : nearby) {
+            const Prop* prop = std::as_const(env.objects).FindProp(propId);
+            if (prop == nullptr || prop->def < 0 ||
+                static_cast<std::size_t>(prop->def) >= env.catalog.props.size()) {
+                continue;
+            }
+            const PropDef& def = env.catalog.props[static_cast<std::size_t>(prop->def)];
+            const float clearance = radius + def.radiusM + tuning::kObstacleClearanceM;
+            if (def.blocksWalking && DistanceSquared(candidate, prop->position) < clearance * clearance) {
+                free = false;
+                break;
+            }
+        }
+        for (const Animal& other : animals_) {
+            if (!free || other.id == id || !other.InWorld() || other.shelter) {
+                continue;
+            }
+            if (other.species < 0 || static_cast<std::size_t>(other.species) >= env.species.All().size()) {
+                continue;
+            }
+            const SpeciesDef& otherSpecies = env.species.All()[static_cast<std::size_t>(other.species)];
+            const float otherRadius = otherSpecies.bodyRadiusM * BodyScale(other, otherSpecies, env.time);
+            const float clearance = radius + otherRadius + tuning::kAnimalClearanceM;
+            if (DistanceSquared(candidate, other.position) < clearance * clearance) {
+                free = false;
+            }
+        }
+        if (free) {
+            chosen = candidate;
+            found = true;
+            break;
+        }
+    }
+    if (!found) {
+        animal->activity = AnimalActivity::Crated;
+        animal->shelter = {};
+    } else {
+        animal->position = chosen;
+        animal->target = chosen;
+        animal->activity = AnimalActivity::Idle;
+    }
+    animal->home = homeId;
+    animal->loose = false;
+    animal->moving = false;
+    animal->speed = 0.0f;
+    animal->targetProp = {};
+    animal->activityLeft = 0;
+    animal->activityTicks = 0;
+    animal->route.clear();
+    animal->routeIndex = 0;
+    animal->following = {};
+    return true;
+}
+
 int Animals::FoodFor(const Env& env, const Prop& feeder) const {
     if (feeder.def < 0 || static_cast<std::size_t>(feeder.def) >= env.catalog.props.size())
         return -1;
@@ -1135,7 +1259,21 @@ void Animals::StepAnimals(Env& env, const std::vector<Enclosure>& enclosures, in
             animal.routeIndex = 0;
         }
         if (animal.activity == AnimalActivity::BreakOut && completed && enclosure != nullptr) {
-            const EdgeRef edge = enclosure->weakestEdge;
+            EdgeRef edge = enclosure->weakestEdge;
+            // A deliberate spectacle opens a real service gate.  Prefer that opening when the
+            // animal has just reached its inside tile; ordinary welfare escapes retain the
+            // enclosure's weakest barrier.
+            const TileCoord reached = World::TileAt(animal.target);
+            for (const Dir side : {Dir::North, Dir::East, Dir::South, Dir::West}) {
+                const TileCoord outside = reached + zoo::Step(side);
+                if (env.enclosures.At(reached) == enclosureId && env.world.InBounds(outside) &&
+                    env.enclosures.At(outside) != enclosureId &&
+                    env.enclosures.RegionAt(outside) == Region::Public &&
+                    !env.world.FenceOn(reached, side).Exists()) {
+                    edge = EdgeOf(reached, side);
+                    break;
+                }
+            }
             TileCoord firstInside{};
             TileCoord secondInside{};
             TileCoord firstOutside{};

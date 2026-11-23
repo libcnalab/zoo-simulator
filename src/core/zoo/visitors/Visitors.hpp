@@ -157,7 +157,7 @@ struct Visitor {
     std::vector<std::uint32_t> seenEnclosures;  ///< enclosure ids it has been to, in order
     std::uint8_t unmet = 0;                     ///< bit per need it found nothing for (see VisitorTuning)
     std::uint8_t done = 0;                      ///< bit per once-a-visit thing done (see VisitorTuning)
-    std::vector<BuildingId> avoidedBuildings;  ///< services whose queue, capacity or price it rejected
+    std::vector<BuildingId> avoidedBuildings;   ///< services whose queue, capacity or price it rejected
     std::uint8_t litter = 0;                    ///< wrappers and cups in hand
     std::uint8_t lost = 0;                      ///< plans that failed in a row
     bool ticketPaid = false;
@@ -271,6 +271,9 @@ public:
     /// not saved and not part of StateHash, like the player's bystander position.
     void ClearMovingObstacles() { movingObstacles_.clear(); }
     void AddMovingObstacle(Vec2 position) { movingObstacles_.push_back(position); }
+    /// Ends only the emergency plans created by a loose animal.  Groups remain intact and make
+    /// a fresh ordinary decision on their next step.
+    void CalmAfterApocalypse();
     /// As if the zoo had been open for hours: every group that is on its feet inside
     /// (walking, standing or at a fence; not seated, served, queueing or in a house)
     /// is set down somewhere on the public paths the gate leads to, the farther in the

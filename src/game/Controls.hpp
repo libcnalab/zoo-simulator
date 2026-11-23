@@ -29,6 +29,7 @@ public:
 
     bool Down(Keys key) const { return now_.keyboard.IsKeyDown(key); }
     bool Pressed(Keys key) const { return now_.keyboard.IsKeyDown(key) && !before_.keyboard.IsKeyDown(key); }
+    bool Released(Keys key) const { return !now_.keyboard.IsKeyDown(key) && before_.keyboard.IsKeyDown(key); }
     bool Shift() const { return Down(Keys::LeftShift) || Down(Keys::RightShift); }
     bool Control() const { return Down(Keys::LeftControl) || Down(Keys::RightControl); }
 

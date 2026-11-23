@@ -273,8 +273,8 @@ public:
 
     /// Does a pedestrian at this spot encroach on a resident of a walk-through habitat?
     /// A pedestrian already too close can always step away.
-    bool CrowdsResident(const Enclosures& habitats, const SpeciesCatalog& species, GameTime now,
-                        Vec2 next, std::optional<Vec2> from = std::nullopt) const;
+    bool CrowdsResident(const Enclosures& habitats, const SpeciesCatalog& species, GameTime now, Vec2 next,
+                        std::optional<Vec2> from = std::nullopt) const;
 
     /// The animals currently inside an enclosure (by position), ascending id.
     void InEnclosure(const Env& env, EnclosureId enclosure, std::vector<AnimalId>& out) const;
@@ -327,6 +327,12 @@ public:
     /// enclosure, or crated when it has none. Emits AnimalRecaptured. False if it
     /// is not loose.
     bool Recapture(const Env& env, AnimalId id);
+    /// Starts a deliberate visible escape through the inside tile of an already open service
+    /// gate.  Shelter occupants come to the door instead of being teleported outside.
+    bool ReleaseForApocalypse(AnimalId id, EnclosureId home, Vec2 insideGate);
+    /// Places a participant back in its recorded home at a deterministic free, passable spot.
+    /// It is crated only when that habitat no longer exists or has no safe place.
+    bool ReturnFromApocalypse(const Env& env, AnimalId id, EnclosureId home);
 
     /// The food a feeder should hold for the animals living around it: among the
     /// foods the feeder accepts, the one the most animals of its enclosure eat

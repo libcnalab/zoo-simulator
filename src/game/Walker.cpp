@@ -44,7 +44,8 @@ CharacterSettings Body() {
 }
 
 /// The body stands deeper in a wall, a trunk or a post than being pushed out of it leaves it.
-bool Wedged(const CnaEngine::Collision::StaticWorld& world, const CnaEngine::Collision::CharacterController& body) {
+bool Wedged(const CnaEngine::Collision::StaticWorld& world,
+            const CnaEngine::Collision::CharacterController& body) {
     for (const auto& contact : world.Contacts(body.Body())) {
         if (std::abs(contact.normal.Y) < 0.7f && contact.depth > 0.005f)
             return true;
@@ -113,10 +114,76 @@ bool CanLandOnPath(const zoo::Zoo& zoo, zoo::TileCoord tile) {
 
 Walker::Walker() : world_(4.0f), body_(Body()) {}
 
+std::uint64_t Walker::EdgeKey(zoo::EdgeRef edge) {
+    return (static_cast<std::uint64_t>(edge.horizontal) << 63u) |
+           (static_cast<std::uint64_t>(static_cast<std::uint32_t>(edge.z)) << 31u) |
+           static_cast<std::uint32_t>(edge.x);
+}
+
+void Walker::AddFenceShape(const zoo::Zoo& zoo, zoo::EdgeRef edge, zoo::Fence fence) {
+    if (!fence.Exists() || fence.visitorGate)
+        return;
+    const zoo::World& map = zoo.Map();
+    const zoo::Catalog& catalog = zoo.Definitions();
+    const float tile = zoo::kTileSize;
+    const float x0 = static_cast<float>(edge.x) * tile;
+    const float z0 = static_cast<float>(edge.z) * tile;
+    const float x1 = x0 + (edge.horizontal ? tile : 0.0f);
+    const float z1 = z0 + (edge.horizontal ? 0.0f : tile);
+    const float a = DrawnGroundHeight(map, {x0, z0});
+    const float b = DrawnGroundHeight(map, {x1, z1});
+    const zoo::FenceDef* def = fence.kind == zoo::kPerimeterFence ? nullptr : catalog.FenceByKind(fence.kind);
+    const float height = fence.kind == zoo::kPerimeterFence
+                             ? zoo::kPerimeterHeightM
+                             : std::max(def != nullptr ? def->heightM : 1.2f, 1.0f);
+    constexpr float kHalf = 0.11f;
+    const auto shape = world_.AddBox(
+        BoundingBox(Vector3(std::min(x0, x1) - kHalf, std::min(a, b) - 1.0f, std::min(z0, z1) - kHalf),
+                    Vector3(std::max(x0, x1) + kHalf, std::max(a, b) + height, std::max(z0, z1) + kHalf)));
+    fenceShapes_.insert_or_assign(EdgeKey(edge), shape);
+}
+
+bool Walker::SyncApocalypseFences(const zoo::Zoo& zoo) {
+    std::vector<zoo::EdgeRef> current;
+    current.reserve(zoo.Apocalypse().breaches.size());
+    for (const zoo::ApocalypseBreach& breach : zoo.Apocalypse().breaches)
+        current.push_back(breach.edge);
+
+    // A spectacle transition changes exactly its recorded service gates. Any other map edit
+    // still takes the conservative full-rebuild path below.
+    const std::uint32_t changed = zoo.Map().FenceRevision() - fenceRevision_;
+    const std::size_t expected =
+        apocalypseEdges_.empty() ? current.size() : (current.empty() ? apocalypseEdges_.size() : 0u);
+    if (changed != expected)
+        return false;
+
+    std::vector<zoo::EdgeRef> edges = apocalypseEdges_;
+    edges.insert(edges.end(), current.begin(), current.end());
+    std::ranges::sort(edges, {}, [](const zoo::EdgeRef& edge) { return EdgeKey(edge); });
+    edges.erase(std::unique(edges.begin(), edges.end()), edges.end());
+    for (const zoo::EdgeRef edge : edges) {
+        const std::uint64_t key = EdgeKey(edge);
+        const auto shape = fenceShapes_.find(key);
+        const zoo::Fence fence = zoo.Map().FenceAt(edge);
+        const bool solid = fence.Exists() && !fence.visitorGate;
+        if (shape != fenceShapes_.end() && !solid) {
+            world_.Remove(shape->second);
+            fenceShapes_.erase(shape);
+        } else if (shape == fenceShapes_.end() && solid) {
+            AddFenceShape(zoo, edge, fence);
+        }
+    }
+    apocalypseEdges_ = std::move(current);
+    fenceRevision_ = zoo.Map().FenceRevision();
+    navRevision_ = zoo.Map().NavRevision();
+    return true;
+}
+
 void Walker::Rebuild(const zoo::Zoo& zoo) {
     const zoo::World& map = zoo.Map();
     const zoo::Catalog& catalog = zoo.Definitions();
     world_.Clear();
+    fenceShapes_.clear();
 
     HeightField ground;
     ground.origin = Vector3::Zero;
@@ -133,42 +200,17 @@ void Walker::Rebuild(const zoo::Zoo& zoo) {
     }
     world_.SetHeightField(std::move(ground));
 
-    const float tile = zoo::kTileSize;
-    const auto wall = [&](float x0, float z0, float x1, float z1, float height) {
-        // From under the lower end's ground to `height` above the higher end's.
-        const float a = DrawnGroundHeight(map, {x0, z0});
-        const float b = DrawnGroundHeight(map, {x1, z1});
-        constexpr float kHalf = 0.11f;
-        world_.AddBox(BoundingBox(Vector3(std::min(x0, x1) - kHalf, std::min(a, b) - 1.0f, std::min(z0, z1) - kHalf),
-                                  Vector3(std::max(x0, x1) + kHalf, std::max(a, b) + height,
-                                          std::max(z0, z1) + kHalf)));
-    };
-    const auto heightOf = [&](zoo::Fence fence) {
-        if (fence.kind == zoo::kPerimeterFence)
-            return zoo::kPerimeterHeightM;
-        const zoo::FenceDef* def = catalog.FenceByKind(fence.kind);
-        // Nobody climbs over a fence here, however low it is.
-        return std::max(def != nullptr ? def->heightM : 1.2f, 1.0f);
-    };
     // Keeper gates stay shut. Visitors can pass through an aviary curtain.
     for (int z = 0; z <= map.Depth(); ++z) {
         for (int x = 0; x < map.Width(); ++x) {
             const zoo::Fence fence = map.FenceAt({x, z, true});
-            if (fence.Exists() && !fence.visitorGate) {
-                const float fx = static_cast<float>(x) * tile;
-                const float fz = static_cast<float>(z) * tile;
-                wall(fx, fz, fx + tile, fz, heightOf(fence));
-            }
+            AddFenceShape(zoo, {x, z, true}, fence);
         }
     }
     for (int z = 0; z < map.Depth(); ++z) {
         for (int x = 0; x <= map.Width(); ++x) {
             const zoo::Fence fence = map.FenceAt({x, z, false});
-            if (fence.Exists() && !fence.visitorGate) {
-                const float fx = static_cast<float>(x) * tile;
-                const float fz = static_cast<float>(z) * tile;
-                wall(fx, fz, fx, fz + tile, heightOf(fence));
-            }
+            AddFenceShape(zoo, {x, z, false}, fence);
         }
     }
 
@@ -180,20 +222,21 @@ void Walker::Rebuild(const zoo::Zoo& zoo) {
                 continue;
             const float floor = DrawnGroundHeight(map, centre);
             const float surface = map.At({x, z}).waterLevel;
-            const float x0 = static_cast<float>(x) * tile;
-            const float z0 = static_cast<float>(z) * tile;
-            world_.AddBox(BoundingBox(Vector3(x0 + 0.2f, floor - 2.0f, z0 + 0.2f),
-                                      Vector3(x0 + tile - 0.2f, surface + 3.0f, z0 + tile - 0.2f)));
+            const float x0 = static_cast<float>(x) * zoo::kTileSize;
+            const float z0 = static_cast<float>(z) * zoo::kTileSize;
+            world_.AddBox(
+                BoundingBox(Vector3(x0 + 0.2f, floor - 2.0f, z0 + 0.2f),
+                            Vector3(x0 + zoo::kTileSize - 0.2f, surface + 3.0f, z0 + zoo::kTileSize - 0.2f)));
         }
     }
 
     for (const zoo::Building& building : zoo.Objects().Buildings()) {
         const zoo::BuildingDef& def = catalog.buildings[static_cast<std::size_t>(building.def)];
         const zoo::TileCoord size = zoo::FootprintSize(def, building.facing);
-        const float x0 = static_cast<float>(building.origin.x) * tile;
-        const float z0 = static_cast<float>(building.origin.z) * tile;
-        const float x1 = x0 + static_cast<float>(size.x) * tile;
-        const float z1 = z0 + static_cast<float>(size.z) * tile;
+        const float x0 = static_cast<float>(building.origin.x) * zoo::kTileSize;
+        const float z0 = static_cast<float>(building.origin.z) * zoo::kTileSize;
+        const float x1 = x0 + static_cast<float>(size.x) * zoo::kTileSize;
+        const float z1 = z0 + static_cast<float>(size.z) * zoo::kTileSize;
         const float floor = DrawnGroundHeight(map, {(x0 + x1) * 0.5f, (z0 + z1) * 0.5f});
         // A little inside the footprint: eaves and counters reach out to it, walls do not.
         constexpr float kInset = 0.25f;
@@ -225,12 +268,16 @@ void Walker::Rebuild(const zoo::Zoo& zoo) {
     objectsRevision_ = zoo.Objects().Revision();
     fenceRevision_ = map.FenceRevision();
     navRevision_ = map.NavRevision();
+    apocalypseEdges_.clear();
+    for (const zoo::ApocalypseBreach& breach : zoo.Apocalypse().breaches)
+        apocalypseEdges_.push_back(breach.edge);
     built_ = true;
 }
 
 void Walker::Enter(const zoo::Zoo& zoo, zoo::Vec2 at, float yaw, float pitch) {
     if (!built_ || objectsRevision_ != zoo.Objects().Revision() ||
-        fenceRevision_ != zoo.Map().FenceRevision() || navRevision_ != zoo.Map().NavRevision())
+        (fenceRevision_ != zoo.Map().FenceRevision() && !SyncApocalypseFences(zoo)) ||
+        navRevision_ != zoo.Map().NavRevision())
         Rebuild(zoo);
     const float ground = DrawnGroundHeight(zoo.Map(), at);
     body_ = CnaEngine::Collision::CharacterController(Body(), Vector3(at.x, ground, at.z));
@@ -243,7 +290,8 @@ void Walker::Enter(const zoo::Zoo& zoo, zoo::Vec2 at, float yaw, float pitch) {
 
 void Walker::Update(const zoo::Zoo& zoo, const Input& input, float seconds) {
     if (!built_ || objectsRevision_ != zoo.Objects().Revision() ||
-        fenceRevision_ != zoo.Map().FenceRevision() || navRevision_ != zoo.Map().NavRevision())
+        (fenceRevision_ != zoo.Map().FenceRevision() && !SyncApocalypseFences(zoo)) ||
+        navRevision_ != zoo.Map().NavRevision())
         Rebuild(zoo);
 
     // To the right is clockwise seen from above: the heading falls.
@@ -252,7 +300,8 @@ void Walker::Update(const zoo::Zoo& zoo, const Input& input, float seconds) {
 
     const Vector3 ahead(std::sin(yaw_), 0.0f, std::cos(yaw_));
     const Vector3 right(-std::cos(yaw_), 0.0f, std::sin(yaw_));
-    Vector3 wish = right * std::clamp(input.right, -1.0f, 1.0f) + ahead * std::clamp(input.ahead, -1.0f, 1.0f);
+    Vector3 wish =
+        right * std::clamp(input.right, -1.0f, 1.0f) + ahead * std::clamp(input.ahead, -1.0f, 1.0f);
     const float push = wish.Length();
     if (push > 1.0f)
         wish = wish * (1.0f / push);
@@ -282,7 +331,8 @@ void Walker::Update(const zoo::Zoo& zoo, const Input& input, float seconds) {
             map.At(here).path != zoo::PathKind::None && map.At(next).path == zoo::PathKind::None) {
             bank = zoo.Habitats().Find(zoo.Habitats().At(next));
         }
-        if ((bank && bank->walkThrough) || zoo.Fauna().CrowdsResident(zoo.Habitats(), zoo.SpeciesList(), zoo.Time(), Position(),
+        if ((bank && bank->walkThrough) ||
+            zoo.Fauna().CrowdsResident(zoo.Habitats(), zoo.SpeciesList(), zoo.Time(), Position(),
                                        zoo::Vec2{before.X, before.Z})) {
             body_.Teleport(world_, before);
         } else if (Wedged(world_, body_)) {

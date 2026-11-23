@@ -2,6 +2,7 @@
 #include "zoo/sim/ZooSaveJson.hpp"
 
 #include <algorithm>
+#include <cmath>
 #include <cstdint>
 #include <cstdio>
 #include <filesystem>
@@ -29,6 +30,7 @@ struct ZooAccess {
     static const std::deque<Notification>& Notifications(const Zoo& zoo) { return zoo.notifications_; }
     static std::uint32_t NextNotification(const Zoo& zoo) { return zoo.nextNotification_; }
     static std::int64_t LastScareNote(const Zoo& zoo) { return zoo.lastScareNote_; }
+    static const ApocalypseState& Apocalypse(const Zoo& zoo) { return zoo.apocalypse_; }
 
     static std::unique_ptr<Zoo> Assemble(const Catalog& catalog, const SpeciesCatalog& species,
                                          ZooConfig config, World world, ZooObjects objects, Finance finance,
@@ -62,6 +64,25 @@ struct ZooAccess {
         zoo->lastScareNote_ = lastScareNote;
         return zoo;
     }
+    static bool RestoreApocalypse(Zoo& zoo, ApocalypseState state, std::string* error) {
+        if (!state.active) {
+            zoo.apocalypse_ = {};
+            return true;
+        }
+        for (const ApocalypseBreach& breach : state.breaches) {
+            if (!zoo.world_.EdgeInBounds(breach.edge) || !breach.enclosure ||
+                zoo.enclosures_.Find(breach.enclosure) == nullptr || !breach.former.Exists() ||
+                breach.former.kind == kPerimeterFence) {
+                if (error != nullptr) {
+                    *error = "invalid Apocalypse breach";
+                }
+                return false;
+            }
+            zoo.world_.SetFence(breach.edge, {});
+        }
+        zoo.apocalypse_ = std::move(state);
+        return true;
+    }
 };
 
 namespace {
@@ -71,6 +92,62 @@ bool ViewersSaved(const Json& animals) {
     const Json& care = animals.at("care");
     return std::ranges::all_of(care,
                                [](const Json& item) { return item.is_object() && item.contains("viewers"); });
+}
+
+Json ApocalypseToJson(const ApocalypseState& state) {
+    Json breaches = Json::array();
+    for (const ApocalypseBreach& breach : state.breaches) {
+        breaches.push_back({{"enclosure", breach.enclosure.value},
+                            {"edge", {breach.edge.x, breach.edge.z, breach.edge.horizontal}},
+                            {"fence",
+                             {{"kind", breach.former.kind},
+                              {"gate", breach.former.gate},
+                              {"condition", breach.former.condition},
+                              {"visitor_gate", breach.former.visitorGate}}}});
+    }
+    Json animals = Json::array();
+    for (const ApocalypseAnimal& animal : state.animals) {
+        animals.push_back({{"animal", animal.animal.value}, {"home", animal.home.value}});
+    }
+    return {{"active", state.active}, {"breaches", std::move(breaches)}, {"animals", std::move(animals)}};
+}
+
+ApocalypseState ApocalypseFromJson(const Json& value) {
+    ApocalypseState state;
+    state.active = value.at("active").get<bool>();
+    for (const Json& item : value.at("breaches")) {
+        const Json& edge = item.at("edge");
+        const Json& fence = item.at("fence");
+        if (!edge.is_array() || edge.size() != 3) {
+            throw std::runtime_error("Apocalypse edge is damaged");
+        }
+        ApocalypseBreach breach;
+        breach.enclosure = EnclosureId{item.at("enclosure").get<std::uint32_t>()};
+        breach.edge = {edge.at(0).get<int>(), edge.at(1).get<int>(), edge.at(2).get<bool>()};
+        breach.former.kind = fence.at("kind").get<std::uint8_t>();
+        breach.former.gate = fence.at("gate").get<bool>();
+        breach.former.condition = fence.at("condition").get<float>();
+        breach.former.visitorGate = fence.at("visitor_gate").get<bool>();
+        if (!std::isfinite(breach.former.condition) || breach.former.condition < 0.0f ||
+            breach.former.condition > 1.0f) {
+            throw std::runtime_error("Apocalypse fence condition is invalid");
+        }
+        state.breaches.push_back(breach);
+    }
+    for (const Json& item : value.at("animals")) {
+        state.animals.push_back({AnimalId{item.at("animal").get<std::uint32_t>()},
+                                 EnclosureId{item.at("home").get<std::uint32_t>()}});
+    }
+    if (!state.active && (!state.breaches.empty() || !state.animals.empty())) {
+        throw std::runtime_error("inactive Apocalypse state has live records");
+    }
+    if (state.active && state.breaches.empty()) {
+        throw std::runtime_error("active Apocalypse state has no breaches");
+    }
+    if (!std::ranges::is_sorted(state.animals, {}, &ApocalypseAnimal::animal)) {
+        throw std::runtime_error("Apocalypse animals are not ordered");
+    }
+    return state;
 }
 
 // A guest remembers at most 64 species. Record the catalog once for the entire crowd.
@@ -382,7 +459,8 @@ Json ZooToJson(const Zoo& zoo) {
               {"staff", ToJson(zoo.Keepers())},
               {"notifications", std::move(notifications)},
               {"next_notification", ZooAccess::NextNotification(zoo)},
-              {"last_scare_note", ZooAccess::LastScareNote(zoo)}};
+              {"last_scare_note", ZooAccess::LastScareNote(zoo)},
+              {"apocalypse", ApocalypseToJson(ZooAccess::Apocalypse(zoo))}};
     return Json{{"format", kSaveFormat},
                 {"version", kSaveVersion},
                 {"summary", Json{{"name", zoo.Name()},
@@ -448,6 +526,24 @@ std::unique_ptr<Zoo> ZooFromJson(const Json& json, const Catalog& catalog, const
         if (body.contains("stand_off")) {
             ReadStandOff(body.at("stand_off"), *world);
         }
+        ApocalypseState apocalypse;
+        if (version >= 4) {
+            if (!body.contains("apocalypse")) {
+                throw std::runtime_error("missing Apocalypse state");
+            }
+            apocalypse = ApocalypseFromJson(body.at("apocalypse"));
+            // Reconstruct habitat identities with their real closed boundaries.  Once the Zoo
+            // and saved identities exist, RestoreApocalypse opens the recorded gates again
+            // without rebuilding regions.
+            if (apocalypse.active) {
+                for (const ApocalypseBreach& breach : apocalypse.breaches) {
+                    if (!world->EdgeInBounds(breach.edge) || world->FenceAt(breach.edge).Exists()) {
+                        throw std::runtime_error("Apocalypse breach no longer matches the open map");
+                    }
+                    world->SetFence(breach.edge, breach.former);
+                }
+            }
+        }
         std::optional<ZooObjects> objects = ObjectsFromJson(body.at("objects"), catalog, &part);
         if (!objects) {
             throw std::runtime_error("objects: " + part);
@@ -494,6 +590,9 @@ std::unique_ptr<Zoo> ZooFromJson(const Json& json, const Catalog& catalog, const
             ViewersSaved(body.at("animals")), &part);
         if (!zoo) {
             throw std::runtime_error("enclosures: " + part);
+        }
+        if (!ZooAccess::RestoreApocalypse(*zoo, std::move(apocalypse), &part)) {
+            throw std::runtime_error("Apocalypse: " + part);
         }
         return zoo;
     } catch (const std::exception& e) {

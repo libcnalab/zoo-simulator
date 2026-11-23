@@ -2,6 +2,8 @@
 #pragma once
 
 #include <cstdint>
+#include <unordered_map>
+#include <vector>
 
 #include "CnaEngine/Collision/CharacterController.hpp"
 
@@ -63,9 +65,14 @@ public:
 
 private:
     void Rebuild(const zoo::Zoo& zoo);
+    bool SyncApocalypseFences(const zoo::Zoo& zoo);
+    void AddFenceShape(const zoo::Zoo& zoo, zoo::EdgeRef edge, zoo::Fence fence);
+    static std::uint64_t EdgeKey(zoo::EdgeRef edge);
 
     CnaEngine::Collision::StaticWorld world_;
     CnaEngine::Collision::CharacterController body_;
+    std::unordered_map<std::uint64_t, CnaEngine::Collision::ShapeId> fenceShapes_;
+    std::vector<zoo::EdgeRef> apocalypseEdges_;
     std::uint32_t objectsRevision_ = 0;
     std::uint32_t fenceRevision_ = 0;
     std::uint32_t navRevision_ = 0;

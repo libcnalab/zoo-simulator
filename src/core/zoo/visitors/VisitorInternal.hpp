@@ -6,6 +6,7 @@
 
 #include <array>
 #include <cstdint>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -115,8 +116,10 @@ struct Scratch {
     std::int64_t appealTick = -1;
     float attraction = 0.0f;  ///< of the zoo, this tick
     std::int64_t attractionTick = -1;
-    std::vector<Vec2> beasts;     ///< where the animals of the enclosure in question are
-    std::vector<Threat> threats;  ///< dangerous animals on the loose
+    std::vector<Vec2> beasts;  ///< where the animals of the enclosure in question are
+    /// Dangerous loose animals, indexed in 32-metre cells so panic checks scale with nearby
+    /// threats rather than every visitor group times every escaped animal.
+    std::unordered_map<std::uint64_t, std::vector<Threat>> threatCells;
     std::vector<std::uint8_t> gone;
     /// Who stands on which tile as the tick begins (walkers look there for the people in
     /// their way): cellHead[tile] is the first of them, cellNext[visitor] the one after,

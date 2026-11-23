@@ -335,6 +335,25 @@ void VisitorHud::Walking(ui::Ui& ui, Visit& visit) {
         Shadowed(ui, visit.clock, screen.X - width - 22.0f, 16.0f, theme::kTitle, ui::Rgb(255, 255, 255, 215),
                  true);
     }
+    if (visit.apocalypse) {
+        const std::string status = "APOCALYPSE";
+        const float width = ui.Paint().TextWidth(status, theme::kBody + 2.0f, true) + 30.0f;
+        const Box plate{22.0f, 14.0f, width, 31.0f};
+        ui.Paint().Round(plate, 7.0f, ui::Rgb(125, 15, 18, 225));
+        ui.LabelIn(plate, status, theme::kBody + 2.0f, ui::Rgb(255, 236, 224, 255), Align::Center, true);
+    }
+    if (visit.apocalypseHold > 0.0f) {
+        const float width = 360.0f;
+        const Box plate{std::round(0.5f * (screen.X - width)), std::round(screen.Y * 0.67f), width, 62.0f};
+        ui.Paint().Round(plate, 8.0f, ui::Rgb(10, 14, 18, 215));
+        ui.LabelIn({plate.x + 14.0f, plate.y + 8.0f, plate.w - 28.0f, 22.0f},
+                   visit.apocalypse ? "Hold E to restore the zoo" : "Hold E to arm APOCALYPSE", theme::kBody,
+                   theme::kText, Align::Center, true);
+        const Box bar{plate.x + 20.0f, plate.y + 39.0f, plate.w - 40.0f, 8.0f};
+        ui.Paint().Round(bar, 4.0f, ui::Rgb(255, 255, 255, 45));
+        ui.Paint().Round({bar.x, bar.y, bar.w * visit.apocalypseHold, bar.h}, 4.0f,
+                         visit.apocalypse ? ui::Rgb(80, 190, 120, 255) : ui::Rgb(220, 55, 42, 255));
+    }
     if (!visit.prompt.empty())
         KeyHints(ui, middle.X, std::round(screen.Y * 0.62f), {{"E", visit.prompt}}, 1.0f);
     if (visit.window == VisitWindow::Board)

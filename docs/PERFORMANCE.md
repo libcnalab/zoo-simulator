@@ -759,3 +759,13 @@ be much slower. Normal remains 800. The inspected evidence is
 `many-remote-okapi.png`; the last is the actual north-east Okapi Rainforest view selected by
 `--stand habitat:2:okapi`. The entrance capture shows the intended dense plaza without replacing
 visitors by scenery.
+
+## Apocalypse gate transitions (2026-11-23)
+
+Opening 116 keeper gates originally invalidated the player collision world and synchronously
+rebuilt the full 1,284 × 648-tile estate, presenting as a frozen game. Fence collision shapes are
+now retained by edge and patched only for the recorded breaches. A full Greenhill regression
+opens and closes the mode, checks the exact shape-count change and requires each update to remain
+under two seconds. Static fence drawing is refreshed separately at no more than two 128-tile cells
+per frame; the discarded plant-atlas edit cache is not reconstructed. Dangerous loose-animal
+lookups use 32 m spatial cells rather than scanning every threat for every visitor group.

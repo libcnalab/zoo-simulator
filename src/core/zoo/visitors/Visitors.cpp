@@ -31,6 +31,12 @@ float PaceOf(const Visitor& visitor) {
 
 namespace {
 
+constexpr int kThreatCellTiles = 16;
+
+std::uint64_t ThreatCellKey(int x, int z) {
+    return (static_cast<std::uint64_t>(static_cast<std::uint32_t>(z)) << 32u) | static_cast<std::uint32_t>(x);
+}
+
 const ViewingSpot* SpreadFront(const ViewSite& site, const Env& env, const Animals& animals,
                                std::size_t groupSize) {
     const ViewingSpot* chosen = nullptr;
@@ -38,7 +44,8 @@ const ViewingSpot* SpreadFront(const ViewSite& site, const Env& env, const Anima
     for (const ViewingSpot& spot : site.spots) {
         const float score = DistanceSquared(World::TileCenter(spot.tile), site.centre) +
                             (spot.side == Dir::North ? 0.0f : 100000.0f);
-        if (score >= best) continue;
+        if (score >= best)
+            continue;
         bool clear = true;
         for (std::size_t slot = 0; slot < groupSize && clear; ++slot) {
             clear = !animals.CrowdsResident(env.enclosures, env.species, env.time,
@@ -52,8 +59,8 @@ const ViewingSpot* SpreadFront(const ViewSite& site, const Env& env, const Anima
     return chosen;
 }
 
-void SpreadWatchers(std::span<Visitor> group, const ViewSite& site, const ViewingSpot& spot,
-                    std::int64_t now, float linger, Rng& rng) {
+void SpreadWatchers(std::span<Visitor> group, const ViewSite& site, const ViewingSpot& spot, std::int64_t now,
+                    float linger, Rng& rng) {
     for (std::size_t member = 0; member < group.size(); ++member) {
         Visitor& visitor = group[member];
         visitor.slot = static_cast<std::uint8_t>(member);
@@ -397,6 +404,25 @@ void Visitors::Clear() {
     arrivalRemainder_ = 0.0f;
 }
 
+void Visitors::CalmAfterApocalypse() {
+    for (Visitor& visitor : visitors_) {
+        if (visitor.goal != VisitorGoal::Flee && visitor.activity != VisitorActivity::Fleeing) {
+            continue;
+        }
+        visitor.goal = VisitorGoal::None;
+        visitor.activity = VisitorActivity::Idle;
+        visitor.thought = VisitorThought::None;
+        visitor.targetEnclosure = {};
+        visitor.targetBuilding = {};
+        visitor.targetProp = {};
+        visitor.target = visitor.position;
+        visitor.route.clear();
+        visitor.routeIndex = 0;
+        visitor.speed = 0.0f;
+        visitor.reroute = false;
+    }
+}
+
 int Visitors::SendHome(int keep) {
     keep = std::max(keep, 0);
     const int before = Count();
@@ -693,12 +719,14 @@ void Stepper::BuildFrame() {
         scr.litterRevision = scr.litterEdits;
     }
 
-    scr.threats.clear();
+    scr.threatCells.clear();
     for (const Animal& animal : fauna.All()) {
         if (animal.loose && animal.InWorld() && animal.species >= 0 &&
             static_cast<std::size_t>(animal.species) < env.species.All().size() &&
             env.species.All()[static_cast<std::size_t>(animal.species)].dangerous) {
-            scr.threats.push_back({animal.id, animal.position});
+            const TileCoord tile = World::TileAt(animal.position);
+            scr.threatCells[ThreatCellKey(tile.x / kThreatCellTiles, tile.z / kThreatCellTiles)].push_back(
+                {animal.id, animal.position});
         }
     }
 }
@@ -852,10 +880,23 @@ void Stepper::EverySecond(Group g) {
         return;
     }
     if (!indoors) {
-        for (const Threat& threat : scr.threats) {
-            if (DistanceSquared(threat.position, lead.position) > kThreatM * kThreatM) {
-                continue;
+        const int cellX = tile.x / kThreatCellTiles;
+        const int cellZ = tile.z / kThreatCellTiles;
+        const Threat* nearby = nullptr;
+        for (int dz = -1; dz <= 1; ++dz) {
+            for (int dx = -1; dx <= 1; ++dx) {
+                const auto cell = scr.threatCells.find(ThreatCellKey(cellX + dx, cellZ + dz));
+                if (cell == scr.threatCells.end())
+                    continue;
+                for (const Threat& threat : cell->second) {
+                    if (DistanceSquared(threat.position, lead.position) <= kThreatM * kThreatM &&
+                        (nearby == nullptr || threat.animal < nearby->animal)) {
+                        nearby = &threat;
+                    }
+                }
             }
+        }
+        if (nearby != nullptr) {
             if (scr.budget <= 0) {
                 return;  // next second, then
             }
@@ -864,7 +905,7 @@ void Stepper::EverySecond(Group g) {
             Event event;
             event.type = EventType::VisitorScared;
             event.visitor = lead.id;
-            event.animal = threat.animal;
+            event.animal = nearby->animal;
             event.position = lead.position;
             env.Emit(event);
             if (!PlanLeave(g, VisitorGoal::Flee)) {

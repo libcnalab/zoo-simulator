@@ -1,0 +1,13 @@
+# The same public input path as a player: first release E before three seconds to prove
+# cancellation, then hold it continuously to arm the spectacle and again to restore the zoo.
+2 hold E
+100 shot ../build-probe/shots/apocalypse-hold.png
+108 release E
+118 shot ../build-probe/shots/apocalypse-cancelled.png
+130 hold E
+318 release E
+324 shot ../build-probe/shots/apocalypse-active.png
+900 shot ../build-probe/shots/apocalypse-escape.png
+920 hold E
+1108 release E
+1114 shot ../build-probe/shots/apocalypse-restored.png

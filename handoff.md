@@ -47,6 +47,14 @@ linked `zoo-simulator.html` without an error. See `docs/WEB.md` for the command 
 
 ### Apocalypse mode
 
+**Implemented and verified 2026-11-23 (local work following `9c5edb4`; see
+`docs/APOCALYPSE.md`).** Holding E uses the ordinary input path, opens 116 recorded keeper gates
+for 587 residents, persists format-4 state, routes animals and danger-aware visitor panic, and
+restores exact gates and safe home positions. The first runtime implementation rebuilt the full
+player collision estate and appeared frozen; fence shapes are now patched edge-by-edge and a
+full-estate regression caps both transitions at two seconds. The requirements below are retained
+as the acceptance record.
+
 Add a deliberately opt-in, reversible spectacle mode. It must not be possible to trigger by an
 ordinary press of E, because short E remains **Read the board**.
 
@@ -86,6 +94,14 @@ ordinary press of E, because short E remains **Read the board**.
 
 A visual prototype is roughly 8–12 agent hours. A safe reversible implementation with simulation,
 tests and save policy is estimated at 25–40 hours; a polished danger-aware version at 50–90 hours.
+
+### More animals in sparse districts
+
+The owner's 2026-11-23 follow-up is next: add genuinely new resident species with their own
+habitats where the nine-sheet estate still reads sparsely. Do not merely increase counts in old
+pens. New exhibits must join the district's authored trail, retain public and keeper access,
+welfare and performance, and disclose or replace proxy bodies rather than presenting a mismatched
+model as a new animal.
 
 ### Experimental `Many` visitor crowd (implemented)
 

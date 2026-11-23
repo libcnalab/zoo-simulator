@@ -71,6 +71,33 @@ struct Notification {
     bool operator==(const Notification&) const = default;
 };
 
+/// One deliberately opened habitat service gate.  The fence is retained verbatim so a
+/// spectacle can be undone without reconstructing it from the catalog.
+struct ApocalypseBreach {
+    EnclosureId enclosure;
+    EdgeRef edge;
+    Fence former;
+
+    bool operator==(const ApocalypseBreach&) const = default;
+};
+
+/// An animal taking part, with the home it had when the mode began.  Loose-animal behaviour
+/// may cross another open habitat; this saved identity still returns it to the right place.
+struct ApocalypseAnimal {
+    AnimalId animal;
+    EnclosureId home;
+
+    bool operator==(const ApocalypseAnimal&) const = default;
+};
+
+struct ApocalypseState {
+    bool active = false;
+    std::vector<ApocalypseBreach> breaches;
+    std::vector<ApocalypseAnimal> animals;
+
+    bool operator==(const ApocalypseState&) const = default;
+};
+
 /// Why a direct order of the player was not carried out.
 enum class ActionError : std::uint8_t {
     None,
@@ -162,6 +189,16 @@ public:
     const Staff& Keepers() const { return staff_; }
     Staff& Keepers() { return staff_; }
 
+    // ---- reversible spectacle --------------------------------------------------------
+    const ApocalypseState& Apocalypse() const { return apocalypse_; }
+    /// Opens one deterministic service gate of every occupied outdoor habitat and sends its
+    /// residents out through it.  Returns false atomically when any eligible habitat has no
+    /// safe gate; `error` explains why.
+    bool EnableApocalypse(std::string* error = nullptr);
+    /// Safely returns every participant to its original habitat and restores every gate byte
+    /// for byte.  Calling it while inactive has no effect.
+    void DisableApocalypse();
+
     /// The view of the zoo the subsystems step with, as of now. Events go to the
     /// zoo's own list. For queries that need one (Animals::Welfare, GroupOf, ...).
     Env MakeEnv();
@@ -229,6 +266,7 @@ private:
     /// Tells the animals how many people watch each habitat (Animals::SetViewers): an input of
     /// theirs, not saved, so it is told again when a zoo is loaded.
     void TellViewers();
+    void ContinueApocalypse();
     Notification& Push(Severity severity, std::string text);
 
     const Catalog& catalog_;
@@ -249,6 +287,7 @@ private:
     std::vector<Event> events_;  // undrained
     std::deque<Notification> notifications_;
     std::uint32_t nextNotification_ = 1;
+    ApocalypseState apocalypse_;
 
     /// Names of the animals alive before the running step: an animal that dies is
     /// gone from the list by the time its death is reported.

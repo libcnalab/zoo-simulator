@@ -202,9 +202,11 @@ classifies it as `Region::StandOff`, with no enclosure id, name or habitat stati
 Fencing an unmarked pocket still makes an ordinary enclosure. Strip tiles never appear in
 scenario habitat totals, visitor habitat choices or information-board associations.
 Save format 2 introduced the row-major `stand_off` coordinate array in the zoo envelope. Format 1
-saves omit it and load with no strips; the base world JSON format is unchanged. Current format 3
-also permits stable fence kind 16, the mesh-backed wildlife hedge. The version bumps prevent older
-readers from turning planted reservations into unnamed habitats or misreading a new barrier kind.
+saves omit it and load with no strips; the base world JSON format is unchanged. Format 3 permits
+stable fence kind 16, the mesh-backed wildlife hedge. Current format 4 records reversible
+Apocalypse breaches and participants (`docs/APOCALYPSE.md`). The version bumps prevent older
+readers from turning planted reservations into unnamed habitats, misreading a new barrier kind or
+silently loading a half-restored spectacle.
 
 A viewing corridor is axis-aligned: public path, rail, one or more marked tiles without
 internal fences, containment barrier, enclosure. `ViewingSpot::side` points toward the

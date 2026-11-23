@@ -182,8 +182,12 @@ void AdvanceMovement(Animal& animal, const SpeciesDef& species, const Env& env, 
         animal.onDetour = false;
         animal.detours = 0;
     }
-    if (animal.route.empty() && animal.position != animal.target &&
-        animal.activity == AnimalActivity::BreakOut) {
+    const EnclosureId routeHome = env.enclosures.At(animal.position);
+    const bool crossingBarrier = animal.activity == AnimalActivity::BreakOut && routeHome &&
+                                 env.enclosures.At(animal.target) != routeHome;
+    if (animal.route.empty() && animal.position != animal.target && crossingBarrier) {
+        // The final, adjacent crossing of an intentional escape. The preceding route to the
+        // inside of the selected edge used ordinary navigation.
         animal.route.push_back(animal.target);
         animal.routeIndex = 0;
     } else if (animal.route.empty() && animal.position != animal.target) {
@@ -377,13 +381,29 @@ void AdvanceMovement(Animal& animal, const SpeciesDef& species, const Env& env, 
             break;
         }
     }
-    // A short step can round exactly onto a fence edge. The navigator checks
-    // interior crossings, but that endpoint can already belong to the other tile
-    // (including planted stand-off ground). Ordinary movement must stay in its
-    // enclosure; deliberate breakouts retain their existing crossing behaviour.
+    // A short step can round exactly onto a fence edge. The navigator checks interior
+    // crossings, but that endpoint can already belong to another tile. A deliberate
+    // breakout may leave its habitat only through a real, open public-side edge; it still
+    // obeys navigation everywhere else instead of running straight through scenery or water.
     const EnclosureId currentHome = env.enclosures.At(animal.position);
-    const bool leavesHome = currentHome && env.enclosures.At(animal.position + step) != currentHome;
-    if (animal.activity != AnimalActivity::BreakOut && step != Vec2{} &&
+    const TileCoord nextTile = World::TileAt(animal.position + step);
+    const bool leavesHome = currentHome && env.enclosures.At(nextTile) != currentHome;
+    bool permittedExit = false;
+    if (animal.activity == AnimalActivity::BreakOut && leavesHome && env.world.InBounds(nextTile)) {
+        const TileCoord here = World::TileAt(animal.position);
+        const TileCoord tileStep = nextTile - here;
+        if (std::abs(tileStep.x) + std::abs(tileStep.z) == 1) {
+            const Dir side = tileStep.x > 0   ? Dir::East
+                             : tileStep.x < 0 ? Dir::West
+                             : tileStep.z > 0 ? Dir::South
+                                              : Dir::North;
+            const bool realOpening = env.enclosures.RegionAt(nextTile) == Region::Public &&
+                                     !env.world.FenceOn(here, side).Exists();
+            const bool intendedWeakEdge = World::TileAt(animal.target) == nextTile;
+            permittedExit = realOpening || intendedWeakEdge;
+        }
+    }
+    if (step != Vec2{} && !permittedExit &&
         (leavesHome || !env.nav.Walkable(animal.position, animal.position + step, profile))) {
         if (step == planned) {
             // The route itself is shut (a fence went up): think again.

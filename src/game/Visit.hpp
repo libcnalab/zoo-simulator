@@ -174,6 +174,9 @@ struct Visit {
     bool cinema = false;
     int cinemaIndex = 0;  ///< one-based position in the resident-species order
     int cinemaTotal = 0;
+    /// The deliberately armed reversible escape spectacle and the current three-second hold.
+    bool apocalypse = false;
+    float apocalypseHold = 0.0f;  ///< 0..1; releasing E before 1 cancels
     AnimalCard card;
     BoardText board;
     VisitMap map;

@@ -349,6 +349,10 @@ void ZooGame::BeginWalk(const Pose& pose) {
     cinemaSpecies_.clear();
     cinemaNext_ = 0;
     cinemaLeft_ = 0.0f;
+    visit_.apocalypse = zoo_->Apocalypse().active;
+    visit_.apocalypseHold = 0.0f;
+    apocalypseHeld_ = 0.0f;
+    apocalypseTriggeredThisHold_ = false;
     visit_.screen = VisitScreen::Walking;
     visit_.window = VisitWindow::None;
     visit_.hintLeft = 14.0f;
@@ -647,6 +651,42 @@ void ZooGame::UpdateVisit(double seconds) {
     if (std::exchange(visit_.settingsChanged, false))
         ApplyVisitSettings(true);
 
+    // E remains the board key on a short press.  Away from a modal window, holding it for a
+    // full three seconds deliberately arms or disarms the reversible spectacle.
+    const bool focused = automated || getIsActiveProperty();
+    const bool apocalypseHoldAllowed = controls_.KeyboardFree() && focused &&
+                                       visit_.screen == VisitScreen::Walking &&
+                                       visit_.window == VisitWindow::None && !visit_.cinema;
+    if (apocalypseHoldAllowed && controls_.Down(Keys::E)) {
+        if (!apocalypseTriggeredThisHold_) {
+            apocalypseHeld_ += dt;
+            visit_.apocalypseHold = std::clamp(apocalypseHeld_ / 3.0f, 0.0f, 1.0f);
+        }
+        if (!apocalypseTriggeredThisHold_ && apocalypseHeld_ >= 3.0f - 0.0001f) {
+            apocalypseHeld_ = 0.0f;
+            visit_.apocalypseHold = 0.0f;
+            apocalypseTriggeredThisHold_ = true;
+            if (zoo_->Apocalypse().active) {
+                zoo_->DisableApocalypse();
+                visit_.apocalypse = false;
+                visit_.Flash("APOCALYPSE ended - animals and gates restored", 5.0f);
+            } else {
+                std::string error;
+                if (zoo_->EnableApocalypse(&error)) {
+                    visit_.apocalypse = true;
+                    visit_.binoculars = false;
+                    visit_.binocularsUp = 0.0f;
+                    visit_.Flash("WARNING: APOCALYPSE - animals are leaving through opened gates", 6.0f);
+                } else {
+                    visit_.Flash("APOCALYPSE could not start: " + error, 6.0f);
+                }
+            }
+        }
+    } else {
+        apocalypseHeld_ = 0.0f;
+        visit_.apocalypseHold = 0.0f;
+    }
+
     if (controls_.KeyboardFree()) {
         if (controls_.Pressed(Keys::Escape)) {
             if (visit_.window != VisitWindow::None)
@@ -664,29 +704,33 @@ void ZooGame::UpdateVisit(double seconds) {
             visit_.request = VisitRequest::Save;
         if (controls_.Pressed(Keys::C) && visit_.screen == VisitScreen::Walking &&
             visit_.window == VisitWindow::None) {
-            visit_.cinema = !visit_.cinema;
-            cinemaAnimal_ = {};
-            cinemaSpecies_.clear();
-            cinemaNext_ = 0;
-            cinemaLeft_ = 0.0f;
-            visit_.cinemaIndex = 0;
-            visit_.binoculars = false;
-            if (visit_.cinema) {
-                std::vector<bool> resident(species_->All().size(), false);
-                for (const zoo::Animal& animal : zoo_->Fauna().All())
-                    if (animal.InWorld() && animal.species >= 0 &&
-                        animal.species < static_cast<int>(resident.size()))
-                        resident[static_cast<std::size_t>(animal.species)] = true;
-                for (std::size_t species = 0; species < resident.size(); ++species)
-                    if (resident[species])
-                        cinemaSpecies_.push_back(static_cast<int>(species));
-                visit_.cinemaTotal = static_cast<int>(cinemaSpecies_.size());
-                visit_.Flash("Cinema mode", 1.5f);
+            if (visit_.apocalypse) {
+                visit_.Flash("Cinema is unavailable during APOCALYPSE", 2.5f);
             } else {
-                visit_.cinemaTotal = 0;
-                visit_.card.shown = 0.0f;
-                camera_.SetEye(walker_.Eye(), walker_.Yaw(), walker_.Pitch());
-                visit_.Flash("Back to the visit", 1.5f);
+                visit_.cinema = !visit_.cinema;
+                cinemaAnimal_ = {};
+                cinemaSpecies_.clear();
+                cinemaNext_ = 0;
+                cinemaLeft_ = 0.0f;
+                visit_.cinemaIndex = 0;
+                visit_.binoculars = false;
+                if (visit_.cinema) {
+                    std::vector<bool> resident(species_->All().size(), false);
+                    for (const zoo::Animal& animal : zoo_->Fauna().All())
+                        if (animal.InWorld() && animal.species >= 0 &&
+                            animal.species < static_cast<int>(resident.size()))
+                            resident[static_cast<std::size_t>(animal.species)] = true;
+                    for (std::size_t species = 0; species < resident.size(); ++species)
+                        if (resident[species])
+                            cinemaSpecies_.push_back(static_cast<int>(species));
+                    visit_.cinemaTotal = static_cast<int>(cinemaSpecies_.size());
+                    visit_.Flash("Cinema mode", 1.5f);
+                } else {
+                    visit_.cinemaTotal = 0;
+                    visit_.card.shown = 0.0f;
+                    camera_.SetEye(walker_.Eye(), walker_.Yaw(), walker_.Pitch());
+                    visit_.Flash("Back to the visit", 1.5f);
+                }
             }
         }
     }
@@ -733,7 +777,7 @@ void ZooGame::UpdateVisit(double seconds) {
 
         // Binoculars: B raises and lowers them, the right mouse button holds them up. They are
         // used standing still, and the head turns as much less as the view is narrower.
-        const bool free = visit_.window == VisitWindow::None && !visit_.cinema;
+        const bool free = visit_.window == VisitWindow::None && !visit_.cinema && !visit_.apocalypse;
         if (controls_.KeyboardFree() && controls_.Pressed(Keys::B) && free)
             visit_.binoculars = !visit_.binoculars;
         if (!free)
@@ -759,6 +803,8 @@ void ZooGame::UpdateVisit(double seconds) {
         if (!visit_.cinema) {
             walker_.Update(*zoo_, input, dt);
             UpdateBoardsAndMap();
+            if (!controls_.Down(Keys::E))
+                apocalypseTriggeredThisHold_ = false;
         } else {
             visit_.prompt.clear();
         }

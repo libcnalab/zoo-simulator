@@ -195,6 +195,8 @@ private:
     std::vector<int> cinemaSpecies_;
     std::size_t cinemaNext_ = 0;
     float cinemaLeft_ = 0.0f;
+    float apocalypseHeld_ = 0.0f;
+    bool apocalypseTriggeredThisHold_ = false;
 };
 
 }  // namespace zoogame

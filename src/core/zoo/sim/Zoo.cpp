@@ -57,6 +57,17 @@ std::string_view DeathText(int cause) {
     return "";
 }
 
+std::pair<TileCoord, TileCoord> Beside(EdgeRef edge) {
+    if (edge.horizontal) {
+        return {{edge.x, edge.z - 1}, {edge.x, edge.z}};
+    }
+    return {{edge.x - 1, edge.z}, {edge.x, edge.z}};
+}
+
+bool SealedApocalypseSpecies(std::string_view id) {
+    return id == "corn_snake" || id == "black_headed_python";
+}
+
 }  // namespace
 
 std::string_view Describe(ActionError e) {
@@ -152,6 +163,7 @@ void Zoo::Step() {
     RefreshRoster();
 
     Env env = MakeEnv();
+    ContinueApocalypse();
     animals_.ClearKeepers();
     animals_.ClearStaffLockouts();
     for (const StaffMember& member : staff_.All()) {
@@ -214,6 +226,113 @@ void Zoo::Step() {
         CloseDay(day);
     }
     ReportEvents(firstEvent);
+}
+
+bool Zoo::EnableApocalypse(std::string* error) {
+    if (apocalypse_.active) {
+        return true;
+    }
+    ApocalypseState next;
+    next.active = true;
+    for (const Enclosure& enclosure : enclosures_.All()) {
+        bool occupied = false;
+        bool sealed = true;
+        for (const Animal& animal : animals_.All()) {
+            if (!animal.InWorld() || animal.home != enclosure.id || animal.species < 0 ||
+                static_cast<std::size_t>(animal.species) >= species_.All().size()) {
+                continue;
+            }
+            occupied = true;
+            sealed = sealed &&
+                     SealedApocalypseSpecies(species_.All()[static_cast<std::size_t>(animal.species)].id);
+        }
+        if (!occupied || sealed) {
+            continue;
+        }
+        const EdgeRef* chosen = nullptr;
+        for (const EdgeRef& gate : enclosure.gates) {
+            const Fence fence = world_.FenceAt(gate);
+            if (!fence.Exists() || !fence.gate || fence.visitorGate || fence.kind == kPerimeterFence) {
+                continue;
+            }
+            const auto [a, b] = Beside(gate);
+            const TileCoord inside = enclosures_.At(a) == enclosure.id ? a : b;
+            const TileCoord outside = inside == a ? b : a;
+            if (enclosures_.At(inside) != enclosure.id || !world_.InBounds(outside) ||
+                enclosures_.RegionAt(outside) != Region::Public || world_.At(outside).standOff ||
+                world_.At(outside).building || world_.HasWater(outside) ||
+                !nav_.Passable(outside, NavProfile::Animal(0.0f, false))) {
+                continue;
+            }
+            chosen = &gate;
+            break;
+        }
+        if (chosen == nullptr) {
+            if (error != nullptr) {
+                *error = enclosure.name + " has no safe public-side service gate.";
+            }
+            return false;
+        }
+        next.breaches.push_back({enclosure.id, *chosen, world_.FenceAt(*chosen)});
+    }
+    if (next.breaches.empty()) {
+        if (error != nullptr) {
+            *error = "There are no occupied outdoor habitats to open.";
+        }
+        return false;
+    }
+    apocalypse_ = std::move(next);
+    for (const ApocalypseBreach& breach : apocalypse_.breaches) {
+        world_.SetFence(breach.edge, {});
+    }
+    ContinueApocalypse();
+    Notify(Severity::Alarm, "APOCALYPSE mode opened the habitat service gates.");
+    return true;
+}
+
+void Zoo::ContinueApocalypse() {
+    if (!apocalypse_.active) {
+        return;
+    }
+    for (const ApocalypseBreach& breach : apocalypse_.breaches) {
+        const auto [a, b] = Beside(breach.edge);
+        const TileCoord inside = enclosures_.At(a) == breach.enclosure ? a : b;
+        if (enclosures_.At(inside) != breach.enclosure) {
+            continue;
+        }
+        for (const Animal& animal : animals_.All()) {
+            if (!animal.InWorld() || animal.home != breach.enclosure) {
+                continue;
+            }
+            const auto participant =
+                std::lower_bound(apocalypse_.animals.begin(), apocalypse_.animals.end(), animal.id,
+                                 [](const ApocalypseAnimal& item, AnimalId id) { return item.animal < id; });
+            if (participant == apocalypse_.animals.end() || participant->animal != animal.id) {
+                apocalypse_.animals.insert(participant, {animal.id, breach.enclosure});
+            }
+            if (!animal.loose && animal.activity != AnimalActivity::BreakOut) {
+                animals_.ReleaseForApocalypse(animal.id, breach.enclosure, World::TileCenter(inside));
+            }
+        }
+    }
+}
+
+void Zoo::DisableApocalypse() {
+    if (!apocalypse_.active) {
+        return;
+    }
+    Env env = MakeEnv();
+    for (const ApocalypseAnimal& participant : apocalypse_.animals) {
+        animals_.ReturnFromApocalypse(env, participant.animal, participant.home);
+    }
+    for (const ApocalypseBreach& breach : apocalypse_.breaches) {
+        if (world_.EdgeInBounds(breach.edge)) {
+            world_.SetFence(breach.edge, breach.former);
+        }
+    }
+    visitors_.CalmAfterApocalypse();
+    apocalypse_ = {};
+    Notify(Severity::Good, "APOCALYPSE mode ended; every recorded gate was restored.");
 }
 
 void Zoo::DrainEvents(std::vector<Event>& out) {
@@ -675,6 +794,23 @@ std::uint64_t Zoo::StateHash() const {
         h.Add(enclosure.id.value);
         h.Add(enclosure.stats.minFenceCondition);
     }
+    if (apocalypse_.active) {
+        h.Add(true);  // an ordinary zoo keeps its pre-feature deterministic hash
+        for (const ApocalypseBreach& breach : apocalypse_.breaches) {
+            h.Add(breach.enclosure.value);
+            h.Add(breach.edge.x);
+            h.Add(breach.edge.z);
+            h.Add(breach.edge.horizontal);
+            h.Add(static_cast<int>(breach.former.kind));
+            h.Add(breach.former.gate);
+            h.Add(breach.former.condition);
+            h.Add(breach.former.visitorGate);
+        }
+        for (const ApocalypseAnimal& participant : apocalypse_.animals) {
+            h.Add(participant.animal.value);
+            h.Add(participant.home.value);
+        }
+    }
     return h.value;
 }
 
@@ -682,7 +818,8 @@ bool Zoo::SameState(const Zoo& other) const {
     return config_ == other.config_ && time_ == other.time_ && world_ == other.world_ &&
            objects_ == other.objects_ && enclosures_ == other.enclosures_ && finance_ == other.finance_ &&
            animals_ == other.animals_ && visitors_ == other.visitors_ && staff_ == other.staff_ &&
-           weather_.State() == other.weather_.State() && lastScareNote_ == other.lastScareNote_;
+           weather_.State() == other.weather_.State() && lastScareNote_ == other.lastScareNote_ &&
+           apocalypse_ == other.apocalypse_;
 }
 
 }  // namespace zoo
