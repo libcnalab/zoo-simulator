@@ -3,7 +3,7 @@
 What the ground of Greenhill Zoo is drawn from, how the banks of its pools are shaped, the
 height lookup everything standing on the ground uses, what it costs, and what is open.
 Tasks G1 (2026-11-13), G1b and G1c (2026-11-14), J51, J52 and J55 (2026-11-20),
-and the foundation-edge pass (2026-11-24). Code:
+and the foundation-edge/detail-contour pass (2026-11-24). Code:
 `src/game/GroundPaint.{hpp,cpp}`
 (colours and heights), `src/game/GroundDetail.{hpp,cpp}` (the detail layer's textures),
 `src/game/TerrainRenderer.{hpp,cpp}` (meshes, textures, drawing). Evidence:
@@ -221,8 +221,23 @@ normally and under AddressSanitizer. Two real 1280 x 720 software-OpenGL visits 
 expanded 121-habitat zoo; ground painting remained 3.40--3.42 seconds. The close check is
 `build-probe/shots/foundation-apron-ground.png`.
 
+The same pass removes the square staircase from close detail-layer outlines without increasing
+their mesh resolution. Where exactly one of the four 25 cm cells meeting a vertex has a detail
+kind (or exactly one does not), both adjoining detail meshes move that existing shared corner
+8 cm towards the same quadrant. Convex and concave corners therefore become short diagonals;
+straight edges, checkerboard ambiguities, tile sides and the terrain's diagonal crease remain
+fixed. No vertex, triangle, sample or draw call is added. Compile-time cases hold complementary
+one-of-four and three-of-four masks to the same point. Two software-OpenGL Flamingo Lagoon runs
+both kept ground painting at 3.42 seconds and 2,129 MB after the ground phase; the close capture
+`build-probe/shots/detail-contour-bevel-close.png` has no gap or depth fighting. A sanitized empty
+editor render also completed cleanly.
+
+An adaptive 12.5 cm boundary experiment was rejected before this solution: on the same estate it
+again raised the ground build from 3.42 to 6.71 seconds and resident memory after ground from
+2,129 to 3,686 MB, despite retaining 25 cm bank geometry and subdividing only mixed detail cells.
+The retained contour bevel has neither cost.
+
 ## Open
 
-- Detail layer outlines are 25 cm cells: the edge between mud and grass is stepped close up.
 - Not verified: shimmer and repetition in motion (stills only), resolutions above 1280 x 720,
   the editor's repaint after an edit (`TerrainRenderer::Update`), the browser build.

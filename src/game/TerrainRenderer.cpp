@@ -258,6 +258,32 @@ BankPatch CutBankTile(const ChunkInfos& infos, const TilePaintInfo& info) {
 
 /// Which detail lies over each of a tile's cells; true when it is the same all over.
 using CellDetails = std::array<GroundDetail, kCells * kCells>;
+
+struct ContourShift {
+    int x = 0;
+    int z = 0;
+    constexpr bool operator==(const ContourShift&) const = default;
+};
+
+/// Four cells meet at a detail vertex, bits NW, NE, SW, SE. At a convex or
+/// concave pixel corner both adjoining detail kinds choose the same diagonal
+/// point: the lone occupied quadrant for one is the lone empty quadrant for
+/// the other. Straight edges and ambiguous checkerboards stay put.
+constexpr ContourShift DetailContourShift(unsigned occupied) {
+    int count = 0;
+    for (unsigned bit = occupied; bit != 0; bit >>= 1u)
+        count += static_cast<int>(bit & 1u);
+    if (count != 1 && count != 3)
+        return {};
+    unsigned target = count == 1 ? occupied : (~occupied & 0xfu);
+    const int quadrant = target == 1u ? 0 : target == 2u ? 1 : target == 4u ? 2 : 3;
+    return {(quadrant & 1) != 0 ? 1 : -1, (quadrant & 2) != 0 ? 1 : -1};
+}
+static_assert(DetailContourShift(0b0001u) == ContourShift{-1, -1});
+static_assert(DetailContourShift(0b1110u) == ContourShift{-1, -1});
+static_assert(DetailContourShift(0b0011u) == ContourShift{});
+static_assert(DetailContourShift(0b1001u) == ContourShift{});
+
 bool ClassifyCells(const TilePaintInfo& info, CellDetails& cells) {
     const float x0 = static_cast<float>(info.tile.x) * kTileSize;
     const float z0 = static_cast<float>(info.tile.z) * kTileSize;
@@ -388,11 +414,25 @@ void AddTileDetail(const ChunkInfos& infos, const TilePaintInfo& info, const Cel
     for (int corner = 0; corner < 4; ++corner)
         cornerNormal[static_cast<std::size_t>(corner)] =
             GridNormal(world, tile.x + (corner & 1), tile.z + (corner >> 1));
-    const auto vertex = [&](WeldedMesh& mesh, int i, int j) {
+    const auto vertex = [&](WeldedMesh& mesh, GroundDetail kind, int i, int j) {
         // A point of the tile's surface: the two triangles carry heights and normals alike.
         return mesh.Vertex(latticeI + i, latticeJ + j, [&](Vector3& position, Vector3& normal) {
-            const float u = static_cast<float>(i) / static_cast<float>(kCells);
-            const float v = static_cast<float>(j) / static_cast<float>(kCells);
+            ContourShift shift;
+            // Tile sides remain at their exact shared points. Inside a mixed tile,
+            // bevel a square contour corner without adding a vertex or triangle.
+            if (i > 0 && i < kCells && j > 0 && j < kCells && i != j) {
+                unsigned occupied = 0;
+                occupied |= cells[static_cast<std::size_t>((j - 1) * kCells + i - 1)] == kind ? 1u : 0u;
+                occupied |= cells[static_cast<std::size_t>((j - 1) * kCells + i)] == kind ? 2u : 0u;
+                occupied |= cells[static_cast<std::size_t>(j * kCells + i - 1)] == kind ? 4u : 0u;
+                occupied |= cells[static_cast<std::size_t>(j * kCells + i)] == kind ? 8u : 0u;
+                shift = DetailContourShift(occupied);
+            }
+            constexpr float kContourInset = kTileSize / static_cast<float>(kCells) * 0.32f;
+            const float u = static_cast<float>(i) / static_cast<float>(kCells) +
+                            static_cast<float>(shift.x) * kContourInset / kTileSize;
+            const float v = static_cast<float>(j) / static_cast<float>(kCells) +
+                            static_cast<float>(shift.z) * kContourInset / kTileSize;
             const float x = (static_cast<float>(tile.x) + u) * kTileSize;
             const float z = (static_cast<float>(tile.z) + v) * kTileSize;
             position = Vector3(x, GroundHeight(info, x, z), z);
@@ -408,7 +448,8 @@ void AddTileDetail(const ChunkInfos& infos, const TilePaintInfo& info, const Cel
         if (kind == GroundDetail::None)
             return;
         WeldedMesh& mesh = cut.detail[static_cast<std::size_t>(kind)];
-        mesh.Piece({vertex(mesh, i0, j0), vertex(mesh, i1, j0), vertex(mesh, i0, j1), vertex(mesh, i1, j1)});
+        mesh.Piece({vertex(mesh, kind, i0, j0), vertex(mesh, kind, i1, j0), vertex(mesh, kind, i0, j1),
+                    vertex(mesh, kind, i1, j1)});
     };
     if (same) {
         piece(cells[0], 0, 0, kCells, kCells);

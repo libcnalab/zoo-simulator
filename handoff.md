@@ -1220,6 +1220,14 @@ software-OpenGL runs completed on the 121-habitat zoo, with the ground still bui
 3.40--3.42 s. The useful close view is `build-probe/shots/foundation-apron-ground.png`
 (2026-11-24).
 
+The detail layer's 25 cm square corners are now bevelled without adding geometry. At a one-of-four
+or three-of-four cell junction, both adjoining kinds move their existing shared point 8 cm towards
+the same lone quadrant; straight boundaries, tile sides and the terrain crease stay exact. Two
+Flamingo Lagoon software-GL runs remained at 3.42 s and 2,129 MB after ground, and
+`build-probe/shots/detail-contour-bevel-close.png` has no gap or depth fighting. A sanitized editor
+render is also clean. The rejected adaptive 12.5 cm alternative cost 6.71 s and 3,686 MB after
+ground, so none of it is retained (2026-11-24).
+
 ## 5. Worktrees in `.codex-work/` (git-ignored)
 
 Still holding work to take: **none**. Briefs `brief-<id>.md`, reports `report-<id>.md`, logs
