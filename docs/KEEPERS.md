@@ -294,12 +294,19 @@ of its own for every job (a lean, a squat, the hands placed and the arms solved)
 and out so that a rake does not turn into a bucket in the hands. The tools are coloured
 triangles built every frame for those in view (bucket, wheelbarrow, rake, broom, hose with its
 jet, clipboard, sack, trowel, watering can) and drawn in two calls for the whole crew; they
-cast soft projected contact shadows, as does each member. All eleven members of Greenhill's crew
-fit the 12-nearest full-avatar budget; nobody beyond 150 m is drawn. The bounded headroom admits
-a somewhat larger built-in zoo without letting a damaged or imported save request hundreds of
-CNA avatars in one frame. A warning-clean game build, a real 626-visitor offscreen run at a
-working keeper and all 32 active keeper/Walker integration cases pass (J46, 2026-11-20); the
-captured frame was opened and checked.
+cast soft projected contact shadows, as does each member. The nearest 12 members within 150 m
+use those full skeletal avatars. Every other member in the camera frustum remains visible as a
+small animated 3D uniform proxy: green torso and arms, khaki legs and hat, boots, head and contact
+shadow. These proxies join the existing solid tool batch, so they add neither individual CNA
+avatars nor a new draw call. The current 121-habitat Visitor Zoo employs 112 staff; the bound
+therefore limits only avatar cost, not staff visibility.
+
+A warning-clean game build and two real 1280 x 720 software-OpenGL visits pass (2026-11-23).
+The entrance camera drew 22 staff, 21 of them through the distant LOD; a close
+`--stand keeper:0` view drew the detailed working keeper and 11 distant LODs. Both captures were
+opened and checked (`build-probe/shots/staff-lod.png`, `staff-lod-close.png`). The entrance run's
+people pass, including 49 visitors and 22 staff, averaged 26.75 ms under the software renderer;
+the simulation averaged 1.51 ms per frame.
 
 `--stand keeper:<id>` stands the camera on the nearest path a few metres from that member
 (`keeper:0`: the first member at a job; `keeper:0:rake`: the first raking) and prints who it is
@@ -324,7 +331,3 @@ simulation; the frame as a whole shows no cost beyond the spread of the runs (th
 run is the slowest of all six, the other two the fastest). Engine draw calls fall by 7 and
 triangles by 0.19 million because the crowd at the entrance differs (the state differs from
 the first tick on), not because of the keepers.
-
-## Open
-
-- Nobody is drawn beyond 150 m or beyond the 12 nearest.

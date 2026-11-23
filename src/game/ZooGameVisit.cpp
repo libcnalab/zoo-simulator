@@ -540,11 +540,13 @@ void ZooGame::PrintVisitFigures(const char* when) const {
     std::printf(
         "zoo: visit %s: %s, at %.1f,%.1f heading %.0f; visitors %d simulated, %zu in range, %zu in view, %zu "
         "drawn; "
-        "avatars %d ready of %zu, %d failed; animals %zu, %zu drawn (%zu distant LOD)\n",
+        "avatars %d ready of %zu, %d failed; staff %zu drawn (%zu distant LOD); animals %zu, %zu "
+        "drawn (%zu distant LOD)\n",
         when, visit_.clock.c_str(), static_cast<double>(at.x), static_cast<double>(at.z),
         static_cast<double>(walker_.Yaw() * 180.0f / kPi), zoo_->Guests().Count(), visitors_->InRange(),
         visitors_->InView(), visitors_->Drawn(), visitors_->Ready(), visitors_->CastSize(),
-        visitors_->Failed(), zoo_->Fauna().All().size(), animals_->Drawn(), animals_->Proxied());
+        visitors_->Failed(), keepers_->Drawn(), keepers_->Proxied(), zoo_->Fauna().All().size(),
+        animals_->Drawn(), animals_->Proxied());
     const SoundFigures& sound = sounds_->Figures();
     std::printf(
         "zoo: visit %s: sound %s, %d recordings (%d decoded, %d failed), %d voices (%d heard), %d steps, "

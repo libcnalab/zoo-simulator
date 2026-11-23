@@ -41,8 +41,8 @@ namespace zoogame {
 /// crew (the solid ones, then water and the patches of shade). Small projected patches
 /// join each tool to the ground without another draw call.
 ///
-/// The crew is at most a dozen people; everybody in view within kFarthest is drawn as a
-/// full avatar (there are no pictures for the distance as the visitors have).
+/// The nearest dozen people within 150 m are full avatars. Everyone else in the camera
+/// frustum remains visible as cheap batched 3D uniform proxies.
 class KeeperRenderer {
 public:
     using GraphicsDevice = Microsoft::Xna::Framework::Graphics::GraphicsDevice;
@@ -62,6 +62,8 @@ public:
 
     /// Staff drawn by the last Draw().
     std::size_t Drawn() const { return drawn_; }
+    /// Of Drawn(), staff represented by the cheap uniform proxy rather than a skeletal avatar.
+    std::size_t Proxied() const { return proxied_; }
     /// Where a member of staff is shown (the feet), once the renderer has met them.
     std::optional<Vector3> PositionOf(zoo::StaffId id) const;
 
@@ -130,6 +132,7 @@ private:
     std::vector<Vertex> sheer_;
     std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> effect_;
     std::size_t drawn_ = 0;
+    std::size_t proxied_ = 0;
 };
 
 }  // namespace zoogame

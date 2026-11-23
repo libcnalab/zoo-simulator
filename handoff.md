@@ -1190,6 +1190,15 @@ including its 0.28 m body radius and furniture which simulation visitors may pas
 All fourteen habitats kept identical requested/final coordinates to 0.1 m in a zero-tick
 offscreen smoke, so the former 42 set-downs inside furniture are resolved (2026-11-19).
 
+The large Visitor Zoo no longer drops staff beyond 150 m or the nearest 12. `KeeperRenderer`
+still reserves full CNA skeletal avatars for the nearest 12 people within 150 m, but every other
+member in the camera frustum now uses a low-poly animated uniform proxy in the existing solid
+tool batch. The current zoo has 112 staff. A 2026-11-23 software-OpenGL entrance run drew 22
+staff (21 distant LODs), while `--stand keeper:0` drew the nearby detailed keeper plus 11 distant
+LODs. Both 1280 x 720 captures (`build-probe/shots/staff-lod.png` and `staff-lod-close.png`) were
+opened and checked. The entrance run averaged 1.51 ms simulation and 26.75 ms for the people pass
+with 49 visitors and 22 staff in view.
+
 ## 5. Worktrees in `.codex-work/` (git-ignored)
 
 Still holding work to take: **none**. Briefs `brief-<id>.md`, reports `report-<id>.md`, logs

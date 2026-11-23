@@ -31,12 +31,11 @@ using namespace avatar_bone;
 constexpr float kPi = 3.14159265f;
 /// How many different people the crew is played by.
 constexpr std::size_t kCast = 4;
-/// Nobody is drawn farther from the camera than this, metres: a keeper is then a dozen
-/// pixels tall and the tools cannot be told any more.
-constexpr float kFarthest = 150.0f;
-/// How many are drawn in one frame at most (the nearest): enough for Greenhill's whole crew,
-/// with room for a larger built-in scenario but still bounded for a damaged or imported save.
-constexpr std::size_t kMost = 12;
+/// Within this distance the nearest crew use their full skeletal avatars. Farther members
+/// remain visible as batched uniform proxies until the camera frustum clips them.
+constexpr float kFullFarthest = 150.0f;
+/// How many full CNA avatars are drawn in one frame at most. Everyone else uses the cheap proxy.
+constexpr std::size_t kMostFull = 12;
 
 float Ease(float value, float goal, float rate, float seconds) {
     return goal + (value - goal) * std::exp(-rate * seconds);
@@ -662,6 +661,37 @@ private:
     Vector3 ambient_;
 };
 
+/// A distant member of staff: enough uniform shape and colour to remain recognisable without
+/// another skeletal avatar, individual tool geometry or draw call. All proxies share the same
+/// solid triangle batch as the detailed crew's tools.
+void FarStaff(Painter& paint, float phase, float gait) {
+    const Vector3 green(44.0f / 255.0f, 112.0f / 255.0f, 70.0f / 255.0f);
+    const Vector3 khaki(152.0f / 255.0f, 134.0f / 255.0f, 96.0f / 255.0f);
+    const Vector3 boots(72.0f / 255.0f, 52.0f / 255.0f, 38.0f / 255.0f);
+    const Vector3 skin(0.62f, 0.43f, 0.31f);
+    const float stride = 0.07f * gait * std::sin(phase * 2.0f * kPi);
+    paint.Box(Vector3(-0.11f, 0.37f, stride), kRight * 0.07f, kUp * 0.31f, kForward * 0.07f,
+              khaki);
+    paint.Box(Vector3(0.11f, 0.37f, -stride), kRight * 0.07f, kUp * 0.31f, kForward * 0.07f,
+              khaki);
+    paint.Box(Vector3(-0.11f, 0.08f, stride), kRight * 0.08f, kUp * 0.08f, kForward * 0.13f,
+              boots);
+    paint.Box(Vector3(0.11f, 0.08f, -stride), kRight * 0.08f, kUp * 0.08f, kForward * 0.13f,
+              boots);
+    paint.Box(Vector3(0.0f, 1.04f, 0.0f), kRight * 0.23f, kUp * 0.36f, kForward * 0.12f,
+              green);
+    paint.Box(Vector3(-0.29f, 1.02f, 0.0f), kRight * 0.055f, kUp * 0.29f, kForward * 0.055f,
+              green);
+    paint.Box(Vector3(0.29f, 1.02f, 0.0f), kRight * 0.055f, kUp * 0.29f, kForward * 0.055f,
+              green);
+    paint.Round(Vector3(0.0f, 1.37f, 0.0f), Vector3(0.0f, 1.62f, 0.0f), 0.12f, 0.11f, skin, 6,
+                true, true);
+    paint.Round(Vector3(0.0f, 1.61f, 0.0f), Vector3(0.0f, 1.70f, 0.0f), 0.15f, 0.12f, khaki, 6,
+                true, true);
+    paint.Disc(Vector3(0.0f, 1.62f, 0.0f), kUp, 0.19f, khaki, 8);
+    paint.Shade(Vector3(0.0f, 0.0f, 0.0f), 0.27f);
+}
+
 const Vector3 kWood(0.62f, 0.47f, 0.28f);
 const Vector3 kSteel(0.42f, 0.44f, 0.47f);
 const Vector3 kBucketBlue(0.24f, 0.4f, 0.62f);
@@ -1022,6 +1052,7 @@ void KeeperRenderer::Clear() {
     inView_.clear();
     tick_ = -1;
     drawn_ = 0;
+    proxied_ = 0;
 }
 
 void KeeperRenderer::PollCast() {
@@ -1228,17 +1259,14 @@ void KeeperRenderer::Draw(GraphicsDevice& device, const CnaEngine::Graphics::Cam
                           const CnaEngine::Graphics::ForwardLighting& lighting) {
     namespace Xna = Microsoft::Xna::Framework::Graphics;
     drawn_ = 0;
+    proxied_ = 0;
     const auto& frustum = camera.Frustum();
     const Vector3 eye = camera.Position();
     inView_.clear();
     for (Actor& actor : actors_) {
-        if (Playing(actor) == nullptr)
-            continue;
         const Vector3 feet(actor.shown.x, actor.ground, actor.shown.z);
         const Vector3 away = feet - eye;
         const float distance = away.X * away.X + away.Y * away.Y + away.Z * away.Z;
-        if (distance > kFarthest * kFarthest)
-            continue;
         // Room for the tools as well: a rake reaches out, a jet of water lands metres away.
         if (frustum.Contains(BoundingSphere(feet + Vector3(0.0f, 0.9f, 0.0f), 2.6f)) == ContainmentType::Disjoint)
             continue;
@@ -1247,8 +1275,6 @@ void KeeperRenderer::Draw(GraphicsDevice& device, const CnaEngine::Graphics::Cam
     if (inView_.empty())
         return;
     std::sort(inView_.begin(), inView_.end(), [](const auto& a, const auto& b) { return a.first < b.first; });
-    if (inView_.size() > kMost)
-        inView_.resize(kMost);
 
     // The scene's sun, and its sky as light from everywhere, as the visitors are lit.
     const Vector3 sun = lighting.lightColor * 0.9f;
@@ -1259,14 +1285,25 @@ void KeeperRenderer::Draw(GraphicsDevice& device, const CnaEngine::Graphics::Cam
 
     solid_.clear();
     sheer_.clear();
+    std::size_t full = 0;
     for (const auto& [distance, seen] : inView_) {
         const Actor& actor = *seen;
-        const Member& member = *Playing(actor);
         const Vector3 feet(actor.shown.x, actor.ground, actor.shown.z);
-        Pose(actor, member);
         // An avatar looks along -Z; a heading of 0 looks along +Z.
         const Matrix world = Matrix::CreateRotationY(actor.heading + kPi) * Matrix::CreateTranslation(feet);
-        AvatarRenderer& renderer = *member.renderer;
+        const Member* member = Playing(actor);
+        const bool detailed = member != nullptr && distance <= kFullFarthest * kFullFarthest &&
+                              full < kMostFull;
+        if (!detailed) {
+            Painter paint(solid_, sheer_, world, toSun, sun, ambient);
+            FarStaff(paint, actor.phase, actor.gait);
+            ++drawn_;
+            ++proxied_;
+            continue;
+        }
+        ++full;
+        Pose(actor, *member);
+        AvatarRenderer& renderer = *member->renderer;
         renderer.setWorldProperty(world);
         renderer.setViewProperty(camera.View());
         renderer.setProjectionProperty(camera.Projection());
@@ -1278,9 +1315,9 @@ void KeeperRenderer::Draw(GraphicsDevice& device, const CnaEngine::Graphics::Cam
 
         Painter paint(solid_, sheer_, world, toSun, sun, ambient);
         paint.Shade(Vector3(0.0f, 0.0f, 0.0f), 0.34f);
-        if (member.upperArm <= 0.0f)
+        if (member->upperArm <= 0.0f)
             continue;
-        const Build build{member.body, member.upperArm, member.foreArm};
+        const Build build{member->body, member->upperArm, member->foreArm};
         if (actor.working && actor.workWeight > 0.3f)
             WorkTools(paint, pose_, build, actor.work, actor.approach, actor.workTime, actor.barrowSide);
         else if (!actor.working && actor.holdWeight > 0.3f)
