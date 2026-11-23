@@ -52,8 +52,12 @@ linked `zoo-simulator.html` without an error. See `docs/WEB.md` for the command 
 for 607 residents, persists format-4 state, routes animals and danger-aware visitor panic, and
 restores exact gates and safe home positions. The first runtime implementation rebuilt the full
 player collision estate and appeared frozen; fence shapes are now patched edge-by-edge and a
-full-estate regression caps both transitions at two seconds. The requirements below are retained
-as the acceptance record.
+full-estate regression caps both transitions at two seconds. A later live-play report exposed a
+second freeze after activation: escapees sidestepped into impassable stand-off planting and their
+recovery rescanned all 832k tiles every tick; `PropsInTiles` also rescanned all 74,683 props.
+Passable exit validation, local public-ground repair, bucketed prop queries and deferred visitor
+site rebuilding reduce 200 active full-zoo steps from 8.5--11.9 s to 0.89 s (5 s regression
+ceiling). The requirements below are retained as the acceptance record.
 
 Add a deliberately opt-in, reversible spectacle mode. It must not be possible to trigger by an
 ordinary press of E, because short E remains **Read the board**.

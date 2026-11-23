@@ -769,3 +769,12 @@ opens and closes the mode, checks the exact shape-count change and requires each
 under two seconds. Static fence drawing is refreshed separately at no more than two 128-tile cells
 per frame; the discarded plant-atlas edit cache is not reconstructed. Dangerous loose-animal
 lookups use 32 m spatial cells rather than scanning every threat for every visitor group.
+
+A second freeze was in the simulation after the transition. Some collision sidesteps ended on the
+planted stand-off beside an opened gate. The invalid-position recovery then searched all 832k map
+tiles for an impossible passable tile in that same stand-off on every tick, while route obstacle
+queries called `PropsInTiles` but linearly scanned all 74,683 props. Escape steps now require a
+passable destination, old invalid loose positions recover locally to public ground, and
+`PropsInTiles` uses the existing 16 m prop buckets. Visitor sites defer their full-estate rebuild
+while Apocalypse only opens gates. The 200-step full-zoo measurement dropped from 8.5--11.9 s to
+0.89 s; its regression ceiling is 5 s.

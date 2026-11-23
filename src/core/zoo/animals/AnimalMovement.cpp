@@ -101,22 +101,40 @@ void AdvanceMovement(Animal& animal, const SpeciesDef& species, const Env& env, 
     if (!env.nav.Passable(currentTile, profile)) {
         const Region region = env.enclosures.RegionAt(currentTile);
         const EnclosureId enclosure = env.enclosures.At(currentTile);
+        const Region wantedRegion = animal.loose ? Region::Public : region;
         float nearest = std::numeric_limits<float>::max();
         Vec2 relocated{};
         bool found = false;
-        for (int z = 0; z < env.world.Depth(); ++z) {
-            for (int x = 0; x < env.world.Width(); ++x) {
-                const TileCoord candidate{x, z};
-                if (!env.nav.Passable(candidate, profile) || env.enclosures.RegionAt(candidate) != region ||
-                    env.enclosures.At(candidate) != enclosure) {
-                    continue;
-                }
-                const Vec2 center = World::TileCenter(candidate);
-                const float distance = DistanceSquared(animal.position, center);
-                if (distance < nearest) {
-                    nearest = distance;
-                    relocated = center;
-                    found = true;
+        const auto consider = [&](TileCoord candidate) {
+            if (!env.world.InBounds(candidate) || !env.nav.Passable(candidate, profile) ||
+                env.enclosures.RegionAt(candidate) != wantedRegion ||
+                (!animal.loose && env.enclosures.At(candidate) != enclosure)) {
+                return;
+            }
+            const Vec2 center = World::TileCenter(candidate);
+            const float distance = DistanceSquared(animal.position, center);
+            if (distance < nearest) {
+                nearest = distance;
+                relocated = center;
+                found = true;
+            }
+        };
+        // A collision sidestep at an opened service gate can put an escapee a few centimetres
+        // into the planted stand-off strip. Public ground is immediately beside it, so repair
+        // locally instead of scanning the entire multi-district estate every simulation tick.
+        constexpr int kLocalRecoveryTiles = 8;
+        for (int z = currentTile.z - kLocalRecoveryTiles; z <= currentTile.z + kLocalRecoveryTiles; ++z) {
+            for (int x = currentTile.x - kLocalRecoveryTiles; x <= currentTile.x + kLocalRecoveryTiles; ++x) {
+                consider({x, z});
+            }
+        }
+        // Corrupt or old saves may be farther from valid ground; retain the old exhaustive
+        // fallback for that rare repair, with the loose animal's intended public region.
+        if (!found) {
+            for (int z = 0; z < env.world.Depth(); ++z) {
+                for (int x = 0; x < env.world.Width(); ++x) {
+                    const TileCoord candidate{x, z};
+                    consider(candidate);
                 }
             }
         }
@@ -400,7 +418,7 @@ void AdvanceMovement(Animal& animal, const SpeciesDef& species, const Env& env, 
             const bool realOpening = env.enclosures.RegionAt(nextTile) == Region::Public &&
                                      !env.world.FenceOn(here, side).Exists();
             const bool intendedWeakEdge = World::TileAt(animal.target) == nextTile;
-            permittedExit = realOpening || intendedWeakEdge;
+            permittedExit = (realOpening || intendedWeakEdge) && env.nav.Passable(nextTile, profile);
         }
     }
     if (step != Vec2{} && !permittedExit &&

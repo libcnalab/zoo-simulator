@@ -42,8 +42,19 @@ each transition to complete in under two seconds and checks the exact shape-coun
 render batches update at two 128-tile cells per frame even after the read-only plant construction
 cache has been released; buildings and vegetation are not rebuilt.
 
+The simulation side is bounded too. Visitor destinations retain their already valid snapshot
+while the spectacle only opens gates. Animal route obstacle queries use the prop spatial buckets
+instead of rescanning all 74,683 props, and a collision sidestep cannot strand an escapee in the
+impassable planted stand-off beside a service gate. A legacy or damaged position there is repaired
+to nearby public ground without an estate-wide scan. On the reference full-zoo regression, 200
+active steps fell from 8.5--11.9 seconds and progressively worsening to 0.89 seconds; the test
+allows five seconds to preserve ample rendering and input headroom on slower machines.
+The 360-frame rendered input script then completed at 34.9 fps under software OpenGL, with
+simulation averaging 1.85 ms per frame, and captured the active state after the three-second hold.
+
 `tests/core/ApocalypseTests.cpp` covers deterministic selection, public reachability, active
-save/load, movement in map bounds, exact restoration, repeatability and damaged-save refusal.
+save/load, passable post-escape positions, the active-step CPU ceiling, exact restoration,
+repeatability and damaged-save refusal.
 `tests/game/WalkerTests.cpp` covers the incremental full-estate collision update.
 `tests/game/apocalypse.script` exercises early cancellation, activation and restoration through
 the same held-key input path as a player and captures each state.

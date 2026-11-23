@@ -135,9 +135,29 @@ void ZooObjects::PropsInTiles(TileCoord min, TileCoord max, std::vector<PropId>&
     RebuildBuckets();
     const float minX = static_cast<float>(min.x) * kTileSize, minZ = static_cast<float>(min.z) * kTileSize,
                 maxX = static_cast<float>(max.x + 1) * kTileSize, maxZ = static_cast<float>(max.z + 1) * kTileSize;
-    for (const Prop& p : props_)
-        if (p.position.x >= minX && p.position.x < maxX && p.position.z >= minZ && p.position.z < maxZ)
-            out.push_back(p.id);
+    const int firstX = Bucket(minX);
+    const int lastX = Bucket(std::nextafter(maxX, -std::numeric_limits<float>::infinity()));
+    const int firstZ = Bucket(minZ);
+    const int lastZ = Bucket(std::nextafter(maxZ, -std::numeric_limits<float>::infinity()));
+    for (int z = firstZ;; ++z) {
+        for (int x = firstX;; ++x) {
+            const auto bucket = buckets_.find({x, z});
+            if (bucket != buckets_.end()) {
+                for (const std::uint32_t index : bucket->second) {
+                    const Prop& p = props_[index];
+                    if (p.position.x >= minX && p.position.x < maxX && p.position.z >= minZ &&
+                        p.position.z < maxZ) {
+                        out.push_back(p.id);
+                    }
+                }
+            }
+            if (x == lastX || x == std::numeric_limits<int>::max())
+                break;
+        }
+        if (z == lastZ || z == std::numeric_limits<int>::max())
+            break;
+    }
+    std::sort(out.begin(), out.end(), [](PropId a, PropId b) { return a.value < b.value; });
 }
 bool ZooObjects::operator==(const ZooObjects& other) const {
     return buildings_ == other.buildings_ && props_ == other.props_ && nextBuilding_ == other.nextBuilding_ &&

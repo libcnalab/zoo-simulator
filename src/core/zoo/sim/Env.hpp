@@ -35,6 +35,9 @@ struct Env {
     std::vector<Event>* events = nullptr;
     GameTime time;
     WeatherNow weather;
+    /// The reversible visit spectacle is active. Derived visitor destinations may keep their
+    /// pre-spectacle snapshot while gates are only being opened.
+    bool apocalypse = false;
 
     void Emit(const Event& event) const {
         if (events != nullptr) {

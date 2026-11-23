@@ -139,6 +139,14 @@ void Sites::Refresh(const Env& env) {
         width == world.Width() && depth == world.Depth()) {
         return;
     }
+    // Apocalypse only opens service gates. Existing visitor paths and destinations therefore
+    // remain valid, while rebuilding the whole 800k-tile destination snapshot would stall the
+    // activation frame. Keep the pre-spectacle snapshot and rebuild normally after restoration,
+    // when the gates close and the saved revision no longer matches.
+    if (env.apocalypse && valid && objects == env.objects.Revision() &&
+        enclosures == env.enclosures.Revision() && width == world.Width() && depth == world.Depth()) {
+        return;
+    }
     valid = true;
     nav = world.NavRevision();
     fences = world.FenceRevision();

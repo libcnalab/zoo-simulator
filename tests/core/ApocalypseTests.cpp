@@ -1,11 +1,15 @@
 // SPDX-License-Identifier: MIT
 #include <gtest/gtest.h>
 
+#include <chrono>
+#include <iostream>
 #include <set>
 
 #include "TestData.hpp"
+#include "zoo/animals/AnimalTuning.hpp"
 #include "zoo/sim/VisitorZoo.hpp"
 #include "zoo/sim/ZooSaveJson.hpp"
+#include "zoo/visitors/VisitorInternal.hpp"
 
 namespace zoo {
 namespace {
@@ -28,10 +32,23 @@ std::unique_ptr<Zoo> ApocalypseZoo() {
 TEST(Apocalypse, EveryOutdoorHabitatGetsOneSavedReachableBreachAndRestoresExactly) {
     std::unique_ptr<Zoo> zoo = ApocalypseZoo();
     const World before = zoo->Map();
+    visitors_detail::Sites visitorSites;
+    visitorSites.Refresh(zoo->MakeEnv());
+    const std::uint32_t ordinaryVisitorNav = visitorSites.nav;
+    const std::size_t ordinaryViews = visitorSites.views.size();
+    const std::size_t ordinaryServices = visitorSites.services.size();
     std::string error;
+    const auto enableBegan = std::chrono::steady_clock::now();
     ASSERT_TRUE(zoo->EnableApocalypse(&error)) << error;
+    std::cout << "APOCALYPSE enable "
+              << std::chrono::duration<double>(std::chrono::steady_clock::now() - enableBegan).count()
+              << " s\n";
     const ApocalypseState first = zoo->Apocalypse();
     ASSERT_TRUE(first.active);
+    visitorSites.Refresh(zoo->MakeEnv());
+    EXPECT_EQ(visitorSites.nav, ordinaryVisitorNav);
+    EXPECT_EQ(visitorSites.views.size(), ordinaryViews);
+    EXPECT_EQ(visitorSites.services.size(), ordinaryServices);
     EXPECT_EQ(first.breaches.size(), zoo->Habitats().All().size() - 2U);  // two sealed snake terraria
     EXPECT_EQ(first.animals.size(), zoo->Fauna().All().size() - 2U);
 
@@ -59,16 +76,45 @@ TEST(Apocalypse, EveryOutdoorHabitatGetsOneSavedReachableBreachAndRestoresExactl
     EXPECT_TRUE(loaded->Apocalypse().active);
     EXPECT_TRUE(zoo->SameState(*loaded));
     EXPECT_EQ(activeSave, ZooToJson(*loaded));
+    zoo->DisableApocalypse();
+    visitorSites.Refresh(zoo->MakeEnv());
+    EXPECT_EQ(visitorSites.nav, zoo->Map().NavRevision());
+    EXPECT_NE(visitorSites.nav, ordinaryVisitorNav);
 
+    double stepTotal = 0.0;
+    double stepLongest = 0.0;
+    int stepLongestAt = -1;
     for (int tick = 0; tick < 200; ++tick) {
+        const auto stepBegan = std::chrono::steady_clock::now();
         loaded->Step();
+        const double seconds =
+            std::chrono::duration<double>(std::chrono::steady_clock::now() - stepBegan).count();
+        stepTotal += seconds;
+        if (seconds > stepLongest) {
+            stepLongest = seconds;
+            stepLongestAt = tick;
+        }
     }
+    std::cout << "APOCALYPSE 200 steps " << stepTotal << " s; longest " << stepLongest << " s at "
+              << stepLongestAt << "\n";
+    // Ten simulated seconds must leave at least half of one CPU for drawing and input. The old
+    // whole-estate shore scan took about nine seconds here and then kept getting slower.
+    EXPECT_LT(stepTotal, 5.0);
+    EXPECT_LT(stepLongest, 2.0);
     std::size_t loose = 0;
     for (const ApocalypseAnimal& participant : loaded->Apocalypse().animals) {
         const Animal* animal = loaded->Fauna().Find(participant.animal);
         ASSERT_NE(animal, nullptr);
         ASSERT_TRUE(animal->InWorld());
         EXPECT_TRUE(loaded->Map().InBounds(World::TileAt(animal->position))) << animal->name;
+        const SpeciesDef& species = loaded->SpeciesList().All()[static_cast<std::size_t>(animal->species)];
+        const float wade = species.canSwim
+                               ? tuning::kWadingShoulderFraction * species.shoulderHeightM *
+                                     BodyScale(*animal, species, loaded->Time())
+                               : 0.0f;
+        EXPECT_TRUE(loaded->Routes().Passable(World::TileAt(animal->position),
+                                              NavProfile::Animal(wade, species.canSwim)))
+            << animal->name << " stands on an impassable tile";
         loose += animal->loose ? 1U : 0U;
     }
     EXPECT_GT(loose, 0U);

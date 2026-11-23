@@ -359,27 +359,39 @@ void DecideActivity(Animal& animal, const SpeciesDef& species, Env& env, std::sp
             Vec2 shore{};
             bool foundShore = false;
             const NavProfile profile = NavProfile::Animal(0.0f, species.canSwim);
-            constexpr Dir sides[] = {Dir::North, Dir::East, Dir::South, Dir::West};
-            for (int z = 0; z < env.world.Depth(); ++z) {
-                for (int x = 0; x < env.world.Width(); ++x) {
-                    const TileCoord waterTile{x, z};
-                    if (!env.world.HasWater(waterTile)) {
+            // A loose animal explores locally. Scanning the whole multi-district estate for
+            // every thirsty escapee made the apocalypse progressively slower as more of the
+            // 600 residents reached public ground, and chose shores far beyond the route
+            // search's useful range anyway. Look for a dry public shore within the same radius
+            // used by loose roaming; if there is none, roaming can bring another area into view.
+            const TileCoord here = World::TileAt(animal.position);
+            const int radius = static_cast<int>(std::ceil(tuning::kLooseRoamRadiusM / kTileSize));
+            const float radiusSquared = tuning::kLooseRoamRadiusM * tuning::kLooseRoamRadiusM;
+            for (int z = std::max(0, here.z - radius);
+                 z <= std::min(env.world.Depth() - 1, here.z + radius); ++z) {
+                for (int x = std::max(0, here.x - radius);
+                     x <= std::min(env.world.Width() - 1, here.x + radius); ++x) {
+                    const TileCoord dryTile{x, z};
+                    const Vec2 candidate = World::TileCenter(dryTile);
+                    const float distance = DistanceSquared(animal.position, candidate);
+                    if (distance > radiusSquared || distance >= nearest || env.world.HasWater(dryTile) ||
+                        env.enclosures.RegionAt(dryTile) != Region::Public ||
+                        !env.nav.Passable(dryTile, profile) ||
+                        !env.nav.Walkable(animal.position, candidate, profile)) {
                         continue;
                     }
-                    for (Dir side : sides) {
-                        const TileCoord dryTile = waterTile + Step(side);
-                        if (!env.world.InBounds(dryTile) ||
-                            env.enclosures.RegionAt(dryTile) != Region::Public ||
-                            env.world.HasWater(dryTile) || !env.nav.Passable(dryTile, profile)) {
-                            continue;
+                    bool besideWater = false;
+                    for (const Dir side : {Dir::North, Dir::East, Dir::South, Dir::West}) {
+                        const TileCoord beside = dryTile + Step(side);
+                        if (env.world.InBounds(beside) && env.world.HasWater(beside)) {
+                            besideWater = true;
+                            break;
                         }
-                        const Vec2 candidate = World::TileCenter(dryTile);
-                        const float distance = DistanceSquared(animal.position, candidate);
-                        if (distance < nearest) {
-                            nearest = distance;
-                            shore = candidate;
-                            foundShore = true;
-                        }
+                    }
+                    if (besideWater) {
+                        nearest = distance;
+                        shore = candidate;
+                        foundShore = true;
                     }
                 }
             }
@@ -399,7 +411,7 @@ void DecideActivity(Animal& animal, const SpeciesDef& species, Env& env, std::sp
             const Vec2 target{rng.Range(minX, maxX), rng.Range(minZ, maxZ)};
             const TileCoord tile = World::TileAt(target);
             if (env.world.InBounds(tile) && env.enclosures.RegionAt(tile) == Region::Public &&
-                env.nav.Passable(tile, profile)) {
+                env.nav.Passable(tile, profile) && env.nav.Walkable(animal.position, target, profile)) {
                 StartActivity(animal, AnimalActivity::Loose, target,
                               RandomDuration(rng, tuning::kIdleMinimumSeconds, tuning::kIdleMaximumSeconds));
                 return;

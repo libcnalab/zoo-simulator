@@ -127,7 +127,7 @@ void Zoo::Rename(std::string name) {
 Env Zoo::MakeEnv() {
     return Env{
         world_,   objects_, enclosures_,   catalog_, species_, nav_, config_.sandbox ? nullptr : &finance_,
-        &events_, time_,    weather_.Now()};
+        &events_, time_,    weather_.Now(), apocalypse_.active};
 }
 
 // ---- time ---------------------------------------------------------------------------------
