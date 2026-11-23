@@ -245,6 +245,8 @@ animal containment substitute: tall mesh remains behind the hoofstock planting a
 original cable barrier remains behind the elephant/rhino planting.
 
 The entrance has the gift shop, education centre, refreshments, restroom, fountain and statue.
+Two open-ended, one-metre clipped hedges edge the fountain garden without enclosing it; both
+adjacent sides remain public and the broad cobbled approaches stay clear.
 The central food court groups burger, drinks and ice-cream stalls around picnic tables and
 acacia islands; another court sits below the northern predators. Restrooms serve the entrance,
 central court, northern court and the new woodland glade. A drinks kiosk on the outer ridge keeps

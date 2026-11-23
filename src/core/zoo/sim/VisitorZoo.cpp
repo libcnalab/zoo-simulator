@@ -3376,6 +3376,19 @@ void Facilities(Zoo& zoo, Script& script, bool sideGardens, bool steppeGardens, 
         script.Prop("flower_bed", script.Point(east, 8));
         script.Prop("flower_bed", script.Point(east, 9));
     }
+    // Low clipped hedges edge the two broad entrance walks without pretending to contain an
+    // animal. Leave both ends of the central fountain garden open, so this remains a decorative
+    // pair of lines rather than a new enclosure or a trap for a visitor set down on the lawn.
+    std::vector<EdgeRef> entranceHedges;
+    for (int north = 5; north <= 9; ++north) {
+        entranceHedges.push_back(EdgeOf(script.Tile(-2, north), Dir::West));
+        entranceHedges.push_back(EdgeOf(script.Tile(2, north), Dir::East));
+    }
+    const BuildPlan hedged = zoo.FreeBuilder().PlaceFence(entranceHedges, script.FenceKind("hedge"));
+    if (!hedged.Ok() || hedged.skipped > 0) {
+        script.Problem("entrance garden hedge incomplete (" +
+                       std::string(Describe(hedged.Ok() ? hedged.skippedBecause : hedged.error)) + ")");
+    }
     for (const int east : {-3, 3}) {
         for (const int north : {6, 9}) {
             script.Prop("bench", script.Point(east, north), east < 0 ? kPi * 0.5f : -kPi * 0.5f);

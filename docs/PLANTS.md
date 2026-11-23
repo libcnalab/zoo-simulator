@@ -193,8 +193,15 @@ second, runs of different rounds): 80 tiles offset by half a grove (the earlier 
 - Cut-out edges far away are aliased (no alpha-to-coverage, no MSAA).
 - Plants are fill-bound as much as triangle-bound: the far form cuts the triangles a frame by
   1.4 million but buys about 1 ms; overlapping alpha-tested cards remain the larger cost.
-- The hedge is in no habitat of the visitor zoo (fence kind "hedge" exists, the plan does not
-  use it); it was looked at as a specimen placed by a probe build.
+
+## Clipped entrance hedges (2026-11-23)
+
+The ordinary one-metre `hedge` now borders both sides of the entrance fountain garden for five
+tiles. The lines stay open at both ends and both adjacent regions remain public, so they are
+landscape edging rather than a hidden enclosure or a visitor trap. The wildlife-rated
+`mesh_backed_hedge` remains the containment barrier at Meerkat Lookout and the tortoise gardens.
+Both construction seeds pass a ten-edge regression, and the real 1280 x 720 entrance capture
+`build-probe/shots/entrance-hedges.png` was opened and checked.
 
 ## Nine-sheet distance impostors (2026-11-22)
 

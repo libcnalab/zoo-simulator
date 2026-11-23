@@ -1199,6 +1199,11 @@ LODs. Both 1280 x 720 captures (`build-probe/shots/staff-lod.png` and `staff-lod
 opened and checked. The entrance run averaged 1.51 ms simulation and 26.75 ms for the people pass
 with 49 visitors and 22 staff in view.
 
+The catalog's ordinary clipped hedge is now used in the Visitor Zoo rather than existing only in
+the build palette. Ten one-metre sections border the two sides of the entrance fountain garden;
+both ends and both adjacent public regions remain open. Both plan seeds pass the focused
+regression, and `build-probe/shots/entrance-hedges.png` is the opened 1280 x 720 real-game check.
+
 ## 5. Worktrees in `.codex-work/` (git-ignored)
 
 Still holding work to take: **none**. Briefs `brief-<id>.md`, reports `report-<id>.md`, logs

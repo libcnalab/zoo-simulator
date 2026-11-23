@@ -1215,6 +1215,26 @@ TEST_P(VisitorZooPlan, MeerkatLookoutUsesAContainedWildlifeHedge) {
     }
 }
 
+TEST_P(VisitorZooPlan, EntranceGardenUsesDecorativeClippedHedges) {
+    const TileCoord gate = zoo_.Map().EntranceTile();
+    const FenceDef* hedge = zoo_.Definitions().FindFence("hedge");
+    ASSERT_NE(hedge, nullptr);
+    int edges = 0;
+    for (int north = 5; north <= 9; ++north) {
+        for (const auto& [east, side] :
+             {std::pair{-2, Dir::West}, std::pair{2, Dir::East}}) {
+            const TileCoord tile{gate.x + east, gate.z - north};
+            const Fence fence = zoo_.Map().FenceOn(tile, side);
+            EXPECT_EQ(fence.kind, hedge->kind) << east << ", " << north;
+            EXPECT_FALSE(fence.gate);
+            EXPECT_EQ(zoo_.Habitats().RegionAt(tile), Region::Public);
+            EXPECT_EQ(zoo_.Habitats().RegionAt(tile + Step(side)), Region::Public);
+            ++edges;
+        }
+    }
+    EXPECT_EQ(edges, 10);
+}
+
 TEST_P(VisitorZooPlan, FoodAndWaterStandInsideAndInView) {
     for (const Enclosure& home : zoo_.Habitats().All()) {
         SCOPED_TRACE(home.name);
