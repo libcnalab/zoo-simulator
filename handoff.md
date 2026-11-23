@@ -1,20 +1,18 @@
-# Handoff: Zoo Simulator (state of 2026-11-23)
+# Handoff: Zoo Simulator (state of 2026-11-24)
 
 For the next agent, who starts without any earlier context. Read this file first, then
 `docs/REALISM.md` (progress log and the honest list of what is open), and the document of
 whatever you take up (`docs/VISITOR_ZOO.md`, `docs/ANIMAL_BEHAVIOUR.md`, `docs/VISITORS.md`,
 `docs/WEB.md`, `docs/PERFORMANCE.md`, `docs/CODEX_TASKS.md` for the history of delegated tasks).
 
-## Final verification (2026-11-22)
+## Final verification (2026-11-24)
 
-The final Emscripten/WebGL 2 rebuild completed successfully after the district redesigns, the
-experimental 3,000-visitor setting and the indexed species-viewpoint fix. The deliverable is
-`build-probe/web/web-package/` (226 MB): 299,283-byte JavaScript, 37,174,319-byte WebAssembly
-and 198,797,117-byte preloaded data. `file` identifies the wasm as a valid version-1 module;
-both HTML entry points reference the JavaScript loader, and that loader references the data and
-wasm payloads. An HTTP browser smoke test could not be repeated because this managed sandbox
-rejects opening a listening socket with `EPERM`; the build itself completed all 88 steps and
-linked `zoo-simulator.html` without an error. See `docs/WEB.md` for the command and limitation.
+The current Emscripten/WebGL 2 rebuild completed successfully after the apocalypse
+responsiveness, expanded estate and ground-detail work. The deliverable in
+`build-probe/web/web-package/` contains 300,424-byte JavaScript, 37,235,051-byte WebAssembly and
+215,381,022-byte preloaded data. Its wasm header is a valid version-1 module; the generated HTML
+references the JavaScript loader, and that loader references both payloads. It was not launched
+in a browser in this pass; see `docs/WEB.md` for the command and limitation.
 
 ## Current backlog (2026-11-22)
 

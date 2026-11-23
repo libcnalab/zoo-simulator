@@ -237,7 +237,18 @@ again raised the ground build from 3.42 to 6.71 seconds and resident memory afte
 2,129 to 3,686 MB, despite retaining 25 cm bank geometry and subdividing only mixed detail cells.
 The retained contour bevel has neither cost.
 
-## Open
+## Final visual and platform checks (2026-11-24)
 
-- Not verified: shimmer and repetition in motion (stills only), resolutions above 1280 x 720,
-  the editor's repaint after an edit (`TerrainRenderer::Update`), the browser build.
+The remaining checks were repeated on the retained implementation. A 30-frame software-OpenGL
+walk at 1920 x 1080 sampled the view at frames 4, 14 and 27; the camera travelled about 0.7 m and
+the opened full-resolution captures showed no visible ground shimmer, repeated patch, crack or
+detail seam (`build-probe/shots/ground-motion-1080-{a,b,c}.png`). In the empty editor, a scripted
+Mud stroke appeared in the first captured frame after the cursor left the painted tiles and was
+unchanged in the settled capture, exercising `TerrainRenderer::Update`
+(`build-probe/shots/editor-repaint-{before,first-frame,settled}.png`).
+
+The current source also compiles and links successfully with Emscripten as the WebGL 2 target.
+The generated 37,235,051-byte wasm has the version-1 WebAssembly header, and its HTML/JavaScript
+loader references the current `.js`, `.wasm` and 215,381,022-byte asset package. These complete
+the ground-specific verification backlog; the browser's interactive limitations remain recorded
+in `docs/WEB.md`.
