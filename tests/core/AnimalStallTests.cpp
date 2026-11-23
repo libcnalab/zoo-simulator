@@ -54,7 +54,21 @@ TEST(AnimalMovementTests, VisitorZooAnimalsDoNotRemainStalledInPropPockets) {
     EXPECT_LT(stalledTicks * 400, movingTicks * 3)
         << stalledTicks << " stalled ticks of " << movingTicks << " moving ticks";
     for (const auto& [id, ticks] : longestStall) {
-        EXPECT_LT(ticks, 120) << "animal " << id;
+        const Animal* animal = zoo.Fauna().Find(AnimalId{id});
+        const SpeciesDef* species =
+            animal != nullptr && animal->species >= 0 &&
+                    static_cast<std::size_t>(animal->species) < zoo.SpeciesList().All().size()
+                ? &zoo.SpeciesList().All()[static_cast<std::size_t>(animal->species)]
+                : nullptr;
+        const Enclosure* enclosure = animal != nullptr ? zoo.Habitats().Find(animal->home) : nullptr;
+        EXPECT_LT(ticks, 120)
+            << "animal " << id << (species != nullptr ? " (" + species->id + ")" : "")
+            << (enclosure != nullptr ? " in " + enclosure->name : "")
+            << (animal != nullptr ? " at (" + std::to_string(animal->position.x) + ", " +
+                                        std::to_string(animal->position.z) + ") targeting (" +
+                                        std::to_string(animal->target.x) + ", " +
+                                        std::to_string(animal->target.z) + ")"
+                                  : "");
     }
 }
 

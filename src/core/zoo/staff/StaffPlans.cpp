@@ -69,7 +69,9 @@ constexpr float kFillTroughS = 14.0f;
 constexpr float kThrowFeedS = 9.0f;
 constexpr float kScatterS = 15.0f;
 constexpr float kRakeS = 34.0f;
-constexpr float kDangerousRakeS = 12.0f;
+// Keep the necessary inside pass visible without holding dangerous residents in their
+// houses longer than the recall and gate travel require.
+constexpr float kDangerousRakeS = 6.0f;
 /// The keeper remains outside while the last assigned house gate completes its closing travel.
 constexpr float kHoldingGateCloseS = 1.2f;
 /// Opening the holding gate: the release occurs halfway through this visible operation.
@@ -109,7 +111,9 @@ constexpr std::size_t kMatchLimit = 20;
 constexpr float kFeedingGap = 0.75f;
 /// Very shy species are fed, watered and inspected from the public side of the barrier. Repeated
 /// routine entry displaces them from provisions even though they are not dangerous to staff.
-constexpr float kQuietHabitatShyness = 0.6f;
+// Species at or above this point already retreat from a nearby keeper. Serve their
+// provisions from outside so routine rounds do not repeatedly interrupt feeding.
+constexpr float kQuietHabitatShyness = 0.5f;
 
 std::int32_t Ticks(float seconds) {
     return static_cast<std::int32_t>(seconds * static_cast<float>(kTicksPerSecond));

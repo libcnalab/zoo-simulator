@@ -499,6 +499,20 @@ previously it decremented N for every populated habitat and could silently remai
   hashes repeat for seeds 1–3; all 270 active functional CTest cases pass, as did today's separate
   six-minute `zoogen_animation` run (21 diagnostics disabled). Dangerous habitats still cannot be
   entered and bold species at or below 0.3 do not retreat.
+- The 121-habitat keeper regression is current again (2026-11-23). Crew tests assert the actual
+  one-or-two-habitat staffing policy instead of the obsolete 17-member total. Safety recalls use a
+  purposeful 1.5x walk capped at run speed and a six-second inside rake; all dangerous habitats pass
+  the unchanged 1,500-tick four-day lockout bound. Staff now wait for tolerant animals which step
+  into their motion margin (flamingo close steps 27 -> 0), and species at 0.5 shyness are served from
+  outside. The visitor-paced welfare comparison improves from 13 animal-hours in need to zero and
+  worst hunger from 0.787 to 0.669, versus automatic care's 0.685.
+- The same pass fixes slow-animal need ping-pong found in Tortoise Conservatory. Food, water and
+  shelter journeys that still make progress are not discarded by the former forty-metre time cap;
+  a sub-0.3 m/s animal may divert to urgent water while far from food but commits to the final five
+  metres. Two direct boundary tests pass. The final staffed week is 55 animal-hours in need versus
+  82 under automatic care, longest spell 3 versus 5 hours, hunger 0.780 versus 0.826 and thirst 0.768
+  versus 0.839. The unchanged stall limits pass at 5,941 / 1,809,748 moving ticks (0.328%) with no
+  individual reaching 120 consecutive ticks.
 - J21 fixes the single-position outside round at strip-ringed dangerous habitats. Barrier work now
   draws from both the direct service-gate stands and every reachable public viewing bay instead of
   returning after the first category. In the new 12,000-tick regression Elephant Valley and Rhino

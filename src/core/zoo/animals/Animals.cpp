@@ -1235,7 +1235,15 @@ void Animals::StepAnimals(Env& env, const std::vector<Enclosure>& enclosures, in
             if (animal.activity == AnimalActivity::Drink) {
                 urgentInterrupt = false;
             } else if (animal.activity == AnimalActivity::Eat) {
-                urgentInterrupt = urgentDrink;
+                // A slow animal can spend hours crossing between provisions. Once it is close
+                // to food, let it finish instead of turning back toward water just before
+                // arrival and then back toward food with neither need satisfied. Farther away,
+                // an urgent drink may still interrupt in time.
+                constexpr float kSlowProvisionCommitM = 5.0f;
+                const bool committed = species.walkSpeed < 0.3f &&
+                                       DistanceSquared(animal.position, animal.target) <=
+                                           kSlowProvisionCommitM * kSlowProvisionCommitM;
+                urgentInterrupt = urgentDrink && !committed;
             } else {
                 urgentInterrupt = urgentDrink || urgentEat;
             }

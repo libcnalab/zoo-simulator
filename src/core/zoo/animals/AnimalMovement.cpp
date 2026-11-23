@@ -156,7 +156,11 @@ void AdvanceMovement(Animal& animal, const SpeciesDef& species, const Env& env, 
          animal.activityTicks < 3 * kTicksPerSecond &&
          HashFloat(animal.id.value, static_cast<std::uint32_t>(env.time.tick - animal.activityTicks)) <
              0.15f);
-    const float gait = animal.activity == AnimalActivity::Patrol
+    // A staff recall is the one shelter errand with no dwell time. Animals move at a
+    // purposeful but non-running pace so a distant group is not confined for minutes
+    // while its keeper waits at the holding-gate control.
+    const bool staffRecall = animal.activity == AnimalActivity::Shelter && animal.activityLeft == 0;
+    const float gait = animal.activity == AnimalActivity::Patrol || staffRecall
                            ? std::min(species.runSpeed, species.walkSpeed * 1.5f)
                            : (running ? species.runSpeed : species.walkSpeed);
     const float maxSpeed = gait * speedScale;
@@ -183,8 +187,11 @@ void AdvanceMovement(Animal& animal, const SpeciesDef& species, const Env& env, 
     // Stalled animals still use the much shorter waypoint progress timeout below.
     const float maxWalkTicks = std::max(static_cast<float>(tuning::kWalkGiveUpTicks),
                                         40.0f / (species.walkSpeed * tuning::kMotionSecondsPerTick));
+    const bool essentialJourney = animal.activity == AnimalActivity::Eat ||
+                                  animal.activity == AnimalActivity::Drink ||
+                                  animal.activity == AnimalActivity::Shelter;
     if (static_cast<float>(animal.activityTicks) > maxWalkTicks &&
-        animal.activity != AnimalActivity::BreakOut) {
+        animal.activity != AnimalActivity::BreakOut && !essentialJourney) {
         animal.moving = false;
         animal.speed = 0.0f;
         animal.activityLeft = 0;

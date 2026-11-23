@@ -109,11 +109,12 @@ struct Watch {
 TEST(Keeper, TheVisitorZooHasItsCrew) {
     const auto zoo = VisitorZoo();
     const Staff& staff = zoo->Keepers();
-    ASSERT_EQ(staff.All().size(), 17u);
+    int keepers = 0;
     int gardeners = 0;
     int cleaners = 0;
     for (const StaffMember& member : staff.All()) {
         ASSERT_FALSE(member.round.empty());
+        keepers += member.role == StaffRole::Keeper;
         gardeners += member.role == StaffRole::Gardener;
         cleaners += member.role == StaffRole::Cleaner;
         EXPECT_TRUE(zoo->Routes().Passable(World::TileAt(member.position), kStaff));
@@ -121,6 +122,10 @@ TEST(Keeper, TheVisitorZooHasItsCrew) {
             EXPECT_LE(member.round.size(), 2u);
         }
     }
+    const auto habitats = zoo->Habitats().All().size();
+    EXPECT_GE(static_cast<std::size_t>(keepers), (habitats + 1) / 2);
+    EXPECT_LE(static_cast<std::size_t>(keepers), habitats);
+    EXPECT_EQ(staff.All().size(), static_cast<std::size_t>(keepers + gardeners + cleaners));
     EXPECT_EQ(gardeners, 1);
     EXPECT_EQ(cleaners, 1);
     Env env = zoo->MakeEnv();
@@ -632,8 +637,22 @@ Welfare RunAndWatch(Zoo& zoo, std::int64_t ticks, const char* label, bool staffe
             if (!animal.InWorld()) {
                 continue;
             }
-            const std::string who = "animal " + std::to_string(animal.id.value) + " of habitat " +
-                                    std::to_string(animal.home.value) + " at tick " + std::to_string(i);
+            const SpeciesDef* species =
+                animal.species >= 0 && static_cast<std::size_t>(animal.species) < zoo.SpeciesList().All().size()
+                    ? &zoo.SpeciesList().All()[static_cast<std::size_t>(animal.species)]
+                    : nullptr;
+            const Enclosure* enclosure = zoo.Habitats().Find(animal.home);
+            const std::string who =
+                "animal " + std::to_string(animal.id.value) +
+                (species != nullptr ? " (" + species->id + ")" : "") + " of habitat " +
+                std::to_string(animal.home.value) +
+                (enclosure != nullptr ? " (" + enclosure->name + ")" : "") + " at tick " +
+                std::to_string(i) + ", activity " +
+                std::to_string(static_cast<int>(animal.activity)) +
+                (animal.moving ? " moving" : " still") + ", position (" +
+                std::to_string(animal.position.x) + ", " + std::to_string(animal.position.z) +
+                "), target (" + std::to_string(animal.target.x) + ", " +
+                std::to_string(animal.target.z) + "), prop " + std::to_string(animal.targetProp.value);
             if (animal.hunger > welfare.worstHunger) {
                 welfare.worstHunger = animal.hunger;
                 welfare.worstHungerWho = who;
@@ -700,7 +719,7 @@ Welfare WithoutStaff(std::uint32_t seed, float hour, int pace, std::int64_t tick
 /// The two runs are different histories (a feeder filled at another moment sends the
 /// animals to it at another moment), so single animals fare a little differently in them:
 /// the sum of the hours in need may differ by a twentieth, the longest spell of one animal
-/// by a few hours and the single worst moment of one of 90 animals can move more while remaining
+/// by a few hours and the single worst moment of one of hundreds of animals can move more while remaining
 /// below the welfare issue line. Keep the tighter comparison whenever automatic care is near it.
 /// As measured after the habitat-front planting change (2026-11-19): over a week 11 against 36
 /// animal-hours in need, 3 against 10 hours, hunger at worst 0.751 against 0.989 and thirst 0.712
@@ -762,6 +781,7 @@ TEST(Keeper, AtWorkAmongVisitorsAfterTheMorningFill) {
     std::int64_t all = 0;
     int visitorEncounters = 0;
     int animalEncounters = 0;
+    std::set<std::string> animalEncounterWho;
     float closestWalkingVisitor = 1.0e9f;
     for (int i = 0; i < 3600; ++i) {
         std::vector<Vec2> staffBefore;
@@ -817,7 +837,11 @@ TEST(Keeper, AtWorkAmongVisitorsAfterTheMorningFill) {
                     0.32f + species.bodyRadiusM * BodyScale(animal, species, zoo->Time()) * 0.75f + 0.08f;
                 const float before = Distance(staffBefore[m], animal.position);
                 const float after = Distance(member.position, animal.position);
-                animalEncounters += before < clearance + 0.08f;
+                if (before < clearance + 0.08f) {
+                    ++animalEncounters;
+                    animalEncounterWho.insert("staff " + std::to_string(member.id.value) + ", animal " +
+                                              std::to_string(animal.id.value) + " (" + species.id + ")");
+                }
                 EXPECT_GE(after + 1.0e-4f, std::min(before, clearance))
                     << "staff " << member.id.value << " walked into animal " << animal.id.value;
             }
@@ -826,9 +850,12 @@ TEST(Keeper, AtWorkAmongVisitorsAfterTheMorningFill) {
     std::cout << "KEEPERS at a job " << working * 100 / all << " % of the staff's time\n";
     std::cout << "KEEPERS guarded " << visitorEncounters << " close visitor and " << animalEncounters
               << " close animal steps; nearest walking visitor " << closestWalkingVisitor << " m\n";
+    for (const std::string& who : animalEncounterWho) {
+        std::cout << "KEEPERS close animal: " << who << "\n";
+    }
     EXPECT_GT(working * 5, all * 2) << "the staff are at a job less than two fifths of the time";
     EXPECT_GT(visitorEncounters, 10) << "the run did not exercise walking through a crowd";
-    EXPECT_EQ(animalEncounters, 0) << "a shy animal let staff enter its body clearance";
+    EXPECT_EQ(animalEncounters, 0) << "an animal let staff enter its body clearance";
     EXPECT_GT(closestWalkingVisitor, 0.2f) << "a visitor walked through a member of staff";
 }
 

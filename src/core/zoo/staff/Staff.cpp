@@ -178,9 +178,11 @@ Vec2 AroundBodies(const Env& env, const Animals& animals, const Visitors& visito
             const bool shy = species.shyness > tuning::kKeeperShynessThreshold;
             const float clearance =
                 kStaffRadius + radius + kBodyClearance + (shy ? kShyAnimalYieldMargin : 0.0f);
-            // The animal movement runs before staff movement. If a shy animal stepped into the
-            // margin this tick, wait in place and let its existing keeper-retreat route clear it.
-            if (shy && DistanceSquared(from, animal.position) < clearance * clearance) {
+            // Animal movement runs first. If any animal stepped into the motion margin this
+            // tick, wait rather than walking away through its body; shy animals will use their
+            // keeper-retreat route, while tolerant ones simply pass at their own pace.
+            const float yieldClearance = kStaffRadius + radius + kBodyClearance + kShyAnimalYieldMargin;
+            if (DistanceSquared(from, animal.position) < yieldClearance * yieldClearance) {
                 blocked = true;
                 continue;
             }

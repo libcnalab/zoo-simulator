@@ -483,6 +483,55 @@ TEST(AnimalEthogramTests, TortoiseStartsForWaterEarlierWhenItMustCrossTheHabitat
     EXPECT_GE(far, 0.2f);
 }
 
+TEST(AnimalEthogramTests, TortoiseNearFoodFinishesItsJourneyBeforeSwitchingToWater) {
+    HabitatDay habitat("aldabra_tortoise");
+    Animal& animal = *habitat.animals.Find(AnimalId{1U});
+    ASSERT_GE(habitat.supplies.size(), 2u);
+    const Prop* feeder = habitat.objects.FindProp(habitat.supplies[0]);
+    ASSERT_NE(feeder, nullptr);
+    animal.position = feeder->position + Vec2{0.0f, 4.0f};
+    animal.target = feeder->position;
+    animal.targetProp = feeder->id;
+    animal.activity = AnimalActivity::Eat;
+    animal.activityLeft = 30 * kTicksPerSecond;
+    animal.activityTicks = 0;
+    animal.moving = true;
+    animal.hunger = 0.8f;
+    animal.thirst = 0.9f;
+    animal.nextNeedCheck = 0;
+    habitat.env.time.tick = kTicksPerGameHour;
+
+    habitat.animals.Step(habitat.env);
+
+    EXPECT_EQ(animal.activity, AnimalActivity::Eat);
+    EXPECT_EQ(animal.targetProp, feeder->id);
+    EXPECT_TRUE(animal.moving);
+}
+
+TEST(AnimalEthogramTests, TortoiseFarFromFoodMaySwitchToUrgentWater) {
+    HabitatDay habitat("aldabra_tortoise");
+    Animal& animal = *habitat.animals.Find(AnimalId{1U});
+    ASSERT_GE(habitat.supplies.size(), 2u);
+    const Prop* feeder = habitat.objects.FindProp(habitat.supplies[0]);
+    ASSERT_NE(feeder, nullptr);
+    animal.position = World::TileCenter({20, 26});
+    animal.target = feeder->position;
+    animal.targetProp = feeder->id;
+    animal.activity = AnimalActivity::Eat;
+    animal.activityLeft = 30 * kTicksPerSecond;
+    animal.activityTicks = 0;
+    animal.moving = true;
+    animal.hunger = 0.8f;
+    animal.thirst = 0.9f;
+    animal.nextNeedCheck = 0;
+    habitat.env.time.tick = kTicksPerGameHour;
+
+    habitat.animals.Step(habitat.env);
+
+    EXPECT_EQ(animal.activity, AnimalActivity::Drink);
+    EXPECT_NE(animal.targetProp, feeder->id);
+}
+
 TEST(AnimalEthogramTests, WalkingTortoiseKeepsItsRigidShellClearOfACompanion) {
     HabitatDay habitat("aldabra_tortoise");
     const auto& species = habitat.species.All()[static_cast<std::size_t>(habitat.speciesIndex)];

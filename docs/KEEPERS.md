@@ -46,7 +46,7 @@ zoo happens half way through the job.
   `Staff::NextFeeding`).
 - **Routine by the hour.** Mucking out (raking, the wheelbarrow) in the morning, hosing at
   the water's edge, fence checks with a clipboard, a breather at midday, a walk round at
-  night. A habitat dirtier than 0.25 is raked whatever the hour. Residents at or above 0.6
+  night. A habitat dirtier than 0.25 is raked whatever the hour. Residents at or above 0.5
   shyness are serviced from the public side instead of repeatedly being displaced from food and
   water by routine entry; Greenhill gives each of its three such northern habitats two separated
   troughs.
@@ -57,9 +57,10 @@ zoo happens half way through the job.
   threshold. A group that needs a drink or meal sooner keeps access to its provisions. Every animal in the
   habitat must fit into an open, registered shelter whose door its species can use; a loose resident, missing door or short
   capacity or disconnected route makes the whole operation fail without moving any animal. On
-  success the assigned group remains visible while walking to those doors. The keeper waits at
+  success the assigned group remains visible while walking purposefully, at up to 1.5 times its
+  ordinary walk but never faster than its natural run, to those doors. The keeper waits at
   the outside control until the last dangerous resident is hidden and its separately drawn welded
-  holding gate has slid shut, crosses the same registered service gate for one twelve-second rake
+  holding gate has slid shut, crosses the same registered service gate for one six-second rake
   at its inside tile, returns outside, visibly slides the holding gate open for 1.2 seconds and only
   then releases the group.
   If the way out changes, the animals stay secured and the keeper retries rather than completing
@@ -125,6 +126,15 @@ its keeper-retreat route instead of walking away through the overlap. The change
 morning run exercises 3,289 close staff/visitor steps, records zero staff/animal approaches, and
 keeps the nearest moving visitor 0.253 m away; the zero-contact assertions were not relaxed.
 
+The 121-habitat expansion exposed two further edges in that guard. A tolerant flamingo could step
+into a member's motion margin between ticks; staff now wait for every visible animal in that margin,
+not only shy species. The measured visitor morning again records zero close animal steps while staff
+remain visibly at work for 63% of their time and negotiate 7,373 close visitor steps. The same larger
+zoo also showed that repeated entry displaced moderately shy Arctic foxes from provisions. The
+outside-service threshold is now 0.5 shyness. At visitor pace the staffed comparison falls from 13
+animal-hours in need (five consecutive, worst hunger 0.787) to zero, with worst hunger 0.669 versus
+automatic care's 0.685. Test diagnostics now name the species and habitat behind every extreme.
+
 J35 closes the dangerous-habitat care gap. `Animals::SecureForStaff` first solves the whole
 group-to-shelter capacity assignment and changes nothing unless every animal has a valid slot.
 The resulting shelter hold is transient input rebuilt from the keeper's saved `lockout` field:
@@ -156,7 +166,10 @@ J50 replaces J35's instantaneous shelter transfer with a visible, fail-closed re
 atomic capacity and fallback-route check assigns each resident a registered door, but preserves
 its position and uses the ordinary animal gait and collision system to reach it. A shelter route
 which cannot fit the exact prop-aware tile-centre graph may fall back to the older grid route;
-waypoint correction and every physical step still avoid the real trees and rocks. The keeper holds
+waypoint correction and every physical step still avoid the real trees and rocks. A later large-zoo
+regression gives this zero-dwell safety errand a purposeful 1.5x walk (capped by natural run speed)
+and shortens the single inside rake from twelve to six seconds; every four-day lockout remains below
+the unchanged 1,500-tick bound. The keeper holds
 the outside control until `DangerSecuredForStaff` sees every dangerous resident hidden, so the gate
 remains impassable during the walk. Every dangerous Visitor Zoo habitat shows a recall and later
 admits its keeper; the longest complete lockout is 1,116 ticks (55.8 seconds) against a 1,500-tick
@@ -248,6 +261,16 @@ The seed-1 staffed week recorded one animal-hour in need, compared with ten unde
 care alone. Both morning visits recorded zero.
 The comparison still keeps its separate
 aggregate, duration and peak checks rather than allowing one good average to hide a stranded animal.
+The 121-habitat week exposed that exact individual failure in a slow tortoise. Its far feeder and
+trough could make urgent hunger and thirst reverse the journey just before arrival. Essential food,
+water and shelter journeys are no longer abandoned merely for exceeding the old forty-metre time
+budget; their existing progress/stall guard still rejects blocked routes. A species walking below
+0.3 m/s may switch from food to urgent water while far away, but commits to the final five metres of
+its food journey so it satisfies one need instead of oscillating. Direct tests cover both sides of
+that boundary. The final staffed week records 55 animal-hours in need against automatic care's 82,
+a three-hour longest spell against five, worst hunger 0.780 against 0.826 and worst thirst 0.768
+against 0.839. The 12,000-tick whole-zoo stall probe remains green at 5,941 of 1,809,748 moving ticks
+(0.328%), with every individual run below the unchanged 120-tick bound.
 
 ## Determinism and saves
 
