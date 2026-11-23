@@ -2,7 +2,8 @@
 
 What the ground of Greenhill Zoo is drawn from, how the banks of its pools are shaped, the
 height lookup everything standing on the ground uses, what it costs, and what is open.
-Tasks G1 (2026-11-13), G1b and G1c (2026-11-14), J51, J52 and J55 (2026-11-20). Code:
+Tasks G1 (2026-11-13), G1b and G1c (2026-11-14), J51, J52 and J55 (2026-11-20),
+and the foundation-edge pass (2026-11-24). Code:
 `src/game/GroundPaint.{hpp,cpp}`
 (colours and heights), `src/game/GroundDetail.{hpp,cpp}` (the detail layer's textures),
 `src/game/TerrainRenderer.{hpp,cpp}` (meshes, textures, drawing). Evidence:
@@ -209,9 +210,19 @@ to 12.5 cm was rejected: on the 121-habitat estate it raised ground build time f
 6.62 seconds and resident memory after ground by roughly 1.2 GB. The final 25 cm build remains
 3.43 seconds; `build-probe/shots/soft-bank-tiger.png` is the opened real-game smoke.
 
+The 2026-11-24 foundation pass removes the last deliberately grid-aligned building edge. The
+concrete now continues 24 cm outside the occupied tiles, fading into the path or terrain and using
+distance to the actual footprint rectangles, so straight walls stay straight and outside corners
+are rounded. At the footprint edge both neighbouring tile painters produce the exact same concrete
+sample; the doorway sill wins briefly over its connecting path and then fades into it. This changes
+only the existing baked ground texture, with no mesh or draw call. A regression checks all samples
+along a building side, the rounded corner and the exact outer limit, and all five ground tests pass
+normally and under AddressSanitizer. Two real 1280 x 720 software-OpenGL visits completed with the
+expanded 121-habitat zoo; ground painting remained 3.40--3.42 seconds. The close check is
+`build-probe/shots/foundation-apron-ground.png`.
+
 ## Open
 
-- Building foundations end at the tile (intentional so far).
 - Detail layer outlines are 25 cm cells: the edge between mud and grass is stepped close up.
 - Not verified: shimmer and repetition in motion (stills only), resolutions above 1280 x 720,
   the editor's repaint after an edit (`TerrainRenderer::Update`), the browser build.

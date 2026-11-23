@@ -1211,6 +1211,15 @@ A rejected whole-terrain 12.5 cm experiment doubled ground build time (3.39 -> 6
 about 1.2 GB after ground. The final build retains 25 cm cells and takes 3.43 s; the real-game
 smoke is `build-probe/shots/soft-bank-tiger.png`.
 
+Building foundations no longer stop on the tile grid. A 24 cm baked concrete apron follows the
+union of the occupied tile rectangles, with straight sides, rounded outer corners and an exact
+match between both painters on every footprint edge. It fades over paths at doorways and into
+terrain elsewhere without new geometry or draw calls. The focused test covers the side seam,
+corner and cutoff; all five ground tests pass normally and under ASan. Three real 1280 x 720
+software-OpenGL runs completed on the 121-habitat zoo, with the ground still building in
+3.40--3.42 s. The useful close view is `build-probe/shots/foundation-apron-ground.png`
+(2026-11-24).
+
 ## 5. Worktrees in `.codex-work/` (git-ignored)
 
 Still holding work to take: **none**. Briefs `brief-<id>.md`, reports `report-<id>.md`, logs

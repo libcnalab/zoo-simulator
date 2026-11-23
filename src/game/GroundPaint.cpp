@@ -196,6 +196,32 @@ Color3 EarthColor(float x, float z) {
     return Multiply(Color3{0.27f, 0.2f, 0.125f}, 0.8f + 0.36f * Value(x * 4.5f, z * 4.5f, 83));
 }
 
+Color3 FoundationColor(float x, float z) {
+    const float fine = Value(x * 5.0f, z * 5.0f, 41);
+    return Multiply(Color3{0.36f, 0.35f, 0.33f}, 0.88f + 0.24f * fine);
+}
+
+/// A small concrete apron beyond the occupied tiles keeps a foundation from ending
+/// on the map grid. Distance to the union of the neighbouring tile rectangles gives
+/// straight sides and naturally rounded outside corners; the apron is narrower than
+/// one 25 cm detail cell, so the nine tiles PaintInfo carries are ample.
+float FoundationCover(const TilePaintInfo& info, float x, float z) {
+    constexpr float kApronM = 0.24f;
+    float nearest = kApronM;
+    for (int dz = -1; dz <= 1; ++dz) {
+        for (int dx = -1; dx <= 1; ++dx) {
+            if (!info.building[static_cast<std::size_t>((dz + 1) * 3 + dx + 1)])
+                continue;
+            const float left = static_cast<float>(info.tile.x + dx) * zoo::kTileSize;
+            const float top = static_cast<float>(info.tile.z + dz) * zoo::kTileSize;
+            const float outsideX = std::max(std::max(left - x, 0.0f), x - (left + zoo::kTileSize));
+            const float outsideZ = std::max(std::max(top - z, 0.0f), z - (top + zoo::kTileSize));
+            nearest = std::min(nearest, std::hypot(outsideX, outsideZ));
+        }
+    }
+    return Noise::SmoothStep(kApronM, 0.0f, nearest);
+}
+
 /// `inside` is the distance in metres to the path's edge.
 Color3 PathColor(PathKind kind, float x, float z, float inside) {
     switch (kind) {
@@ -615,8 +641,7 @@ GroundSample SampleGround(const TilePaintInfo& info, float x, float z) {
 
     bool paved = false;
     if (info.building[4]) {
-        const float fine = Value(x * 5.0f, z * 5.0f, 41);
-        out.color = Multiply(Color3{0.36f, 0.35f, 0.33f}, 0.88f + 0.24f * fine);
+        out.color = FoundationColor(x, z);
         out.detail = GroundDetail::Grain;
         paved = true;
     } else {
@@ -765,6 +790,17 @@ GroundSample SampleGround(const TilePaintInfo& info, float x, float z) {
                     if (rock > 0.5f)
                         out.detail = GroundDetail::Grain;
                 }
+            }
+        }
+        // The sill wins over a path at a doorway and fades into it (or the terrain)
+        // within 24 cm. At the footprint edge cover is exactly one, so the two tile
+        // painters agree there instead of exposing a grid-aligned colour seam.
+        const float foundation = FoundationCover(info, x, z);
+        if (foundation > 0.0f) {
+            out.color = Mix(out.color, FoundationColor(x, z), foundation);
+            if (foundation >= 0.5f) {
+                out.detail = GroundDetail::Grain;
+                paved = true;
             }
         }
     }

@@ -78,6 +78,43 @@ TEST(GroundPaint, FenceEndsTurnsAndGatesStayContinuousAcrossTileSides) {
     }
 }
 
+TEST(GroundPaint, BuildingFoundationCrossesTheTileEdgeAndEndsInARoundedApron) {
+    zoo::World world(8, 8);
+    world.SetBuilding({2, 2}, zoo::BuildingId{1});
+
+    const TilePaintInfo building = PaintInfo(world, {2, 2});
+    const TilePaintInfo east = PaintInfo(world, {3, 2});
+    for (int sample = 0; sample <= 8; ++sample) {
+        const float z = 4.0f + static_cast<float>(sample) * zoo::kTileSize / 8.0f;
+        const GroundSample fromBuilding = SampleGround(building, 6.0f, z);
+        const GroundSample fromOutside = SampleGround(east, 6.0f, z);
+        for (std::size_t channel = 0; channel < fromBuilding.color.size(); ++channel)
+            EXPECT_NEAR(fromBuilding.color[channel], fromOutside.color[channel], 1.0e-6f) << "sample " << sample;
+        EXPECT_EQ(fromBuilding.detail, fromOutside.detail) << "sample " << sample;
+    }
+
+    zoo::World bareWorld(8, 8);
+    const TilePaintInfo bareEast = PaintInfo(bareWorld, {3, 2});
+    const GroundSample apron = SampleGround(east, 6.1f, 5.0f);
+    const GroundSample roundedCorner = SampleGround(PaintInfo(world, {3, 3}), 6.1f, 6.1f);
+    const GroundSample beyond = SampleGround(east, 6.3f, 5.0f);
+    const GroundSample bareApron = SampleGround(bareEast, 6.1f, 5.0f);
+    const GroundSample bareCorner = SampleGround(PaintInfo(bareWorld, {3, 3}), 6.1f, 6.1f);
+    const GroundSample bareBeyond = SampleGround(bareEast, 6.3f, 5.0f);
+
+    float apronDifference = 0.0f;
+    float cornerDifference = 0.0f;
+    for (std::size_t channel = 0; channel < apron.color.size(); ++channel) {
+        apronDifference += std::abs(apron.color[channel] - bareApron.color[channel]);
+        cornerDifference += std::abs(roundedCorner.color[channel] - bareCorner.color[channel]);
+        EXPECT_FLOAT_EQ(beyond.color[channel], bareBeyond.color[channel]);
+    }
+    EXPECT_GT(apronDifference, 0.05f);
+    EXPECT_GT(cornerDifference, 0.01f);
+    EXPECT_EQ(apron.detail, GroundDetail::Grain);
+    EXPECT_EQ(beyond.detail, bareBeyond.detail);
+}
+
 TEST(GroundPaint, DeepPoolBankIsBroadAndReachesItsBedBeforeTheNextTile) {
     zoo::World world(10, 10);
     for (int z = 2; z <= 7; ++z) {
