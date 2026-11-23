@@ -102,8 +102,9 @@ public:
                   int maxExpansions = 60000, std::span<const NavObstacle> obstacles = {}) const;
 
     /// Can the walker go from `a` to `b` in a straight line: every tile the segment
-    /// passes through is passable and it crosses no blocked edge (a segment through
-    /// a grid vertex counts as touching all four tiles around it).
+    /// passes through is passable and it crosses no blocked edge, including when either
+    /// endpoint lies exactly on that edge (a segment through a grid vertex counts as touching
+    /// all four tiles around it).
     bool Walkable(Vec2 a, Vec2 b, const NavProfile& profile,
                   std::span<const NavObstacle> obstacles = {}) const;
 

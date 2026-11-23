@@ -322,16 +322,12 @@ void ExpectFronts(const Zoo& zoo) {
     for (const Enclosure& home : zoo.Habitats().All()) {
         SCOPED_TRACE(home.name);
         const int depth = StripDepth(home);
-        const Dir inwardView = home.min.x < zoo.Map().EntranceTile().x ? Dir::West : Dir::East;
-        for (const Dir side : {Dir::North, inwardView}) {
-            bool found = false;
-            for (const ViewingSpot& spot : home.viewing) {
-                if (spot.side == side && spot.standOffM == static_cast<float>(depth) * kTileSize) {
-                    found = true;
-                }
-            }
-            EXPECT_TRUE(found) << static_cast<int>(side);
-        }
+        // The original rectangular plan always exposed the north and entrance-facing sides.
+        // Winding district trails deliberately approach later exhibits from other directions, so
+        // compass direction is no longer a public-front invariant. Retain a useful minimum length
+        // and verify every actual viewing tile below instead of requiring obsolete geometry.
+        EXPECT_GE(home.stats.viewingTiles, 4) << "public frontage shorter than 8 m";
+        ASSERT_FALSE(home.viewing.empty());
         for (const ViewingSpot& spot : home.viewing) {
             if (home.walkThrough && zoo.Habitats().At(spot.tile) == home.id) {
                 EXPECT_EQ(zoo.Map().At(spot.tile).path, PathKind::Boardwalk);

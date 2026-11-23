@@ -233,7 +233,8 @@ ordinary movement landed exactly on the south glass edge at `(214.335, 272)` m, 
 animals off ground outside their enclosure, including strips, without altering deliberate
 `BreakOut` movement or the behaviour of already loose animals. A small endpoint regression
 covers both public and stand-off ground and verifies that intentional breakouts still cross.
-The generic endpoint issue in `src/core/zoo/nav/Nav.cpp` remains a follow-up for its owner.
+`Navigator::Walkable` now checks a blocked edge even when a route begins or ends exactly on it;
+the enclosure-ownership check remains a second, habitat-specific guard.
 
 
 The absence of paths excludes visitors from strips; the rail and containment fence enclose

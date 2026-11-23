@@ -140,6 +140,25 @@ TEST(Navigator, VertexTraversalCornerCuttingAndDeterminism) {
     EXPECT_FALSE(cornerNavigator.Walkable(World::TileCenter({1, 1}), World::TileCenter({2, 2}), {}));
 }
 
+TEST(Navigator, EndpointOnFenceDoesNotCrossTheUnexaminedFinalEdge) {
+    World world(8, 8);
+    const Vec2 west = World::TileCenter({2, 3});
+    const Vec2 east = World::TileCenter({3, 3});
+    const Vec2 edge = {(west.x + east.x) * 0.5f, west.z};
+    Navigator open(world);
+    EXPECT_TRUE(open.Walkable(west, edge, {}));
+    EXPECT_TRUE(open.Walkable(edge, west, {}));
+
+    world.SetFence(EdgeOf({2, 3}, Dir::East), {1, false, 1.0f});
+    Navigator closed(world);
+    // The exact endpoint belongs to the east tile under World::TileAt, so reaching it from the
+    // west crosses the fence at t=1; starting there and heading west crosses it at t=0.
+    EXPECT_FALSE(closed.Walkable(west, edge, {}));
+    EXPECT_FALSE(closed.Walkable(edge, west, {}));
+    EXPECT_TRUE(closed.Walkable(east, edge, {}));
+    EXPECT_TRUE(closed.Walkable(edge, east, {}));
+}
+
 TEST(Navigator, PerRouteCircularObstaclesAreWalkedAroundDeterministically) {
     World world(12, 9);
     Navigator navigator(world);

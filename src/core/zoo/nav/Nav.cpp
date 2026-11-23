@@ -195,6 +195,33 @@ bool Navigator::Walkable(Vec2 from, Vec2 to, const NavProfile& profile,
     if (!vertexOpen(x0, z0) || !vertexOpen(x1, z1)) {
         return false;
     }
+    const auto endpointTransitionOpen = [this, &profile](TileCoord fromTile, TileCoord toTile) {
+        const TileCoord delta = toTile - fromTile;
+        if (delta == TileCoord{}) {
+            return true;
+        }
+        // A corner endpoint is already covered by vertexOpen(), which deliberately checks all
+        // four touching tiles and edges. A non-corner boundary can cross exactly one edge.
+        if (std::abs(delta.x) + std::abs(delta.z) != 1) {
+            return true;
+        }
+        const Dir direction = delta.x > 0   ? Dir::East
+                              : delta.x < 0 ? Dir::West
+                              : delta.z > 0 ? Dir::South
+                                            : Dir::North;
+        return EdgeOpen(*world_, fromTile, direction, profile);
+    };
+    // World::TileAt assigns a point exactly on an east/south grid line to the tile on that
+    // line's positive side. The segment interior can still be on the other side. Interior event
+    // checks intentionally exclude t=0 and t=1, so validate those two possible edge crossings
+    // explicitly; otherwise a route ending exactly on a fence can appear walkable.
+    const TileCoord startTile = World::TileAt(from);
+    const TileCoord afterStart = tileAt(x0, z0, dx, dz);
+    const TileCoord beforeEnd = tileAt(x1, z1, -dx, -dz);
+    const TileCoord endTile = World::TileAt(to);
+    if (!endpointTransitionOpen(startTile, afterStart) || !endpointTransitionOpen(beforeEnd, endTile)) {
+        return false;
+    }
     for (std::size_t i = 0; i + 1 < eventCount; ++i) {
         const double middle = (events[i] + events[i + 1]) * 0.5;
         const TileCoord tile = tileAt(x0 + dx * middle, z0 + dz * middle, dx, dz);
