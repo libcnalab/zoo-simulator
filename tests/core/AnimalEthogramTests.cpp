@@ -406,6 +406,43 @@ TEST(AnimalEthogramTests, HabitatWaterShadeAndHighGroundAreUsedWithoutUnsafeTarg
     }
 }
 
+TEST(AnimalEthogramTests, SocialLionApproachesAStationaryCompanionsCheekFromFarAway) {
+    HabitatDay habitat("lion");
+    const SpeciesDef& species = habitat.species.All()[static_cast<std::size_t>(habitat.speciesIndex)];
+    Animal& initiator = *habitat.animals.Find(AnimalId{1U});
+    Animal& companion = *habitat.animals.Find(AnimalId{2U});
+    initiator.position = {40.0f, 24.0f};
+    companion.position = {40.0f, 40.0f};
+    companion.heading = 0.0f;
+    companion.activity = AnimalActivity::Rest;
+    companion.moving = false;
+    for (const AnimalId id : {AnimalId{3U}, AnimalId{4U}}) {
+        habitat.animals.Find(id)->activity = AnimalActivity::Crated;
+    }
+    const std::array<std::size_t, 4> group{0, 1, 2, 3};
+    std::vector<PropId> props;
+    bool found = false;
+    for (std::uint64_t seed = 1; seed <= 2000 && !found; ++seed) {
+        habitat.env.time.tick = static_cast<std::int64_t>(seed) * 30 * kTicksPerSecond;
+        Animal trial = initiator;
+        trial.hunger = trial.thirst = trial.fatigue = trial.stress = 0.0f;
+        trial.activity = AnimalActivity::Idle;
+        trial.activityLeft = 0;
+        Rng rng(seed);
+        animal_internal::DecideActivity(trial, species, habitat.env, habitat.animals.All(), group, rng,
+                                        props);
+        if (trial.activity != AnimalActivity::Socialize) {
+            continue;
+        }
+        found = true;
+        const Vec2 approach = trial.target - companion.position;
+        EXPECT_GT(std::abs(approach.x), 0.5f);
+        EXPECT_NEAR(approach.z, 0.0f, 0.001f);
+        EXPECT_GT(Distance(trial.position, trial.target), 10.0f);
+    }
+    EXPECT_TRUE(found);
+}
+
 TEST(AnimalEthogramTests, TortoiseGrazesAtItsFeetAndWalksToNearbyShadeAtMidday) {
     HabitatDay habitat("aldabra_tortoise");
     const auto& species = habitat.species.All()[static_cast<std::size_t>(habitat.speciesIndex)];

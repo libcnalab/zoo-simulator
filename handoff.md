@@ -101,6 +101,7 @@ Implemented 2026-11-23: Dingo Scrub, Painted Dog Valley and Dhole Forest fill qu
 Australian, African and Asian districts. The connected exhibits add 20 residents and raise a fresh
 zoo to 609 animals, 52 species and 121 habitats. All three species have dedicated adult and
 juvenile procedural assets, distinct anatomy and coats, rather than renamed wolf bodies. The
+three pack species also have explicit activity profiles instead of the legacy fallback. The
 600-step resident/containment regression and the 119-gate Apocalypse restoration regression pass.
 
 ### Experimental `Many` visitor crowd (implemented)

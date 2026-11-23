@@ -155,6 +155,6 @@ manifest regression.
    searches now include the trees and rocks along their route corridor (0.33 % of the moving
    ticks, was 5.4 %; a regression test holds it under 0.75 %). Local crowding and sub-tile
    pockets can still require deterministic sidesteps (`docs/ANIMAL_BEHAVIOUR.md` "In the game").
-   Nearby lions can fit a greeting to each other's faces. Approaching a particular cheek
-   from farther away remains open. Kangaroos groom their own faces, and the penguin and
+   Nearby lions fit a greeting to each other's faces, and a social lion now approaches the nearer
+   clear cheek of a stationary companion from farther away. Kangaroos groom their own faces, and the penguin and
    flamingo huddles and zebra watch use individual clips.

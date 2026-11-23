@@ -755,7 +755,11 @@ void DecideActivity(Animal& animal, const SpeciesDef& species, Env& env, std::sp
             const Animal& other = animals[otherIndex];
             if (other.id == animal.id || other.species != animal.species || !other.Visible() ||
                 env.enclosures.At(other.position) != enclosureId ||
-                (youngPlay && IsAdult(other, species, env.time))) {
+                (youngPlay && IsAdult(other, species, env.time)) ||
+                (species.id == "lion" && next == AnimalActivity::Socialize &&
+                 (other.moving || other.sick ||
+                  (other.activity != AnimalActivity::Rest && other.activity != AnimalActivity::Idle &&
+                   other.activity != AnimalActivity::Socialize)))) {
                 continue;
             }
             const float distance = DistanceSquared(animal.position, other.position);
@@ -772,9 +776,28 @@ void DecideActivity(Animal& animal, const SpeciesDef& species, Env& env, std::sp
                                                        BodyScale(*companion, species, env.time)) +
                                 tuning::kSocialGapM;
             const Vec2 offset = animal.position - companion->position;
-            const Vec2 beside =
-                companion->position +
-                (LengthSquared(offset) > 1.0e-6f ? Normalized(offset) : Vec2{1.0f, 0.0f}) * apart;
+            Vec2 beside = companion->position +
+                          (LengthSquared(offset) > 1.0e-6f ? Normalized(offset) : Vec2{1.0f, 0.0f}) * apart;
+            if (species.id == "lion" && next == AnimalActivity::Socialize && nearest > apart * apart) {
+                // A lion greeting is cheek-to-muzzle. Approaching on the radial line from an
+                // arbitrary starting point often leaves the bodies nose-to-tail, beyond the
+                // renderer's neck fit. Prefer the nearer side of the stationary partner, trying
+                // the other cheek when scenery or a fence blocks it.
+                const Vec2 forward = HeadingVector(companion->heading);
+                Vec2 side{forward.z, -forward.x};
+                if (Dot(offset, side) < 0.0f) {
+                    side = side * -1.0f;
+                }
+                const float bodyRadius = species.bodyRadiusM * BodyScale(animal, species, env.time);
+                const std::array<Vec2, 2> cheeks = {companion->position + side * apart,
+                                                    companion->position - side * apart};
+                for (const Vec2 cheek : cheeks) {
+                    if (DestinationClear(cheek, bodyRadius, enclosureId, env, species, propScratch)) {
+                        beside = cheek;
+                        break;
+                    }
+                }
+            }
             StartActivity(
                 animal, next, nearest > apart * apart ? beside : animal.position,
                 RandomDuration(rng, tuning::kSocializeMinimumSeconds, tuning::kSocializeMaximumSeconds));

@@ -43,7 +43,7 @@ it is tired). Sleep timing uses a day/night bias, with a midday
 rest period for crepuscular species. Loose animals roam nearby public tiles,
 drink at open water and keep accumulating needs.
 
-The nineteen shipped species use the internal table in `AnimalProfile.cpp`.
+Every shipped species uses the internal table in `AnimalProfile.cpp`.
 Unknown species ids still use the original weighted routine; the species JSON
 schema and loader are unchanged. Table weights and all times and distances below
 are **game-design estimates**, intended to produce plausible ethograms, not
@@ -67,6 +67,9 @@ can arrive or leave during the same bout.
 | Flamingo | 3/12/2/4 | shallow filter feeding, preening | 2 | 12 |
 | Brown bear | 4/9/4/3 | enrichment, bathing in heat | solitary | 15 |
 | Wolf | 10/0/5/2 | boundary patrol | 5 | 12 |
+| Dingo | 9/0/6/3 | boundary patrol | 5 | 13 |
+| African wild dog | 6/0/8/5 | pack contact | 7 | 12 |
+| Dhole | 7/0/7/5 | pack contact | 7 | 13 |
 | Rhino | 5/10/3/3 | shallow wallowing | solitary | 18 |
 | Camel | 4/10/4/3 | rumination | 7 | 16 |
 | Ostrich | 2/11/6/2 | dust bathing | 6 | 10 |
@@ -715,10 +718,12 @@ are not counted as completed validation.
 ### Head rubbing at Lion Rock (2026-11-21)
 
 Sara's social activity and Suki's rest can overlap. When both are stationary in the same
-habitat and their faces are within reach, Sara lowers her muzzle and Suki turns her head.
+habitat, a social lion approaching from farther away now selects the nearer clear cheek side
+rather than stopping on an arbitrary radial line. Once their faces are within reach, Sara lowers
+her muzzle and Suki turns her head.
 Their feet keep their positions during the rub. A moving, sleeping or sick animal is
-unavailable. Navigation still brings a social lion beside a companion using body spacing.
-Selecting an approach to a specific cheek from farther away remains open.
+unavailable. Navigation retains body spacing and tries the other cheek if scenery or a fence
+blocks the first.
 [In-game comparison](evidence/lion-rock-paired-greeting-2026-11-21.jpg)
 
 The posture is based on observations of head rubbing in captive African lions. Figure 1
