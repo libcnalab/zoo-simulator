@@ -28,6 +28,9 @@ Each species is defined by one JSON file in `data/species/`. Biological values u
 | Southern white rhinoceros | Ceratotherium simum simum | NT | 2–8 | 1000 | 2.0 m / 5 | 1.2 / 4 | 12000 | 82 |
 | Bengal tiger | Panthera tigris tigris | EN | 1–2 | 800 | 4.0 m / 4 | 1.0 / 5 | 8500 | 90 |
 | Grey wolf | Canis lupus | LC | 4–10 | 600 | 2.5 m / 3 | 1.2 / 6 | 4500 | 76 |
+| Dingo | Canis familiaris (dingo) | NE | 2–8 | 600 | 2.4 m / 3 | 1.05 / 5.4 | 5200 | 84 |
+| African wild dog | Lycaon pictus | EN | 4–14 | 900 | 2.5 m / 4 | 1.15 / 6.7 | 9800 | 94 |
+| Dhole | Cuon alpinus | EN | 3–12 | 700 | 2.4 m / 3 | 1.0 / 5.8 | 8800 | 91 |
 | Plains zebra | Equus quagga | NT | 4–20 | 500 | 2.4 m / 3 | 1.5 / 7 | 3000 | 58 |
 
 
@@ -55,7 +58,7 @@ while geometry, textures and animations remain identical.
 | `zoogen/scan.py` on a prepared third-party static sculpt, rigged by us (below) | zebra, zebra_female, zebra_juvenile |
 | `zoogen/giraffe2.py` on a prepared head-and-neck scan, body modelled by us (below) | giraffe, giraffe_female, giraffe_juvenile |
 | `zoogen/sculpt.py`, `bear.py` on a prepared third-party sculpt, rigged by us (below) | brown_bear, brown_bear_female, brown_bear_juvenile, polar_bear, polar_bear_female, polar_bear_juvenile |
-| `zoogen/quadruped.py`, `wild_quadruped.py`, `anatomy.py` | wolf, wolf_female, wolf_juvenile, camel, camel_female, camel_juvenile, meerkat, meerkat_juvenile, lynx, lynx_juvenile, red_panda, red_panda_juvenile, snow_leopard, snow_leopard_juvenile, capybara, capybara_juvenile |
+| `zoogen/quadruped.py`, `wild_quadruped.py`, `anatomy.py` | wolf, wolf_female, wolf_juvenile, dingo, dingo_juvenile, african_wild_dog, african_wild_dog_juvenile, dhole, dhole_juvenile, camel, camel_female, camel_juvenile, meerkat, meerkat_juvenile, lynx, lynx_juvenile, red_panda, red_panda_juvenile, snow_leopard, snow_leopard_juvenile, capybara, capybara_juvenile |
 | `zoogen/birdscan.py` on a prepared third-party scan or sculpt, rigged by us (below) | penguin, penguin_juvenile, flamingo, flamingo_juvenile |
 | `zoogen/biped.py` | ostrich, ostrich_female, ostrich_juvenile, kangaroo, kangaroo_female, kangaroo_juvenile |
 

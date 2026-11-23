@@ -22,6 +22,7 @@ def make_wild_quadruped(config):
     zebra = kind == "zebra"
     tiger = kind == "tiger"
     wolf = kind == "wolf"
+    coat_variant = config.get("coat_variant", "grey_wolf")
     skull_scale = config.get("skull_scale", 1.0)
     muzzle_width_scale = config.get("muzzle_width_scale", 1.0)
     muzzle_length_scale = config.get("muzzle_length_scale", 1.0)
@@ -342,6 +343,40 @@ def make_wild_quadruped(config):
             coat = nz.mix(coat, np.array([0.055, 0.04, 0.035]), ctx.tag("hoof") * 0.9)
             coat = nz.mix(coat, np.array([0.08, 0.055, 0.045]), ctx.tag("nose"))
             coat = nz.mix(coat, np.array([0.035, 0.03, 0.028]), ctx.tag("jaw") * 0.7)
+        elif wolf and coat_variant == "african_wild_dog":
+            # Painted dogs are individuals in motley rather than grey wolves with spots. Broad,
+            # low-frequency masks make readable black, ochre and white patches at zoo distance;
+            # the ears and muzzle remain characteristically dark and the tail ends in white.
+            ochre = np.array([0.61, 0.34, 0.13])
+            black = np.array([0.055, 0.045, 0.035])
+            white = np.array([0.82, 0.78, 0.65])
+            grain = nz.fbm(P, 22.0, 3, seed=203)
+            broad = nz.fbm(P * np.array([1.0, 1.25, 0.9]), 3.8, 4, seed=204)
+            pale = nz.fbm(P * np.array([1.2, 0.9, 1.1]), 4.6, 4, seed=205)
+            coat = ochre * (0.88 + 0.20 * grain)[..., None]
+            coat = nz.mix(coat, black, nz.smoothstep(0.43, 0.58, broad))
+            coat = nz.mix(coat, white, nz.smoothstep(0.51, 0.66, pale))
+            coat = nz.mix(coat, black, np.clip(ctx.tag("ear") * 0.95 + ctx.tag("nose"), 0, 1))
+            coat = nz.mix(coat, white, ctx.tag("tuft") * 0.82)
+        elif wolf and coat_variant == "dingo":
+            ginger = np.array([0.72, 0.38, 0.12])
+            cream = np.array([0.88, 0.78, 0.59])
+            grain = nz.fbm(P, 24.0, 3, seed=211)
+            coat = ginger * (0.90 + 0.18 * grain)[..., None]
+            underside = nz.smoothstep(0.08, -0.58, ctx.N[..., 2])
+            socks = ctx.tag("leg") * nz.smoothstep(0.30 * height, 0.10 * height, ctx.z)
+            coat = nz.mix(coat, cream, np.clip(underside * 0.72 + socks * 0.82 +
+                                               ctx.tag("jaw") * 0.75, 0, 0.92))
+            coat = nz.mix(coat, np.array([0.16, 0.10, 0.065]), ctx.tag("nose") * 0.98)
+        elif wolf and coat_variant == "dhole":
+            rust = np.array([0.67, 0.22, 0.075])
+            cream = np.array([0.86, 0.72, 0.50])
+            dark = np.array([0.12, 0.075, 0.045])
+            grain = nz.fbm(P, 26.0, 3, seed=221)
+            coat = rust * (0.88 + 0.20 * grain)[..., None]
+            underside = nz.smoothstep(0.15, -0.58, ctx.N[..., 2])
+            coat = nz.mix(coat, cream, np.clip(underside * 0.72 + ctx.tag("jaw") * 0.62, 0, 0.86))
+            coat = nz.mix(coat, dark, np.clip(ctx.tag("tuft") * 0.82 + ctx.tag("nose"), 0, 0.98))
         elif wolf:
             juvenile = config.get("juvenile", False)
             grey = np.array([0.44, 0.40, 0.34]) if juvenile else np.array([0.40, 0.36, 0.30])

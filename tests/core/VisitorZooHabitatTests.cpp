@@ -138,7 +138,10 @@ const std::map<std::string, std::vector<std::string>> kResidents{
     {"Tapir Tropical River", {"south_american_tapir"}},
     {"Okapi Rainforest", {"okapi"}},
     {"Cassowary Fern Gully", {"southern_cassowary"}},
-    {"Tropical Penguin Coast", {"penguin"}}};
+    {"Tropical Penguin Coast", {"penguin"}},
+    {"Dingo Scrub", {"dingo"}},
+    {"Painted Dog Valley", {"african_wild_dog"}},
+    {"Dhole Forest", {"dhole"}}};
 
 void ExpectResidents(const Zoo& zoo, bool omitPenguin = false) {
     ASSERT_EQ(zoo.Habitats().All().size(), kResidents.size());
@@ -174,8 +177,8 @@ void ExpectReportedResidents(const ScenarioReport& report, bool omitPenguin) {
             actual.push_back(resident.species);
         }
         std::vector<std::string> expected = kResidents.at(habitat.name);
-        if (omitPenguin && habitat.name == "Penguin Cove") {
-            expected.clear();
+        if (omitPenguin) {
+            std::erase(expected, "penguin");
         }
         std::sort(expected.begin(), expected.end());
         EXPECT_EQ(actual, expected) << habitat.name;
@@ -617,8 +620,7 @@ void CheckVisiting(Zoo& zoo, std::int64_t ticks) {
         // visitor groups.  Preserve at least the established zoo's 24-front coverage; the
         // disabled full-morning test below retains the all-habitat expectation.
         constexpr std::size_t kEstablishedFronts = 24;
-        EXPECT_GE(initialFrontWatched.size(),
-                  std::min(kEstablishedFronts, zoo.Habitats().All().size()));
+        EXPECT_GE(initialFrontWatched.size(), std::min(kEstablishedFronts, zoo.Habitats().All().size()));
     }
     ExpectResidents(zoo);
     ExpectContained(zoo);

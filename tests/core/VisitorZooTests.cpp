@@ -199,7 +199,7 @@ TEST(VisitorZooTests, CompleteZoo) {
     ExpectNoProblems(BuildVisitorZoo(zoo));
     ExpectConnected(zoo);
     ExpectPublicAccess(zoo);
-    EXPECT_EQ(zoo.Habitats().All().size(), 118U);
+    EXPECT_EQ(zoo.Habitats().All().size(), 121U);
     std::set<int> species;
     const Env env = zoo.MakeEnv();
     for (const Animal& animal : zoo.Fauna().All()) {
@@ -222,7 +222,7 @@ TEST(VisitorZooTests, CompleteZoo) {
         EXPECT_GE(Containment(def, enclosure->stats), 0.99f) << def.id;
         EXPECT_GE(enclosure->stats.shelterCapacity, group.allAnimals) << def.id;
     }
-    EXPECT_EQ(species.size(), 49U);
+    EXPECT_EQ(species.size(), 52U);
     PrintPlan(zoo);
     for (const Enclosure& enclosure : zoo.Habitats().All()) {
         EXPECT_GE(enclosure.stats.gates, 1) << enclosure.name;
@@ -247,7 +247,7 @@ TEST(VisitorZooTests, SpeciesCanBeOmittedWithoutRemovingTheirHabitat) {
     Zoo zoo(testdata::GameCatalog(), testdata::GameSpecies(), VisitorZooConfig());
     ExpectNoProblems(BuildVisitorZoo(zoo, {{"flamingo"}}));
     EXPECT_EQ(zoo.AnimalCount(zoo.SpeciesList().IndexOf("flamingo")), 0);
-    EXPECT_EQ(zoo.Habitats().All().size(), 118U);
+    EXPECT_EQ(zoo.Habitats().All().size(), 121U);
     bool lagoon = false;
     for (const Enclosure& enclosure : zoo.Habitats().All()) {
         if (enclosure.name == "Flamingo Lagoon") {
@@ -314,11 +314,11 @@ TEST(VisitorZooTests, NineSheetPropertyKeepsTheEstablishedExpansionStocked) {
             ASSERT_NE(home, nullptr);
             homes.insert(animal.home);
             if (id == "kiang") {
-                establishedRangeStocked = establishedRangeStocked ||
-                                          home->max.x < old.Map().PropertyMin().x + shift;
+                establishedRangeStocked =
+                    establishedRangeStocked || home->max.x < old.Map().PropertyMin().x + shift;
             } else {
-                establishedRangeStocked = establishedRangeStocked ||
-                                          home->min.x > old.Map().PropertyMax().x + shift;
+                establishedRangeStocked =
+                    establishedRangeStocked || home->min.x > old.Map().PropertyMax().x + shift;
             }
             ASSERT_FALSE(home->viewing.empty());
             EXPECT_TRUE(expanded.Routes().Reachable(map.EntranceTile(), home->viewing.front().tile,

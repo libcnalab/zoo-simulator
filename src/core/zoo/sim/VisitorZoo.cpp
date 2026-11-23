@@ -30,7 +30,7 @@ struct HabitatPlan {
     int rn;
 };
 
-constexpr std::array<HabitatPlan, 118> kHabitats{{
+constexpr std::array<HabitatPlan, 121> kHabitats{{
     {"Meerkat Lookout", "meerkat", 10, 18, 5, 4},
     {"Flamingo Lagoon", "flamingo", 28, 24, 9, 7},
     {"Acacia Plain", "giraffe", 48, 53, 18, 19},
@@ -174,6 +174,11 @@ constexpr std::array<HabitatPlan, 118> kHabitats{{
     {"Okapi Rainforest", "okapi", 424, 568, 16, 13},
     {"Cassowary Fern Gully", "southern_cassowary", 504, 590, 15, 12},
     {"Tropical Penguin Coast", "penguin", 574, 560, 16, 12},
+    // Three deliberately compact additions occupy quiet edge pockets left by the second-pass
+    // trails. They are new species with dedicated bodies, not extra copies in established pens.
+    {"Dingo Scrub", "dingo", -610, 185, 12, 10},
+    {"Painted Dog Valley", "african_wild_dog", 244, 58, 13, 11},
+    {"Dhole Forest", "dhole", 244, 246, 12, 10},
 }};
 
 bool SteppeEquid(std::string_view species) {
@@ -185,7 +190,8 @@ bool ExpansionCat(std::string_view species) {
 }
 
 bool ExpansionCanid(std::string_view species) {
-    return species == "maned_wolf" || species == "arctic_fox" || species == "spotted_hyena";
+    return species == "maned_wolf" || species == "arctic_fox" || species == "spotted_hyena" ||
+           species == "dingo" || species == "african_wild_dog" || species == "dhole";
 }
 
 bool ExpansionRatite(std::string_view species) {
@@ -823,6 +829,26 @@ void Walks(Zoo& zoo, Script& script, std::span<const HabitatPlan> habitats, bool
                              2, PathKind::Gravel);
         }
 
+        // The three later species additions fill edge pockets on the Australian, African and
+        // Asian sheets. Their branches meet literal vertices of each district's authored trail;
+        // the generic loop below intentionally skips all outer sheets.
+        constexpr std::array<TileCoord, 3> kNewSpeciesJoins{{
+            {-592, 152},
+            {265, 84},
+            {254, 273},
+        }};
+        for (std::size_t i = 0; i < kNewSpeciesJoins.size(); ++i) {
+            const HabitatPlan& plan = habitats[118 + i];
+            const TileCoord join = kNewSpeciesJoins[i];
+            const int clearance = plan.rn + StandOffDepth(plan.species) + 2;
+            const int frontNorth = join.z < plan.north ? plan.north - clearance : plan.north + clearance;
+            const int bend = i % 2 == 0 ? -3 : 3;
+            script.PathAlong({{plan.east, frontNorth},
+                              {(plan.east + join.x) / 2 + bend, (frontNorth + join.z) / 2},
+                              {join.x, join.z}},
+                             2, PathKind::Gravel);
+        }
+
         // Every other exhibit gets a short, slightly bent branch from its near side to the
         // district's middle promenade. These make both lobes reachable where the loop swings away.
         for (const HabitatPlan& plan : habitats.subspan(48)) {
@@ -946,24 +972,33 @@ HabitatStyle Style(std::string_view species) {
     }
     if (ExpansionCanid(species)) {
         const bool cold = species == "arctic_fox";
-        const bool open = species == "spotted_hyena";
-        return {cold   ? Terrain::Snow
-                : open ? Terrain::Savanna
-                       : Terrain::Grass,
+        const bool open = species == "spotted_hyena" || species == "african_wild_dog";
+        const bool dry = species == "dingo";
+        const bool forest = species == "dhole";
+        return {cold     ? Terrain::Snow
+                : open   ? Terrain::Savanna
+                : dry    ? Terrain::Savanna
+                : forest ? Terrain::ForestFloor
+                         : Terrain::Grass,
                 open ? "heavy_mesh" : "tall_mesh",
                 "high_glass_wall",
                 cold ? "cooled_den" : "medium_shelter",
                 "meat_platform",
-                cold   ? "juniper"
-                : open ? "savanna_shrub"
-                       : "tall_grass",
+                cold     ? "juniper"
+                : open   ? "savanna_shrub"
+                : dry    ? "savanna_shrub"
+                : forest ? "juniper"
+                         : "tall_grass",
                 cold   ? "ice_rock"
                 : open ? "sandstone_rock"
+                : dry  ? "sandstone_rock"
                        : "granite_boulder",
                 {"log_pile", "fallen_log", "ball", "scratching_post"},
-                cold   ? std::vector<std::string_view>{"juniper", "juniper", "pine"}
-                : open ? std::vector<std::string_view>{"acacia", "savanna_shrub", "tall_grass"}
-                       : std::vector<std::string_view>{"tall_grass", "tall_grass", "juniper", "birch"}};
+                cold     ? std::vector<std::string_view>{"juniper", "juniper", "pine"}
+                : open   ? std::vector<std::string_view>{"acacia", "savanna_shrub", "tall_grass"}
+                : dry    ? std::vector<std::string_view>{"tall_grass", "savanna_shrub", "acacia"}
+                : forest ? std::vector<std::string_view>{"birch", "pine", "juniper", "tall_grass"}
+                         : std::vector<std::string_view>{"tall_grass", "tall_grass", "juniper", "birch"}};
     }
     if (ExpansionRatite(species)) {
         const bool forest = species == "southern_cassowary";
@@ -1373,6 +1408,22 @@ std::span<const Resident> Family(std::string_view species) {
     if (species == "maned_wolf") {
         static constexpr Resident family[] = {Adult(m, 6), Adult(f, 5), Young(f, 0.4f, 1), Young(m, 0.4f, 1)};
         return family;
+    }
+    if (species == "dingo") {
+        static constexpr Resident family[] = {Adult(m, 6),       Adult(f, 5),       Young(f, 0.5f, 1),
+                                              Young(m, 0.5f, 1), Young(f, 0.5f, 1), Young(m, 0.5f, 1)};
+        return family;
+    }
+    if (species == "african_wild_dog") {
+        static constexpr Resident pack[] = {Adult(f, 6),       Adult(m, 5),       Adult(m, 4),
+                                            Young(f, 0.6f, 0), Young(m, 0.6f, 0), Young(f, 0.6f, 0),
+                                            Young(m, 0.6f, 0), Young(f, 0.6f, 0)};
+        return pack;
+    }
+    if (species == "dhole") {
+        static constexpr Resident pack[] = {Adult(f, 6),       Adult(m, 5),       Adult(f, 4),
+                                            Young(f, 0.5f, 0), Young(m, 0.5f, 0), Young(f, 0.5f, 0)};
+        return pack;
     }
     if (species == "arctic_fox") {
         static constexpr Resident family[] = {Adult(m, 4), Adult(f, 4), Young(f, 0.3f, 1), Young(m, 0.3f, 1),
@@ -3501,7 +3552,7 @@ ScenarioReport BuildVisitorZoo(Zoo& zoo, const VisitorZooOptions& options) {
     }
     script.Release();
     // All habitat regions, gates and viewing fronts are now stable. Updating their statistics
-    // scans the whole map, so defer it across the 118 independent furnishing passes.
+    // scans the whole map, so defer it across the independent furnishing passes.
     script.Hold();
     for (const HabitatPlan& plan : habitats) {
         Habitat(zoo, script, plan, options);

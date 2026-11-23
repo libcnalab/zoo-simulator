@@ -1,0 +1,14 @@
+{
+  "id": "african_wild_dog", "commonName": "African wild dog", "scientificName": "Lycaon pictus", "family": "Canidae", "model": "african_wild_dog", "group": "canine",
+  "adultMassKg": 25, "shoulderHeightM": 0.75, "bodyLengthM": 1.1, "bodyRadiusM": 0.34, "walkSpeed": 1.15, "runSpeed": 6.7,
+  "canSwim": true, "canClimb": false, "jumpHeightM": 1.6, "lifespanYears": 13, "maturityYears": 1.5, "gestationDays": 71,
+  "litterMin": 6, "litterMax": 12, "birthIntervalYears": 1, "diet": "carnivore", "foods": ["meat"], "foodPerDayKg": 2.2, "waterPerDayL": 3.5,
+  "activity": "diurnal", "sleepHoursPerDay": 10, "groupMin": 4, "groupMax": 14, "maxAdultMales": 6,
+  "sociability": 0.95, "playfulness": 0.78, "shyness": 0.32, "aggression": 0.42, "dangerous": true,
+  "minEnclosureM2": 900, "spacePerExtraAnimalM2": 95, "waterAreaFraction": 0.02, "needsDeepWater": false,
+  "vegetationDensity": 0.22, "needsShelter": true, "tempMinC": 5, "tempMaxC": 40, "fenceHeightM": 2.5, "fenceStrength": 4,
+  "price": 9800, "appeal": 94, "status": "EN", "nativeRange": "Sub-Saharan Africa", "biome": "Open savanna, grassland and light woodland",
+  "terrainSuitability": {"savanna": 1, "grass": 0.88, "dirt": 0.72, "forest_floor": 0.55},
+  "facts": ["Every painted coat has a different black, ochre and white pattern.", "Large rounded ears help shed heat and track pack calls.", "Packs cooperate closely when hunting and raising unusually large litters."],
+  "sounds": [], "sources": ["IUCN/SSC Canid Specialist Group African wild dog profile; husbandry values are gameplay estimates."]
+}

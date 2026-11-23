@@ -1,0 +1,139 @@
+{
+  "bones": 33,
+  "clips": [
+    {
+      "duration": 6.0,
+      "events": [],
+      "frames": 181,
+      "loop": true,
+      "name": "idle",
+      "speed": 0.0
+    },
+    {
+      "duration": 0.7333,
+      "events": [
+        {
+          "name": "step",
+          "time": 0.0
+        },
+        {
+          "name": "step",
+          "time": 0.1833
+        },
+        {
+          "name": "step",
+          "time": 0.3667
+        },
+        {
+          "name": "step",
+          "time": 0.55
+        }
+      ],
+      "frames": 23,
+      "loop": true,
+      "name": "walk",
+      "speed": 0.66
+    },
+    {
+      "duration": 0.4667,
+      "events": [
+        {
+          "name": "step",
+          "time": 0.0
+        },
+        {
+          "name": "step",
+          "time": 0.0
+        },
+        {
+          "name": "step",
+          "time": 0.2333
+        },
+        {
+          "name": "step",
+          "time": 0.2333
+        }
+      ],
+      "frames": 15,
+      "loop": true,
+      "name": "trot",
+      "speed": 1.45
+    },
+    {
+      "duration": 3.0,
+      "events": [],
+      "frames": 91,
+      "loop": true,
+      "name": "eat",
+      "speed": 0.0
+    },
+    {
+      "duration": 2.4,
+      "events": [],
+      "frames": 73,
+      "loop": true,
+      "name": "drink",
+      "speed": 0.0
+    },
+    {
+      "duration": 8.0,
+      "events": [],
+      "frames": 241,
+      "loop": true,
+      "name": "rest",
+      "speed": 0.0
+    },
+    {
+      "duration": 8.0,
+      "events": [],
+      "frames": 241,
+      "loop": true,
+      "name": "sleep",
+      "speed": 0.0
+    },
+    {
+      "duration": 2.6,
+      "events": [
+        {
+          "name": "call",
+          "time": 0.572
+        }
+      ],
+      "frames": 79,
+      "loop": false,
+      "name": "vocalize",
+      "speed": 0.0
+    }
+  ],
+  "generator": "tools/animals (zoogen)",
+  "license": "MIT",
+  "meta": {
+    "age_shape": "Older pup: shorter muzzle and body, broader skull and paws",
+    "anatomy": "Compact red canid with broad short muzzle, rounded ears and dark brush tail",
+    "body_length_m": 0.5760000000000001,
+    "common_name": "Dhole",
+    "relative_height": 0.61,
+    "roughness": 0.9,
+    "scientific_name": "Cuon alpinus",
+    "shoulder_height_m": 0.305,
+    "surface_detail": "anisotropic double-coat normal map",
+    "variant": "juvenile",
+    "variant_of": "dhole"
+  },
+  "name": "dhole_juvenile",
+  "skeleton_bounds_animal_space": {
+    "max": [
+      0.2822,
+      0.0366,
+      0.3142
+    ],
+    "min": [
+      -0.3859,
+      -0.0366,
+      0.0
+    ]
+  },
+  "texture": 1024,
+  "triangles": 15028,
+  "vertices": 7522
+}

@@ -762,7 +762,7 @@ visitors by scenery.
 
 ## Apocalypse gate transitions (2026-11-23)
 
-Opening 116 keeper gates originally invalidated the player collision world and synchronously
+Opening 119 keeper gates originally invalidated the player collision world and synchronously
 rebuilt the full 1,284 × 648-tile estate, presenting as a frozen game. Fence collision shapes are
 now retained by edge and patched only for the recorded breaches. A full Greenhill regression
 opens and closes the mode, checks the exact shape-count change and requires each update to remain

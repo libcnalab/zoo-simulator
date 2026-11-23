@@ -23,7 +23,7 @@ std::string ValidJson() {
 TEST(SpeciesTests, LoadsAllFilesInNameOrderAndSupportsLookup) {
     const auto catalog = Catalog();
     ASSERT_TRUE(catalog.Errors().empty()) << (catalog.Errors().empty() ? "" : catalog.Errors().front());
-    ASSERT_EQ(catalog.All().size(), 49U);
+    ASSERT_EQ(catalog.All().size(), 52U);
     for (std::size_t i = 0; i < catalog.All().size(); ++i) {
         if (i > 0) {
             EXPECT_LT(catalog.All()[i - 1].id, catalog.All()[i].id);
@@ -38,7 +38,7 @@ TEST(SpeciesTests, LoadsAllFilesInNameOrderAndSupportsLookup) {
 
 TEST(SpeciesTests, RealDataHasCoherentRelativeValues) {
     const auto c = Catalog();
-    ASSERT_EQ(c.All().size(), 49U);
+    ASSERT_EQ(c.All().size(), 52U);
     EXPECT_EQ(c.Find("elephant")->adultMassKg, 5000.0f);
     EXPECT_LT(c.Find("meerkat")->adultMassKg, c.Find("penguin")->adultMassKg);
     EXPECT_LT(c.Find("polar_bear")->tempMinC, c.Find("lion")->tempMinC);
@@ -46,6 +46,9 @@ TEST(SpeciesTests, RealDataHasCoherentRelativeValues) {
     EXPECT_LT(c.Find("penguin")->fenceStrength, c.Find("zebra")->fenceStrength);
     EXPECT_LT(c.Find("zebra")->fenceStrength, c.Find("lion")->fenceStrength);
     EXPECT_LT(c.Find("lion")->fenceStrength, c.Find("elephant")->fenceStrength);
+    EXPECT_EQ(c.Find("dingo")->model, "dingo");
+    EXPECT_EQ(c.Find("african_wild_dog")->model, "african_wild_dog");
+    EXPECT_EQ(c.Find("dhole")->model, "dhole");
     constexpr std::array<std::string_view, 8> foods = {"meat",          "fish",      "hay",     "browse",
                                                        "grass_pellets", "fruit_veg", "insects", "bamboo"};
     for (const auto& d : c.All()) {

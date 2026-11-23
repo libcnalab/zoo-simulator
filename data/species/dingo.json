@@ -1,0 +1,14 @@
+{
+  "id": "dingo", "commonName": "Dingo", "scientificName": "Canis familiaris (dingo)", "family": "Canidae", "model": "dingo", "group": "canine",
+  "adultMassKg": 18, "shoulderHeightM": 0.55, "bodyLengthM": 1.0, "bodyRadiusM": 0.31, "walkSpeed": 1.05, "runSpeed": 5.4,
+  "canSwim": true, "canClimb": false, "jumpHeightM": 1.5, "lifespanYears": 15, "maturityYears": 2, "gestationDays": 63,
+  "litterMin": 4, "litterMax": 6, "birthIntervalYears": 1, "diet": "carnivore", "foods": ["meat"], "foodPerDayKg": 1.4, "waterPerDayL": 2.5,
+  "activity": "crepuscular", "sleepHoursPerDay": 11, "groupMin": 2, "groupMax": 8, "maxAdultMales": 2,
+  "sociability": 0.7, "playfulness": 0.65, "shyness": 0.45, "aggression": 0.38, "dangerous": true,
+  "minEnclosureM2": 600, "spacePerExtraAnimalM2": 75, "waterAreaFraction": 0.02, "needsDeepWater": false,
+  "vegetationDensity": 0.3, "needsShelter": true, "tempMinC": -5, "tempMaxC": 42, "fenceHeightM": 2.4, "fenceStrength": 3,
+  "price": 5200, "appeal": 84, "status": "NE", "nativeRange": "Mainland Australia", "biome": "Arid grassland, scrub, forest and alpine woodland",
+  "terrainSuitability": {"savanna": 1, "grass": 0.9, "forest_floor": 0.75, "dirt": 0.7, "sand": 0.65},
+  "facts": ["Dingoes have lean bodies, pricked ears and bushy tails.", "Pairs and helpers rear one annual litter in a den.", "Their ginger coat often has pale feet and varies with habitat."],
+  "sounds": [], "sources": ["Australian Museum Dingo profile (updated 2026); Victoria conservation status assessment; husbandry values are gameplay estimates."]
+}

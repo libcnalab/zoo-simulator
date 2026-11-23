@@ -8,7 +8,7 @@ still reads an information board.
 Activation records one deterministic public-side keeper gate from every occupied outdoor
 habitat, including its exact fence kind, condition and gate flags, and then removes those edges.
 The two sealed snake terraria are the defined indoor exception. The property perimeter and shared
-habitat walls are never candidates. Seed 1 currently opens 116 gates for 587 of 589 animals.
+habitat walls are never candidates. Seed 1 currently opens 119 gates for 607 of 609 animals.
 
 Residents first route normally to the inside of their own opening, respecting blocking props,
 fences and species water ability. Only the final adjacent step crosses the recorded open edge.

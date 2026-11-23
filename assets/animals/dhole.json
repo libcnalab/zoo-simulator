@@ -1,0 +1,135 @@
+{
+  "bones": 33,
+  "clips": [
+    {
+      "duration": 6.0,
+      "events": [],
+      "frames": 181,
+      "loop": true,
+      "name": "idle",
+      "speed": 0.0
+    },
+    {
+      "duration": 1.0667,
+      "events": [
+        {
+          "name": "step",
+          "time": 0.0
+        },
+        {
+          "name": "step",
+          "time": 0.2667
+        },
+        {
+          "name": "step",
+          "time": 0.5333
+        },
+        {
+          "name": "step",
+          "time": 0.8
+        }
+      ],
+      "frames": 33,
+      "loop": true,
+      "name": "walk",
+      "speed": 1.0
+    },
+    {
+      "duration": 0.5667,
+      "events": [
+        {
+          "name": "step",
+          "time": 0.0
+        },
+        {
+          "name": "step",
+          "time": 0.0
+        },
+        {
+          "name": "step",
+          "time": 0.2833
+        },
+        {
+          "name": "step",
+          "time": 0.2833
+        }
+      ],
+      "frames": 18,
+      "loop": true,
+      "name": "trot",
+      "speed": 2.494
+    },
+    {
+      "duration": 3.0,
+      "events": [],
+      "frames": 91,
+      "loop": true,
+      "name": "eat",
+      "speed": 0.0
+    },
+    {
+      "duration": 2.4,
+      "events": [],
+      "frames": 73,
+      "loop": true,
+      "name": "drink",
+      "speed": 0.0
+    },
+    {
+      "duration": 8.0,
+      "events": [],
+      "frames": 241,
+      "loop": true,
+      "name": "rest",
+      "speed": 0.0
+    },
+    {
+      "duration": 8.0,
+      "events": [],
+      "frames": 241,
+      "loop": true,
+      "name": "sleep",
+      "speed": 0.0
+    },
+    {
+      "duration": 2.6,
+      "events": [
+        {
+          "name": "call",
+          "time": 0.572
+        }
+      ],
+      "frames": 79,
+      "loop": false,
+      "name": "vocalize",
+      "speed": 0.0
+    }
+  ],
+  "generator": "tools/animals (zoogen)",
+  "license": "MIT",
+  "meta": {
+    "anatomy": "Compact red canid with broad short muzzle, rounded ears and dark brush tail",
+    "body_length_m": 0.9,
+    "common_name": "Dhole",
+    "roughness": 0.9,
+    "scientific_name": "Cuon alpinus",
+    "shoulder_height_m": 0.5,
+    "surface_detail": "anisotropic double-coat normal map"
+  },
+  "name": "dhole",
+  "skeleton_bounds_animal_space": {
+    "max": [
+      0.441,
+      0.06,
+      0.515
+    ],
+    "min": [
+      -0.603,
+      -0.06,
+      0.0
+    ]
+  },
+  "texture": 1024,
+  "triangles": 18028,
+  "vertices": 9022
+}

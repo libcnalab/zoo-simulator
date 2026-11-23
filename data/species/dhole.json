@@ -1,0 +1,14 @@
+{
+  "id": "dhole", "commonName": "Dhole", "scientificName": "Cuon alpinus", "family": "Canidae", "model": "dhole", "group": "canine",
+  "adultMassKg": 17, "shoulderHeightM": 0.5, "bodyLengthM": 0.9, "bodyRadiusM": 0.3, "walkSpeed": 1.0, "runSpeed": 5.8,
+  "canSwim": true, "canClimb": false, "jumpHeightM": 1.45, "lifespanYears": 16, "maturityYears": 1.5, "gestationDays": 63,
+  "litterMin": 4, "litterMax": 10, "birthIntervalYears": 1, "diet": "carnivore", "foods": ["meat"], "foodPerDayKg": 1.6, "waterPerDayL": 2.5,
+  "activity": "diurnal", "sleepHoursPerDay": 10, "groupMin": 3, "groupMax": 12, "maxAdultMales": 5,
+  "sociability": 0.9, "playfulness": 0.72, "shyness": 0.42, "aggression": 0.35, "dangerous": true,
+  "minEnclosureM2": 700, "spacePerExtraAnimalM2": 80, "waterAreaFraction": 0.03, "needsDeepWater": false,
+  "vegetationDensity": 0.42, "needsShelter": true, "tempMinC": -15, "tempMaxC": 32, "fenceHeightM": 2.4, "fenceStrength": 3,
+  "price": 8800, "appeal": 91, "status": "EN", "nativeRange": "South, East and Southeast Asia", "biome": "Forest, scrub and mountain grassland",
+  "terrainSuitability": {"forest_floor": 1, "grass": 0.82, "rock": 0.65, "savanna": 0.55},
+  "facts": ["Dholes are compact red canids with dark brush tails.", "A cohesive pack communicates with whistles as well as calls.", "Packs can bring down prey much larger than one dhole."],
+  "sounds": [], "sources": ["National Tiger Conservation Authority India species account; Central Zoo Authority Asiatic wild dog studbook; husbandry values are gameplay estimates."]
+}

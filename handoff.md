@@ -1,4 +1,4 @@
-# Handoff: Zoo Simulator (state of 2026-11-22)
+# Handoff: Zoo Simulator (state of 2026-11-23)
 
 For the next agent, who starts without any earlier context. Read this file first, then
 `docs/REALISM.md` (progress log and the honest list of what is open), and the document of
@@ -48,8 +48,8 @@ linked `zoo-simulator.html` without an error. See `docs/WEB.md` for the command 
 ### Apocalypse mode
 
 **Implemented and verified 2026-11-23 (local work following `9c5edb4`; see
-`docs/APOCALYPSE.md`).** Holding E uses the ordinary input path, opens 116 recorded keeper gates
-for 587 residents, persists format-4 state, routes animals and danger-aware visitor panic, and
+`docs/APOCALYPSE.md`).** Holding E uses the ordinary input path, opens 119 recorded keeper gates
+for 607 residents, persists format-4 state, routes animals and danger-aware visitor panic, and
 restores exact gates and safe home positions. The first runtime implementation rebuilt the full
 player collision estate and appeared frozen; fence shapes are now patched edge-by-edge and a
 full-estate regression caps both transitions at two seconds. The requirements below are retained
@@ -69,7 +69,7 @@ ordinary press of E, because short E remains **Read the board**.
   indoor exhibits need a defined safe exception rather than a fake hole through a building.
 - **Animals:** residents leave through their real breach and move on valid zoo ground; do not
   teleport or merely clear containment flags. Loose-animal routing must respect buildings, deep
-  water, scenery and the estate boundary, scale to all 589 residents without all-pairs searches,
+  water, scenery and the estate boundary, scale to all 609 residents without all-pairs searches,
   and remain deterministic. Species retain plausible speeds and locomotion. Decide explicitly
   how shelter occupants join and how dangerous, aquatic or tiny species differ.
 - **Visitors:** groups notice a relevant loose animal, switch to a visible panic/run state and
@@ -90,18 +90,18 @@ ordinary press of E, because short E remains **Read the board**.
   exact restoration; save/load policy; every eligible habitat has one reachable breach; animals
   and visitors remain in world bounds and avoid solids/water; repeated on/off cycles are identical;
   a full 3 × 3 runtime script visually proves breach, escape, panic and restoration; benchmark the
-  589-animal/800-visitor case and reject quadratic frame-time growth.
+  609-animal/800-visitor case and reject quadratic frame-time growth.
 
 A visual prototype is roughly 8–12 agent hours. A safe reversible implementation with simulation,
 tests and save policy is estimated at 25–40 hours; a polished danger-aware version at 50–90 hours.
 
 ### More animals in sparse districts
 
-The owner's 2026-11-23 follow-up is next: add genuinely new resident species with their own
-habitats where the nine-sheet estate still reads sparsely. Do not merely increase counts in old
-pens. New exhibits must join the district's authored trail, retain public and keeper access,
-welfare and performance, and disclose or replace proxy bodies rather than presenting a mismatched
-model as a new animal.
+Implemented 2026-11-23: Dingo Scrub, Painted Dog Valley and Dhole Forest fill quiet pockets in the
+Australian, African and Asian districts. The connected exhibits add 20 residents and raise a fresh
+zoo to 609 animals, 52 species and 121 habitats. All three species have dedicated adult and
+juvenile procedural assets, distinct anatomy and coats, rather than renamed wolf bodies. The
+600-step resident/containment regression and the 119-gate Apocalypse restoration regression pass.
 
 ### Experimental `Many` visitor crowd (implemented)
 
@@ -114,7 +114,8 @@ whole-group `SendHome` policy. The settings window warns that Many can be much s
 capacity, six-level table, exact key/name/cap and unchanged Normal index. A real seed-1
 `--crowd many` visit reached exactly 3,000 people, spread 2,693 around all 118 habitat fronts,
 rendered its first frames and saved/reloaded the complete crowd with an identical state hash.
-Cache revision 13 prevents any pre-second-pass start from restoring an old district layout.
+That measurement predates the three new exhibits. Cache revision 14 prevents any older start from
+restoring a layout without them.
 
 Matched Normal / More / Many measurements and their limitations are in `docs/PERFORMANCE.md`.
 On the offscreen Mesa path Many filled in 81.3 s and measured 5.0 fps / 198.9 ms mean / 207.7 ms

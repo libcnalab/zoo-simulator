@@ -2,8 +2,8 @@
 
 Greenhill has free admission and automatic animal care. The current world is 1,284 × 648 tiles;
 its fenced 1,272 × 636 tile property measures **2,544 × 1,272 m (3,235,968 m²)**. This is exactly
-4.5 times the area of the preceding 424 × 424 tile estate. A fresh visit opens with **589 animals
-of 49 species in 118 habitats**.
+4.5 times the area of the preceding 424 × 424 tile estate. A fresh visit opens with **609 animals
+of 52 species in 121 habitats**.
 
 On the east, Gobi Steppe holds five Przewalski's horses on 5,628 m². On the west, Tibetan
 Plateau holds five kiangs on 4,580 m². Each herd has an eight-year-old stallion, three mares
@@ -13,11 +13,20 @@ aged nine, six and five, and the oldest mare's filly aged 0.6 years. Both specie
 The established central zoo, its side gardens, steppe paddocks and northern expansion retain
 their entrance-relative positions. Six continental districts fill the new south-west,
 south-east, mid-west, mid-east, north-west and north-east sheets; a compact European landscape
-occupies the northern centre. Their 96 additional exhibits reuse the established 49-species
-catalogue in separate, plausible conservation groups. The first design pass is deliberately a
+occupies the northern centre. Their 99 additional exhibits combine the established catalogue
+with three new wild-canid species in separate, plausible conservation groups. The first design pass is deliberately a
 baseline rather than a finished zoo: this second pass gives all seven new landscape sheets their
 own routes, but later passes should keep replacing any remaining mechanical geometry and
 unjustifiably large paddocks with more varied, real-zoo-inspired exhibits and facilities.
+
+Three deliberately placed exhibits fill quiet edge pockets without returning to a copied grid.
+Dingo Scrub joins the Australian gravel trail with two adults and four pups; Painted Dog Valley
+joins the African savanna trail with three adults and five pups; Dhole Forest joins the Asian
+mountain trail with three adults and three pups. All have a public front, keeper gate, shelter,
+water, feeding and species-appropriate ground and planting. Each species has distinct adult and
+juvenile GLB assets: ginger dingoes with pale socks, black-ochre-white painted dogs with oversized
+rounded ears, and compact rust-red dholes with dark tail tips. New starts use visit-cache revision
+14 so an older cached layout cannot hide the exhibits.
 
 The south-west Australian district is the first second-pass sheet. Its copied outer circuit and
 straight middle promenade are gone. A low gravel trail now bends past Outback Emu Range, Wombat
