@@ -114,6 +114,22 @@ TEST(GroundPaint, DeepPoolBankIsBroadAndReachesItsBedBeforeTheNextTile) {
     // purposeful animal-pool bank, but no longer reads as a near-vertical wall.
     EXPECT_LT(steepest, 1.6f);
     EXPECT_GT(narrowestShallowBand, 0.2f);
+
+    // The 25 cm render lattice used to hide a sharper part of the continuous profile. Probe at
+    // 12.5 cm as well: increasing the render resolution must not rediscover an engineered wall.
+    constexpr int fineCells = kGroundCells * 2;
+    constexpr float fineCell = zoo::kTileSize / static_cast<float>(fineCells);
+    float fineSteepest = 0.0f;
+    for (int column = 0; column <= fineCells; ++column) {
+        const float x = 8.0f + static_cast<float>(column) * fineCell;
+        float previous = GroundHeight(bank, x, 4.0f);
+        for (int step = 1; step <= fineCells; ++step) {
+            const float height = GroundHeight(bank, x, 4.0f + static_cast<float>(step) * fineCell);
+            fineSteepest = std::max(fineSteepest, (previous - height) / fineCell);
+            previous = height;
+        }
+    }
+    EXPECT_LT(fineSteepest, 1.6f);
 }
 
 }  // namespace

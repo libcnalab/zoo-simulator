@@ -149,8 +149,10 @@ manifest regression.
 2. Plants: cut-out edges far away are aliased (no alpha-to-coverage, no MSAA); the scenery still
    costs about 7 ms at the entrance, mostly overlapping
    alpha-tested cards (fill), which the far form does not reduce (`docs/PLANTS.md`).
-3. Loading takes about 8 s with the visit's fill on this machine, 1.6 s of it the ground. Deep-pool
-   banks are broader now but remain engineered one-tile slopes rather than natural beaches.
+3. Loading takes about 8 s with the visit's fill on the earlier compact zoo; the current
+   121-habitat estate is measured separately in the performance and Visitor Zoo documents.
+   Deep-pool banks now pass the 1.6 m/m steepness bound even at an independent 12.5 cm sampling,
+   but remain engineered one-tile slopes rather than natural beaches.
 4. Animals get stuck less since the plan keeps room between blocking props and animal route
    searches now include the trees and rocks along their route corridor (0.33 % of the moving
    ticks, was 5.4 %; a regression test holds it under 0.75 %). Local crowding and sub-tile

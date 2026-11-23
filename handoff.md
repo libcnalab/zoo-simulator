@@ -1204,6 +1204,13 @@ the build palette. Ten one-metre sections border the two sides of the entrance f
 both ends and both adjacent public regions remain open. Both plan seeds pass the focused
 regression, and `build-probe/shots/entrance-hedges.png` is the opened 1280 x 720 real-game check.
 
+A finer audit found that the deep-pool bank's 25 cm render lattice hid a 1.80 m/m part of its
+continuous profile. Its wandering start is reduced from 0.35 to 0.25 m and its fall widened from
+1.55 to 1.65 m; both the real lattice and an independent 12.5 cm regression now stay below 1.6.
+A rejected whole-terrain 12.5 cm experiment doubled ground build time (3.39 -> 6.62 s) and added
+about 1.2 GB after ground. The final build retains 25 cm cells and takes 3.43 s; the real-game
+smoke is `build-probe/shots/soft-bank-tiger.png`.
+
 ## 5. Worktrees in `.codex-work/` (git-ignored)
 
 Still holding work to take: **none**. Briefs `brief-<id>.md`, reports `report-<id>.md`, logs

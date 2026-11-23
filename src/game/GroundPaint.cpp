@@ -279,8 +279,8 @@ float Triangles(const std::array<float, 4>& h, float u, float v) {
 /// side between two water tiles can then come that close to dry land only through
 /// the dry sides and corners at that side's ends, which both tiles know, so both
 /// draw it at the same height.
-constexpr float kBankWanderM = 0.35f;
-constexpr float kBankWidthM = 1.55f;
+constexpr float kBankWanderM = 0.25f;
+constexpr float kBankWidthM = 1.65f;
 static_assert(kBankWanderM + kBankWidthM < zoo::kTileSize);
 /// Where dry land lies along two sides of a water tile that meet, the water's
 /// corner is rounded off with this radius (it stays clear of the other two sides).

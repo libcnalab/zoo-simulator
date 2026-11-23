@@ -200,6 +200,15 @@ dry bank or renderer error. The complete C++ suite passes all 301 active cases i
 with 21 diagnostics disabled; the unchanged animation pipeline passed in the immediately preceding
 full run.
 
+The 2026-11-23 close-grid audit found that J52's 25 cm render samples hid a locally sharper part
+of the continuous bank: sampling every 12.5 cm measured 1.80 m/m against the existing 1.6 bound.
+The wandering start is now at most 0.25 m and the fall itself spans 1.65 m, retaining the same
+1.90 m one-tile total while the finer probe also stays below 1.6. The regression tests both the
+real 25 cm mesh samples and independent finer samples. Simply changing the whole terrain lattice
+to 12.5 cm was rejected: on the 121-habitat estate it raised ground build time from 3.39 to
+6.62 seconds and resident memory after ground by roughly 1.2 GB. The final 25 cm build remains
+3.43 seconds; `build-probe/shots/soft-bank-tiger.png` is the opened real-game smoke.
+
 ## Open
 
 - Building foundations end at the tile (intentional so far).
