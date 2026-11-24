@@ -1,7 +1,7 @@
 # Keepers
 
-The zoo's staff a visitor sees at work: keepers at the habitats, a gardener at the flower
-beds, a cleaner at the bins. The simulation lives in `src/core/zoo/staff/` (no CNA; part of
+The zoo's staff a visitor sees at work: keepers at the habitats, gardeners at the flower
+beds, cleaners at the bins. The simulation lives in `src/core/zoo/staff/` (no CNA; part of
 `zoo_core`), is stepped by `Zoo::Step()` right after the visitors, is saved with the zoo and
 enters its state hash. The game draws each member of staff as a CNA avatar in the zoo's
 uniform, with the tools of the job (`src/game/KeeperRenderer.cpp`).
@@ -19,9 +19,10 @@ rounds all day.
   number of nearby pairs and then minimises their combined distance. Larger parks pair
   the nearest available neighbours within the same limit. Every habitat with a place to
   work from has a keeper (`Staff::KeeperOf`).
-- **A gardener** when there are flower beds that can be stood beside (at most 24 on the
-  round, spread evenly along a walk of short hops from the entrance).
-- **A cleaner** when there are bins (at most 30 on the round, likewise).
+- **Gardeners** divide every flower bed that can be stood beside into local rounds of at most 24,
+  ordered as walks of short hops from the entrance.
+- **Cleaners** sample bins in proportion to the property area, then divide them into local rounds
+  of at most 30. A large estate therefore no longer gives one cleaner a day-long cross-zoo round.
 
 Every member has a `look` (a hash of the id) that picks the avatar playing them.
 
@@ -43,7 +44,11 @@ zoo happens half way through the job.
   the order of the round: feed is scattered near where the public stands, every feeder
   is topped up and every trough gets fresh water. The information board of the habitat says when
   ("Keeper feeds: 11:00 and 15:00, next at 15:00"; `Staff::FeedingHours`,
-  `Staff::NextFeeding`).
+  `Staff::NextFeeding`). Residents whose hunger and thirst are both below 0.35 and which are already
+  within four metres of a feeder now gather there during a short window around the posted time.
+  The derived schedule is rebuilt before every animal step and is neither saved nor hashed; urgent
+  needs and distant routines keep priority. It is published in one pass over keepers rather than
+  searching the full crew once per habitat. The complete staffed-week welfare comparison passes.
 - **Routine by the hour.** Mucking out (raking, the wheelbarrow) in the morning, hosing at
   the water's edge, fence checks with a clipboard, a breather at midday, a walk round at
   night. A habitat dirtier than 0.25 is raked whatever the hour. Residents at or above 0.5
@@ -67,8 +72,8 @@ zoo happens half way through the job.
   the release remotely.
 - **The gardener** waters a bed every third stop, kneels and tends it with a trowel, and
   rests now and then; **the cleaner** gives priority to the nearest bin with litter within
-  30 m, empties it and then sweeps that litter, or the path beside the bin. The overlapping
-  catchments include the cleaner's stand beside a bin and no longer leave a narrow unswept ring.
+  40 m, empties it and then walks to and sweeps that litter, or the path beside the bin. The
+  overlapping catchments cover the widest gap left by the expanded estate's sampled bins.
   The sweep target is refreshed before the walk and again on arrival, so a wrapper dropped after
   the stop was first planned does not wait for a complete circuit of the zoo.
 
@@ -298,15 +303,16 @@ cast soft projected contact shadows, as does each member. The nearest 12 members
 use those full skeletal avatars. Every other member in the camera frustum remains visible as a
 small animated 3D uniform proxy: green torso and arms, khaki legs and hat, boots, head and contact
 shadow. These proxies join the existing solid tool batch, so they add neither individual CNA
-avatars nor a new draw call. The current 121-habitat Visitor Zoo employs 112 staff; the bound
-therefore limits only avatar cost, not staff visibility.
+avatars nor a new draw call. The current 121-habitat Visitor Zoo employs 160 staff: 110 keepers,
+32 gardeners and 18 cleaners. The bound therefore limits only avatar cost, not staff visibility.
 
 A warning-clean game build and two real 1280 x 720 software-OpenGL visits pass (2026-11-23).
 The entrance camera drew 22 staff, 21 of them through the distant LOD; a close
 `--stand keeper:0` view drew the detailed working keeper and 11 distant LODs. Both captures were
 opened and checked (`build-probe/shots/staff-lod.png`, `staff-lod-close.png`). The entrance run's
 people pass, including 49 visitors and 22 staff, averaged 26.75 ms under the software renderer;
-the simulation averaged 1.51 ms per frame.
+the simulation averaged 1.51 ms per frame. That capture predates the local garden and cleaning
+rounds and is retained as historical evidence.
 
 `--stand keeper:<id>` stands the camera on the nearest path a few metres from that member
 (`keeper:0`: the first member at a job; `keeper:0:rake`: the first raking) and prints who it is

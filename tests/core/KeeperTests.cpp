@@ -120,14 +120,20 @@ TEST(Keeper, TheVisitorZooHasItsCrew) {
         EXPECT_TRUE(zoo->Routes().Passable(World::TileAt(member.position), kStaff));
         if (member.role == StaffRole::Keeper) {
             EXPECT_LE(member.round.size(), 2u);
+        } else if (member.role == StaffRole::Gardener) {
+            EXPECT_LE(member.round.size(), 24u);
+        } else if (member.role == StaffRole::Cleaner) {
+            EXPECT_LE(member.round.size(), 30u);
         }
     }
     const auto habitats = zoo->Habitats().All().size();
     EXPECT_GE(static_cast<std::size_t>(keepers), (habitats + 1) / 2);
     EXPECT_LE(static_cast<std::size_t>(keepers), habitats);
     EXPECT_EQ(staff.All().size(), static_cast<std::size_t>(keepers + gardeners + cleaners));
-    EXPECT_EQ(gardeners, 1);
-    EXPECT_EQ(cleaners, 1);
+    EXPECT_GT(gardeners, 1);
+    EXPECT_GT(cleaners, 1);
+    std::cout << "KEEPERS crew: " << keepers << " keepers, " << gardeners << " gardeners, " << cleaners
+              << " cleaners\n";
     Env env = zoo->MakeEnv();
     const std::set<std::uint32_t> dangerous = DangerousHabitats(*zoo);
     EXPECT_FALSE(dangerous.empty());
@@ -389,6 +395,11 @@ TEST(Keeper, NextFeedingIsTheNextOneOfToday) {
     Env morning = zoo->MakeEnv();
     ASSERT_TRUE(staff.NextFeeding(morning, habitat.id).has_value());
     EXPECT_FLOAT_EQ(*staff.NextFeeding(morning, habitat.id), hours[0]);
+    zoo->SetCalendar(3, hours[0] - 0.1f);
+    Env cue = zoo->MakeEnv();
+    zoo->Fauna().ClearFeedingTimes();
+    staff.PublishNextFeedings(cue, zoo->Fauna());
+    EXPECT_TRUE(zoo->Fauna().FeedingSoon(habitat.id, cue.time.Hour()));
     zoo->SetCalendar(3, hours[0] + 1.5f);
     Env noon = zoo->MakeEnv();
     ASSERT_TRUE(staff.NextFeeding(noon, habitat.id).has_value());

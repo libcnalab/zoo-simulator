@@ -170,7 +170,8 @@ What each species declares (`data/species/*.json` `sounds`) against what the lib
 | Flamingo | `flamingo_call` (3) | — | a feeding flock calling | `Vocalize`, meeting, play, **starting to feed** (new) |
 | Penguin | `penguin_bray` (3) | — | take 2 is a contact call, not a bray (labelled) | `Vocalize`, meeting, play |
 
-Nine declared names have no recording. Two earlier rounds searched Wikimedia Commons,
+Eight declared names have no recording; the ninth originally missing name, `elephant_trumpet`,
+is now a clearly labelled Asian-elephant substitute. Two earlier rounds searched Wikimedia Commons,
 Freesound, xeno-canto, GBIF, iNaturalist, Zenodo/Dryad, the Internet Archive and US federal
 archives for them (`tools/audio/RESEARCH.md`, "Names intentionally not delivered" and Round 2);
 this round did not search again. Polar bears, kangaroos, ostriches and giraffes are mostly
@@ -212,7 +213,7 @@ driver also makes the off-screen game run slower than its simulated walking spee
 therefore checked against the walker's stride model as well as reported from the wall-clock
 captures.
 
-Nine declared vocalization names still have no licensed recording, and no identified source has
+Eight declared vocalization names still have no licensed recording, and no identified source has
 yet been prepared for splashes, hooves, wings, chewing or keepers' tools. The brown-bear cut is a
 measured low event from the correct NPS grizzly source, but its publisher does not identify the
 event's exact position; it remains explicitly uncertain rather than being presented as a proven

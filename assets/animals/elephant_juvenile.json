@@ -159,9 +159,15 @@
     "scientific_name": "Loxodonta africana",
     "shoulder_height_m": 1.2,
     "source_author": "exegetpro",
+    "swim": {
+      "clip": "swim",
+      "depth_m": 0.9839999999999999,
+      "speed_mps": 0.54
+    },
     "swim_depth_m": 0.9839999999999999,
     "variant": "juvenile",
-    "variant_of": "elephant"
+    "variant_of": "elephant",
+    "water_origin_convention": "Place the asset origin at water surface - depth_m"
   },
   "name": "elephant_juvenile",
   "skeleton_bounds_animal_space": {

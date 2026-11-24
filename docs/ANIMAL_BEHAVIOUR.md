@@ -116,8 +116,13 @@ count. The list is rebuilt before every animal step and is not saved or hashed.
 `AnimalMovementTests.ShyAnimalsRetreatFromAVisibleKeeperButBoldAnimalsDoNot` holds a zebra and a
 flamingo at rest with staff one metre away: the zebra moves beyond three metres while the flamingo
 stays put. In the seed-1 morning integration, staff/animal approaches inside body clearance fell
-from 75 over 3,600 ticks after J19 to zero after J20. Gate anticipation is still not implemented;
-there is no feeding-time input.
+from 75 over 3,600 ticks after J19 to zero after J20. Gate anticipation is still not implemented.
+The public-feeding schedule is now a separate transient input: a resident whose hunger and thirst
+are both below 0.35 and which is within four metres of a feeder gathers there from 15 minutes
+before the posted time until six minutes after it. The cue never replaces an urgent need or a
+cross-habitat routine. The direct regression starts a satiated lion nearby and holds its selected
+feeder and feeding activity. The full staffed-week comparison passes with the tightened local cue;
+the discarded 0.5-need/eight-metre version exceeded its worst-thirst bound.
 Rain and dangerous temperature shelter priority remain ahead of routines.
 
 The lowest-id visible adult female leads a social group, falling back to the
@@ -328,9 +333,11 @@ position remains on the front tile while its `shelter` id hides it from view.
 It stays while it sleeps or while the weather that sent it in lasts (rain above
 `kRainLeaveThreshold`, snow, a temperature outside its range by more than
 `kShelterLeaveTemperatureC`); pressing hunger or thirst brings it out. The
-thresholds for going in are higher than those for coming out, so a shower does
-not send the group in and out. Removed, closed or invalid shelters release the
-animal on the next step.
+temperature thresholds retain a one-degree hysteresis (enter above five degrees,
+leave below four), enough to prevent door oscillation without keeping an entire
+cold-climate group hidden through a mildly warm morning. Rain uses the same
+enter/leave principle. Removed, closed or invalid shelters release the animal on
+the next step.
 
 Socialising walks to the nearest visible companion of the same species in the
 enclosure and stops a body apart from it, not on top of it.

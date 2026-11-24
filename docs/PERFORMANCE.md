@@ -177,13 +177,12 @@ The lever that is left is the number of finishes (a mesh per colour and pattern)
 with vertex colours for each pattern would need the engine's PBR binder to take vertex colours
 (it hands such materials to the stock effect), which is cna-engine's to change, not ours.
 
-## What remains
+## What remained at this checkpoint
 
 
-- **Scenery**: see "the scenery is one cell" below; what is left of it is about 190 draw calls
-  and two million triangles a frame at the entrance (both passes). Trees are 760,000 of the
-  zoo's 1,063,415 scenery triangles (`--bench` prints the tally by kind); they have no simpler
-  form for the distance yet.
+- **Scenery**: at this checkpoint it was about 190 draw calls and two million triangles a frame at
+  the entrance (both passes). The later nine-sheet distance impostors replace the missing simpler
+  tree form; see “Nine-sheet distance impostors” below.
 - **Shadows**: about 1.8 ms at the entrance (262 draw calls, 520,000 triangles).
 - **Loading**: 5.5 s now (see below); the ground painting (about 2.2 s on the worker threads)
   is the largest part left.

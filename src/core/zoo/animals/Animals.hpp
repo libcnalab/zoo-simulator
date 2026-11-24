@@ -309,6 +309,13 @@ public:
     void AddStaffLockout(EnclosureId enclosure);
     bool StaffLockout(EnclosureId enclosure) const;
 
+    /// The next public feeding in each staffed habitat. This is transient input rebuilt by Zoo
+    /// before Step(), like keeper positions: it is not saved, compared or hashed. Residents use
+    /// it only to gather at a feeder shortly before the keeper arrives.
+    void ClearFeedingTimes() { feedingTimes_.clear(); }
+    void SetNextFeeding(EnclosureId enclosure, float hour);
+    bool FeedingSoon(EnclosureId enclosure, float hour) const;
+
     /// The full report for one animal, evaluated now.
     WelfareReport Welfare(const Env& env, const Animal& animal) const;
 
@@ -399,11 +406,16 @@ private:
         EnclosureId enclosure;
         Vec2 position;
     };
+    struct FeedingTime {
+        EnclosureId enclosure;
+        float hour = -1.0f;
+    };
 
     std::vector<Animal> animals_;             // ascending id
     std::vector<EnclosureCare> care_;         // ascending id
     std::vector<KeeperPresence> keepers_;     // current input, not simulation state
     std::vector<EnclosureId> staffLockouts_;  // current input, sorted, not simulation state
+    std::vector<FeedingTime> feedingTimes_;   // current input, sorted, not simulation state
     std::vector<std::vector<std::size_t>> enclosureScratch_;
     std::vector<PropId> propScratch_;
     std::vector<NavObstacle> navScratch_;

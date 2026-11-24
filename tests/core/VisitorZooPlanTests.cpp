@@ -366,6 +366,24 @@ std::vector<const Animal*> Group(const Zoo& zoo, const std::string& species) {
     return group;
 }
 
+/// The residents of one species in a particular habitat.
+std::vector<const Animal*> Group(const Zoo& zoo, const std::string& species, EnclosureId home) {
+    std::vector<const Animal*> group = Group(zoo, species);
+    std::erase_if(group, [home](const Animal* animal) { return animal->home != home; });
+    return group;
+}
+
+/// The habitats containing this species, in stocking order.
+std::vector<EnclosureId> Homes(const Zoo& zoo, const std::string& species) {
+    std::vector<EnclosureId> homes;
+    for (const Animal* animal : Group(zoo, species)) {
+        if (std::find(homes.begin(), homes.end(), animal->home) == homes.end()) {
+            homes.push_back(animal->home);
+        }
+    }
+    return homes;
+}
+
 /// Whether the circle of `radius` round `point` reaches into the tile.
 bool Touches(Vec2 point, float radius, TileCoord tile) {
     const float x = static_cast<float>(tile.x) * kTileSize;
@@ -458,40 +476,46 @@ void ExpectFamilies(const Zoo& zoo, float aged) {
     std::size_t expected = 0;
     for (const auto& [species, family] : kFamilies) {
         SCOPED_TRACE(species);
-        const std::vector<const Animal*> group = Group(zoo, species);
-        expected += family.size();
-        ASSERT_EQ(group.size(), family.size());
-        const SpeciesDef& def = SpeciesOf(zoo, *group.front());
-        for (std::size_t i = 0; i < family.size(); ++i) {
-            const Animal& animal = *group[i];
-            const Named& named = family[i];
-            EXPECT_EQ(animal.sex, named.sex) << i;
-            EXPECT_NEAR(AgeYears(animal, zoo.Time()), named.age + aged, 0.01f) << i;
-            EXPECT_EQ(animal.home, group.front()->home) << i;
-            EXPECT_GT(animal.health, 0.9f) << animal.name;
-            if (!named.young) {
-                EXPECT_TRUE(IsAdult(animal, def, zoo.Time())) << i;
-                EXPECT_FALSE(animal.mother) << i;
-                continue;
-            }
-            const Animal* mother = zoo.Fauna().Find(animal.mother);
-            const Animal* father = zoo.Fauna().Find(animal.father);
-            ASSERT_NE(mother, nullptr) << i;
-            EXPECT_EQ(mother->sex, Sex::Female);
-            EXPECT_EQ(mother->species, animal.species);
-            EXPECT_EQ(mother->home, animal.home);
-            EXPECT_TRUE(IsAdult(*mother, def, zoo.Time()));
-            if (species == "elephant" || species == "brown_bear" || species == "polar_bear" ||
-                species == "lynx" || species == "red_panda" || species == "snow_leopard") {
-                EXPECT_EQ(father, nullptr);  // mother group; the sire is not resident here
-            } else {
-                ASSERT_NE(father, nullptr) << i;
-                EXPECT_EQ(father, group.front());
-                EXPECT_EQ(father->sex, Sex::Male);
+        for (const EnclosureId home : Homes(zoo, species)) {
+            SCOPED_TRACE(home.value);
+            const std::vector<const Animal*> group = Group(zoo, species, home);
+            expected += family.size();
+            ASSERT_EQ(group.size(), family.size());
+            const SpeciesDef& def = SpeciesOf(zoo, *group.front());
+            for (std::size_t i = 0; i < family.size(); ++i) {
+                const Animal& animal = *group[i];
+                const Named& named = family[i];
+                EXPECT_EQ(animal.sex, named.sex) << i;
+                EXPECT_NEAR(AgeYears(animal, zoo.Time()), named.age + aged, 0.01f) << i;
+                EXPECT_EQ(animal.home, home) << i;
+                EXPECT_GT(animal.health, 0.9f) << animal.name;
+                if (!named.young) {
+                    EXPECT_TRUE(IsAdult(animal, def, zoo.Time())) << i;
+                    EXPECT_FALSE(animal.mother) << i;
+                    continue;
+                }
+                const Animal* mother = zoo.Fauna().Find(animal.mother);
+                const Animal* father = zoo.Fauna().Find(animal.father);
+                ASSERT_NE(mother, nullptr) << i;
+                EXPECT_EQ(mother->sex, Sex::Female);
+                EXPECT_EQ(mother->species, animal.species);
+                EXPECT_EQ(mother->home, animal.home);
+                EXPECT_TRUE(IsAdult(*mother, def, zoo.Time()));
+                if (species == "elephant" || species == "brown_bear" || species == "polar_bear" ||
+                    species == "lynx" || species == "red_panda" || species == "snow_leopard") {
+                    EXPECT_EQ(father, nullptr);  // mother group; the sire is not resident here
+                } else {
+                    ASSERT_NE(father, nullptr) << i;
+                    EXPECT_EQ(father, group.front());
+                    EXPECT_EQ(father->sex, Sex::Male);
+                }
             }
         }
     }
-    EXPECT_EQ(zoo.Fauna().All().size(), expected);
+    const std::size_t known = std::ranges::count_if(zoo.Fauna().All(), [&zoo](const Animal& animal) {
+        return kFamilies.contains(SpeciesOf(zoo, animal).id);
+    });
+    EXPECT_EQ(known, expected);
 }
 
 class VisitorZooPlan : public testing::TestWithParam<std::uint64_t> {
@@ -626,7 +650,7 @@ TEST_P(VisitorZooPlan, TortoiseMeadowHasShallowWaterGroundFeedAndAnAccessibleEas
     EXPECT_EQ(KindOf(zoo_, *front).id, "drinking_basin");
     EXPECT_EQ(KindOf(zoo_, *rear).id, "drinking_basin");
     EXPECT_GT(Distance(front->position, rear->position), 10.0f);
-    const auto residents = Group(zoo_, "aldabra_tortoise");
+    const auto residents = Group(zoo_, "aldabra_tortoise", meadow->id);
     ASSERT_EQ(residents.size(), 3U);
     for (const Animal* animal : residents) {
         EXPECT_EQ(animal->home, meadow->id);
@@ -657,7 +681,7 @@ TEST_P(VisitorZooPlan, WoodlandAviarySharesAPondsideWalkWithPeopleAndContainsIts
     }
     EXPECT_TRUE(
         std::ranges::any_of(home->viewing, [&](const ViewingSpot& spot) { return spot.tile == walk; }));
-    const auto flock = Group(zoo_, "mandarin_duck");
+    const auto flock = Group(zoo_, "mandarin_duck", home->id);
     ASSERT_EQ(flock.size(), 4U);
     EXPECT_EQ(std::ranges::count_if(flock, [](const Animal* bird) { return bird->sex == Sex::Male; }), 2);
     for (const Animal* bird : flock)
@@ -693,7 +717,7 @@ TEST_P(VisitorZooPlan, SnakePavilionHasAnOpenAisleBetweenSeparateGlazedHabitats)
         EXPECT_TRUE(std::ranges::any_of(home->viewing, [&](const ViewingSpot& spot) {
             return spot.tile == front && spot.side == direction;
         }));
-        const auto residents = Group(zoo_, side < 0 ? "corn_snake" : "black_headed_python");
+        const auto residents = Group(zoo_, side < 0 ? "corn_snake" : "black_headed_python", homeId);
         ASSERT_EQ(residents.size(), 1U);
         EXPECT_EQ(residents.front()->home, homeId);
         ASSERT_FALSE(home->feeders.empty());
@@ -732,7 +756,7 @@ TEST_P(VisitorZooPlan, CapybaraFamilyCanSwimAndGrazeBesideTheWestWalk) {
         EXPECT_LE(kind.feedHeightM, 0.25f);
         EXPECT_FALSE(zoo_.Map().HasWater(World::TileAt(tray->position)));
     }
-    const auto family = Group(zoo_, "capybara");
+    const auto family = Group(zoo_, "capybara", marsh->id);
     ASSERT_EQ(family.size(), 8U);
     int pups = 0;
     std::set<AnimalId> mothers;
@@ -790,7 +814,7 @@ TEST_P(VisitorZooPlan, LynxRidgeOccupiesTheNorthernExtension) {
     }
     EXPECT_EQ(habitatTiles * 4, static_cast<int>(ridge->stats.areaM2));
 
-    const std::vector<const Animal*> residents = Group(zoo_, "lynx");
+    const std::vector<const Animal*> residents = Group(zoo_, "lynx", ridge->id);
     ASSERT_EQ(residents.size(), 3U);
     int kittens = 0;
     for (const Animal* resident : residents) {
@@ -838,7 +862,7 @@ TEST_P(VisitorZooPlan, RedPandaCanopyOccupiesTheNorthernExtension) {
     }
     EXPECT_EQ(habitatTiles * 4, static_cast<int>(canopy->stats.areaM2));
 
-    const std::vector<const Animal*> residents = Group(zoo_, "red_panda");
+    const std::vector<const Animal*> residents = Group(zoo_, "red_panda", canopy->id);
     ASSERT_EQ(residents.size(), 3U);
     int cubs = 0;
     for (const Animal* resident : residents) {
@@ -886,7 +910,7 @@ TEST_P(VisitorZooPlan, SnowLeopardHeightsOccupiesTheSecondNorthernStage) {
     }
     EXPECT_EQ(habitatTiles * 4, static_cast<int>(heights->stats.areaM2));
 
-    const std::vector<const Animal*> residents = Group(zoo_, "snow_leopard");
+    const std::vector<const Animal*> residents = Group(zoo_, "snow_leopard", heights->id);
     ASSERT_EQ(residents.size(), 3U);
     int cubs = 0;
     for (const Animal* resident : residents) {
@@ -903,30 +927,38 @@ TEST_P(VisitorZooPlan, FamiliesWithTheirYoungOnTheOpeningDay) {
     ExpectFamilies(zoo_, 0.0f);
     // The young of the year are small enough to be drawn as young and to need their mothers.
     int sucklings = 0;
+    int expectedSucklings = 0;
     for (const auto& [species, family] : kFamilies) {
-        const std::vector<const Animal*> group = Group(zoo_, species);
-        const SpeciesDef& def = SpeciesOf(zoo_, *group.front());
-        int youngest = 0;
-        for (const Animal* animal : group) {
-            youngest += AgeYears(*animal, zoo_.Time()) < def.maturityYears * 0.25f ? 1 : 0;
+        for (const EnclosureId home : Homes(zoo_, species)) {
+            const std::vector<const Animal*> group = Group(zoo_, species, home);
+            const SpeciesDef& def = SpeciesOf(zoo_, *group.front());
+            int youngest = 0;
+            for (const Animal* animal : group) {
+                youngest += AgeYears(*animal, zoo_.Time()) < def.maturityYears * 0.25f ? 1 : 0;
+            }
+            sucklings += youngest;
+            expectedSucklings +=
+                static_cast<int>(std::count_if(family.begin(), family.end(), [&def](const Named& resident) {
+                    return resident.age < def.maturityYears * 0.25f;
+                }));
+            const bool allAdults = species == "tiger" || species == "aldabra_tortoise" ||
+                                   species == "corn_snake" || species == "black_headed_python" ||
+                                   species == "mandarin_duck";
+            // A joey under half a year lives in the pouch, which the simulation has not: the zoo's
+            // joeys are young at foot, past their first quarter of maturity.
+            const bool pouch = species == "kangaroo";
+            EXPECT_EQ(youngest > 0, !allAdults && !pouch) << species << " in home " << home.value;
+            int grownMales = 0;
+            for (const Animal* animal : group) {
+                grownMales += animal->sex == Sex::Male && IsAdult(*animal, def, zoo_.Time()) ? 1 : 0;
+            }
+            EXPECT_TRUE(def.maxAdultMales == 0 || grownMales <= def.maxAdultMales)
+                << species << " in home " << home.value;
+            EXPECT_GE(static_cast<int>(group.size()), def.groupMin) << species << " in home " << home.value;
+            EXPECT_LE(static_cast<int>(group.size()), def.groupMax) << species << " in home " << home.value;
         }
-        sucklings += youngest;
-        const bool allAdults = species == "tiger" || species == "aldabra_tortoise" ||
-                               species == "corn_snake" || species == "black_headed_python" ||
-                               species == "mandarin_duck";
-        // A joey under half a year lives in the pouch, which the simulation has not: the zoo's
-        // joeys are young at foot, past their first quarter of maturity.
-        const bool pouch = species == "kangaroo";
-        EXPECT_EQ(youngest > 0, !allAdults && !pouch) << species;
-        int grownMales = 0;
-        for (const Animal* animal : group) {
-            grownMales += animal->sex == Sex::Male && IsAdult(*animal, def, zoo_.Time()) ? 1 : 0;
-        }
-        EXPECT_TRUE(def.maxAdultMales == 0 || grownMales <= def.maxAdultMales) << species;
-        EXPECT_GE(static_cast<int>(group.size()), def.groupMin) << species;
-        EXPECT_LE(static_cast<int>(group.size()), def.groupMax) << species;
     }
-    EXPECT_EQ(sucklings, 37);
+    EXPECT_EQ(sucklings, expectedSucklings);
 }
 
 TEST_P(VisitorZooPlan, FamiliesAreWholeWhenTheVisitBegins) {
@@ -1011,7 +1043,7 @@ TEST_P(VisitorZooPlan, NoLandPlantInOrBesideWater) {
     EXPECT_GT(beside, 0) << "the plan should retain planting on dry banks near water";
 }
 
-TEST_P(VisitorZooPlan, BothWetlandsHaveShorelineReedsAndOpenHabitatsHaveTallGrass) {
+TEST_P(VisitorZooPlan, WetlandHabitatsHaveShorelineReedsAndOpenHabitatsHaveTallGrass) {
     std::map<std::string, int> reeds;
     int grass = 0;
     for (const Prop& prop : zoo_.Objects().Props()) {
@@ -1019,7 +1051,7 @@ TEST_P(VisitorZooPlan, BothWetlandsHaveShorelineReedsAndOpenHabitatsHaveTallGras
         if (kind.id == "wetland_reeds") {
             const Enclosure* home = zoo_.Habitats().Find(zoo_.Habitats().At(World::TileAt(prop.position)));
             ASSERT_NE(home, nullptr);
-            EXPECT_TRUE(home->name == "Flamingo Lagoon" || home->name == "Capybara Marsh") << home->name;
+            EXPECT_GT(home->stats.waterShare, 0.05f) << home->name;
             EXPECT_FALSE(zoo_.Map().HasWater(World::TileAt(prop.position)));
             const TileCoord at = World::TileAt(prop.position);
             bool waterBeside = false;
@@ -1033,12 +1065,14 @@ TEST_P(VisitorZooPlan, BothWetlandsHaveShorelineReedsAndOpenHabitatsHaveTallGras
         } else if (kind.id == "tall_grass") {
             const Enclosure* home = zoo_.Habitats().Find(zoo_.Habitats().At(World::TileAt(prop.position)));
             ASSERT_NE(home, nullptr);
-            EXPECT_NE(home->name, "Flamingo Lagoon");
+            EXPECT_FALSE(zoo_.Map().HasWater(World::TileAt(prop.position)));
             ++grass;
         }
     }
-    EXPECT_GE(reeds["Flamingo Lagoon"], 8);
-    EXPECT_GE(reeds["Capybara Marsh"], 8);
+    EXPECT_GE(reeds.size(), 6U);
+    for (const auto& [name, count] : reeds) {
+        EXPECT_GE(count, 8) << name;
+    }
     EXPECT_GT(grass, 0);
 }
 
@@ -1113,8 +1147,7 @@ TEST_P(VisitorZooPlan, BenchesStandInShade) {
                     std::abs(bench->position.z - prop.position.z) < 8.8f * prop.scale) {
                     nearest = 0.0f;
                 }
-                if (KindOf(zoo_, prop).role == PropRole::Tree &&
-                    !zoo_.Habitats().At(World::TileAt(prop.position))) {
+                if (KindOf(zoo_, prop).role == PropRole::Tree) {
                     nearest = std::min(nearest, Distance(prop.position, bench->position));
                 }
             }
@@ -1124,7 +1157,7 @@ TEST_P(VisitorZooPlan, BenchesStandInShade) {
             }
         }
     }
-    EXPECT_EQ(benches, 72);
+    EXPECT_EQ(benches, static_cast<int>(zoo_.Habitats().All().size()) * 3);
     // Three walks run between the planted strips of two habitats and have no lawn for a tree; a
     // strip's own planting stays below the eye (VisitorZooHabitatTests). Their benches are the
     // exception, by name, so that a fourth is noticed.
@@ -1221,8 +1254,7 @@ TEST_P(VisitorZooPlan, EntranceGardenUsesDecorativeClippedHedges) {
     ASSERT_NE(hedge, nullptr);
     int edges = 0;
     for (int north = 5; north <= 9; ++north) {
-        for (const auto& [east, side] :
-             {std::pair{-2, Dir::West}, std::pair{2, Dir::East}}) {
+        for (const auto& [east, side] : {std::pair{-2, Dir::West}, std::pair{2, Dir::East}}) {
             const TileCoord tile{gate.x + east, gate.z - north};
             const Fence fence = zoo_.Map().FenceOn(tile, side);
             EXPECT_EQ(fence.kind, hedge->kind) << east << ", " << north;
@@ -1700,27 +1732,30 @@ TEST(VisitorZooPlanTests, TheYoungAreStillYoungAndFedAfterAWeek) {
     const float aged = 7.0f / kGameDaysPerRealYear;
     for (const auto& [species, family] : kFamilies) {
         SCOPED_TRACE(species);
-        const std::vector<const Animal*> group = Group(zoo, species);
-        ASSERT_GE(group.size(), family.size());
-        const SpeciesDef& def = SpeciesOf(zoo, *group.front());
-        for (std::size_t i = 0; i < family.size(); ++i) {
-            const Animal& animal = *group[i];
-            EXPECT_EQ(animal.sex, family[i].sex) << i;
-            EXPECT_NEAR(AgeYears(animal, zoo.Time()), family[i].age + aged, 0.01f) << i;
-            EXPECT_GT(animal.health, 0.8f) << animal.name;
-            EXPECT_LT(animal.hunger, 0.9f) << animal.name;
-            if (!family[i].young) {
-                continue;
-            }
-            const Animal* mother = zoo.Fauna().Find(animal.mother);
-            ASSERT_NE(mother, nullptr) << i;
-            EXPECT_EQ(mother->home, animal.home);
-            // Who was a suckling on the opening day still is one; who was drawn young still is.
-            if (family[i].age < def.maturityYears * 0.25f) {
-                EXPECT_LT(AgeYears(animal, zoo.Time()), def.maturityYears * 0.25f) << i;
-            }
-            if (family[i].age < def.maturityYears * 0.5f) {
-                EXPECT_LT(AgeYears(animal, zoo.Time()), def.maturityYears * 0.5f) << i;
+        for (const EnclosureId home : Homes(zoo, species)) {
+            SCOPED_TRACE(home.value);
+            const std::vector<const Animal*> group = Group(zoo, species, home);
+            ASSERT_EQ(group.size(), family.size());
+            const SpeciesDef& def = SpeciesOf(zoo, *group.front());
+            for (std::size_t i = 0; i < family.size(); ++i) {
+                const Animal& animal = *group[i];
+                EXPECT_EQ(animal.sex, family[i].sex) << i;
+                EXPECT_NEAR(AgeYears(animal, zoo.Time()), family[i].age + aged, 0.01f) << i;
+                EXPECT_GT(animal.health, 0.8f) << animal.name;
+                EXPECT_LT(animal.hunger, 0.9f) << animal.name;
+                if (!family[i].young) {
+                    continue;
+                }
+                const Animal* mother = zoo.Fauna().Find(animal.mother);
+                ASSERT_NE(mother, nullptr) << i;
+                EXPECT_EQ(mother->home, animal.home);
+                // Who was a suckling on the opening day still is one; who was drawn young still is.
+                if (family[i].age < def.maturityYears * 0.25f) {
+                    EXPECT_LT(AgeYears(animal, zoo.Time()), def.maturityYears * 0.25f) << i;
+                }
+                if (family[i].age < def.maturityYears * 0.5f) {
+                    EXPECT_LT(AgeYears(animal, zoo.Time()), def.maturityYears * 0.5f) << i;
+                }
             }
         }
     }

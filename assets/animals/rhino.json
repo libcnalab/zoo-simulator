@@ -158,7 +158,13 @@
     "scientific_name": "Ceratotherium simum simum",
     "shoulder_height_m": 1.8,
     "source_author": "LasquetiSpice",
-    "swim_depth_m": 1.476
+    "swim": {
+      "clip": "swim",
+      "depth_m": 1.476,
+      "speed_mps": 0.72
+    },
+    "swim_depth_m": 1.476,
+    "water_origin_convention": "Place the asset origin at water surface - depth_m"
   },
   "name": "rhino",
   "skeleton_bounds_animal_space": {

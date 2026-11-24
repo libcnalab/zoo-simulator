@@ -164,7 +164,9 @@ inline constexpr float kSocialGapM = 0.3f;
 inline constexpr float kShelterDoorM = 1.9f;
 /// Precipitation and degrees outside the comfort range below which a sheltering animal comes out.
 inline constexpr float kRainLeaveThreshold = 0.25f;
-inline constexpr float kShelterLeaveTemperatureC = 2.0f;
+// Enter above five degrees and leave below four: enough hysteresis to prevent door oscillation
+// without hiding a whole cold-climate herd through a merely warm visitor morning.
+inline constexpr float kShelterLeaveTemperatureC = 4.0f;
 inline constexpr float kWanderWeight = 3.0f;                     // routine choice weight
 inline constexpr float kIdleWeight = 1.0f;                       // routine choice weight
 inline constexpr float kRestBaseWeight = 1.0f;                   // routine choice weight

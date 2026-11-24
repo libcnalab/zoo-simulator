@@ -2463,9 +2463,10 @@ void Stock(Zoo& zoo, Script& script, const Site& site, std::string_view speciesI
         if (dam) {
             Animal* young = zoo.Fauna().Find(id);
             young->mother = dam;
-            const auto sire = std::ranges::find_if(family, [&zoo](AnimalId relative) {
+            const auto sire = std::ranges::find_if(family, [&zoo, &def, &env, id](AnimalId relative) {
                 const Animal* animal = zoo.Fauna().Find(relative);
-                return animal != nullptr && animal->sex == Sex::Male;
+                return relative != id && animal != nullptr && animal->sex == Sex::Male &&
+                       IsAdult(*animal, def, env.time);
             });
             young->father = sire != family.end() ? *sire : AnimalId{};
             Animal* parent = zoo.Fauna().Find(dam);
@@ -2960,7 +2961,7 @@ bool OpenLawn(Zoo& zoo, TileCoord tile) {
 // the picnic lawn (only where paving stays all round it, so that no walk is narrowed). A walk that
 // runs between two habitats' planted strips has neither, and its bench stays in the sun: what grows
 // on a strip stays below the eye.
-void ShadeTree(Zoo& zoo, Script& script, const ViewingSpot& spot) {
+bool ShadeTree(Zoo& zoo, Script& script, const ViewingSpot& spot) {
     const World& map = zoo.Map();
     const TileCoord step = Step(spot.side);
     const TileCoord gate = map.EntranceTile();
@@ -3025,9 +3026,10 @@ void ShadeTree(Zoo& zoo, Script& script, const ViewingSpot& spot) {
             script.PathTiles({tile}, PathKind::None);
         }
         if (PublicProp(zoo, script, crown(tile), point, script.Random().Range(0.0f, kTwoPi), 1.15f)) {
-            return;
+            return true;
         }
     }
+    return false;
 }
 
 void ViewingFurniture(Zoo& zoo, Script& script) {
@@ -3048,8 +3050,24 @@ void ViewingFurniture(Zoo& zoo, Script& script) {
             } else {
                 script.Prop("litter_bin", point + along * 0.7f, heading);
             }
-            if (habitat.name != "Corn Snake Terrarium" && habitat.name != "Python Terrarium") {
-                ShadeTree(zoo, script, spot);
+            if (habitat.name != "Corn Snake Terrarium" && habitat.name != "Python Terrarium" &&
+                !ShadeTree(zoo, script, spot) && habitat.name == "Red Deer Riverside") {
+                // This lookout is pinched between the northern circuit and its neighbouring
+                // wetland, leaving no public lawn for a tree. A crown just inside the enclosure,
+                // offset from the sight line, shades the bench without narrowing the walk.
+                constexpr std::array<std::pair<float, float>, 6> places{{
+                    {5.0f, -5.0f},
+                    {5.0f, 5.0f},
+                    {6.0f, -4.0f},
+                    {6.0f, 4.0f},
+                    {5.0f, -4.0f},
+                    {5.0f, 4.0f},
+                }};
+                for (const auto& [inward, side] : places) {
+                    if (script.Prop("oak", point + toward * inward + along * side, 0.0f, 1.15f, true)) {
+                        break;
+                    }
+                }
             }
             ++sideNumber;
         }
@@ -3551,7 +3569,9 @@ ScenarioReport BuildVisitorZoo(Zoo& zoo, const VisitorZooOptions& options) {
     }
     const bool sideGardens = besideGate >= 103;
     const bool steppeGardens = besideGate >= 185;
-    const bool northernExpansion = gate.z - map.PropertyMin().z >= 423;
+    // The northern district is a continuation of the wide steppe estate. A deep but narrow
+    // compatibility map has room north of the entrance, but not for its +/-200-tile circuit.
+    const bool northernExpansion = steppeGardens && gate.z - map.PropertyMin().z >= 423;
     const bool continentalExpansion = besideGate >= 600 && gate.z - map.PropertyMin().z >= 635;
     const auto habitats = std::span(kHabitats).first(continentalExpansion ? kHabitats.size()
                                                      : northernExpansion  ? 48

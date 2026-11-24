@@ -14,10 +14,10 @@ The established central zoo, its side gardens, steppe paddocks and northern expa
 their entrance-relative positions. Six continental districts fill the new south-west,
 south-east, mid-west, mid-east, north-west and north-east sheets; a compact European landscape
 occupies the northern centre. Their 99 additional exhibits combine the established catalogue
-with three new wild-canid species in separate, plausible conservation groups. The first design pass is deliberately a
-baseline rather than a finished zoo: this second pass gives all seven new landscape sheets their
-own routes, but later passes should keep replacing any remaining mechanical geometry and
-unjustifiably large paddocks with more varied, real-zoo-inspired exhibits and facilities.
+with three new wild-canid species in separate, plausible conservation groups. The second design
+pass gives all seven new landscape sheets their own routes instead of the copied first-pass
+circuits. Further species-specific refinement remains an open-ended art pass, not an unfinished
+district or disconnected exhibit.
 
 Three deliberately placed exhibits fill quiet edge pockets without returning to a copied grid.
 Dingo Scrub joins the Australian gravel trail with two adults and four pups; Painted Dog Valley
@@ -515,8 +515,9 @@ finished, reviewed and measured by the lead. All of it is in `VisitorZoo.cpp`; t
 
 **Families.** Each habitat is stocked as a zoo keeps the species (`Family()`): a breeding group
 with this season's young for the social species, a pair for tigers, and a mother with two cubs for
-each bear species. The first of a family is its sire except in Elephant Valley and the bear mother
-groups, where the sire lives elsewhere and is left unset. Ages in years on the opening day:
+each bear species. The first resident adult male is the sire where the group has one. Elephant,
+bear, lynx, red-panda and snow-leopard mother groups have no resident sire and leave it unset;
+stocking explicitly rejects a male cub as its own father. Ages in years on the opening day:
 
 | Species | Adults | Young (mother) |
 |---|---|---|
@@ -536,8 +537,8 @@ groups, where the sire lives elsewhere and is left unset. Ages in years on the o
 | Camel | M 9, F 8, F 13 | F 2.0, M 0.7 |
 | Kangaroo | M 6, F 4, 5, 7 | F 1.2; M 0.7, F 0.65 |
 
-A young animal is set down beside its mother, knows her (`Animal::mother`, and the sire as
-`father`), and her `lastBirthTick` is its birth, so she is not in calf again on the opening
+A young animal is set down beside its mother, knows her (`Animal::mother`, and a resident adult
+sire as `father` when present), and her `lastBirthTick` is its birth, so she is not in calf again on the opening
 day. Under a quarter of the age of maturity a juvenile suckles and follows its mother
 (`docs/ANIMAL_BEHAVIOUR.md`); under half the renderer draws the juvenile model where one exists.
 The calendar has 48 days a year, so a week ages an animal by 0.146 years: the youngest stay
@@ -643,7 +644,9 @@ vegetation figure less 0.08 (0.12 above 0.4), which keeps views open; falling sh
 as a problem only below the welfare band (figure − 0.15, `Animals.cpp`). Lawn trees in the
 public grounds stand in groves as well (they stood on every third tile, an orchard), and a
 broad crown is planted beside each viewing bench, on an island left in a paved bay where the
-paving stays all round it. The lamp stands at the end of the bench, not before it.
+paving stays all round it. Red Deer Riverside's pinched northern lookout has no legal public
+island, so its oak stands just inside the habitat and four metres off the sight line. The lamp
+stands at the end of the bench, not before it.
 
 `NoPlantOnAPathOrBeforeABench` applies the full tree set-back to every habitat and both seeds;
 `HabitatCoverKeepsAMarginInsideTheWelfareBand` separately preserves the 0.02 margin within the

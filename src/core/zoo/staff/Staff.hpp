@@ -165,6 +165,9 @@ public:
     std::array<float, 2> FeedingHours(EnclosureId enclosure) const;
     /// The next public feeding of today that has not been given yet, as a calendar hour.
     std::optional<float> NextFeeding(const Env& env, EnclosureId enclosure) const;
+    /// Publishes every habitat's next feeding to the animal simulation in one pass over the
+    /// keepers. Zoo calls this every tick after clearing the previous transient schedule.
+    void PublishNextFeedings(const Env& env, Animals& animals) const;
 
     /// Hash over the whole saved state (FNV-1a, floats by bit pattern).
     std::uint64_t StateHash() const;

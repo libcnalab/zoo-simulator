@@ -54,6 +54,63 @@ TEST(AnimalBehaviourTests, DecisionsChooseActivitiesAndKeepNeedPriority) {
     EXPECT_TRUE(sawRest || sawSleep);
 }
 
+TEST(AnimalBehaviourTests, PublicFeedingTimeDrawsResidentsToAFeederBeforeTheKeeperArrives) {
+    World world(40, 40);
+    ZooObjects objects;
+    Catalog catalog = Catalog::LoadDirectory(std::string(ZOO_SOURCE_DIR) + "/data/construction");
+    SpeciesCatalog species = SpeciesCatalog::LoadDirectory(std::string(ZOO_SOURCE_DIR) + "/data/species");
+    const int fence = catalog.FindFence("high_glass_wall")->kind;
+    for (int x = 8; x <= 30; ++x) {
+        world.SetFence({x, 8, true}, {static_cast<std::uint8_t>(fence), false, 1.0f});
+        world.SetFence({x, 31, true}, {static_cast<std::uint8_t>(fence), false, 1.0f});
+    }
+    for (int z = 8; z <= 30; ++z) {
+        world.SetFence({8, z, false}, {static_cast<std::uint8_t>(fence), false, 1.0f});
+        world.SetFence({31, z, false}, {static_cast<std::uint8_t>(fence), false, 1.0f});
+    }
+    Prop feeder;
+    feeder.def = catalog.PropIndex("meat_platform");
+    feeder.position = World::TileCenter({24, 20});
+    feeder.food = catalog.FoodIndex("meat");
+    const PropId feederId = objects.AddProp(feeder);
+    ASSERT_TRUE(feederId);
+    Enclosures enclosures;
+    enclosures.Rebuild(world, objects, catalog);
+    Navigator nav(world);
+    Animals animals(103U);
+    const int lion = species.IndexOf("lion");
+    ASSERT_GE(lion, 0);
+    Env env{world, objects, enclosures, catalog, species, nav, nullptr, nullptr, {}, {}};
+    env.time.tick = (10 - GameTime::kStartHour) * kTicksPerGameHour;
+    const AnimalId id = animals.Add(env, lion, Sex::Female, 5.0f, World::TileCenter({23, 20}));
+    ASSERT_TRUE(id);
+    Animal* animal = animals.Find(id);
+    ASSERT_NE(animal, nullptr);
+    animal->hunger = 0.0f;
+    animal->thirst = 0.0f;
+    animal->fatigue = 0.0f;
+    animal->activity = AnimalActivity::Idle;
+    animal->activityLeft = 0;
+    animal->moving = false;
+    animal->target = animal->position;
+    animal->route.clear();
+    animal->routeIndex = 0;
+    const EnclosureId home = enclosures.At(animal->position);
+    ASSERT_TRUE(home);
+
+    animals.SetNextFeeding(home, 10.25f);
+    EXPECT_TRUE(animals.FeedingSoon(home, 10.0f));
+    EXPECT_FALSE(animals.FeedingSoon(home, 9.99f));
+    animals.Step(env);
+
+    animal = animals.Find(id);
+    ASSERT_NE(animal, nullptr);
+    EXPECT_EQ(animal->activity, AnimalActivity::Forage);
+    EXPECT_EQ(animal->targetProp, feederId);
+    EXPECT_TRUE(animal->moving);
+    EXPECT_LT(DistanceSquared(animal->target, feeder.position), 9.0f);
+}
+
 TEST(AnimalBehaviourTests, RainMovesAnAnimalIntoAnOpenShelter) {
     World world(40, 40);
     ZooObjects objects;
@@ -111,6 +168,67 @@ TEST(AnimalBehaviourTests, RainMovesAnAnimalIntoAnOpenShelter) {
     }
     enclosures.Rebuild(world, objects, catalog);
     env.time.tick = 1200;
+    animals.Step(env);
+    animal = animals.Find(id);
+    ASSERT_NE(animal, nullptr);
+    EXPECT_FALSE(animal->shelter);
+}
+
+TEST(AnimalBehaviourTests, CoolingHysteresisReleasesAnAnimalAfterTheHeatSubsides) {
+    World world(40, 40);
+    ZooObjects objects;
+    Catalog catalog = Catalog::LoadDirectory(std::string(ZOO_SOURCE_DIR) + "/data/construction");
+    SpeciesCatalog species = SpeciesCatalog::LoadDirectory(std::string(ZOO_SOURCE_DIR) + "/data/species");
+    const int fence = catalog.FindFence("high_glass_wall")->kind;
+    for (int x = 8; x <= 30; ++x) {
+        world.SetFence({x, 8, true}, {static_cast<std::uint8_t>(fence), false, 1.0f});
+        world.SetFence({x, 31, true}, {static_cast<std::uint8_t>(fence), false, 1.0f});
+    }
+    for (int z = 8; z <= 30; ++z) {
+        world.SetFence({8, z, false}, {static_cast<std::uint8_t>(fence), false, 1.0f});
+        world.SetFence({31, z, false}, {static_cast<std::uint8_t>(fence), false, 1.0f});
+    }
+    Building shelter;
+    shelter.def = catalog.BuildingIndex("cooled_den");
+    shelter.origin = {18, 18};
+    shelter.facing = Dir::South;
+    const BuildingId shelterId = objects.AddBuilding(shelter);
+    ASSERT_TRUE(shelterId);
+    const BuildingDef& shelterDef = catalog.buildings[static_cast<std::size_t>(shelter.def)];
+    for (int z = shelter.origin.z; z < shelter.origin.z + shelterDef.depth; ++z) {
+        for (int x = shelter.origin.x; x < shelter.origin.x + shelterDef.width; ++x) {
+            world.SetBuilding({x, z}, shelterId);
+        }
+    }
+    Enclosures enclosures;
+    enclosures.Rebuild(world, objects, catalog);
+    Navigator nav(world);
+    Animals animals(812U);
+    const int muskOx = species.IndexOf("musk_ox");
+    ASSERT_GE(muskOx, 0);
+    Env env{world, objects, enclosures, catalog, species, nav, nullptr, nullptr, {}, {}};
+    env.time.tick = (12 - GameTime::kStartHour) * kTicksPerGameHour;
+    const Vec2 door = World::TileCenter(FrontTile(shelterDef, shelter.origin, shelter.facing));
+    const AnimalId id = animals.Add(env, muskOx, Sex::Female, 6.0f, door);
+    ASSERT_TRUE(id);
+    Animal* animal = animals.Find(id);
+    ASSERT_NE(animal, nullptr);
+    animal->shelter = shelterId;
+    animal->activity = AnimalActivity::Shelter;
+    animal->activityLeft = 0;
+    animal->hunger = 0.0f;
+    animal->thirst = 0.0f;
+    animal->fatigue = 0.0f;
+    const SpeciesDef& muskOxDef = species.All()[static_cast<std::size_t>(muskOx)];
+
+    env.weather.temperatureC = muskOxDef.tempMaxC + 4.5f;
+    animals.Step(env);
+    animal = animals.Find(id);
+    ASSERT_NE(animal, nullptr);
+    EXPECT_EQ(animal->shelter, shelterId);
+
+    ++env.time.tick;
+    env.weather.temperatureC = muskOxDef.tempMaxC + 3.5f;
     animals.Step(env);
     animal = animals.Find(id);
     ASSERT_NE(animal, nullptr);

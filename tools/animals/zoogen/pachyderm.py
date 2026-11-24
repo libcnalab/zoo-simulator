@@ -369,7 +369,9 @@ def make_pachyderm(model_name, kind, height, edits, shape, walk, fast, meta):
               {'muzzle': (muzzle_bone, muzzle), 'mouth': mouth})
     data.update(source_path=str(source_path), rigged=True, kind=kind, height=height, shape=shape,
                 variant=meta.get('variant', 'adult'), scale=scale, target_walk=walk, target_fast=fast)
-    meta = dict(meta, shoulder_height_m=height, swim_depth_m=.82 * height, roughness=.9,
+    meta = dict(meta, shoulder_height_m=height, swim_depth_m=.82 * height,
+                swim=dict(clip='swim', depth_m=.82 * height, speed_mps=.6 * walk),
+                water_origin_convention='Place the asset origin at water surface - depth_m', roughness=.9,
                 asset_license='CC-BY-4.0', source_author='LasquetiSpice' if kind == 'rhino' else 'exegetpro',
                 motion_source='procedural replacement; authored source samples retained in derivative',
                 authored_stance_speed_medians=source['authored_stance_speeds'][:, 1].tolist(),

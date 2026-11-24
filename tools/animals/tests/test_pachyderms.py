@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: MIT
-"""Portable skin, gait, posture and exported glTF contracts for all five pachyderms."""
+"""Portable skin, gait, posture and exported glTF contracts for all six pachyderms."""
 import json
 from pathlib import Path
 import unittest
@@ -275,6 +275,10 @@ class PachydermTests(unittest.TestCase):
                 self.assertIn(image['mimeType'], ('image/png', 'image/jpeg'))
             meta = manifest['meta']
             self.assertAlmostEqual(meta['swim_depth_m'], .82 * meta['shoulder_height_m'])
+            self.assertEqual(meta['swim']['clip'], 'swim')
+            self.assertAlmostEqual(meta['swim']['depth_m'], meta['swim_depth_m'])
+            swim_speed = next(clip['speed'] for clip in manifest['clips'] if clip['name'] == 'swim')
+            self.assertAlmostEqual(meta['swim']['speed_mps'], swim_speed)
             if '_' in species:
                 base, variant = species.split('_')
                 self.assertEqual(meta['variant_of'], base)

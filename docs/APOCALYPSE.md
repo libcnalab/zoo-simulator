@@ -49,6 +49,10 @@ impassable planted stand-off beside a service gate. A legacy or damaged position
 to nearby public ground without an estate-wide scan. On the reference full-zoo regression, 200
 active steps fell from 8.5--11.9 seconds and progressively worsening to 0.89 seconds; the test
 allows five seconds to preserve ample rendering and input headroom on slower machines.
+After the 2026-11-24 expansion to 160 locally assigned staff, the same final-build regression
+completed 200 active steps in 0.638 seconds (longest individual step 0.295 seconds, the first one)
+and enabled the mode in 0.00021 seconds. The larger visible crew therefore does not restore the
+freeze.
 The 360-frame rendered input script then completed at 34.9 fps under software OpenGL, with
 simulation averaging 1.85 ms per frame, and captured the active state after the three-second hold.
 

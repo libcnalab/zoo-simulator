@@ -890,6 +890,34 @@ bool Animals::StaffLockout(EnclosureId enclosure) const {
     return std::binary_search(staffLockouts_.begin(), staffLockouts_.end(), enclosure);
 }
 
+void Animals::SetNextFeeding(EnclosureId enclosure, float hour) {
+    if (!enclosure || hour < 0.0f) {
+        return;
+    }
+    const auto found = std::lower_bound(
+        feedingTimes_.begin(), feedingTimes_.end(), enclosure.value,
+        [](const FeedingTime& candidate, std::uint32_t value) { return candidate.enclosure.value < value; });
+    if (found != feedingTimes_.end() && found->enclosure == enclosure) {
+        found->hour = hour;
+    } else {
+        feedingTimes_.insert(found, FeedingTime{enclosure, hour});
+    }
+}
+
+bool Animals::FeedingSoon(EnclosureId enclosure, float hour) const {
+    const auto found = std::lower_bound(
+        feedingTimes_.begin(), feedingTimes_.end(), enclosure.value,
+        [](const FeedingTime& candidate, std::uint32_t value) { return candidate.enclosure.value < value; });
+    if (found == feedingTimes_.end() || found->enclosure != enclosure) {
+        return false;
+    }
+    const float until = found->hour - hour;
+    // A quarter in-game hour is 7.5 motion seconds. This is a local reaction to the
+    // keeper's imminent arrival, not an alternative daily routine; a short grace period
+    // covers a keeper who reaches the stand just after the posted time.
+    return until >= -0.1f && until <= 0.25f;
+}
+
 bool Animals::SecureForStaff(const Env& env, EnclosureId enclosureId) {
     const Enclosure* enclosure = env.enclosures.Find(enclosureId);
     if (enclosure == nullptr) {
@@ -1306,7 +1334,7 @@ void Animals::StepAnimals(Env& env, const std::vector<Enclosure>& enclosures, in
             animal.routeIndex = 0;
         } else if (!heldForStaff && (urgentInterrupt || completed)) {
             animal_internal::DecideActivity(animal, species, env, animals_, neighbors, rng_, propScratch_,
-                                            Viewers(enclosureId));
+                                            Viewers(enclosureId), FeedingSoon(enclosureId, env.time.Hour()));
             animal.nextNeedCheck = env.time.tick + 2 * kTicksPerSecond;
         }
         AvoidKeeper(animal, species, env, enclosureId, urgentDrink || urgentEat);

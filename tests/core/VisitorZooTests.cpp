@@ -281,7 +281,8 @@ TEST(VisitorZooTests, PreviousMapWidthRetainsTheNorthernCircuit) {
     Zoo zoo(testdata::GameCatalog(), testdata::GameSpecies(), config);
     ExpectNoProblems(BuildVisitorZoo(zoo));
     ExpectConnected(zoo);
-    EXPECT_EQ(zoo.Fauna().All().size(), 111U);
+    EXPECT_EQ(zoo.Habitats().All().size(), 17U);
+    EXPECT_EQ(zoo.Fauna().All().size(), 99U);
 }
 
 TEST(VisitorZooTests, NineSheetPropertyKeepsTheEstablishedExpansionStocked) {

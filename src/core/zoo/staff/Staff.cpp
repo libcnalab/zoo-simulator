@@ -55,6 +55,20 @@ constexpr float kBodyClearance = 0.08f;
 /// A shy animal gets one further body-clearance of reaction room while it retreats from staff.
 constexpr float kShyAnimalYieldMargin = 0.08f;
 
+std::optional<float> NextFeedingAt(const Env& env, const StaffStop& stop) {
+    const float hour = env.time.Hour();
+    const std::int64_t today = env.time.Day();
+    std::optional<float> next;
+    for (std::size_t i = 0; i < stop.feedHours.size(); ++i) {
+        const float at = stop.feedHours[i];
+        if (at >= 0.0f && stop.fedDay[i] != today && hour < at + Staff::kFeedingLate &&
+            (!next || at < *next)) {
+            next = at;
+        }
+    }
+    return next;
+}
+
 struct Hasher {
     std::uint64_t value = 0xcbf29ce484222325ULL;
 
@@ -340,21 +354,25 @@ std::optional<float> Staff::NextFeeding(const Env& env, EnclosureId enclosure) c
     if (keeper == nullptr) {
         return std::nullopt;
     }
-    const float hour = env.time.Hour();
-    const std::int64_t today = env.time.Day();
-    std::optional<float> next;
     for (const StaffStop& stop : keeper->round) {
-        if (stop.enclosure != enclosure) {
+        if (stop.enclosure == enclosure) {
+            return NextFeedingAt(env, stop);
+        }
+    }
+    return std::nullopt;
+}
+
+void Staff::PublishNextFeedings(const Env& env, Animals& animals) const {
+    for (const StaffMember& member : members_) {
+        if (member.role != StaffRole::Keeper) {
             continue;
         }
-        for (std::size_t i = 0; i < stop.feedHours.size(); ++i) {
-            const float at = stop.feedHours[i];
-            if (at >= 0.0f && stop.fedDay[i] != today && hour < at + kFeedingLate && (!next || at < *next)) {
-                next = at;
+        for (const StaffStop& stop : member.round) {
+            if (const std::optional<float> next = NextFeedingAt(env, stop)) {
+                animals.SetNextFeeding(stop.enclosure, *next);
             }
         }
     }
-    return next;
 }
 
 void Staff::Apply(Env& env, Animals& animals, Visitors& visitors, const StaffTask& task) {

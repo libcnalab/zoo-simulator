@@ -79,9 +79,10 @@ constexpr float kReleaseGateS = 2.4f;
 constexpr float kHoseS = 30.0f;
 constexpr float kInspectS = 22.0f;
 constexpr float kSweepS = 24.0f;
-/// How far from a bin its cleaner picks a litter target, in metres. This overlaps
-/// neighbouring bin catchments after accounting for the cleaner's stand beside a bin.
-constexpr float kLitterReach = 30.0f;
+/// How far from a sampled bin its cleaner picks a litter target, in metres. The expanded estate
+/// samples bins by area; forty-metre catchments overlap its widest deterministic sampling gap.
+/// The cleaner still walks to the exact piece and the broom itself retains its five-metre reach.
+constexpr float kLitterReach = 40.0f;
 constexpr float kEmptyBinS = 10.0f;
 constexpr float kTendS = 30.0f;
 constexpr float kWaterS = 16.0f;
@@ -100,6 +101,7 @@ constexpr std::size_t kMostFills = 4;
 constexpr float kNearWeight = 0.4f;
 /// How many beds a gardener and how many bins a cleaner has on the round at most.
 constexpr std::size_t kMostBeds = 24;
+constexpr std::size_t kMostBins = 30;
 // Sample bins in proportion to the serviced grounds so wider parks retain local litter coverage.
 constexpr int kPropertyTilesPerBinStop = 1500;
 constexpr std::size_t kMinimumBinStops = 30;
@@ -1117,24 +1119,28 @@ void Staff::Engage(const Env& env, const Animals& animals) {
             (bed ? beds : bins).push_back({prop.id, stand->place});
         }
     }
-    const auto engage = [&](StaffRole role, std::vector<PropStop>& stops, std::size_t most) {
+    const auto engage = [&](StaffRole role, std::vector<PropStop>& stops, std::size_t sampled,
+                            std::size_t perRound) {
         if (stops.empty()) {
             return;
         }
-        RoundOf(stops, entrance, most);
-        StaffMember& member = add(role, stops.front().place, 0.0f);
-        for (const PropStop& at : stops) {
-            StaffStop stop;
-            stop.prop = at.prop;
-            member.round.push_back(stop);
+        RoundOf(stops, entrance, sampled);
+        for (std::size_t first = 0; first < stops.size(); first += perRound) {
+            const std::size_t last = std::min(first + perRound, stops.size());
+            StaffMember& member = add(role, stops[first].place, 0.0f);
+            for (std::size_t i = first; i < last; ++i) {
+                StaffStop stop;
+                stop.prop = stops[i].prop;
+                member.round.push_back(stop);
+            }
+            member.stop = static_cast<std::uint32_t>(member.round.size() - 1);
         }
-        member.stop = static_cast<std::uint32_t>(member.round.size() - 1);
     };
-    engage(StaffRole::Gardener, beds, kMostBeds);
+    engage(StaffRole::Gardener, beds, beds.size(), kMostBeds);
     const TileCoord extent = env.world.PropertyMax() - env.world.PropertyMin();
     const auto binStops =
         static_cast<std::size_t>((extent.x + 1) * (extent.z + 1) / kPropertyTilesPerBinStop);
-    engage(StaffRole::Cleaner, bins, std::max(kMinimumBinStops, binStops));
+    engage(StaffRole::Cleaner, bins, std::max(kMinimumBinStops, binStops), kMostBins);
 }
 
 void Staff::PlanStop(const Env& env, const Animals& animals, const Visitors& visitors,
@@ -1168,7 +1174,7 @@ void Staff::PlanStop(const Env& env, const Animals& animals, const Visitors& vis
         }
     } else if (member.role == StaffRole::Cleaner) {
         // Fresh litter should not wait for a complete circuit of a large zoo. Prefer the
-        // next bin which has a piece within the same 25 m catchment used by PlanBin.
+        // next bin which has a piece within the same catchment used by PlanBin.
         float shortestWalk = std::numeric_limits<float>::infinity();
         for (std::size_t i = 0; i < stops; ++i) {
             const Prop* bin = env.objects.FindProp(member.round[i].prop);

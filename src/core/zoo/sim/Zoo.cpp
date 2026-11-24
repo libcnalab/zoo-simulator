@@ -166,10 +166,12 @@ void Zoo::Step() {
     ContinueApocalypse();
     animals_.ClearKeepers();
     animals_.ClearStaffLockouts();
+    animals_.ClearFeedingTimes();
     for (const StaffMember& member : staff_.All()) {
         animals_.SetKeeper(enclosures_.At(member.position), member.position);
         animals_.AddStaffLockout(member.lockout);
     }
+    staff_.PublishNextFeedings(env, animals_);
     for (const Enclosure& home : enclosures_.All()) {
         if (!home.walkThrough)
             continue;

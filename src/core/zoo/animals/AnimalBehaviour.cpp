@@ -349,7 +349,7 @@ NeedThresholds ProvisionThresholds(const Animal& animal, const SpeciesDef& speci
 
 void DecideActivity(Animal& animal, const SpeciesDef& species, Env& env, std::span<const Animal> animals,
                     std::span<const std::size_t> neighbors, Rng& rng, std::vector<PropId>& propScratch,
-                    int viewers) {
+                    int viewers, bool feedingSoon) {
     const EnclosureId enclosureId = env.enclosures.At(animal.position);
     const Enclosure* enclosure = env.enclosures.Find(enclosureId);
     if (!enclosureId) {
@@ -639,6 +639,35 @@ void DecideActivity(Animal& animal, const SpeciesDef& species, Env& env, std::sp
     }
 
     const BehaviourProfile* profile = ProfileFor(species);
+    // Anticipation is enrichment, never care. An animal already halfway to an urgent
+    // food or water threshold keeps its ordinary routine so a long walk to the public
+    // feeding cannot create a transient welfare issue before the next need check.
+    if (feedingSoon && profile != nullptr && animal.hunger < 0.35f && animal.thirst < 0.35f) {
+        // Only residents which can already see or hear the nearby preparation gather.
+        // Crossing a large habitat for this optional cue used to perturb later water
+        // errands even though urgent needs could interrupt the walk.
+        constexpr float kFeedingCueReachM = 4.0f;
+        float nearest = kFeedingCueReachM * kFeedingCueReachM;
+        const Prop* chosen = nullptr;
+        for (PropId id : enclosure->feeders) {
+            const Prop* feeder = std::as_const(env.objects).FindProp(id);
+            if (feeder == nullptr || !PropHasRoom(id, animals, neighbors)) {
+                continue;
+            }
+            const float distance = DistanceSquared(animal.position, feeder->position);
+            if (distance < nearest) {
+                nearest = distance;
+                chosen = feeder;
+            }
+        }
+        if (chosen != nullptr) {
+            StartActivity(animal, profile->feeding,
+                          PropApproach(species, env, *chosen,
+                                       PropSlot(animal, species, env, *chosen, animals, neighbors)),
+                          static_cast<std::int32_t>(tuning::kRoutineRecheckSeconds), chosen->id);
+            return;
+        }
+    }
     if (profile != nullptr && species.id != "lion" && species.id != "tiger" && species.id != "wolf") {
         const float sleepHours = std::min(10.0f, species.sleepHoursPerDay);
         const float nightHour = std::fmod(hour + 24.0f - 20.0f - HashFloat(animal.id.value, 43U), 24.0f);

@@ -374,7 +374,7 @@ visitor who had just finished eating and now holds every such pair at least
 
 J42 keeps J38's visible daytime cleanup reliable under that changed crowd
 history. Instead of completing a full bin circuit while fresh litter waits,
-the cleaner goes next to the nearest bin whose 25 m catchment contains a piece
+the cleaner now goes next to the nearest sampled bin whose 40 m catchment contains a piece
 and refreshes the saved sweep target before the walk and on arrival. The public
 regression removes real litter before midnight again, and all 13 focused keeper
 cases pass. The combined J41/J42 suite passes all 292 active cases, including the

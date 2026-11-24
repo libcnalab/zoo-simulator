@@ -425,7 +425,12 @@ void AdvanceMovement(Animal& animal, const SpeciesDef& species, const Env& env, 
             const bool realOpening = env.enclosures.RegionAt(nextTile) == Region::Public &&
                                      !env.world.FenceOn(here, side).Exists();
             const bool intendedWeakEdge = World::TileAt(animal.target) == nextTile;
-            permittedExit = (realOpening || intendedWeakEdge) && env.nav.Passable(nextTile, profile);
+            // A welfare escape deliberately crosses its selected weak boundary even when the
+            // outside tile is a planted stand-off. On the next tick the loose-animal recovery
+            // moves it locally to passable public ground. Ordinary movement remains unable to
+            // reserve this rounded endpoint, and an arbitrary BreakOut target still cannot
+            // bypass a different blocked edge.
+            permittedExit = intendedWeakEdge || (realOpening && env.nav.Passable(nextTile, profile));
         }
     }
     if (step != Vec2{} && !permittedExit &&

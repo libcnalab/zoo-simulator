@@ -32,7 +32,7 @@ void AdvanceNeeds(Animal& animal, const SpeciesDef& species, Env& env, const Enc
                   int viewers, const Animal* mother, bool predatorPresent);
 void DecideActivity(Animal& animal, const SpeciesDef& species, Env& env, std::span<const Animal> animals,
                     std::span<const std::size_t> neighbors, Rng& rng, std::vector<PropId>& propScratch,
-                    int viewers = 0);
+                    int viewers = 0, bool feedingSoon = false);
 void UpdateSpeciesBehaviour(Animal& animal, const SpeciesDef& species, Env& env,
                             std::span<const Animal> animals, std::span<const std::size_t> neighbors,
                             int viewers, Rng& rng, std::vector<PropId>& propScratch);

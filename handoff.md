@@ -14,7 +14,7 @@ responsiveness, expanded estate and ground-detail work. The deliverable in
 references the JavaScript loader, and that loader references both payloads. It was not launched
 in a browser in this pass; see `docs/WEB.md` for the command and limitation.
 
-## Current backlog (2026-11-22)
+## Current implementation backlog (closed 2026-11-24)
 
 - Treat the current 3 × 3, 4.5-times-larger estate as a long-form zoo-design project, not a
   one-pass enlargement. Rework mechanical-looking geometry, reduce habitats whose area is not
@@ -36,8 +36,8 @@ in a browser in this pass; see `docs/WEB.md` for the command and limitation.
   drinks stop. The north-east tropical sheet is the seventh and final redesign: a gravel temple
   trail and river-and-mangrove boardwalk braid around ten staggered habitats with three crossings,
   both inherited seams and an Aldabra branch stop. No new landscape sheet still uses the copied
-  first-pass circuit or straight middle promenade. Continue later zoo-design passes where they add
-  species-justified detail rather than stamping another common template. Cinema mode from
+  first-pass circuit or straight middle promenade. Further species-justified polish is an open-ended
+  art direction, not a pending implementation task. Cinema mode from
   `6e2f119`
   is complete: it shows one representative of each resident species for about three seconds,
   supports Left/Right and returns with C. `9c5edb4` prevents every Cinema cut from rebuilding the
@@ -1021,8 +1021,8 @@ sound unknown); saves there live only in the page's memory.
 ## 3. Verification recipe for any change
 
 1. Build: `cmake --build build --target zoo-simulator zoo_core_tests --parallel 2`.
-2. Focused tests, then the full suite `ctest --test-dir build -j2 --output-on-failure`
-   (221 tests, about 5 to 7 minutes; do not rebuild while it runs).
+2. Focused tests, then the full suite `ctest --test-dir build -j1 --output-on-failure`
+   (403 tests; the extended plan and animation suite takes well over an hour; do not rebuild while it runs).
 3. **Golden hashes** (`tests/core/VisitStartTests.cpp`) change with any behaviour change of the
    core: print with
    `./build/tests/zoo_core_tests --gtest_filter='VisitStart.*Hashes*' --gtest_also_run_disabled_tests | grep ^HASH`,
@@ -1191,7 +1191,8 @@ offscreen smoke, so the former 42 set-downs inside furniture are resolved (2026-
 The large Visitor Zoo no longer drops staff beyond 150 m or the nearest 12. `KeeperRenderer`
 still reserves full CNA skeletal avatars for the nearest 12 people within 150 m, but every other
 member in the camera frustum now uses a low-poly animated uniform proxy in the existing solid
-tool batch. The current zoo has 112 staff. A 2026-11-23 software-OpenGL entrance run drew 22
+tool batch. The zoo then had 112 staff; after the 2026-11-24 local-round correction it has 160
+(110 keepers, 32 gardeners and 18 cleaners). The earlier software-OpenGL entrance run drew 22
 staff (21 distant LODs), while `--stand keeper:0` drew the nearby detailed keeper plus 11 distant
 LODs. Both 1280 x 720 captures (`build-probe/shots/staff-lod.png` and `staff-lod-close.png`) were
 opened and checked. The entrance run averaged 1.51 ms simulation and 26.75 ms for the people pass
@@ -1225,6 +1226,85 @@ Flamingo Lagoon software-GL runs remained at 3.42 s and 2,129 MB after ground, a
 `build-probe/shots/detail-contour-bevel-close.png` has no gap or depth fighting. A sanitized editor
 render is also clean. The rejected adaptive 12.5 cm alternative cost 6.71 s and 3,686 MB after
 ground, so none of it is retained (2026-11-24).
+
+Animals now receive each habitat's next public-feeding time as transient, derived input. A resident
+with hunger and thirst below 0.35 and already within four metres of a feeder gathers there from
+0.25 game hour before the posted time until 0.1 hour after it; distant routines and approaching
+needs are unchanged. The direct regression holds the selected feeder and feeding activity. The
+same verification exposed and fixed a prior movement regression: an intentional welfare
+`BreakOut` may cross its selected weak edge into a planted stand-off, where existing local recovery
+places the now-loose animal on passable public ground. Ordinary rounded route endpoints remain
+inside. The three focused escape/recapture cases pass three times. A preliminary 0.5-need/eight-metre
+cue failed the staffed-week thirst bound and is not retained; the final local cue passes the full
+835.6-second staffed-week comparison (2026-11-24).
+
+The six pachyderm manifests now expose their existing swim clip through the renderer's structured
+`meta.swim` contract (clip, waterline and speed), while retaining `swim_depth_m` for older readers.
+The source generator and manifest regression cover rhinoceros and elephant adults, females and
+juveniles; the binary GLBs remain byte-identical. Habitat-specific Visitor Zoo plan tests now
+filter residents by `home` instead of mistaking the same species in another one of the 121 habitats
+for an overstocked exhibit. Historical documentation was also corrected where it still claimed
+that no animal swam, keepers were invisible, loading took 10–15 seconds, trees had no far form or
+nine audio names remained missing (the current count is eight after the labelled elephant
+substitute) (2026-11-24).
+
+The expanded estate exposed a compact-zoo staff assumption: one cleaner was assigned every sampled
+bin, so a visible sweep could remain almost 300 m from the nearest litter until midnight. Reachable
+flower beds and area-proportional bin samples are now divided along the deterministic short-hop
+walk into local rounds of at most 24 per gardener and 30 per cleaner. The former single-worker
+counts are no longer an acceptance condition; every round retains the original cap. The final crew
+is 110 keepers, 32 gardeners and 18 cleaners; the visible daytime litter regression passes in
+113.3 seconds. With all 160 staff active, the apocalypse regression still enables in 0.00021 s
+and completes 200 full-zoo steps in 0.638 s. Equal-zoo, save/load and damaged-save tests pass.
+All six 600-step and six 6,000-step fill hashes were independently repeated before their goldens
+were updated, and both complete hash guards then passed in 373.2 seconds (2026-11-24).
+
+The later cold-climate visibility correction moved where visitors dropped litter and exposed the
+widest remaining sampled-bin gap: the nearest empty sweep was 34.9 m from every piece, outside the
+old 30 m catchment. Cleaner catchments are now 40 m, while the cleaner still walks to the exact
+piece and the broom itself still removes litter only within five metres. The cleanup regression
+passes in 106.5 seconds. All short hashes remained identical; only three long-hash values changed,
+and all twelve values were reproduced by two complete runs before updating the goldens
+(2026-11-24).
+
+The expanded family-plan audit now validates every `(habitat, species)` group independently rather
+than combining repeated species across the estate. It also exposed a real pedigree error: in a
+mother-only group, the first male cub could find itself as its own sire after insertion. Stocking
+now accepts only an earlier adult male as a sire. Red Deer Riverside's one exposed northern bench
+also gains an oak crown just inside the habitat, offset from the sightline, when the pinched public
+walk has no legal planting island. Both plan seeds pass the family and shade checks. The twelve
+short/full hashes below were reproduced in two independent complete runs before updating the
+goldens, and the 298--403 tail (including the 480-second animation generator) passes:
+
+| Fill ticks | Seed | At fill | After 500 ticks |
+|---:|---:|---:|---:|
+| 600 | 1 | 6059500128786579907 | 10139131778207682489 |
+| 600 | 2 | 12632541324756449535 | 15134940833656845578 |
+| 600 | 3 | 7566100497125835002 | 458906233866439788 |
+| 6000 | 1 | 14759060237273233589 | 8509003878970392156 |
+| 6000 | 2 | 18208058158681371476 | 17723381617506838522 |
+| 6000 | 3 | 17817019389461238695 | 12955052076653118417 |
+
+The same changed visitor history made the first of four mid-visit save checkpoints contain 15
+half-walked visitor routes rather than the old hard-coded minimum 18; the following checkpoints
+contained 65, 71 and 97. The save/load test now retains a nonempty in-progress route sample in
+every document and at least the former 72-route total across the four, while preserving all exact
+JSON, subsystem-hash and 100-step continuation comparisons (2026-11-24).
+
+The plan audit no longer hard-codes shoreline reeds to the two compact-zoo wetlands. Every reed
+must be dry, touch water and belong to a habitat with more than 5 % water; every represented
+wetland keeps at least eight clumps and the expanded estate must expose at least six such habitats.
+This includes Flamingo Billabong, Capybara Oxbow, Flamingo Fen and Flamingo Mangrove without
+weakening the original Lagoon and Marsh checks (2026-11-24).
+
+The full visiting-habitat audit exposed all five Musk Ox Ridge residents staying in their cooled
+den for 2,001 consecutive steps after a hot spell had already subsided to 21.64 C. Temperature
+shelter hysteresis is now one degree: animals still enter above five degrees outside their comfort
+range, remain sheltered at +4.5 C and leave below +4 C. The ridge's longest invisible spell falls
+to 157 steps on seed 1 and is 207 on seed 2; all 121 habitats pass. A direct boundary regression
+covers the cooled-den transition. All six short and long visit hash pairs changed only where the
+later animal decisions require it and were reproduced in two independent complete runs before
+their goldens were updated (2026-11-24).
 
 ## 5. Worktrees in `.codex-work/` (git-ignored)
 

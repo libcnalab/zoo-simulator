@@ -218,16 +218,20 @@ which says nothing); the sound by ear; a long play session by a person.
 
 ## Known limits
 
-- Animals are stylised (above). The lion remains the best one.
+- This is the pivot's historical checkpoint; the current 121-habitat zoo and its measured limits
+  are tracked in `docs/REALISM.md`, `docs/PERFORMANCE.md` and `docs/VISITOR_ZOO.md`.
+- Animals remain stylised rather than scan-derived; all current species have tailored models.
 - At 10:30 most predators sleep or rest, as they would; the zoo is livelier for the herbivores.
-- No species has a swimming clip: a penguin or a polar bear in its pool is drawn with its
-  walking and standing clips.
-- Ostrich, kangaroo and polar bear have no call recorded; they are silent.
+- Deep-water species and their available age/sex variants now have swimming clips. Manifest tests
+  cover the full catalog.
+- Ostrich, kangaroo and polar bear still have no verified reusable call recording and are silent.
 - Every young animal used in the Visitor Zoo now has a dedicated age variant
   (`docs/ANIMALS.md`).
 - Zebra rest now breathes and looks around; elephants use a supported standing doze because the
   source rig cannot make a sound lateral recumbency (`docs/ANIMALS.md`).
 - The ground texture is soft when one looks straight down; distant trees are simple.
 - No third-person view (the brief called it optional).
-- Keepers are not seen: the staff simulation exists as a contract only, care is automatic.
-- The loading takes ten to fifteen seconds, most of it simulating the morning.
+- Keepers, cleaners, vets and mechanics now walk and visibly perform their jobs; automatic care is
+  retained only as a comparison and safety net.
+- The former ten-to-fifteen-second start was reduced to about 5.5 seconds on the compact zoo, with
+  later cache and current-estate measurements recorded in `docs/PERFORMANCE.md`.

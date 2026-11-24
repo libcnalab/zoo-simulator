@@ -97,15 +97,17 @@ TEST(VisitStart, MatchesGameSequence) {
 // steppe herds and longer visitor and staff rounds. The nine-sheet estate adds six continental
 // districts; all seven new landscape sheets now have separate circuits, and low forest ferns
 // complete the shy okapi's cover without blocking its routes).
+// 2026-11-24: the continental family checks operate per habitat, mother-only groups no longer
+// record a male cub as its own father, and Red Deer Riverside's northern bench has a shaded crown.
 void CheckFillHashes(std::int64_t ticks) {
     constexpr std::array<std::array<std::uint64_t, 2>, 3> shortHashes{
-        {{7588000211208753496ULL, 9478475717036931524ULL},
-         {13525159268746519313ULL, 6527218833112431517ULL},
-         {3780609227292557847ULL, 5022954794148817315ULL}}};
+        {{6059500128786579907ULL, 10139131778207682489ULL},
+         {12632541324756449535ULL, 15134940833656845578ULL},
+         {7566100497125835002ULL, 458906233866439788ULL}}};
     constexpr std::array<std::array<std::uint64_t, 2>, 3> fullHashes{
-        {{1269454734725533523ULL, 12946726679459501400ULL},
-         {6536241318627275939ULL, 6664318456975005ULL},
-         {16363341369766972077ULL, 4597660634925168785ULL}}};
+        {{14759060237273233589ULL, 8509003878970392156ULL},
+         {18208058158681371476ULL, 17723381617506838522ULL},
+         {17817019389461238695ULL, 12955052076653118417ULL}}};
     for (const std::uint64_t seed : {1ULL, 2ULL, 3ULL}) {
         Zoo zoo(testdata::GameCatalog(), testdata::GameSpecies(), VisitorZooConfig(seed));
         BuildVisitorZoo(zoo);

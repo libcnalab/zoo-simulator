@@ -74,7 +74,8 @@ explicitly retried. `round2_ledger.py` regenerates only its marked section in RE
 `inspect_source.py SOURCE LABEL [--start SECONDS --end SECONDS]` writes a combined waveform
 and logarithmic spectrogram in that cache. These scripts do not play audio. Nobody listened.
 
-The nine missing call names remain omitted; no manifest entry points to a substitute species.
+Eight call names remain omitted. The formerly ninth, `elephant_trumpet`, is a clearly labelled
+Asian-elephant substitute rather than an unidentified manifest alias.
 Penguin take 1 is now a documented ecstatic-display bray excerpt, take 2 is the explicitly
 labelled old contact call, and take 3 is a separate display excerpt. Elephant rumble has three
 distinct natural recordings. See the Round 2 sections of REPORT.md and RESEARCH.md.

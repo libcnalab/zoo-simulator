@@ -648,12 +648,15 @@ including the note that we could not confirm who modelled either animal.
 | `elephant_female` | 16,801 | 46 | cow: smaller frame, shorter and thinner tusks |
 | `elephant_juvenile` | 15,585 | 46 | calf without tusks |
 
-Nine clips each (the usual eight and `swim`). The walks are ours, not the sources': the
+Ten clips each (the usual eight, `swim`, and `bathe` for rhinoceroses or `dust_bathe` for
+elephants). The walks are ours, not the sources': the
 authored walk loops slid their feet by more than our 2 % tolerance when measured
 (stance speeds of 0.52 to 1.59 m/s within one rhino stride), so the game's clips are
 contact-constrained replacements at 1.2 m/s (rhino) and 1.3 m/s (elephant); the elephant
 moves lateral pairs without an aerial phase, the rhino trots on diagonals. The game plays
-`swim` where the water is deep enough for the animal to float (below).
+`swim` where the water is deep enough for the animal to float (below). The manifest records the
+clip, waterline and speed together under `meta.swim`; the legacy `swim_depth_m` is retained for
+older readers. All six pachyderm manifests have a regression for this renderer contract.
 
 Seen in Blender previews, in the game's viewer and in both habitats
 (`evidence/rhino-elephant-rigged-2026-11-13.jpg`: before, after and calf of each). Honest
